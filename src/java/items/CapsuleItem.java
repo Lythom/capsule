@@ -26,6 +26,7 @@ public class CapsuleItem extends Item {
 		this.setUnlocalizedName(unlocalizedName);
 		this.setCreativeTab(CreativeTabs.tabMisc);
 		this.setMaxStackSize(1);
+		this.setMaxDamage(0);
 	}
 
 	@Override
@@ -50,24 +51,15 @@ public class CapsuleItem extends Item {
 	}
 
 	@Override
-	public EnumAction getItemUseAction(ItemStack stack) {
-		return EnumAction.DRINK;
-	}
-
-	// how long the drinking will last for, in ticks (1 tick = 1/20 second)
-	@Override
-	public int getMaxItemUseDuration(ItemStack stack) {
-		return 1;
-	}
-
-	@Override
 	public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
+		
+		System.out.println(String.valueOf(worldIn.isRemote) + " " + itemStackIn.getItemDamage());
 
 		if (itemStackIn.getItemDamage() == 1) {
 			EntityItem entityItem = throwItem(itemStackIn, playerIn);
-			playerIn.inventory.decrStackSize(playerIn.inventory.currentItem, 1);
+			playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 		}
 
 		if (itemStackIn.getItemDamage() == 0) {
@@ -89,7 +81,7 @@ public class CapsuleItem extends Item {
 	 */
 	private EntityItem throwItem(ItemStack itemStackIn, EntityPlayer playerIn) {
 		double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
-		EntityItem entityitem = new CapsuleEntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
+		EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
 		entityitem.setPickupDelay(40);
 		entityitem.setThrower(playerIn.getName());
 		float f = 0.5F;
@@ -100,7 +92,6 @@ public class CapsuleItem extends Item {
 		entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
 
 		playerIn.joinEntityItemWithWorld(entityitem);
-		playerIn.triggerAchievement(StatList.dropStat);
 
 		return entityitem;
 	}
@@ -143,7 +134,6 @@ public class CapsuleItem extends Item {
         for( BlockPos pos : blockPoss) {
         	Block block = entityItem.worldObj.getBlockState(pos).getBlock();
         	double distance = pos.distanceSqToCenter(i, j, k);
-        	System.out.println(pos.toString() + " => " + distance);
         	if (block.getMaterial() != Material.air && distance < closestDistance) {
         		closest = pos;
             	closestDistance = distance;
