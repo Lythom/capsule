@@ -1,7 +1,7 @@
 /**
  * 
  */
-package items;
+package capsule.items;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;

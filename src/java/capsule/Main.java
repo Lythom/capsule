@@ -1,11 +1,13 @@
 package capsule;
 
+import dimension.CapsuleDimension;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 
 @Mod(modid = Main.MODID, name = Main.MODNAME, version = Main.VERSION)
 public class Main {
@@ -32,5 +34,11 @@ public class Main {
     public void postInit(FMLPostInitializationEvent e) {
     	CapsuleItems.registerRecipes();
     }
+    
+	@EventHandler
+	private void serverAboutToStart( FMLServerAboutToStartEvent evt )
+	{
+		CapsuleDimension.registerDimension();
+	}
     
 }
