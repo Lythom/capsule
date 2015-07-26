@@ -21,13 +21,15 @@ public class CapsuleItems {
 	public static void createItems(String modid) {
 		GameRegistry.registerItem(creativeTP = new CapsuleCreativeTP("capsule_CTP"), "capsule_CTP");
 		GameRegistry.registerItem(capsule = new CapsuleItem("capsule"), "capsule");
-		ModelBakery.addVariantName(capsule, modid+":capsule_empty", modid+":capsule_activated", modid+":capsule_linked");
+		ModelBakery.addVariantName(capsule, modid+":capsule_empty", modid+":capsule_activated", modid+":capsule_linked", modid+":capsule_deployed", modid+":capsule_broken");
     }
 	
 	public static void registerRenderers(String modid) {
 		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItems.capsule, 0, new ModelResourceLocation(modid+":capsule_empty", "inventory"));
 		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItems.capsule, 1, new ModelResourceLocation(modid+":capsule_activated", "inventory"));
 		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItems.capsule, 2, new ModelResourceLocation(modid+":capsule_linked", "inventory"));
+		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItems.capsule, 3, new ModelResourceLocation(modid+":capsule_deployed", "inventory"));
+		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItems.capsule, 4, new ModelResourceLocation(modid+":capsule_broken", "inventory"));
 	}
 	
 	public static void registerRecipes() {
