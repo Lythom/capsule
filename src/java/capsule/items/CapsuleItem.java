@@ -98,48 +98,53 @@ public class CapsuleItem extends Item {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
 		
-		System.out.println(String.valueOf(worldIn.isRemote) + " " + itemStackIn.getItemDamage());
-
-		// an activated capsule is thrown farther on right click
-		if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
-			throwItem(itemStackIn, playerIn);
-			playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
-		}
-
-		// an empty capsule is activated on right click
-		else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
-			itemStackIn.setItemDamage(STATE_ACTIVATED);
-
-			NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
-			timer.setInteger("starttime", playerIn.ticksExisted);
-		}
 		
-		else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
-			// store again
-			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
-			WorldServer playerWorld = (WorldServer)playerIn.worldObj;
+		
+		if(!worldIn.isRemote){
 			
-			NBTTagCompound linkPos = itemStackIn.getTagCompound().getCompoundTag("linkPosition");
-			BlockPos dest = new BlockPos(linkPos.getInteger("x"),linkPos.getInteger("y"),linkPos.getInteger("z"));
-			NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
-			BlockPos source = new BlockPos(spawnPos.getInteger("x"),spawnPos.getInteger("y"),spawnPos.getInteger("z"));
-			
-			int size = 1;
-			if(itemStackIn.getTagCompound().hasKey("size")){
-				size = itemStackIn.getTagCompound().getInteger("size");
+			System.out.println(String.valueOf(worldIn.isRemote) + " " + itemStackIn.getItemDamage());
+	
+			// an activated capsule is thrown farther on right click
+			if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
+				throwItem(itemStackIn, playerIn);
+				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+			}
+	
+			// an empty capsule is activated on right click
+			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
+				itemStackIn.setItemDamage(STATE_ACTIVATED);
+	
+				NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
+				timer.setInteger("starttime", playerIn.ticksExisted);
 			}
 			
-			// do the transportation
-			for (int x = 0; x < size; x++) {
-				for (int y = 0; y < size; y++) {
-					for (int z = 0; z < size; z++) {
-						teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
+			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
+				// store again
+				WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
+				WorldServer playerWorld = (WorldServer)playerIn.worldObj;
+				
+				NBTTagCompound linkPos = itemStackIn.getTagCompound().getCompoundTag("linkPosition");
+				BlockPos dest = new BlockPos(linkPos.getInteger("x"),linkPos.getInteger("y"),linkPos.getInteger("z"));
+				NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+				BlockPos source = new BlockPos(spawnPos.getInteger("x"),spawnPos.getInteger("y"),spawnPos.getInteger("z"));
+				
+				int size = 1;
+				if(itemStackIn.getTagCompound().hasKey("size")){
+					size = itemStackIn.getTagCompound().getInteger("size");
+				}
+				
+				// do the transportation
+				for (int x = 0; x < size; x++) {
+					for (int y = 0; y < size; y++) {
+						for (int z = 0; z < size; z++) {
+							teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
+						}
 					}
 				}
+				
+				itemStackIn.setItemDamage(STATE_LINKED);
+				itemStackIn.getTagCompound().removeTag("spawnPosition");
 			}
-			
-			itemStackIn.setItemDamage(STATE_LINKED);
-			itemStackIn.getTagCompound().removeTag("spawnPosition");
 		}
 
 		return ret;
@@ -152,8 +157,14 @@ public class CapsuleItem extends Item {
 		// disactivate capsule after some time
 		NBTTagCompound timer = stack.getSubCompound("activetimer", true);
 		int tickDuration = 60; // 3 sec at 20 ticks/sec;
-		if (stack.getItemDamage() == 1 && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
-			stack.setItemDamage(0);
+		if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
+			
+			if(stack.getTagCompound().hasKey("linkPosition")){
+				stack.setItemDamage(STATE_LINKED);
+			} else {
+				stack.setItemDamage(STATE_EMPTY);
+			}
+			
 		}
 	}
 	
@@ -284,23 +295,19 @@ public class CapsuleItem extends Item {
 		capsule.getTagCompound().setTag(key,pos);
 	}
 
-	private void teleportBlock(WorldServer sourceWorld, WorldServer capsuleWorld, BlockPos srcPos, BlockPos destPos) {
+	private void teleportBlock(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcPos, BlockPos destPos) {
 		TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
+		IBlockState srcState = sourceWorld.getBlockState(srcPos);
+		// store the current block
+		destWorld.setBlockState(destPos, srcState);
 		if(srcTE != null){
 			// store the current block
-			capsuleWorld.setTileEntity(destPos, srcTE);
-			// remove from the world the stored block
-			sourceWorld.removeTileEntity(srcPos);
-
-		} else {
-			IBlockState srcState = sourceWorld.getBlockState(srcPos);
-			// store the current block
-			capsuleWorld.setBlockState(destPos, srcState);
-			// remove from the world the stored block
-			sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState());
+			destWorld.setTileEntity(destPos, srcTE);
 		}
+		// remove from the world the stored block
+		sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState());
 		
-		capsuleWorld.markBlockForUpdate(destPos);
+		destWorld.markBlockForUpdate(destPos);
 		sourceWorld.markBlockForUpdate(srcPos);
 	}
 
@@ -320,7 +327,8 @@ public class CapsuleItem extends Item {
 		double j = entityItem.posY;
 		double k = entityItem.posZ;
 
-        Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i - 1, j - 1, k - 1), new BlockPos(i + 1, j + 1, k + 1));
+        @SuppressWarnings("unchecked")
+		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i - 1, j - 1, k - 1), new BlockPos(i + 1, j + 1, k + 1));
         BlockPos closest = null;
         double closestDistance = 1000;
         for( BlockPos pos : blockPoss) {
@@ -335,6 +343,7 @@ public class CapsuleItem extends Item {
 		return closest;
 	}
 	
+	@SuppressWarnings({ "unchecked" })
 	private BlockPos findBottomBlock(EntityItem entityItem, List<Block> excludedBlocks) {
 		if(entityItem.getEntityWorld() == null) return null;
 		
