@@ -1,6 +1,8 @@
 package capsule.dimension;
 
+import capsule.CapsuleConfig;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.config.Property;
 
 public class CapsuleDimension {
 
@@ -13,8 +15,10 @@ public class CapsuleDimension {
 	
 	public static void registerDimension(){
 		
-		// TODO : have in a config file
-		CapsuleDimension.providerId = 7;
+		Property providerIdProp = CapsuleConfig.config.get("Compatibility", "providerId", 7);
+		providerIdProp.comment = "Provider id of the capsule dimension (where blocks are sent inside the capsule).\nChange needed only if there is conflict with an other mod using the same providerId.";
+		CapsuleDimension.providerId = providerIdProp.getInt();
+		CapsuleConfig.config.save();
 		DimensionManager.registerProviderType(CapsuleDimension.providerId, CapsuleWorldProvider.class, true);
 		
 		CapsuleDimension.dimensionId = -1;
