@@ -1,4 +1,4 @@
-package dimension;
+package capsule.dimension;
 
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.WorldProvider;
@@ -108,7 +108,7 @@ public class CapsuleWorldProvider extends WorldProvider {
 	@Override
 	public boolean canDoLightning( Chunk chunk )
 	{
-		return false;
+		return true;
 	}
 	
 	@Override

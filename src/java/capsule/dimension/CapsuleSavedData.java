@@ -1,7 +1,7 @@
 /**
  * 
  */
-package dimension;
+package capsule.dimension;
 
 import java.util.HashMap;
 
@@ -73,7 +73,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		
 		// create a bedrock barrier around
 		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
-		BlockPos nextPosEnd = nextPos.add(sideLength+2, sideLength+2, sideLength+2);
+		BlockPos nextPosEnd = nextPos.add(sideLength+1, sideLength+1, sideLength+1);
 		@SuppressWarnings("unchecked")
 		Iterable<BlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);
 		for (BlockPos pos : borders) {

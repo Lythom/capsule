@@ -1,7 +1,7 @@
 /**
  * 
  */
-package dimension;
+package capsule.dimension;
 
 import net.minecraft.world.biome.BiomeGenBase;
 

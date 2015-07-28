@@ -1,4 +1,4 @@
-package dimension;
+package capsule.dimension;
 
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockPos;
