@@ -1,6 +1,7 @@
 package capsule;
 
 import capsule.dimension.CapsuleDimension;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -23,6 +24,8 @@ public class Main {
     @EventHandler
     public void preInit(FMLPreInitializationEvent e) {
     	CapsuleItems.createItems(Main.MODID);
+        CapsuleConfig.config = new Configuration(e.getSuggestedConfigurationFile());
+        CapsuleConfig.config.load();
     }
         
     @EventHandler

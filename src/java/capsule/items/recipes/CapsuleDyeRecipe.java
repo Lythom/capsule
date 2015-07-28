@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.google.common.collect.Lists;
 
+import capsule.Helpers;
 import capsule.items.CapsuleItem;
 import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.init.Items;
@@ -19,10 +20,11 @@ public class CapsuleDyeRecipe implements IRecipe
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(InventoryCrafting p_77569_1_, World worldIn)
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public boolean matches(InventoryCrafting p_77569_1_, World worldIn)
     {
         ItemStack itemstack = null;
-        ArrayList arraylist = Lists.newArrayList();
+		ArrayList arraylist = Lists.newArrayList();
 
         for (int i = 0; i < p_77569_1_.getSizeInventory(); ++i)
         {
@@ -76,9 +78,9 @@ public class CapsuleDyeRecipe implements IRecipe
                     itemarmor = (CapsuleItem)itemstack1.getItem();
                     itemstack = itemstack1.copy();
 
-                    if (itemarmor.hasColor(itemstack1))
+                    if (Helpers.hasColor(itemstack1))
                     {
-                        l = itemarmor.getColor(itemstack);
+                        l = Helpers.getColor(itemstack);
                         f = (float)(l >> 16 & 255) / 255.0F;
                         f1 = (float)(l >> 8 & 255) / 255.0F;
                         float f2 = (float)(l & 255) / 255.0F;
@@ -125,7 +127,7 @@ public class CapsuleDyeRecipe implements IRecipe
             l = (int)((float)l * f / f1);
             l1 = (k << 8) + i1;
             l1 = (l1 << 8) + l;
-            itemarmor.setColor(itemstack, l1);
+            Helpers.setColor(itemstack, l1);
             return itemstack;
         }
     }
