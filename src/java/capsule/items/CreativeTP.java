@@ -1,7 +1,7 @@
 package capsule.items;
 
 import capsule.Helpers;
-import capsule.dimension.CapsuleDimension;
+import capsule.dimension.CapsuleDimensionRegistrer;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,10 +15,10 @@ import net.minecraft.world.Teleporter;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
-public class CapsuleCreativeTP extends Item {
+public class CreativeTP extends Item {
 	
 
-	public CapsuleCreativeTP(String unlocalizedName) {
+	public CreativeTP(String unlocalizedName) {
 		super();
 		this.setUnlocalizedName(unlocalizedName);
 		this.setCreativeTab(CreativeTabs.tabMisc);
@@ -52,7 +52,7 @@ public class CapsuleCreativeTP extends Item {
 				overworldPos.setInteger("x", playerIn.getPosition().getX());
 				overworldPos.setInteger("y", playerIn.getPosition().getY());
 				overworldPos.setInteger("z", playerIn.getPosition().getZ());
-				playerMP.mcServer.getConfigurationManager().transferPlayerToDimension(playerMP, CapsuleDimension.dimensionId, new CTPTeleporter((WorldServer)worldIn,-1, 1, -1));
+				playerMP.mcServer.getConfigurationManager().transferPlayerToDimension(playerMP, CapsuleDimensionRegistrer.dimensionId, new CTPTeleporter((WorldServer)worldIn,-1, 1, -1));
 			} else {
 				NBTTagCompound overworldPos = itemStackIn.getSubCompound("overworldPos", true);
 				playerMP.mcServer.getConfigurationManager().transferPlayerToDimension(playerMP, 0, new CTPTeleporter((WorldServer)worldIn,overworldPos.getInteger("x"), overworldPos.getInteger("y"), overworldPos.getInteger("z")));

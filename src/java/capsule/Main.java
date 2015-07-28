@@ -1,6 +1,8 @@
 package capsule;
 
-import capsule.dimension.CapsuleDimension;
+import capsule.blocks.CapsuleBlocksRegistrer;
+import capsule.dimension.CapsuleDimensionRegistrer;
+import capsule.items.CapsuleItemsRegistrer;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -23,25 +25,28 @@ public class Main {
      
     @EventHandler
     public void preInit(FMLPreInitializationEvent e) {
-    	CapsuleItems.createItems(Main.MODID);
-        CapsuleConfig.config = new Configuration(e.getSuggestedConfigurationFile());
-        CapsuleConfig.config.load();
+    	CapsuleItemsRegistrer.createItems(Main.MODID);
+    	CapsuleBlocksRegistrer.createBlocks(Main.MODID);
+        Config.config = new Configuration(e.getSuggestedConfigurationFile());
+        Config.config.load();
     }
         
     @EventHandler
     public void init(FMLInitializationEvent e) {
-    	CapsuleItems.registerRenderers(Main.MODID);
+    	CapsuleItemsRegistrer.registerRenderers(Main.MODID);
+    	CapsuleBlocksRegistrer.registerRenderers(Main.MODID);
     }
         
     @EventHandler
     public void postInit(FMLPostInitializationEvent e) {
-    	CapsuleItems.registerRecipes();
+    	CapsuleItemsRegistrer.registerRecipes();
+    	CapsuleBlocksRegistrer.registerRecipes();
     }
     
 	@EventHandler
 	private void serverAboutToStart( FMLServerAboutToStartEvent evt )
 	{
-		CapsuleDimension.registerDimension();
+		CapsuleDimensionRegistrer.registerDimension();
 	}
     
 }

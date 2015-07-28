@@ -5,13 +5,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.World;
 
-public class RepairRecipe implements IRecipe
+public class RepairCapsuleRecipe implements IRecipe
 {
     /** Is the ItemStack that you repair. */
     private final ItemStack input;
 	private final int targetMetadata;
 
-    public RepairRecipe(ItemStack input, int targetMetadata)
+    public RepairCapsuleRecipe(ItemStack input, int targetMetadata)
     {
         this.input = input;
 		this.targetMetadata = targetMetadata;

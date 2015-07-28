@@ -72,7 +72,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		this.markDirty(); // ask the server to save the data on next map save
 		
 		// create a bedrock barrier around
-		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
+		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 		BlockPos nextPosEnd = nextPos.add(sideLength+1, sideLength+1, sideLength+1);
 		@SuppressWarnings("unchecked")
 		Iterable<BlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);

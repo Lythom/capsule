@@ -3,7 +3,7 @@ package capsule.items;
 import java.util.List;
 
 import capsule.Helpers;
-import capsule.dimension.CapsuleDimension;
+import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
@@ -55,6 +55,7 @@ public class CapsuleItem extends Item {
 		this.setCreativeTab(CreativeTabs.tabMisc);
 		this.setMaxStackSize(1);
 		this.setMaxDamage(0);
+		this.setContainerItem(this); // Used to get the capsule back when crafted
 	}
 
 	@Override
@@ -119,7 +120,7 @@ public class CapsuleItem extends Item {
 			
 			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
 				// store again
-				WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
+				WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 				WorldServer playerWorld = (WorldServer)playerIn.worldObj;
 				
 				NBTTagCompound linkPos = itemStackIn.getTagCompound().getCompoundTag("linkPosition");
@@ -184,7 +185,7 @@ public class CapsuleItem extends Item {
 			int exdendLength = (size-1)/2;
 			
 			// get destination world available position
-			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimension.dimensionId);
+			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 			WorldServer playerWorld = (WorldServer)entityItem.worldObj;
 			
 			// DEPLOY
