@@ -298,12 +298,16 @@ public class CapsuleItem extends Item {
 	private void teleportBlock(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcPos, BlockPos destPos) {
 		TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
 		IBlockState srcState = sourceWorld.getBlockState(srcPos);
+		
 		// store the current block
 		destWorld.setBlockState(destPos, srcState);
 		if(srcTE != null){
 			// store the current block
-			destWorld.setTileEntity(destPos, srcTE);
+			srcTE.setWorldObj(destWorld);
+			srcTE.setPos(destPos);
+			destWorld.addTileEntity(srcTE);
 		}
+		
 		// remove from the world the stored block
 		sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState());
 		
