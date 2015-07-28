@@ -2,10 +2,10 @@ package capsule.items;
 
 import java.util.List;
 
-import dimension.CapsuleDimension;
-import dimension.CapsuleSavedData;
+import capsule.Helpers;
+import capsule.dimension.CapsuleDimension;
+import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -14,7 +14,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
@@ -137,7 +136,7 @@ public class CapsuleItem extends Item {
 				for (int x = 0; x < size; x++) {
 					for (int y = 0; y < size; y++) {
 						for (int z = 0; z < size; z++) {
-							teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
+							Helpers.teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
 						}
 					}
 				}
@@ -201,7 +200,7 @@ public class CapsuleItem extends Item {
 				for (int x = 0; x < size; x++) {
 					for (int y = 0; y < size; y++) {
 						for (int z = 0; z < size; z++) {
-							teleportBlock(capsuleWorld, playerWorld, source.add(x,y,z), dest.add(x,y,z));
+							Helpers.teleportBlock(capsuleWorld, playerWorld, source.add(x,y,z), dest.add(x,y,z));
 						}
 					}
 				}
@@ -230,7 +229,7 @@ public class CapsuleItem extends Item {
 				for (int x = 0; x < size; x++) {
 					for (int y = 0; y < size; y++) {
 						for (int z = 0; z < size; z++) {
-							teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
+							Helpers.teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
 						}
 					}
 				}
@@ -238,6 +237,7 @@ public class CapsuleItem extends Item {
 				// register the link in the capsule
 				capsule.setItemDamage(STATE_LINKED);
 				savePosition("linkPosition", capsule, dest);
+				
 				return true;
 			}
 		}
@@ -293,26 +293,6 @@ public class CapsuleItem extends Item {
 		pos.setInteger("y", dest.getY());
 		pos.setInteger("z", dest.getZ());
 		capsule.getTagCompound().setTag(key,pos);
-	}
-
-	private void teleportBlock(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcPos, BlockPos destPos) {
-		TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
-		IBlockState srcState = sourceWorld.getBlockState(srcPos);
-		
-		// store the current block
-		destWorld.setBlockState(destPos, srcState);
-		if(srcTE != null){
-			// store the current block
-			srcTE.setWorldObj(destWorld);
-			srcTE.setPos(destPos);
-			destWorld.addTileEntity(srcTE);
-		}
-		
-		// remove from the world the stored block
-		sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState());
-		
-		destWorld.markBlockForUpdate(destPos);
-		sourceWorld.markBlockForUpdate(srcPos);
 	}
 
 	private CapsuleSavedData getCapsulePlacer(WorldServer capsuleWorld) {

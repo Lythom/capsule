@@ -1,6 +1,6 @@
 package capsule;
 
-import dimension.CapsuleDimension;
+import capsule.dimension.CapsuleDimension;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
