@@ -2,8 +2,6 @@ package capsule.blocks;
 
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
-import capsule.items.recipes.DyeCapsuleRecipe;
-import capsule.items.recipes.RepairCapsuleRecipe;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
@@ -12,7 +10,6 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagInt;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class CapsuleBlocksRegistrer {
