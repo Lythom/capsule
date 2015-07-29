@@ -2,6 +2,7 @@ package capsule;
 
 import java.util.List;
 
+import capsule.items.CapsuleItem;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -59,6 +60,53 @@ public class Helpers {
         }
         
 		return closest;
+	}
+	
+	
+	public static BlockPos findClosestBlock(EntityItem entityItem, List<Block> excludedBlocks) {
+		if(entityItem.getEntityWorld() == null) return null;
+		
+		double i = entityItem.posX;
+		double j = entityItem.posY;
+		double k = entityItem.posZ;
+
+        @SuppressWarnings("unchecked")
+		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i - 1, j - 1, k - 1), new BlockPos(i + 1, j + 1, k + 1));
+        BlockPos closest = null;
+        double closestDistance = 1000;
+        for( BlockPos pos : blockPoss) {
+        	Block block = entityItem.worldObj.getBlockState(pos).getBlock();
+        	double distance = pos.distanceSqToCenter(i, j, k);
+        	if (!excludedBlocks.contains(block) &&  distance < closestDistance) {
+        		closest = pos;
+            	closestDistance = distance;
+            }
+        }
+        
+		return closest;
+	}
+	
+
+	public static BlockPos findSpecificBlock(EntityItem entityItem, int maxRange, Class searchedBlock) {
+		if(entityItem.getEntityWorld() == null || searchedBlock == null) return null;
+		
+		double i = entityItem.posX;
+		double j = entityItem.posY;
+		double k = entityItem.posZ;
+		
+		for(int range = 1; range < maxRange; range ++){
+			@SuppressWarnings("unchecked")
+			Iterable<BlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range), new BlockPos(i + range, j + range, k + range));
+			for( BlockPos pos : blockPoss) {
+	        	Block block = entityItem.worldObj.getBlockState(pos).getBlock();
+	        	if(block.getClass().equals(searchedBlock)){
+	        		return pos.add(0,0,0); // return a copy
+	        	}
+	        }
+		}
+		
+		
+		return null;
 	}
 	
 	
@@ -135,4 +183,5 @@ public class Helpers {
 
         nbttagcompound1.setInteger("color", color);
     }
+
 }
