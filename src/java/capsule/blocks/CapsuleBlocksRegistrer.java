@@ -10,6 +10,7 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class CapsuleBlocksRegistrer {
@@ -18,13 +19,14 @@ public class CapsuleBlocksRegistrer {
 	
 	public static void createBlocks(String modid) {
 		GameRegistry.registerBlock(blockCapsuleReference = new BlockCapsuleMarker("capsulemarker", Material.ground), "capsulemarker");
-		
+		GameRegistry.registerTileEntity(TileEntityCapture.class, "capsulemarker_te");
     }
 	
 	public static void registerRenderers(String modid) {
 		ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
-		
 		mesher.register(Item.getItemFromBlock(blockCapsuleReference), 0, new ModelResourceLocation(modid+":capsulemarker", "inventory"));
+		
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCapture.class, new CaptureTESR());
 	}
 	
 	public static void registerRecipes() {

@@ -1,5 +1,21 @@
 {
+	"forge_marker": 1,
+	"defaults": {
+        "textures": {
+            "side": "blocks/cobblestone",
+            "end" : "capsule:blocks/capsulemarker"
+        },
+        "model": "cube_column"
+    },
     "variants": {
-        "normal": { "model": "capsule:capsulemarker" }
+        "projecting": {
+         	"true": {  
+         		"textures": {
+         			"end" : "capsule:blocks/capsulemarker_activated"
+         		},
+         		"submodel": "wall_n"
+         	},
+        	"false": {  }
+        }
     }
 }
