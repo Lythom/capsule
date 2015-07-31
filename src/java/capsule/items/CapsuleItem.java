@@ -1,12 +1,15 @@
 package capsule.items;
 
+import java.util.Iterator;
 import java.util.List;
 
 import capsule.Helpers;
 import capsule.blocks.BlockCapsuleMarker;
+import capsule.blocks.TileEntityCapture;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -56,22 +59,63 @@ public class CapsuleItem extends Item {
 		this.setCreativeTab(CreativeTabs.tabMisc);
 		this.setMaxStackSize(1);
 		this.setMaxDamage(0);
-		//this.setContainerItem(this); // Used to get the capsule back when crafted
 	}
 
 	@Override
-	public String getUnlocalizedName(ItemStack stack) {
+	public String getItemStackDisplayName(ItemStack stack) {
+		String name = StatCollector.translateToLocal("item.capsule.name");
+		
+		String state = "";
 		switch (stack.getItemDamage()) {
-		case CapsuleItem.STATE_ACTIVATED:
-			return super.getUnlocalizedName() + ".activated";
-		case CapsuleItem.STATE_LINKED:
-			return super.getUnlocalizedName() + ".linked";
-		case CapsuleItem.STATE_BROKEN:
-			return super.getUnlocalizedName() + ".broken";
-		default:
-			return super.getUnlocalizedName() + ".empty";
+			case CapsuleItem.STATE_ACTIVATED:
+				state = StatCollector.translateToLocal("item.capsule.state_activated");
+				break;
+			case CapsuleItem.STATE_LINKED:
+				state = StatCollector.translateToLocal("item.capsule.state_linked");
+				break;
+			case CapsuleItem.STATE_BROKEN:
+				state = StatCollector.translateToLocal("item.capsule.state_broken");
+				break;
+			case CapsuleItem.STATE_DEPLOYED:
+				state = StatCollector.translateToLocal("item.capsule.state_deployed");
+				break;
 		}
+		
+		if(state.length() > 0){
+			state = state + " ";
+		}
+		String content = this.getLabel(stack);
+		if(content.length() > 0){
+			content = content + " ";
+		}
+
+		return state + content + name;
 	}
+	
+	public String getLabel(ItemStack stack){
+		
+		if(stack == null) return "";
+		if(!this.isLinked(stack)){
+			return StatCollector.translateToLocal("item.capsule.content_empty");
+		}
+		else if(stack.hasTagCompound() && stack.getTagCompound().hasKey("Label")){
+			return stack.getTagCompound().getString("Label");
+		}
+		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
+	}
+	
+	private boolean isLinked(ItemStack stack) {
+		return stack.hasTagCompound() && stack.getTagCompound().hasKey("linkPosition");
+	}
+
+	public void setLabel(ItemStack stack, String label) {
+		if(stack.hasTagCompound()){
+			stack.setTagCompound(new NBTTagCompound());
+		}
+		stack.getTagCompound().setString("Label", label);
+	}
+	
+	
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -107,7 +151,7 @@ public class CapsuleItem extends Item {
 				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 			}
 	
-			// an empty capsule is activated on right click
+			// an empty or a linked capsule is activated on right click
 			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
 				itemStackIn.setItemDamage(STATE_ACTIVATED);
 	
@@ -134,15 +178,14 @@ public class CapsuleItem extends Item {
 		int tickDuration = 60; // 3 sec at 20 ticks/sec;
 		if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
 			
-			if(stack.getTagCompound().hasKey("linkPosition")){
+			if(this.isLinked(stack)){
 				stack.setItemDamage(STATE_LINKED);
 			} else {
 				stack.setItemDamage(STATE_EMPTY);
 			}
-			
 		}
 	}
-	
+
 	@Override
 	public boolean onEntityItemUpdate(EntityItem entityItem) {
 		super.onEntityItemUpdate(entityItem);
@@ -199,14 +242,14 @@ public class CapsuleItem extends Item {
 		// specify target to capture
 		BlockPos marker = Helpers.findSpecificBlock(entityItem, size, BlockCapsuleMarker.class);
 		if(marker != null){
-			BlockPos source = marker.add(-exdendLength, size, -exdendLength);
+			BlockPos source = marker.add(-exdendLength, 1, -exdendLength);
 			
 			// get free room to store
 			BlockPos dest = capsulePlacer.reserveNextAvailablePositionForSize(size);
 			
 			// do the transportation
-			for (int x = 0; x < size; x++) {
-				for (int y = 0; y < size; y++) {
+			for (int y = size-1; y > 0; y--) {
+				for (int x = 0; x < size; x++) {
 					for (int z = 0; z < size; z++) {
 						Helpers.teleportBlock(playerWorld, capsuleWorld, source.add(x,y,z), dest.add(x,y,z));
 					}
@@ -238,8 +281,8 @@ public class CapsuleItem extends Item {
 		BlockPos source = new BlockPos(linkPos.getInteger("x"),linkPos.getInteger("y"),linkPos.getInteger("z"));
 		
 		// do the transportation
-		for (int x = 0; x < size; x++) {
-			for (int y = 0; y < size; y++) {
+		for (int y = size-1; y > 0; y--) {
+			for (int x = 0; x < size; x++) {
 				for (int z = 0; z < size; z++) {
 					Helpers.teleportBlock(capsuleWorld, playerWorld, source.add(x,y,z), dest.add(x,y,z));
 				}

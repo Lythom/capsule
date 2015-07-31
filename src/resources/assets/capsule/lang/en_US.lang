@@ -1,6 +1,9 @@
-item.capsule.empty.name=Empty capsule
-item.capsule.activated.name=Empty capsule (activated)
-item.capsule.linked.name=Capsule (linked)
-item.capsule.broken.name=Empty capsule (broken)
+item.capsule.name=capsule
+item.capsule.state_activated=activated
+item.capsule.state_linked=linked
+item.capsule.state_broken=broken
+item.capsule.state_deployed=deployed
+item.capsule.content_empty=empty
+item.capsule.content_unlabeled=unlabeled
 capsule.tooltip.crafttorepair=Place in a crafting grid to repair
 capsule.tooltip.size=Size
