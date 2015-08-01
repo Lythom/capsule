@@ -70,7 +70,7 @@ public class BlockCapsuleMarker extends BlockContainer {
 
 	@Override
 	public boolean isOpaqueCube() {
-		return true;
+		return false;
 	}
 
 	@Override
