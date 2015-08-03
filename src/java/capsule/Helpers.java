@@ -2,7 +2,6 @@ package capsule;
 
 import java.util.List;
 
-import capsule.items.CapsuleItem;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -14,6 +13,56 @@ import net.minecraft.util.BlockPos;
 import net.minecraft.world.WorldServer;
 
 public class Helpers {
+	
+	public static void swapRegions( WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size)
+	{
+		
+		// 1st copy to dest world
+		for (int y = size - 1; y >= 0; y--) {
+			for (int x = 0; x < size; x++) {
+				for (int z = 0; z < size; z++) {
+					
+					BlockPos srcPos = srcOriginPos.add(x,y,z);
+					BlockPos destPos = destOriginPos.add(x,y,z);
+					
+					TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
+					IBlockState srcState = sourceWorld.getBlockState(srcPos);
+					
+					// store the current block
+					destWorld.setBlockState(destPos, srcState, 4);
+					TileEntity destTE = destWorld.getTileEntity(destPos);
+					
+					if(srcTE != null && destTE != null){
+						NBTTagCompound nbt = new NBTTagCompound();
+						srcTE.setPos(destPos);
+						srcTE.setWorldObj(destWorld);
+						srcTE.writeToNBT(nbt);
+						destTE.readFromNBT(nbt);
+						
+						// reset
+						sourceWorld.removeTileEntity(srcPos);
+					}
+					sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 4);
+				}
+			}
+		}
+		
+		for (int y = size - 1; y >= 0; y--) {
+			for (int x = 0; x < size; x++) {
+				for (int z = 0; z < size; z++) {
+					
+					BlockPos srcPos = srcOriginPos.add(x,y,z);
+					BlockPos destPos = destOriginPos.add(x,y,z);
+					
+					sourceWorld.markBlockForUpdate(srcPos);
+					destWorld.markBlockForUpdate(destPos);
+					
+				}
+			}
+		}
+
+
+	}
 
 	public static void teleportBlock(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcPos, BlockPos destPos) {
 		TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
@@ -35,8 +84,8 @@ public class Helpers {
 		sourceWorld.removeTileEntity(srcPos);
 		sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState());
 		
-		destWorld.markBlockForUpdate(destPos);
-		sourceWorld.markBlockForUpdate(srcPos);
+		//destWorld.markBlockForUpdate(destPos);
+		//sourceWorld.markBlockForUpdate(srcPos);
 	}
 	
 	@SuppressWarnings({ "unchecked" })

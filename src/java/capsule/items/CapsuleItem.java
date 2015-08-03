@@ -1,15 +1,12 @@
 package capsule.items;
 
-import java.util.Iterator;
 import java.util.List;
 
 import capsule.Helpers;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.blocks.TileEntityCapture;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -39,8 +36,8 @@ public class CapsuleItem extends Item {
 	public static List<Block> excludedBlocks = Arrays.asList(new Block[] { Blocks.air, Blocks.bedrock });
 
 	@SuppressWarnings("unchecked")
-	public static List<Block> overridableBlocks = Arrays.asList(new Block[] { Blocks.air, Blocks.water, Blocks.leaves,
-			Blocks.leaves2, Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower });
+	public static List<Block> overridableBlocks = Arrays
+			.asList(new Block[] { Blocks.air, Blocks.water, Blocks.leaves, Blocks.leaves2, Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower });
 
 	public CapsuleItem(String unlocalizedName) {
 		super();
@@ -110,8 +107,7 @@ public class CapsuleItem extends Item {
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		if (stack.getTagCompound() != null && stack.getTagCompound().hasKey("size")) {
 			String size = String.valueOf(stack.getTagCompound().getInteger("size"));
-			tooltip.add(
-					StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
+			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
 		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_BROKEN) {
 			tooltip.add(EnumChatFormatting.ITALIC.toString() + EnumChatFormatting.RED.toString()
@@ -165,8 +161,7 @@ public class CapsuleItem extends Item {
 		// disactivate capsule after some time
 		NBTTagCompound timer = stack.getSubCompound("activetimer", true);
 		int tickDuration = 60; // 3 sec at 20 ticks/sec;
-		if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime")
-				&& entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
+		if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
 
 			if (this.isLinked(stack)) {
 				stack.setItemDamage(STATE_LINKED);
@@ -183,8 +178,7 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
-		if (!entityItem.worldObj.isRemote && entityItem.isCollided && capsule.getItemDamage() == STATE_ACTIVATED
-				&& entityItem.getEntityWorld() != null) {
+		if (!entityItem.worldObj.isRemote && entityItem.isCollided && capsule.getItemDamage() == STATE_ACTIVATED && entityItem.getEntityWorld() != null) {
 
 			// total side size
 			int size = 1;
@@ -226,8 +220,8 @@ public class CapsuleItem extends Item {
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private void captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength,
-			WorldServer capsuleWorld, WorldServer playerWorld) {
+	private void captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld,
+			WorldServer playerWorld) {
 		// get available space data
 		CapsuleSavedData capsulePlacer = getCapsulePlacer(capsuleWorld);
 
@@ -240,13 +234,7 @@ public class CapsuleItem extends Item {
 			BlockPos dest = capsulePlacer.reserveNextAvailablePositionForSize(size);
 
 			// do the transportation
-			for (int y = size - 1; y >= 0; y--) {
-				for (int x = 0; x < size; x++) {
-					for (int z = 0; z < size; z++) {
-						Helpers.teleportBlock(playerWorld, capsuleWorld, source.add(x, y, z), dest.add(x, y, z));
-					}
-				}
-			}
+			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size);
 
 			// register the link in the capsule
 			capsule.setItemDamage(STATE_LINKED);
@@ -266,21 +254,14 @@ public class CapsuleItem extends Item {
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private void deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength,
-			WorldServer capsuleWorld, WorldServer playerWorld) {
+	private void deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
 		// specify target to capture
 		BlockPos dest = Helpers.findBottomBlock(entityItem, excludedBlocks).add(-exdendLength, 1, -exdendLength);
 		NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
 		BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
 
 		// do the transportation
-		for (int y = size - 1; y >= 0; y--) {
-			for (int x = 0; x < size; x++) {
-				for (int z = 0; z < size; z++) {
-					Helpers.teleportBlock(capsuleWorld, playerWorld, source.add(x, y, z), dest.add(x, y, z));
-				}
-			}
-		}
+		Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size);
 
 		// register the link in the capsule
 		capsule.setItemDamage(STATE_DEPLOYED);
@@ -303,13 +284,7 @@ public class CapsuleItem extends Item {
 		}
 
 		// do the transportation
-		for (int y = size - 1; y >= 0; y--) {
-			for (int x = 0; x < size; x++) {
-				for (int z = 0; z < size; z++) {
-					Helpers.teleportBlock(playerWorld, capsuleWorld, source.add(x, y, z), dest.add(x, y, z));
-				}
-			}
-		}
+		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size);
 
 		itemStackIn.setItemDamage(STATE_LINKED);
 		itemStackIn.getTagCompound().removeTag("spawnPosition");
@@ -366,8 +341,7 @@ public class CapsuleItem extends Item {
 	}
 
 	private CapsuleSavedData getCapsulePlacer(WorldServer capsuleWorld) {
-		CapsuleSavedData capsulePlacer = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class,
-				"capsulePositions");
+		CapsuleSavedData capsulePlacer = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsulePositions");
 		if (capsulePlacer == null) {
 			capsulePlacer = new CapsuleSavedData("capsule");
 			capsuleWorld.setItemData("capsulePositions", capsulePlacer);
