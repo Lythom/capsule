@@ -6,7 +6,9 @@ import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.network.MessageHandlerOnServer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -28,7 +30,7 @@ public class CommonProxy {
 		Enchantments.initEnchantments();
 		CapsuleItemsRegistrer.createItems(Main.MODID);
 		CapsuleBlocksRegistrer.createBlocks(Main.MODID);
-		
+
 		// network stuff
 		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
 	    simpleNetworkWrapper.registerMessage(MessageHandlerOnServer.class, LabelEditedMessageToServer.class,
@@ -36,7 +38,7 @@ public class CommonProxy {
 	}
 
 	public void init(FMLInitializationEvent event) {
-
+		FMLCommonHandler.instance().bus().register(Enchantments.recallEnchant);
 	}
 
 	public void postInit(FMLPostInitializationEvent event) {

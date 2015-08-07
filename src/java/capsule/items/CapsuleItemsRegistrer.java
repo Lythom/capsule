@@ -35,17 +35,17 @@ public class CapsuleItemsRegistrer {
 		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
 		ironCapsule.setTagInfo("size", new NBTTagInt(3));
-		ironCapsule.addEnchantment(Enchantments.comebackEnchant, 1);
+		ironCapsule.addEnchantment(Enchantments.recallEnchant, 1);
 		
 		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
 		goldCapsule.setTagInfo("size", new NBTTagInt(5));
-		goldCapsule.addEnchantment(Enchantments.comebackEnchant, 1);
+		goldCapsule.addEnchantment(Enchantments.recallEnchant, 1);
 		
 		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
 		diamondCapsule.setTagInfo("size", new NBTTagInt(7));
-		diamondCapsule.addEnchantment(Enchantments.comebackEnchant, 1);
+		diamondCapsule.addEnchantment(Enchantments.recallEnchant, 1);
 		
 		// base recipes
 		GameRegistry.addRecipe(ironCapsule, new Object[] {"   ", "#P#", " # ", '#', Items.iron_ingot, 'P', Items.ender_pearl});

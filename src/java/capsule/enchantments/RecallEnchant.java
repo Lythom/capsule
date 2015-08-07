@@ -1,10 +1,22 @@
 package capsule.enchantments;
 
+import java.util.List;
+
+import capsule.Helpers;
 import capsule.items.CapsuleItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
 public class RecallEnchant extends Enchantment {
 
@@ -23,6 +35,28 @@ public class RecallEnchant extends Enchantment {
 		return stack.getItem() instanceof CapsuleItem || this.type != null && super.canApplyAtEnchantingTable(stack);
 	}
 	
+	public void pickupItemBack(EntityItem entity, EntityPlayer player){
+		
+		entity.setNoPickupDelay();
+		entity.onCollideWithPlayer(player);
+
+	}
 	
+	@SubscribeEvent
+	public void onWorldTickEvent(WorldTickEvent wte){
+		
+		if(wte.side == Side.CLIENT || wte.phase != Phase.END) return;
+		
+		WorldServer world = (WorldServer)wte.world;
+		List<EntityItem> recallEntities = world.getEntities(EntityItem.class, Helpers.hasRecallEnchant);
+		for (EntityItem entity : recallEntities) {
+			if(entity.getThrower() != null && entity.isCollided){
+				// give the item a last tick
+				entity.onUpdate();
+				// then recall to inventory
+				this.pickupItemBack(entity, world.getPlayerEntityByName(entity.getThrower()));
+			}
+		}
+	}
 
 }

@@ -11,13 +11,11 @@ import capsule.gui.LabelGui;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.BlockPos;
@@ -114,7 +112,7 @@ public class CapsuleItem extends Item {
 	
 	@Override
 	public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
-		return Helpers.getStoredEnchantmentLevel(Enchantments.comebackEnchant.effectId, book) > 0;
+		return Helpers.getStoredEnchantmentLevel(Enchantments.recallEnchant.effectId, book) > 0;
 	}
 	
 	@Override
@@ -194,7 +192,7 @@ public class CapsuleItem extends Item {
 
 		if (!worldIn.isRemote) {
 
-			// disactivate capsule after some time
+			// disable capsule after some time
 			NBTTagCompound timer = stack.getSubCompound("activetimer", true);
 			int tickDuration = 60; // 3 sec at 20 ticks/sec;
 			if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime")

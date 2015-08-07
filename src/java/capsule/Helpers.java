@@ -2,8 +2,13 @@ package capsule;
 
 import java.util.List;
 
+import com.google.common.base.Predicate;
+
+import capsule.enchantments.Enchantments;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemEnchantedBook;
@@ -266,5 +271,17 @@ public class Helpers {
             }
         }
     }
+    
+    public static final Predicate hasRecallEnchant = new Predicate()
+    {
+        public boolean apply(Entity entityIn)
+        {
+            return entityIn instanceof EntityItem && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant.effectId, ((EntityItem)entityIn).getEntityItem()) > 0;
+        }
+        public boolean apply(Object obj)
+        {
+            return this.apply((Entity)obj);
+        }
+    };
 
 }

@@ -18,8 +18,6 @@ public class ClientProxy extends CommonProxy {
 		super.init(event);
 		CapsuleItemsRegistrer.registerRenderers(Main.MODID);
 		CapsuleBlocksRegistrer.registerRenderers(Main.MODID);
-		CapsulePreviewHandler previewHandler = new CapsulePreviewHandler();
-		FMLCommonHandler.instance().bus().register(previewHandler);
 		MinecraftForge.EVENT_BUS.register(new CapsulePreviewHandler());
 	}
 	

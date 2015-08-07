@@ -3,12 +3,14 @@ package capsule.enchantments;
 import capsule.Config;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Property;
 
 public class Enchantments {
 	
-	public static Enchantment comebackEnchant = null;
+	public static Enchantment recallEnchant = null;
 	
 	public static void initEnchantments(){
 		Property enchantId = Config.config.get("Compatibility", "recallEnchantId", 101);
@@ -20,16 +22,11 @@ public class Enchantments {
 		Property recallEnchantType = Config.config.get("Balancing", "recallEnchantType", "ALL");
 		recallEnchantType.comment = "Possible targets for the enchantment. By default : ALL.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.";
 		
-		Enchantments.comebackEnchant = new RecallEnchant(
+		Enchantments.recallEnchant = new RecallEnchant(
 			enchantId.getInt(), // id
 			new ResourceLocation("recall"), // name
 			enchantWeight.getInt(), // weight (chances to appear)
 			Enum.valueOf(EnumEnchantmentType.class, recallEnchantType.getString()) // possible targets
 		);
 	}
-
-	public Enchantments() {
-		
-	}
-
 }

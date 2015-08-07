@@ -7,3 +7,4 @@ item.capsule.content_empty=empty
 item.capsule.content_unlabeled=unlabeled
 capsule.tooltip.crafttorepair=Place in a crafting grid to repair
 capsule.tooltip.size=Size
+enchantment.recall=Recall
