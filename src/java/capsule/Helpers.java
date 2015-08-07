@@ -6,8 +6,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.WorldServer;
@@ -231,6 +233,38 @@ public class Helpers {
         }
 
         nbttagcompound1.setInteger("color", color);
+    }
+    
+    public static int getStoredEnchantmentLevel(int enchID, ItemStack stack)
+    {
+        if (stack == null || !(stack.getItem() instanceof ItemEnchantedBook))
+        {
+            return 0;
+        }
+        else
+        {
+            NBTTagList nbttaglist = ((ItemEnchantedBook)stack.getItem()).getEnchantments(stack);
+
+            if (nbttaglist == null)
+            {
+                return 0;
+            }
+            else
+            {
+                for (int j = 0; j < nbttaglist.tagCount(); ++j)
+                {
+                    short short1 = nbttaglist.getCompoundTagAt(j).getShort("id");
+                    short short2 = nbttaglist.getCompoundTagAt(j).getShort("lvl");
+
+                    if (short1 == enchID)
+                    {
+                        return short2;
+                    }
+                }
+
+                return 0;
+            }
+        }
     }
 
 }

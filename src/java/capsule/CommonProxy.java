@@ -2,6 +2,7 @@ package capsule;
 
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.dimension.CapsuleDimensionRegistrer;
+import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.network.MessageHandlerOnServer;
@@ -21,10 +22,12 @@ public class CommonProxy {
 
 
 	public void preInit(FMLPreInitializationEvent event) {
-		CapsuleItemsRegistrer.createItems(Main.MODID);
-		CapsuleBlocksRegistrer.createBlocks(Main.MODID);
 		Config.config = new Configuration(event.getSuggestedConfigurationFile());
 		Config.config.load();
+		
+		Enchantments.initEnchantments();
+		CapsuleItemsRegistrer.createItems(Main.MODID);
+		CapsuleBlocksRegistrer.createBlocks(Main.MODID);
 		
 		// network stuff
 		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");

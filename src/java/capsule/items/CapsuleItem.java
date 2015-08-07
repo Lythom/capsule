@@ -6,15 +6,18 @@ import capsule.Helpers;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
+import capsule.enchantments.Enchantments;
 import capsule.gui.LabelGui;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.BlockPos;
@@ -102,6 +105,26 @@ public class CapsuleItem extends Item {
 			stack.setTagCompound(new NBTTagCompound());
 		}
 		stack.getTagCompound().setString("label", label);
+	}
+	
+	@Override
+	public int getItemEnchantability() {
+		return 1;
+	}
+	
+	@Override
+	public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+		return Helpers.getStoredEnchantmentLevel(Enchantments.comebackEnchant.effectId, book) > 0;
+	}
+	
+	@Override
+	public int getItemEnchantability(ItemStack stack) {
+		return getItemEnchantability();
+	}
+	
+	@Override
+	public boolean hasEffect(ItemStack stack) {
+		return false;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
