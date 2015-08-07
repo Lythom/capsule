@@ -6,7 +6,9 @@ import capsule.Helpers;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
+import capsule.gui.LabelGui;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -85,8 +87,8 @@ public class CapsuleItem extends Item {
 			return "";
 		if (!this.isLinked(stack)) {
 			return StatCollector.translateToLocal("item.capsule.content_empty");
-		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("Label")) {
-			return stack.getTagCompound().getString("Label");
+		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label")) {
+			return stack.getTagCompound().getString("label");
 		}
 		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
 	}
@@ -96,10 +98,10 @@ public class CapsuleItem extends Item {
 	}
 
 	public void setLabel(ItemStack stack, String label) {
-		if (stack.hasTagCompound()) {
+		if (!stack.hasTagCompound()) {
 			stack.setTagCompound(new NBTTagCompound());
 		}
-		stack.getTagCompound().setString("Label", label);
+		stack.getTagCompound().setString("label", label);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -129,25 +131,34 @@ public class CapsuleItem extends Item {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
 
-		if (!worldIn.isRemote) {
-
-			// an activated capsule is thrown farther on right click
-			if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
-				throwItem(itemStackIn, playerIn);
-				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+		if (playerIn.isSneaking()) {
+			if (!worldIn.isRemote) {
+				LabelGui screen = new LabelGui(playerIn);
+				Minecraft.getMinecraft().displayGuiScreen(screen);
 			}
 
-			// an empty or a linked capsule is activated on right click
-			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
-				itemStackIn.setItemDamage(STATE_ACTIVATED);
+		} else {
 
-				NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
-				timer.setInteger("starttime", playerIn.ticksExisted);
-			}
+			if (!worldIn.isRemote) {
 
-			// an opened capsule revoke deployed content on right click
-			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
-				resentToCapsule(itemStackIn, playerIn);
+				// an activated capsule is thrown farther on right click
+				if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
+					throwItem(itemStackIn, playerIn);
+					playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+				}
+
+				// an empty or a linked capsule is activated on right click
+				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
+					itemStackIn.setItemDamage(STATE_ACTIVATED);
+
+					NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
+					timer.setInteger("starttime", playerIn.ticksExisted);
+				}
+
+				// an opened capsule revoke deployed content on right click
+				else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
+					resentToCapsule(itemStackIn, playerIn);
+				}
 			}
 		}
 
@@ -158,15 +169,19 @@ public class CapsuleItem extends Item {
 	public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
 		super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected);
 
-		// disactivate capsule after some time
-		NBTTagCompound timer = stack.getSubCompound("activetimer", true);
-		int tickDuration = 60; // 3 sec at 20 ticks/sec;
-		if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
+		if (!worldIn.isRemote) {
 
-			if (this.isLinked(stack)) {
-				stack.setItemDamage(STATE_LINKED);
-			} else {
-				stack.setItemDamage(STATE_EMPTY);
+			// disactivate capsule after some time
+			NBTTagCompound timer = stack.getSubCompound("activetimer", true);
+			int tickDuration = 60; // 3 sec at 20 ticks/sec;
+			if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime")
+					&& entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
+
+				if (this.isLinked(stack)) {
+					stack.setItemDamage(STATE_LINKED);
+				} else {
+					stack.setItemDamage(STATE_EMPTY);
+				}
 			}
 		}
 	}
