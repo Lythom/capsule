@@ -104,22 +104,22 @@ public class CapsuleItem extends Item {
 		}
 		stack.getTagCompound().setString("label", label);
 	}
-	
+
 	@Override
 	public int getItemEnchantability() {
 		return 1;
 	}
-	
+
 	@Override
 	public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
 		return Helpers.getStoredEnchantmentLevel(Enchantments.recallEnchant.effectId, book) > 0;
 	}
-	
+
 	@Override
 	public int getItemEnchantability(ItemStack stack) {
 		return getItemEnchantability();
 	}
-	
+
 	@Override
 	public boolean hasEffect(ItemStack stack) {
 		return false;
@@ -292,16 +292,19 @@ public class CapsuleItem extends Item {
 	 */
 	private void deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
 		// specify target to capture
-		BlockPos dest = Helpers.findBottomBlock(entityItem, excludedBlocks).add(-exdendLength, 1, -exdendLength);
-		NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
-		BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
+		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, excludedBlocks);
+		if (bottomBlockPos != null) {
+			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
+			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
+			BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
 
-		// do the transportation
-		Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size);
+			// do the transportation
+			Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size);
 
-		// register the link in the capsule
-		capsule.setItemDamage(STATE_DEPLOYED);
-		savePosition("spawnPosition", capsule, dest);
+			// register the link in the capsule
+			capsule.setItemDamage(STATE_DEPLOYED);
+			savePosition("spawnPosition", capsule, dest);
+		}
 	}
 
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {

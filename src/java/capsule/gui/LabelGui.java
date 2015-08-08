@@ -133,7 +133,9 @@ public class LabelGui extends GuiScreen {
 
 		// drawTexturedModalRect(guix, guiy, 0, 0, guiWidth, guiHeight);
 
-		this.textInput.drawTextBox();
+		if(this.textInput != null){
+			this.textInput.drawTextBox();
+		}
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 
