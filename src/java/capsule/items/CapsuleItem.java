@@ -107,7 +107,7 @@ public class CapsuleItem extends Item {
 
 	@Override
 	public int getItemEnchantability() {
-		return 1;
+		return 5;
 	}
 
 	@Override
@@ -118,6 +118,11 @@ public class CapsuleItem extends Item {
 	@Override
 	public int getItemEnchantability(ItemStack stack) {
 		return getItemEnchantability();
+	}
+	
+	@Override
+	public boolean isItemTool(ItemStack stack) {
+		return true;
 	}
 
 	@Override
