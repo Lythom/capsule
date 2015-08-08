@@ -34,6 +34,9 @@ public class CapsuleItem extends Item {
 	public final static int STATE_LINKED = 2;
 	public final static int STATE_DEPLOYED = 3;
 	public final static int STATE_BROKEN = 4;
+	public final static int STATE_ONE_USE = 5;
+	
+	private static final int CAPSULE_MAX_CAPTURE_SIZE = 77;
 
 	@SuppressWarnings("unchecked")
 	public static List<Block> excludedBlocks = Arrays.asList(new Block[] { Blocks.air, Blocks.bedrock });
@@ -68,6 +71,9 @@ public class CapsuleItem extends Item {
 			break;
 		case CapsuleItem.STATE_DEPLOYED:
 			state = StatCollector.translateToLocal("item.capsule.state_deployed");
+			break;
+		case CapsuleItem.STATE_ONE_USE:
+			state = StatCollector.translateToLocal("item.capsule.state_one_use");
 			break;
 		}
 
@@ -133,10 +139,8 @@ public class CapsuleItem extends Item {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
-		if (stack.getTagCompound() != null && stack.getTagCompound().hasKey("size")) {
-			String size = String.valueOf(stack.getTagCompound().getInteger("size"));
-			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
-		}
+		int size = getSize(stack);
+		tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
 		if (stack.getItemDamage() == CapsuleItem.STATE_BROKEN) {
 			tooltip.add(EnumChatFormatting.ITALIC.toString() + EnumChatFormatting.RED.toString()
 					+ StatCollector.translateToLocal("capsule.tooltip.crafttorepair").trim());
@@ -221,11 +225,7 @@ public class CapsuleItem extends Item {
 		// Deploying capsule content on collision with a block
 		if (!entityItem.worldObj.isRemote && entityItem.isCollided && capsule.getItemDamage() == STATE_ACTIVATED && entityItem.getEntityWorld() != null) {
 
-			// total side size
-			int size = 1;
-			if (capsule.getTagCompound().hasKey("size")) {
-				size = capsule.getTagCompound().getInteger("size");
-			}
+			int size = getSize(capsule);
 			int exdendLength = (size - 1) / 2;
 
 			// get destination world available position
@@ -322,16 +322,32 @@ public class CapsuleItem extends Item {
 		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
 		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
 
-		int size = 1;
-		if (itemStackIn.getTagCompound().hasKey("size")) {
-			size = itemStackIn.getTagCompound().getInteger("size");
-		}
+		int size = getSize(itemStackIn);
 
 		// do the transportation
 		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size);
 
 		itemStackIn.setItemDamage(STATE_LINKED);
 		itemStackIn.getTagCompound().removeTag("spawnPosition");
+	}
+
+	private int getSize(ItemStack itemStackIn) {
+		int size = 1;
+		if (itemStackIn.getTagCompound().hasKey("size")) {
+			size = itemStackIn.getTagCompound().getInteger("size");
+		}
+		if(size > CAPSULE_MAX_CAPTURE_SIZE){
+			size = CAPSULE_MAX_CAPTURE_SIZE;
+			itemStackIn.getTagCompound().setInteger("size", size);
+			System.err.println("Capsule sizes are capped to "+CAPSULE_MAX_CAPTURE_SIZE+". Resized to : "+size);
+		}
+		else if(size%2 == 0){
+			size--;
+			itemStackIn.getTagCompound().setInteger("size", size);
+			System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : "+size);
+		}
+		
+		return size;
 	}
 
 	@Override
