@@ -2,7 +2,6 @@ package capsule.enchantments;
 
 import java.util.List;
 
-import capsule.Helpers;
 import capsule.items.CapsuleItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
@@ -67,7 +66,7 @@ public class RecallEnchant extends Enchantment {
 			return;
 
 		WorldServer world = (WorldServer) wte.world;
-		List<EntityItem> recallEntities = world.getEntities(EntityItem.class, Helpers.hasRecallEnchant);
+		List<EntityItem> recallEntities = world.getEntities(EntityItem.class, Enchantments.hasRecallEnchant);
 		for (EntityItem entity : recallEntities) {
 			if (entity.getThrower() != null && (entity.isCollided || entity.isInLava() || entity.isInWater())) {
 				// give the item a last tick

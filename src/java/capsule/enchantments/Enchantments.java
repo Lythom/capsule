@@ -1,8 +1,13 @@
 package capsule.enchantments;
 
+import com.google.common.base.Predicate;
+
 import capsule.Config;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Property;
 
@@ -27,4 +32,15 @@ public class Enchantments {
 			Enum.valueOf(EnumEnchantmentType.class, recallEnchantType.getString()) // possible targets
 		);
 	}
+	
+	public static final Predicate hasRecallEnchant = new Predicate() {
+		public boolean apply(Entity entityIn) {
+			return entityIn instanceof EntityItem
+					&& EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant.effectId, ((EntityItem) entityIn).getEntityItem()) > 0;
+		}
+
+		public boolean apply(Object obj) {
+			return this.apply((Entity) obj);
+		}
+	};
 }
