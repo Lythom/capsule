@@ -1,6 +1,5 @@
 package capsule.items;
 
-import capsule.Helpers;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -9,8 +8,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.Teleporter;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -27,17 +24,6 @@ public class CreativeTP extends Item {
 	@Override
 	public String getUnlocalizedName(ItemStack stack) {
 		return super.getUnlocalizedName() + ".creative_tp";
-	}
-	
-	@Override
-	public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side,
-			float hitX, float hitY, float hitZ) {
-		
-		if(!worldIn.isRemote){
-			Helpers.teleportBlock((WorldServer)worldIn, (WorldServer)worldIn, pos, pos.add(0, 1, 0));
-		}
-		
-		return true;
 	}
 
 	@Override
@@ -63,17 +49,6 @@ public class CreativeTP extends Item {
 		return itemStackIn;
 	}
 
-	@Override
-	public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-		super.onUpdate(stack, worldIn, entityIn, itemSlot, isSelected);
-
-		NBTTagCompound timer = stack.getSubCompound("activetimer", true);
-		int tickDuration = 60; // 3 sec at 20 ticks/sec;
-		if (stack.getItemDamage() == 1 && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
-			stack.setItemDamage(0);
-		}
-	}
-	
 	static class CTPTeleporter extends Teleporter
 	{
 
