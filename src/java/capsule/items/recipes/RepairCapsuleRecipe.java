@@ -1,5 +1,6 @@
 package capsule.items.recipes;
 
+import capsule.items.CapsuleItem;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -70,7 +71,8 @@ public class RepairCapsuleRecipe implements IRecipe
                 if (itemstack != null)
                 {
                 	ItemStack copy = itemstack.copy();
-                	copy.setItemDamage(this.targetMetadata);
+                	CapsuleItem item = (CapsuleItem)copy.getItem();
+                	item.setState(copy, this.targetMetadata);
                     return copy;
                 }
             }
