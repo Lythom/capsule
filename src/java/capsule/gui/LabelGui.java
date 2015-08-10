@@ -126,7 +126,9 @@ public class LabelGui extends GuiScreen {
 		// int guiy =(height - guiHeight) /2;
 
 		GL11.glColor4f(1, 1, 1, 1);
-		drawDefaultBackground();
+		if(this.mc != null){
+			drawDefaultBackground();
+		}
 
 		// mc.renderEngine.bindTexture(new ResourceLocation(Main.MODID,
 		// "textures/gui/label.png"));
