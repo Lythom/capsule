@@ -1,7 +1,7 @@
 package capsule.items;
 
 import capsule.items.recipes.DyeCapsuleRecipe;
-import capsule.items.recipes.RepairCapsuleRecipe;
+import capsule.items.recipes.RecoveryCapsuleRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -51,8 +51,8 @@ public class CapsuleItemsRegistrer {
 		GameRegistry.addRecipe(goldCapsule, new Object[] {"   ", "#P#", " # ", '#', Items.gold_ingot, 'P', Items.ender_pearl});
 		GameRegistry.addRecipe(diamondCapsule, new Object[] {"   ", "#P#", " # ", '#', Items.diamond, 'P', Items.ender_pearl});
 		
-		// repair recipe
-		GameRegistry.addRecipe(new RepairCapsuleRecipe(new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_BROKEN), CapsuleItem.STATE_EMPTY));
+		// recovery capsule recipe
+		GameRegistry.addRecipe(new RecoveryCapsuleRecipe(new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_LINKED), new ItemStack(Items.glass_bottle), CapsuleItem.STATE_ONE_USE));
 		
 		// dye recipe
 		GameRegistry.addRecipe(new DyeCapsuleRecipe());

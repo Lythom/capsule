@@ -4,17 +4,20 @@ import capsule.items.CapsuleItem;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
-public class RepairCapsuleRecipe implements IRecipe
+public class RecoveryCapsuleRecipe implements IRecipe
 {
     /** Is the ItemStack that you repair. */
-    private final ItemStack input;
+    private final ItemStack inputCapsule;
+    private final ItemStack inputMaterial;
 	private final int targetMetadata;
 
-    public RepairCapsuleRecipe(ItemStack input, int targetMetadata)
+    public RecoveryCapsuleRecipe(ItemStack inputCapsule, ItemStack inputMaterial, int targetMetadata)
     {
-        this.input = input;
+        this.inputCapsule = inputCapsule;
+        this.inputMaterial = inputMaterial;
 		this.targetMetadata = targetMetadata;
     }
 
@@ -31,6 +34,9 @@ public class RepairCapsuleRecipe implements IRecipe
         {
             ItemStack itemstack = p_179532_1_.getStackInSlot(i);
             aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
+            if(aitemstack[i] == null && itemstack != null && itemstack.getItem() instanceof CapsuleItem){
+            	aitemstack[i] = itemstack;
+            }
         }
 
         return aitemstack;
@@ -41,20 +47,27 @@ public class RepairCapsuleRecipe implements IRecipe
      */
     public boolean matches(InventoryCrafting p_77569_1_, World worldIn)
     {
+    	int sourceCapsule = 0;
+    	int material = 0;
         for (int i = 0; i < p_77569_1_.getHeight(); ++i)
         {
             for (int j = 0; j < p_77569_1_.getWidth(); ++j)
             {
                 ItemStack itemstack = p_77569_1_.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null && itemstack.getItem() == this.input.getItem() && (itemstack.getMetadata() == this.input.getMetadata()))
+                if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && (itemstack.getMetadata() == this.inputCapsule.getMetadata()))
                 {
-                    return true;
+                	sourceCapsule++;
+                }
+                
+                if (itemstack != null && itemstack.getItem() == this.inputMaterial.getItem() && (itemstack.getMetadata() == this.inputMaterial.getMetadata()))
+                {
+                	material++;
                 }
             }
         }
 
-        return false;
+        return sourceCapsule == 1 && material == 1;
     }
 
     /**
@@ -68,11 +81,15 @@ public class RepairCapsuleRecipe implements IRecipe
             {
                 ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null)
+                if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && itemstack.getMetadata() == this.inputCapsule.getMetadata())
                 {
                 	ItemStack copy = itemstack.copy();
                 	CapsuleItem item = (CapsuleItem)copy.getItem();
-                	item.setState(copy, this.targetMetadata);
+                	item.setState(copy, CapsuleItem.STATE_ONE_USE);
+                	if(!copy.hasTagCompound()){
+                		copy.setTagCompound(new NBTTagCompound());
+                	}
+                	copy.getTagCompound().setBoolean("oneUse", true);
                     return copy;
                 }
             }

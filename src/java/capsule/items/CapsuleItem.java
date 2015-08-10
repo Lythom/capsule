@@ -40,7 +40,6 @@ public class CapsuleItem extends Item {
 	public final static int STATE_ACTIVATED = 1;
 	public final static int STATE_LINKED = 2;
 	public final static int STATE_DEPLOYED = 3;
-	public final static int STATE_BROKEN = 4;
 	public final static int STATE_ONE_USE = 5;
 
 	private static final int CAPSULE_MAX_CAPTURE_SIZE = 69;
@@ -50,8 +49,8 @@ public class CapsuleItem extends Item {
 
 	@SuppressWarnings("unchecked")
 	public static List<IBlockState> overridableBlocks = Arrays.asList(new IBlockState[] { Blocks.air.getDefaultState(), Blocks.water.getDefaultState(),
-			Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(), Blocks.tallgrass.getDefaultState(), Blocks.red_flower.getDefaultState(),
-			Blocks.yellow_flower.getDefaultState(), Blocks.snow_layer.getDefaultState(), Blocks.grass.getDefaultState(), 
+			Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(), Blocks.tallgrass.getStateFromMeta(0),Blocks.tallgrass.getStateFromMeta(1), Blocks.tallgrass.getStateFromMeta(2), Blocks.red_flower.getDefaultState(),
+			Blocks.yellow_flower.getDefaultState(), Blocks.snow_layer.getDefaultState(),
 			Blocks.brown_mushroom.getDefaultState(), Blocks.red_mushroom.getDefaultState() });
 
 	public CapsuleItem(String unlocalizedName) {
@@ -74,9 +73,6 @@ public class CapsuleItem extends Item {
 			break;
 		case CapsuleItem.STATE_LINKED:
 			state = "";
-			break;
-		case CapsuleItem.STATE_BROKEN:
-			state = StatCollector.translateToLocal("item.capsule.state_broken");
 			break;
 		case CapsuleItem.STATE_DEPLOYED:
 			state = StatCollector.translateToLocal("item.capsule.state_deployed");
@@ -166,12 +162,6 @@ public class CapsuleItem extends Item {
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
 		tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
-		if (stack.getItemDamage() == CapsuleItem.STATE_BROKEN) {
-			tooltip.add(EnumChatFormatting.ITALIC.toString() + EnumChatFormatting.RED.toString()
-					+ StatCollector.translateToLocal("capsule.tooltip.noCaptureBase").trim());
-			tooltip.add(EnumChatFormatting.ITALIC.toString() + EnumChatFormatting.YELLOW.toString()
-					+ StatCollector.translateToLocal("capsule.tooltip.crafttorepair").trim());
-		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
 			StatCollector.translateToLocal("capsule.tooltip.one_use").trim();
 		}
@@ -211,15 +201,12 @@ public class CapsuleItem extends Item {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
 
-		if (playerIn.isSneaking()) {
-			if (!worldIn.isRemote) {
+		if (!worldIn.isRemote) {
+			if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
 				LabelGui screen = new LabelGui(playerIn);
 				Minecraft.getMinecraft().displayGuiScreen(screen);
-			}
 
-		} else {
-
-			if (!worldIn.isRemote) {
+			} else {
 
 				// an activated capsule is thrown farther on right click
 				if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
@@ -228,7 +215,8 @@ public class CapsuleItem extends Item {
 				}
 
 				// an empty or a linked capsule is activated on right click
-				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED) {
+				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
+						|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
 					this.setState(itemStackIn, STATE_ACTIVATED);
 
 					NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
@@ -275,7 +263,8 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
-		if (!entityItem.worldObj.isRemote && entityItem.isCollided && capsule.getItemDamage() == STATE_ACTIVATED && entityItem.getEntityWorld() != null) {
+		if (!entityItem.worldObj.isRemote && entityItem.isCollided && (capsule.getItemDamage() == STATE_ACTIVATED || capsule.getItemDamage() == STATE_ONE_USE)
+				&& entityItem.getEntityWorld() != null) {
 
 			int size = getSize(capsule);
 			int exdendLength = (size - 1) / 2;
@@ -289,6 +278,9 @@ public class CapsuleItem extends Item {
 			if (capsule.getTagCompound().hasKey("linkPosition")) {
 
 				deployCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
+				if (this.isOneUse(capsule)) {
+					entityItem.setDead();
+				}
 				return true;
 
 				// CAPTURE
@@ -377,11 +369,17 @@ public class CapsuleItem extends Item {
 	}
 
 	private void revertStateFromActivated(ItemStack capsule) {
-		if (this.isLinked(capsule)) {
+		if (this.isOneUse(capsule)) {
+			this.setState(capsule, STATE_ONE_USE);
+		} else if (this.isLinked(capsule)) {
 			this.setState(capsule, STATE_LINKED);
 		} else {
 			this.setState(capsule, STATE_EMPTY);
 		}
+	}
+
+	private boolean isOneUse(ItemStack stack) {
+		return stack.hasTagCompound() && stack.getTagCompound().getBoolean("oneUse");
 	}
 
 	/**
