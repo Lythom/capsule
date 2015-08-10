@@ -20,7 +20,7 @@ public class RecallEnchant extends Enchantment {
 	protected RecallEnchant(int enchID, ResourceLocation enchName, int enchWeight, EnumEnchantmentType enchType) {
 		super(enchID, enchName, enchWeight, enchType);
 		this.setName("recall");
-		
+
 		Enchantment.addToBookList(this);
 	}
 
@@ -33,18 +33,17 @@ public class RecallEnchant extends Enchantment {
 	public boolean canApplyAtEnchantingTable(ItemStack stack) {
 		return stack.getItem() instanceof CapsuleItem || this.type != null && super.canApplyAtEnchantingTable(stack);
 	}
-	
+
 	@Override
 	public int getMinEnchantability(int enchantmentLevel) {
 		return 1;
 	}
-	
+
 	@Override
-	public int getMaxEnchantability(int enchantmentLevel)
-    {
-        return this.getMinEnchantability(enchantmentLevel) + 40;
-    }
-	
+	public int getMaxEnchantability(int enchantmentLevel) {
+		return this.getMinEnchantability(enchantmentLevel) + 40;
+	}
+
 	@Override
 	public int getMaxLevel() {
 		return 1;
@@ -72,7 +71,9 @@ public class RecallEnchant extends Enchantment {
 				// give the item a last tick
 				entity.onUpdate();
 				// then recall to inventory
-				this.pickupItemBack(entity, world.getPlayerEntityByName(entity.getThrower()));
+				if (!entity.isDead) {
+					this.pickupItemBack(entity, world.getPlayerEntityByName(entity.getThrower()));
+				}
 			}
 		}
 	}
