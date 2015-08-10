@@ -1,6 +1,9 @@
 package capsule.items;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import capsule.Helpers;
 import capsule.blocks.BlockCapsuleMarker;
@@ -8,6 +11,7 @@ import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import capsule.enchantments.Enchantments;
 import capsule.gui.LabelGui;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
@@ -19,6 +23,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -44,9 +49,10 @@ public class CapsuleItem extends Item {
 	public static List<IBlockState> excludedBlocks = Arrays.asList(new IBlockState[] { Blocks.air.getDefaultState(), Blocks.bedrock.getDefaultState() });
 
 	@SuppressWarnings("unchecked")
-	public static List<IBlockState> overridableBlocks = Arrays.asList(
-			new IBlockState[] { Blocks.air.getDefaultState(), Blocks.water.getDefaultState(), Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(),
-					Blocks.tallgrass.getDefaultState(), Blocks.red_flower.getDefaultState(), Blocks.yellow_flower.getDefaultState() });
+	public static List<IBlockState> overridableBlocks = Arrays.asList(new IBlockState[] { Blocks.air.getDefaultState(), Blocks.water.getDefaultState(),
+			Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(), Blocks.tallgrass.getDefaultState(), Blocks.red_flower.getDefaultState(),
+			Blocks.yellow_flower.getDefaultState(), Blocks.snow_layer.getDefaultState(), Blocks.grass.getDefaultState(), 
+			Blocks.brown_mushroom.getDefaultState(), Blocks.red_mushroom.getDefaultState() });
 
 	public CapsuleItem(String unlocalizedName) {
 		super();
@@ -320,25 +326,54 @@ public class CapsuleItem extends Item {
 			// get free room to store
 			BlockPos dest = capsulePlacer.reserveNextAvailablePositionForSize(size);
 
-			// do the transportation. Can't fail because destination is always empty
-			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, overridableBlocks, excludedBlocks, false);
+			// do the transportation. Can't fail because destination is always
+			// empty
+			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, overridableBlocks, excludedBlocks, false, null, null);
 
 			// register the link in the capsule
 			this.setState(capsule, STATE_LINKED);
 			savePosition("linkPosition", capsule, dest);
 		} else {
-			
+
 			revertStateFromActivated(capsule);
-			if (entityItem == null || playerWorld == null){
+			if (entityItem == null || playerWorld == null) {
 				return;
 			}
-			
+
 			// send a chat message to explain failure
 			EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
 			if (player != null) {
 				player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.noCaptureBase").trim()));
 			}
 		}
+	}
+
+	private Map<BlockPos, IBlockState> getOccupiedSourcePos(ItemStack capsule) {
+		Map<BlockPos, IBlockState> occupiedSources = new HashMap<BlockPos, IBlockState>();
+		if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("occupiedSpawnPositions")) {
+			NBTTagList list = capsule.getTagCompound().getTagList("occupiedSpawnPositions", 10);
+			for (int i = 0; i < list.tagCount(); i++) {
+				NBTTagCompound entry = list.getCompoundTagAt(i);
+				occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getStateById(entry.getInteger("state")));
+			}
+		}
+		return occupiedSources;
+	}
+
+	private Map<BlockPos, IBlockState> setOccupiedSourcePos(ItemStack capsule, Map<BlockPos, IBlockState> occupiedSpawnPositions) {
+		Map<BlockPos, IBlockState> occupiedSources = new HashMap<BlockPos, IBlockState>();
+		NBTTagList entries = new NBTTagList();
+		for (Entry<BlockPos, IBlockState> entry : occupiedSpawnPositions.entrySet()) {
+			NBTTagCompound nbtEntry = new NBTTagCompound();
+			nbtEntry.setLong("pos", entry.getKey().toLong());
+			nbtEntry.setInteger("state", Block.getStateId(entry.getValue()));
+			entries.appendTag(nbtEntry);
+		}
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
+		return occupiedSources;
 	}
 
 	private void revertStateFromActivated(ItemStack capsule) {
@@ -368,16 +403,19 @@ public class CapsuleItem extends Item {
 			BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
 
 			// do the transportation
-			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, overridableBlocks, excludedBlocks, false);
+			Map<BlockPos, IBlockState> occupiedSpawnPositions = new HashMap<BlockPos, IBlockState>();
+			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, overridableBlocks, excludedBlocks, false, null,
+					occupiedSpawnPositions);
+			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 
-			if(result){
+			if (result) {
 				// register the link in the capsule
 				this.setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
 
 			} else {
 				revertStateFromActivated(capsule);
-				if (entityItem == null || playerWorld == null){
+				if (entityItem == null || playerWorld == null) {
 					return;
 				}
 				// send a chat message to explain failure
@@ -386,7 +424,7 @@ public class CapsuleItem extends Item {
 					player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.cantMergeWithDestination").trim()));
 				}
 			}
-			
+
 		}
 	}
 
@@ -403,7 +441,8 @@ public class CapsuleItem extends Item {
 		int size = getSize(itemStackIn);
 
 		// do the transportation
-		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, overridableBlocks, excludedBlocks, false);
+		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, overridableBlocks, excludedBlocks, false, this.getOccupiedSourcePos(itemStackIn),
+				null);
 
 		this.setState(itemStackIn, STATE_LINKED);
 		itemStackIn.getTagCompound().removeTag("spawnPosition");

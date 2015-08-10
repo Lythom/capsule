@@ -1,17 +1,19 @@
 package capsule;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.WorldServer;
 
@@ -34,14 +36,19 @@ public class Helpers {
 	 * @param keepSource
 	 *            copy only, don't remove blocks from sourceWorld and allow
 	 *            duplication.
+	 * @param sourceIgnorePos
+	 *            This blocks won't be transfered from source
+	 * @param outOccupiedDestPos
+	 *            This blocks were already present at destination beofre the
+	 *            merge
+	 * @return
 	 */
 	public static boolean swapRegions(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size,
-			List<IBlockState> overridable, List<IBlockState> excluded, boolean keepSource) {
-		
-		IBlockState air = Blocks.air.getDefaultState();
-		List<BlockPos> occupiedDestPos = new ArrayList<BlockPos>();
+			List<IBlockState> overridable, List<IBlockState> excluded, boolean keepSource, Map<BlockPos, IBlockState> sourceIgnorePos,
+			Map<BlockPos, IBlockState> outOccupiedDestPos) {
 
-		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, occupiedDestPos)) {
+		IBlockState air = Blocks.air.getDefaultState();
+		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, outOccupiedDestPos)) {
 			return false;
 		}
 
@@ -51,21 +58,21 @@ public class Helpers {
 				for (int z = 0; z < size; z++) {
 
 					BlockPos srcPos = srcOriginPos.add(x, y, z);
-					
+
 					IBlockState srcState = sourceWorld.getBlockState(srcPos);
 
 					// don't copy excluded blocks
 					// if must copy
-					if (!excluded.contains(srcState)) {
-						
+					if (!excluded.contains(srcState) && (sourceIgnorePos == null || !sourceIgnorePos.keySet().contains(srcPos))) {
+
 						BlockPos destPos = destOriginPos.add(x, y, z);
 						IBlockState destState = destWorld.getBlockState(destPos);
 
 						// store the dest block if it's overridable
-						if(destState == air || overridable.contains(destState)){
+						if (destState == air || overridable.contains(destState)) {
 							// copy block without update
 							destWorld.setBlockState(destPos, srcState, 4);
-							
+
 							// check tileEntity
 							TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
 							TileEntity destTE = destWorld.getTileEntity(destPos);
@@ -79,12 +86,12 @@ public class Helpers {
 
 							}
 						} // end if dest is overridable
-						
+
 						if (!keepSource) {
 							sourceWorld.removeTileEntity(srcPos);
 							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 4);
 						}
-						
+
 					} // end if must copy
 				}
 			}
@@ -124,7 +131,7 @@ public class Helpers {
 	 * @return List<BlockPos> occupied but not blocking positions
 	 */
 	public static boolean isDestinationValid(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size,
-			List<IBlockState> overridable, List<IBlockState> excluded, List<BlockPos> outOccupiedPositions) {
+			List<IBlockState> overridable, List<IBlockState> excluded, Map<BlockPos, IBlockState> outOccupiedPositions) {
 
 		IBlockState air = Blocks.air.getDefaultState();
 
@@ -140,12 +147,22 @@ public class Helpers {
 
 					boolean destOccupied = (destState != air && !overridable.contains(destState));
 					if (destOccupied && outOccupiedPositions != null) {
-						outOccupiedPositions.add(destPos);
+						outOccupiedPositions.put(destPos, destState);
 					}
+					
+					boolean srcOccupied = (srcState != air && !overridable.contains(srcState));
+					List entities = destWorld.getEntitiesWithinAABB(
+							EntityPlayer.class,
+							AxisAlignedBB.fromBounds(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() +1, destPos.getY()+1, destPos.getZ()+1)
+					);
 
-					// if destination is occupied, and source is neither excluded from transportation, nor can't be overriden by destination
-					// the the merge can't be
-					if (destOccupied && !excluded.contains(srcState) && !overridable.contains(srcState)) {
+					// if destination is occupied, and source is neither
+					// excluded from transportation, nor can't be overriden by
+					// destination, then the merge can't be done.
+					if ((entities.size() > 0 && srcOccupied) || (destOccupied && !excluded.contains(srcState) && !overridable.contains(srcState))) {
+						if(entities.size() > 0){
+							System.out.println(entities.get(0));
+						}
 						return false;
 					}
 
@@ -204,7 +221,6 @@ public class Helpers {
 		return closest;
 	}
 
-	
 	@SuppressWarnings("rawtypes")
 	public static BlockPos findSpecificBlock(EntityItem entityItem, int maxRange, Class searchedBlock) {
 		if (entityItem.getEntityWorld() == null || searchedBlock == null)
