@@ -1,7 +1,7 @@
 {
     "parent":"builtin/generated",
     "textures": {
-        "layer0":"capsule:items/capsule_base"
+        "layer0":"capsule:items/capsule_activated"
     },
     "display": {
         "thirdperson": {

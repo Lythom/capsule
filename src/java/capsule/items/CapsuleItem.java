@@ -37,10 +37,12 @@ import scala.actors.threadpool.Arrays;
 public class CapsuleItem extends Item {
 
 	public final static int STATE_EMPTY = 0;
+	public final static int STATE_EMPTY_ACTIVATED = 4;
 	public final static int STATE_ACTIVATED = 1;
 	public final static int STATE_LINKED = 2;
 	public final static int STATE_DEPLOYED = 3;
 	public final static int STATE_ONE_USE = 5;
+	public final static int STATE_ONE_USE_ACTIVATED = 6;
 
 	private static final int CAPSULE_MAX_CAPTURE_SIZE = 69;
 
@@ -69,6 +71,8 @@ public class CapsuleItem extends Item {
 		String state = "";
 		switch (stack.getItemDamage()) {
 		case CapsuleItem.STATE_ACTIVATED:
+		case CapsuleItem.STATE_EMPTY_ACTIVATED:
+		case CapsuleItem.STATE_ONE_USE_ACTIVATED:
 			state = EnumChatFormatting.DARK_GREEN + StatCollector.translateToLocal("item.capsule.state_activated") + EnumChatFormatting.RESET;
 			break;
 		case CapsuleItem.STATE_LINKED:
@@ -209,7 +213,7 @@ public class CapsuleItem extends Item {
 			} else {
 
 				// an activated capsule is thrown farther on right click
-				if (itemStackIn.getItemDamage() == STATE_ACTIVATED) {
+				if (isActivated(itemStackIn)) {
 					throwItem(itemStackIn, playerIn);
 					playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 				}
@@ -217,7 +221,15 @@ public class CapsuleItem extends Item {
 				// an empty or a linked capsule is activated on right click
 				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
 						|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
-					this.setState(itemStackIn, STATE_ACTIVATED);
+					if(itemStackIn.getItemDamage() == STATE_EMPTY ){
+						this.setState(itemStackIn, STATE_EMPTY_ACTIVATED);
+					}
+					if(itemStackIn.getItemDamage() == STATE_LINKED ){
+						this.setState(itemStackIn, STATE_ACTIVATED);
+					}
+					if(itemStackIn.getItemDamage() == STATE_ONE_USE ){
+						this.setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
+					}
 
 					NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
 					timer.setInteger("starttime", playerIn.ticksExisted);
@@ -233,6 +245,12 @@ public class CapsuleItem extends Item {
 		return ret;
 	}
 
+	private boolean isActivated(ItemStack itemStackIn) {
+		return itemStackIn.getItemDamage() == STATE_ACTIVATED
+				|| itemStackIn.getItemDamage() == STATE_EMPTY_ACTIVATED
+				|| itemStackIn.getItemDamage() == STATE_ONE_USE_ACTIVATED;
+	}
+
 	/**
 	 * Manage the "activated" state of the capsule.
 	 */
@@ -245,7 +263,7 @@ public class CapsuleItem extends Item {
 			// disable capsule after some time
 			NBTTagCompound timer = stack.getSubCompound("activetimer", true);
 			int tickDuration = 60; // 3 sec at 20 ticks/sec;
-			if (stack.getItemDamage() == STATE_ACTIVATED && timer.hasKey("starttime")
+			if (this.isActivated(stack) && timer.hasKey("starttime")
 					&& entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
 
 				revertStateFromActivated(stack);
@@ -263,7 +281,7 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
-		if (!entityItem.worldObj.isRemote && entityItem.isCollided && (capsule.getItemDamage() == STATE_ACTIVATED || capsule.getItemDamage() == STATE_ONE_USE)
+		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)
 				&& entityItem.getEntityWorld() != null) {
 
 			int size = getSize(capsule);
@@ -489,7 +507,12 @@ public class CapsuleItem extends Item {
 
 			// label color
 		} else if (renderPass == 1) {
-			color = Helpers.getColor(stack);
+			if (this.isLinked(stack)) {
+				color = Helpers.getColor(stack);
+			} else {
+				return -1;
+			}
+			
 		}
 		return color;
 	}
@@ -505,7 +528,7 @@ public class CapsuleItem extends Item {
 	private EntityItem throwItem(ItemStack itemStackIn, EntityPlayer playerIn) {
 		double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
 		EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
-		entityitem.setPickupDelay(40);
+		entityitem.setPickupDelay(10);
 		entityitem.setThrower(playerIn.getName());
 		float f = 0.5F;
 		entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
