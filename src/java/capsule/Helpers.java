@@ -63,7 +63,7 @@ public class Helpers {
 
 					// don't copy excluded blocks
 					// if must copy
-					if (!excluded.contains(srcState) && (sourceIgnorePos == null || !sourceIgnorePos.keySet().contains(srcPos))) {
+					if (!excluded.contains(srcState) && (sourceIgnorePos == null || !(sourceIgnorePos.keySet().contains(srcPos) && sourceIgnorePos.get(srcPos).equals(srcState)))) {
 
 						BlockPos destPos = destOriginPos.add(x, y, z);
 						IBlockState destState = destWorld.getBlockState(destPos);
@@ -98,9 +98,10 @@ public class Helpers {
 		}
 
 		// mark everything for update
-		for (int y = size - 1; y >= 0; y--) {
-			for (int x = 0; x < size; x++) {
-				for (int z = 0; z < size; z++) {
+		// update surrounding blocks as well
+		for (int y = size; y >= -1; y--) {
+			for (int x = -1; x < size+1; x++) {
+				for (int z = -1; z < size+1; z++) {
 
 					BlockPos srcPos = srcOriginPos.add(x, y, z);
 					BlockPos destPos = destOriginPos.add(x, y, z);
@@ -146,7 +147,7 @@ public class Helpers {
 					IBlockState destState = destWorld.getBlockState(destPos);
 
 					boolean destOccupied = (destState != air && !overridable.contains(destState));
-					if (destOccupied && outOccupiedPositions != null) {
+					if (destState != air && outOccupiedPositions != null) {
 						outOccupiedPositions.put(destPos, destState);
 					}
 					
