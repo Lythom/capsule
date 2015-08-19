@@ -34,7 +34,6 @@ public class BlockCapsuleMarker extends BlockContainer {
 		super(materialIn);
 		this.setDefaultState(this.blockState.getBaseState().withProperty(PROJECTING, Boolean.valueOf(false)));
 		this.setUnlocalizedName(unlocalizedName);
-		this.setCreativeTab(CreativeTabs.tabMisc);
 		this.setHardness(20);
 		this.setResistance(1000);
 		this.setHarvestLevel("pickaxe", 0);
@@ -52,7 +51,12 @@ public class BlockCapsuleMarker extends BlockContainer {
 	 * connections.
 	 */
 	public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-		return state.withProperty(PROJECTING, Boolean.valueOf(false));
+		
+		return state.withProperty(PROJECTING, this.isProjecting((TileEntityCapture)worldIn.getTileEntity(pos)));
+	}
+	
+	public Boolean isProjecting(TileEntityCapture tec) {
+		return tec != null && tec.getTileData() != null && tec.getTileData().getInteger("size") > 0;
 	}
 
 	protected BlockState createBlockState() {

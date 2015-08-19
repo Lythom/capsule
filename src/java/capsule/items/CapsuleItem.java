@@ -59,7 +59,6 @@ public class CapsuleItem extends Item {
 		super();
 		this.setHasSubtypes(true);
 		this.setUnlocalizedName(unlocalizedName);
-		this.setCreativeTab(CreativeTabs.tabMisc);
 		this.setMaxStackSize(1);
 		this.setMaxDamage(0);
 	}

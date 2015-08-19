@@ -18,7 +18,6 @@ public class CreativeTP extends Item {
 	public CreativeTP(String unlocalizedName) {
 		super();
 		this.setUnlocalizedName(unlocalizedName);
-		this.setCreativeTab(CreativeTabs.tabMisc);
 	}
 
 	@Override

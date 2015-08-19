@@ -99,6 +99,7 @@ public class CapsulePreviewHandler {
 				TileEntityCapture tec = (TileEntityCapture) te;
 				tec.getTileData().setInteger("size", size);
 				tec.getTileData().setInteger("color", color);
+				worldIn.markBlockForUpdate(te.getPos());
 			}
 		}
 	}
