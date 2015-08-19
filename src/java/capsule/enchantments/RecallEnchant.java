@@ -69,7 +69,9 @@ public class RecallEnchant extends Enchantment {
 		for (EntityItem entity : recallEntities) {
 			if (entity.getThrower() != null && (entity.isCollided || entity.isInLava() || entity.isInWater())) {
 				// give the item a last tick
-				entity.onUpdate();
+				if (!entity.isInLava()) {
+					entity.onUpdate();
+				}
 				// then recall to inventory
 				if (!entity.isDead) {
 					this.pickupItemBack(entity, world.getPlayerEntityByName(entity.getThrower()));
