@@ -102,7 +102,7 @@ public class CapsuleItem extends Item {
 	}
 
 	public boolean isReward(ItemStack stack) {
-		return (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward"));
+		return (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && this.isOneUse(stack));
 	}
 
 	public void setIsReward(ItemStack stack, boolean isReward) {
@@ -396,7 +396,7 @@ public class CapsuleItem extends Item {
 	}
 
 	private boolean isOneUse(ItemStack stack) {
-		return stack.hasTagCompound() && stack.getTagCompound().getBoolean("oneUse");
+		return stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
 	}
 
 	/**
@@ -419,7 +419,7 @@ public class CapsuleItem extends Item {
 
 			// do the transportation
 			Map<BlockPos, IBlockState> occupiedSpawnPositions = new HashMap<BlockPos, IBlockState>();
-			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, overridableBlocks, excludedBlocks, false, null,
+			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, overridableBlocks, excludedBlocks, this.isReward(capsule), null,
 					occupiedSpawnPositions);
 			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 
