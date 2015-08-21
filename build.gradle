@@ -17,8 +17,8 @@ buildscript {
 
 apply plugin: 'forge'
 
-version = "1.8-1.0.0-rc"
-group= "fr.samuel-bouchet.mods.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+version = "1.8-1.0.0-rc3"
+group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "capsule"
 
 minecraft {
