@@ -85,7 +85,7 @@ public class RecoveryCapsuleRecipe implements IRecipe
                 {
                 	ItemStack copy = itemstack.copy();
                 	CapsuleItem item = (CapsuleItem)copy.getItem();
-                	item.setState(copy, CapsuleItem.STATE_ONE_USE);
+                	item.setState(copy, this.targetMetadata);
                 	if(!copy.hasTagCompound()){
                 		copy.setTagCompound(new NBTTagCompound());
                 	}

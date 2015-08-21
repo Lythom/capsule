@@ -1,7 +1,6 @@
 package capsule.items;
 
 import capsule.dimension.CapsuleDimensionRegistrer;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;

@@ -51,9 +51,9 @@ public class CapsuleItem extends Item {
 
 	@SuppressWarnings("unchecked")
 	public static List<IBlockState> overridableBlocks = Arrays.asList(new IBlockState[] { Blocks.air.getDefaultState(), Blocks.water.getDefaultState(),
-			Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(), Blocks.tallgrass.getStateFromMeta(0),Blocks.tallgrass.getStateFromMeta(1), Blocks.tallgrass.getStateFromMeta(2), Blocks.red_flower.getDefaultState(),
-			Blocks.yellow_flower.getDefaultState(), Blocks.snow_layer.getDefaultState(),
-			Blocks.brown_mushroom.getDefaultState(), Blocks.red_mushroom.getDefaultState() });
+			Blocks.leaves.getDefaultState(), Blocks.leaves2.getDefaultState(), Blocks.tallgrass.getStateFromMeta(0), Blocks.tallgrass.getStateFromMeta(1),
+			Blocks.tallgrass.getStateFromMeta(2), Blocks.red_flower.getDefaultState(), Blocks.yellow_flower.getDefaultState(),
+			Blocks.snow_layer.getDefaultState(), Blocks.brown_mushroom.getDefaultState(), Blocks.red_mushroom.getDefaultState() });
 
 	public CapsuleItem(String unlocalizedName) {
 		super();
@@ -220,13 +220,13 @@ public class CapsuleItem extends Item {
 				// an empty or a linked capsule is activated on right click
 				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
 						|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
-					if(itemStackIn.getItemDamage() == STATE_EMPTY ){
+					if (itemStackIn.getItemDamage() == STATE_EMPTY) {
 						this.setState(itemStackIn, STATE_EMPTY_ACTIVATED);
 					}
-					if(itemStackIn.getItemDamage() == STATE_LINKED ){
+					if (itemStackIn.getItemDamage() == STATE_LINKED) {
 						this.setState(itemStackIn, STATE_ACTIVATED);
 					}
-					if(itemStackIn.getItemDamage() == STATE_ONE_USE ){
+					if (itemStackIn.getItemDamage() == STATE_ONE_USE) {
 						this.setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
 					}
 
@@ -245,8 +245,7 @@ public class CapsuleItem extends Item {
 	}
 
 	private boolean isActivated(ItemStack itemStackIn) {
-		return itemStackIn.getItemDamage() == STATE_ACTIVATED
-				|| itemStackIn.getItemDamage() == STATE_EMPTY_ACTIVATED
+		return itemStackIn.getItemDamage() == STATE_ACTIVATED || itemStackIn.getItemDamage() == STATE_EMPTY_ACTIVATED
 				|| itemStackIn.getItemDamage() == STATE_ONE_USE_ACTIVATED;
 	}
 
@@ -262,8 +261,7 @@ public class CapsuleItem extends Item {
 			// disable capsule after some time
 			NBTTagCompound timer = stack.getSubCompound("activetimer", true);
 			int tickDuration = 60; // 3 sec at 20 ticks/sec;
-			if (this.isActivated(stack) && timer.hasKey("starttime")
-					&& entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
+			if (this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
 
 				revertStateFromActivated(stack);
 			}
@@ -280,8 +278,7 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
-		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)
-				&& entityItem.getEntityWorld() != null) {
+		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule) && entityItem.getEntityWorld() != null) {
 
 			int size = getSize(capsule);
 			int exdendLength = (size - 1) / 2;
@@ -294,8 +291,8 @@ public class CapsuleItem extends Item {
 			// is linked, deploy
 			if (capsule.getTagCompound().hasKey("linkPosition")) {
 
-				deployCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
-				if (this.isOneUse(capsule)) {
+				boolean deployed = deployCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
+				if (deployed && this.isOneUse(capsule)) {
 					entityItem.setDead();
 				}
 				return true;
@@ -322,13 +319,14 @@ public class CapsuleItem extends Item {
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private void captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld,
+	private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld,
 			WorldServer playerWorld) {
 		// get available space data
 		CapsuleSavedData capsulePlacer = getCapsulePlacer(capsuleWorld);
+		boolean didCapture = false;
 
 		// specify target to capture
-		BlockPos marker = Helpers.findSpecificBlock(entityItem, size, BlockCapsuleMarker.class);
+		BlockPos marker = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
 		if (marker != null) {
 			BlockPos source = marker.add(-exdendLength, 1, -exdendLength);
 
@@ -342,11 +340,13 @@ public class CapsuleItem extends Item {
 			// register the link in the capsule
 			this.setState(capsule, STATE_LINKED);
 			savePosition("linkPosition", capsule, dest);
+			didCapture = true;
+			
 		} else {
 
 			revertStateFromActivated(capsule);
 			if (entityItem == null || playerWorld == null) {
-				return;
+				return false;
 			}
 
 			// send a chat message to explain failure
@@ -355,6 +355,8 @@ public class CapsuleItem extends Item {
 				player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.noCaptureBase").trim()));
 			}
 		}
+		
+		return didCapture;
 	}
 
 	private Map<BlockPos, IBlockState> getOccupiedSourcePos(ItemStack capsule) {
@@ -409,9 +411,11 @@ public class CapsuleItem extends Item {
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private void deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
+	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
 		// specify target to capture
 		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, excludedBlocks);
+		boolean didSpawn = false;
+		
 		if (bottomBlockPos != null) {
 			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
 			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
@@ -427,11 +431,12 @@ public class CapsuleItem extends Item {
 				// register the link in the capsule
 				this.setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
+				didSpawn = true;
 
 			} else {
 				revertStateFromActivated(capsule);
 				if (entityItem == null || playerWorld == null) {
-					return;
+					return false;
 				}
 				// send a chat message to explain failure
 				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
@@ -439,8 +444,9 @@ public class CapsuleItem extends Item {
 					player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.cantMergeWithDestination").trim()));
 				}
 			}
-
 		}
+		
+		return didSpawn;
 	}
 
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {
@@ -511,7 +517,7 @@ public class CapsuleItem extends Item {
 			} else {
 				return -1;
 			}
-			
+
 		}
 		return color;
 	}
