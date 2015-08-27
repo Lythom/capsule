@@ -7,6 +7,7 @@ import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.network.MessageHandlerOnServer;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -51,5 +52,9 @@ public class CommonProxy {
 
 	public void serverStarting(FMLServerStartingEvent e) {
 		e.registerServerCommand(new CapsuleCommand());
+	}
+	
+	public void openGuiScreen(EntityPlayer playerIn){
+
 	}
 }

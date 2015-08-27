@@ -6,14 +6,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import capsule.Helpers;
+import capsule.Main;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import capsule.enchantments.Enchantments;
-import capsule.gui.LabelGui;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -204,40 +203,38 @@ public class CapsuleItem extends Item {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
 
+		if (worldIn.isRemote && playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
+			Main.proxy.openGuiScreen(playerIn);
+		}
+
 		if (!worldIn.isRemote) {
-			if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
-				LabelGui screen = new LabelGui(playerIn);
-				Minecraft.getMinecraft().displayGuiScreen(screen);
 
-			} else {
+			// an activated capsule is thrown farther on right click
+			if (isActivated(itemStackIn)) {
+				throwItem(itemStackIn, playerIn);
+				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+			}
 
-				// an activated capsule is thrown farther on right click
-				if (isActivated(itemStackIn)) {
-					throwItem(itemStackIn, playerIn);
-					playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+			// an empty or a linked capsule is activated on right click
+			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
+					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
+				if (itemStackIn.getItemDamage() == STATE_EMPTY) {
+					this.setState(itemStackIn, STATE_EMPTY_ACTIVATED);
+				}
+				if (itemStackIn.getItemDamage() == STATE_LINKED) {
+					this.setState(itemStackIn, STATE_ACTIVATED);
+				}
+				if (itemStackIn.getItemDamage() == STATE_ONE_USE) {
+					this.setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
 				}
 
-				// an empty or a linked capsule is activated on right click
-				else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
-						|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
-					if (itemStackIn.getItemDamage() == STATE_EMPTY) {
-						this.setState(itemStackIn, STATE_EMPTY_ACTIVATED);
-					}
-					if (itemStackIn.getItemDamage() == STATE_LINKED) {
-						this.setState(itemStackIn, STATE_ACTIVATED);
-					}
-					if (itemStackIn.getItemDamage() == STATE_ONE_USE) {
-						this.setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
-					}
+				NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
+				timer.setInteger("starttime", playerIn.ticksExisted);
+			}
 
-					NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
-					timer.setInteger("starttime", playerIn.ticksExisted);
-				}
-
-				// an opened capsule revoke deployed content on right click
-				else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
-					resentToCapsule(itemStackIn, playerIn);
-				}
+			// an opened capsule revoke deployed content on right click
+			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
+				resentToCapsule(itemStackIn, playerIn);
 			}
 		}
 
@@ -341,7 +338,7 @@ public class CapsuleItem extends Item {
 			this.setState(capsule, STATE_LINKED);
 			savePosition("linkPosition", capsule, dest);
 			didCapture = true;
-			
+
 		} else {
 
 			revertStateFromActivated(capsule);
@@ -355,7 +352,7 @@ public class CapsuleItem extends Item {
 				player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.noCaptureBase").trim()));
 			}
 		}
-		
+
 		return didCapture;
 	}
 
@@ -415,7 +412,7 @@ public class CapsuleItem extends Item {
 		// specify target to capture
 		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, excludedBlocks);
 		boolean didSpawn = false;
-		
+
 		if (bottomBlockPos != null) {
 			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
 			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
@@ -445,7 +442,7 @@ public class CapsuleItem extends Item {
 				}
 			}
 		}
-		
+
 		return didSpawn;
 	}
 
