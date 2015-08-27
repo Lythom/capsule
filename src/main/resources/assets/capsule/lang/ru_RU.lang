@@ -1,0 +1,17 @@
+item.capsule_CTP.creative_tp.name=Творческий телепорт к капсулам игроков
+item.capsule.name=капсула
+item.capsule.state_activated=Активированная
+item.capsule.state_broken=Сломанная
+item.capsule.state_deployed=Открытая
+item.capsule.state_one_use=Одноразовая
+item.capsule.state_recovery=Восстанавливающая
+item.capsule.content_empty=Пустая
+item.capsule.content_unlabeled=Неназванная
+tile.capsulemarker.name=Основа захвата
+capsule.tooltip.crafttorepair=Положите в сетку крафта, чтобы починить.
+capsule.tooltip.one_use=Это капсула будет уничтожена после открытия.
+capsule.error.noCaptureBase=Не найдено ни одной «Основа захвата».
+capsule.error.cantMergeWithDestination=Не возможно объединить с местом назначения, существо или блок предотвращает размещению.
+capsule.tooltip.size=Размер
+enchantment.recall=Возвращение
+itemGroup.capsule=Capsules
