@@ -201,11 +201,11 @@ public class CapsuleItem extends Item {
 
 		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
 
-		if (worldIn.isRemote && playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
+		if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
 			Main.proxy.openGuiScreen(playerIn);
 		}
 
-		if (!worldIn.isRemote) {
+		else if (!worldIn.isRemote) {
 
 			// an activated capsule is thrown farther on right click
 			if (isActivated(itemStackIn)) {
