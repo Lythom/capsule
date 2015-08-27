@@ -3,12 +3,10 @@
 /bin
 /crash-reports
 /logs
-/usernamecache.json
 /config/splash.properties
 /.gradle
 /world
-/usercache.json
-/banned-ips.json
-/banned-players.json
-/eula.txt
-/ops.json
+/.project
+/.settings
+/eclipse
+/.classpath
