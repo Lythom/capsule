@@ -1,4 +1,7 @@
-Capsule Mod - CHANGELOG
+# Capsule mod by Lythom #
+Mod page : [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
+
+CHANGELOG
 
 1.8-1.0.1 : Dedicated server fix + various bug fixes
 - downgrade minecraftforge dependency to recommanded version (11.14.3.1450)
