@@ -22,7 +22,7 @@ public class CapsuleCommand extends CommandBase {
 	 * @see net.minecraft.command.ICommand#getName()
 	 */
 	@Override
-	public String getName() {
+	public String getCommandName() {
 		return "capsule";
 	}
 

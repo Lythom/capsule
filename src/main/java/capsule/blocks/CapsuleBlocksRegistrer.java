@@ -2,11 +2,11 @@ package capsule.blocks;
 
 import capsule.Main;
 import capsule.items.CapsuleItem;
+import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class CapsuleBlocksRegistrer {
 	

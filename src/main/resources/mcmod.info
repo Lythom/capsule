@@ -1,0 +1,16 @@
+[
+{
+  "modid": "capsule",
+  "name": "Capsule Mod",
+  "description": "This mod allows you to capture a region containing any blocks or machines, then deploy and undeploy it at will. It is inspired by Dragon Ball capsules.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Lythom"],
+  "credits": "Lythom (author), The Forge and FML guys.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

@@ -4,7 +4,6 @@ import java.awt.Color;
 
 import org.lwjgl.opengl.GL11;
 
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
@@ -18,7 +17,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer {
 
 	@Override
 	public void renderTileEntityAt(TileEntity tileEntity, double relativeX, double relativeY, double relativeZ,
-			float partialTicks, int blockDamageProgress) {
+			float partialTicks) {
 
 		if (!(tileEntity instanceof TileEntityCapture))
 			return;
@@ -51,7 +50,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer {
 		GlStateManager.color(red,green,blue, 0.5F);
 		
 
-		Tessellator tessellator = Tessellator.getInstance();
+		Tessellator tessellator = Tessellator.instance;
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
 
 		AxisAlignedBB boundingBox = AxisAlignedBB.fromBounds(-extendSize - 0.01, 1.01, -extendSize - 0.01,

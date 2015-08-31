@@ -3,8 +3,6 @@
  */
 package capsule.gui;
 
-import java.io.IOException;
-
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 
@@ -38,7 +36,7 @@ public class LabelGui extends GuiScreen {
 		buttonList.clear();
 		Keyboard.enableRepeatEvents(true);
 
-		textInput = new GuiTextField(0, this.fontRendererObj, this.width / 2 - guiWidth / 2, this.height / 2 - guiHeight / 2, guiWidth, guiHeight);
+		textInput = new GuiTextField(this.fontRendererObj, this.width / 2 - guiWidth / 2, this.height / 2 - guiHeight / 2, guiWidth, guiHeight);
 		textInput.setMaxStringLength(32);
 		textInput.setFocused(true);
 		
@@ -58,7 +56,7 @@ public class LabelGui extends GuiScreen {
 	}
 
 	@Override
-	protected void keyTyped(char typedChar, int keyCode) throws IOException {
+	protected void keyTyped(char typedChar, int keyCode){
 		super.keyTyped(typedChar, keyCode);
 		if(keyCode == Keyboard.KEY_RETURN){
 			closeGui();
@@ -69,7 +67,7 @@ public class LabelGui extends GuiScreen {
 	}
 
 	@Override
-	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		this.textInput.mouseClicked(mouseX, mouseY, mouseButton);
 	}

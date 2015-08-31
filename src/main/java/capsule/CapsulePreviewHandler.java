@@ -5,6 +5,8 @@ import java.util.Iterator;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
@@ -13,9 +15,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 
 public class CapsulePreviewHandler {
 	public CapsulePreviewHandler() {

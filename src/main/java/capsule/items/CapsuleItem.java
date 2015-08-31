@@ -13,7 +13,6 @@ import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import capsule.enchantments.Enchantments;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -24,7 +23,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
@@ -116,7 +114,7 @@ public class CapsuleItem extends Item {
 		if (!this.isLinked(stack)) {
 			return StatCollector.translateToLocal("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && stack.getTagCompound().getString("label") != "") {
-			return "“" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "”";
+			return "â€œ" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "â€�";
 		}
 		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
 	}
