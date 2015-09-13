@@ -1,10 +1,13 @@
 package capsule;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.NumberInvalidException;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
@@ -15,6 +18,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 
 public class Helpers {
@@ -44,11 +48,11 @@ public class Helpers {
 	 * @return
 	 */
 	public static boolean swapRegions(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size,
-			List<IBlockState> overridable, List<IBlockState> excluded, boolean keepSource, Map<BlockPos, IBlockState> sourceIgnorePos,
-			Map<BlockPos, IBlockState> outOccupiedDestPos) {
+			List<Block> overridable, List<Block> excluded, boolean keepSource, Map<BlockPos, Block> sourceIgnorePos,
+			Map<BlockPos, Block> outOccupiedDestPos, List<String> outEntityBlocking) {
 
-		IBlockState air = Blocks.air.getDefaultState();
-		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, outOccupiedDestPos)) {
+		Block air = Blocks.air;
+		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, outOccupiedDestPos, outEntityBlocking)) {
 			return false;
 		}
 
@@ -63,13 +67,13 @@ public class Helpers {
 
 					// don't copy excluded blocks
 					// if must copy
-					if (!excluded.contains(srcState) && (sourceIgnorePos == null || !(sourceIgnorePos.keySet().contains(srcPos) && sourceIgnorePos.get(srcPos).equals(srcState)))) {
+					if (!excluded.contains(srcState.getBlock()) && (sourceIgnorePos == null || !(sourceIgnorePos.keySet().contains(srcPos) && sourceIgnorePos.get(srcPos).equals(srcState)))) {
 
 						BlockPos destPos = destOriginPos.add(x, y, z);
 						IBlockState destState = destWorld.getBlockState(destPos);
 
 						// store the dest block if it's overridable
-						if (destState == air || overridable.contains(destState)) {
+						if (air.equals(destState.getBlock()) || overridable.contains(destState.getBlock())) {
 							// copy block without update
 							destWorld.setBlockState(destPos, srcState, 4);
 
@@ -132,7 +136,7 @@ public class Helpers {
 	 * @return List<BlockPos> occupied but not blocking positions
 	 */
 	public static boolean isDestinationValid(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size,
-			List<IBlockState> overridable, List<IBlockState> excluded, Map<BlockPos, IBlockState> outOccupiedPositions) {
+			List<Block> overridable, List<Block> excluded, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
 
 		IBlockState air = Blocks.air.getDefaultState();
 
@@ -141,10 +145,10 @@ public class Helpers {
 				for (int z = 0; z < size; z++) {
 
 					BlockPos srcPos = srcOriginPos.add(x, y, z);
-					IBlockState srcState = sourceWorld.getBlockState(srcPos);
+					Block srcState = sourceWorld.getBlockState(srcPos).getBlock();
 
 					BlockPos destPos = destOriginPos.add(x, y, z);
-					IBlockState destState = destWorld.getBlockState(destPos);
+					Block destState = destWorld.getBlockState(destPos).getBlock();
 
 					boolean destOccupied = (destState != air && !overridable.contains(destState));
 					if (destState != air && outOccupiedPositions != null) {
@@ -162,12 +166,17 @@ public class Helpers {
 					// excluded from transportation, nor can't be overriden by
 					// destination, then the merge can't be done.
 					if ((entities.size() > 0 && srcOccupied) || (destOccupied && !excluded.contains(srcState) && !overridable.contains(srcState))) {
-						if(entities.size() > 0){
-							System.out.println(entities.get(0));
+						if(entities.size() > 0 && outEntityBlocking != null){
+							for(Object e : entities){
+								Entity entity = (Entity)e;
+								if(entity != null){
+									outEntityBlocking.add(entity.getName());
+								}
+							}
+							
 						}
 						return false;
 					}
-
 				}
 			}
 		}
@@ -176,7 +185,7 @@ public class Helpers {
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	public static BlockPos findBottomBlock(EntityItem entityItem, List<IBlockState> excludedBlocks) {
+	public static BlockPos findBottomBlock(EntityItem entityItem, List<Block> excludedBlocks) {
 		if (entityItem.getEntityWorld() == null)
 			return null;
 
@@ -332,6 +341,31 @@ public class Helpers {
 				return 0;
 			}
 		}
+	}
+	
+	public static Block[] deserializeBlockArray(String[] blockIds) throws NumberInvalidException {
+			ArrayList<Block> states = new ArrayList<Block>();
+			for (int i = 0; i < blockIds.length; i++) {
+				Block b = Block.getBlockFromName(blockIds[i]);
+				if(b != null){
+					states.add(b);
+				} else {
+					System.err.println(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockIds[i]));
+				}
+			}
+			Block[] output = new Block[states.size()];
+			return states.toArray(output);
+
+	}
+	
+	public static String[] serializeBlockArray(Block[] states) {
+
+		String[] blocksNames = new String[states.length];
+		for(int i = 0; i < states.length; i++){
+			blocksNames[i] = ((ResourceLocation)Block.blockRegistry.getNameForObject(states[i])).toString();
+		}
+		return blocksNames;
+
 	}
 
 }
