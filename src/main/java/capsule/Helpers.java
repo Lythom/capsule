@@ -67,7 +67,7 @@ public class Helpers {
 
 					// don't copy excluded blocks
 					// if must copy
-					if (!excluded.contains(srcState.getBlock()) && (sourceIgnorePos == null || !(sourceIgnorePos.keySet().contains(srcPos) && sourceIgnorePos.get(srcPos).equals(srcState)))) {
+					if (!excluded.contains(srcState.getBlock()) && (sourceIgnorePos == null || !(sourceIgnorePos.keySet().contains(srcPos) && sourceIgnorePos.get(srcPos).equals(srcState.getBlock())))) {
 
 						BlockPos destPos = destOriginPos.add(x, y, z);
 						IBlockState destState = destWorld.getBlockState(destPos);
