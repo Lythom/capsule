@@ -63,15 +63,7 @@ public class MessageHandlerOnServer implements IMessageHandler<LabelEditedMessag
   void processMessage(LabelEditedMessageToServer message, EntityPlayerMP sendingPlayer)
   {
 	  ItemStack serverStack = sendingPlayer.getHeldItem();
-	  ItemStack clientStack = message.getStack();
-	  if(clientStack != null && serverStack != null 
-			  && clientStack.getItem() != null && serverStack.getItem() != null 
-			  && clientStack.getItem() instanceof CapsuleItem
-			  && serverStack.getItem() instanceof CapsuleItem
-			  && clientStack.getMetadata() == serverStack.getMetadata()
-			  && clientStack.getItemDamage() == serverStack.getItemDamage()
-			  && clientStack.getTagCompound() != null && serverStack.getTagCompound() !=null
-			  && clientStack.getTagCompound().equals(serverStack.getTagCompound())){
+	  if(serverStack.getItem() instanceof CapsuleItem){
 		  // of the player didn't swap item during ui opening
 		  CapsuleItem item = (CapsuleItem)serverStack.getItem();
 		  item.setLabel(serverStack, message.getLabel());

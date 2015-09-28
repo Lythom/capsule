@@ -64,8 +64,7 @@ public class LabelGui extends GuiScreen {
 			closeGui();
 		}
 		this.textInput.textboxKeyTyped(typedChar, keyCode);
-		ItemStack itemStack = this.getItemStack();
-		setLabel(itemStack, this.textInput.getText());
+		setCuurentItemLabel(this.textInput.getText());
 	}
 
 	@Override
@@ -103,8 +102,8 @@ public class LabelGui extends GuiScreen {
 		super.updateScreen();
 	}
 
-	public void setLabel(ItemStack stack, String label) {
-		CommonProxy.simpleNetworkWrapper.sendToServer(new LabelEditedMessageToServer(stack, label));
+	public void setCuurentItemLabel(String label) {
+		CommonProxy.simpleNetworkWrapper.sendToServer(new LabelEditedMessageToServer(label));
 	}
 	
 	public ItemStack getItemStack() {

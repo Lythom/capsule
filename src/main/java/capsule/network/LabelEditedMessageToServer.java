@@ -13,9 +13,8 @@ public class LabelEditedMessageToServer implements IMessage {
 	private String label;
 	private boolean messageIsValid;
 
-	public LabelEditedMessageToServer(ItemStack editedStack, String newLabel) {
+	public LabelEditedMessageToServer(String newLabel) {
 		setLabel(newLabel);
-		setStack(editedStack);
 		messageIsValid = true;
 	}
 
@@ -33,7 +32,6 @@ public class LabelEditedMessageToServer implements IMessage {
 	@Override
 	public void fromBytes(ByteBuf buf) {
 		try {
-			this.setStack(ByteBufUtils.readItemStack(buf));
 			this.setLabel(ByteBufUtils.readUTF8String(buf));
 
 			// these methods may also be of use for your code:
@@ -59,7 +57,6 @@ public class LabelEditedMessageToServer implements IMessage {
 	public void toBytes(ByteBuf buf) {
 		if (!messageIsValid)
 			return;
-		ByteBufUtils.writeItemStack(buf, this.getStack());
 		ByteBufUtils.writeUTF8String(buf, this.getLabel());
 
 		// these methods may also be of use for your code:
@@ -75,14 +72,6 @@ public class LabelEditedMessageToServer implements IMessage {
 
 	public boolean isMessageValid() {
 		return messageIsValid;
-	}
-
-	public ItemStack getStack() {
-		return stack;
-	}
-
-	public void setStack(ItemStack stack) {
-		this.stack = stack;
 	}
 
 	public String getLabel() {
