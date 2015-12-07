@@ -3,9 +3,10 @@
 [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
 
 ## Changelog ##
-**1.8-1.0.2 : Bugfix : capsule content messing up after server restart **
+**1.8-1.0.3 : Bugfixes : capsule content messing up after server restart + network error with large payload **
 
-* Bugfix : capsule content messing up after server restart (last available storage space was not retrieved correctly after server restart)
+* Fix : capsule content messing up after server restart (last available storage space was not retrieved correctly after server restart)
+* Fix : network payload error with big custome capsules
 
 ## Changelog ##
 **1.8-1.0.2 : Capsule labeling fix + configurable overridable and excluded blocks**
