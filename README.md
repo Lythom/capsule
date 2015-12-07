@@ -3,6 +3,11 @@
 [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
 
 ## Changelog ##
+**1.8-1.0.2 : Bugfix : capsule content messing up after server restart **
+
+* Bugfix : capsule content messing up after server restart (last available storage space was not retrieved correctly after server restart)
+
+## Changelog ##
 **1.8-1.0.2 : Capsule labeling fix + configurable overridable and excluded blocks**
 
 * Add overridable and excluded blocks in config files. You can now choose is you want this spawner to get captured =)
@@ -27,3 +32,9 @@ Items :
 Blocks :
 
 * captures base
+
+## In Progress ##
+* Capture entities
+* Have a capsule dimension template loaded
+* the spawn location is set again on bed deployment
+* nether star to move OP blocks (spawner, ender portal)

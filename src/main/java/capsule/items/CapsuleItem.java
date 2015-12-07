@@ -279,20 +279,22 @@ public class CapsuleItem extends Item {
 			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 			WorldServer playerWorld = (WorldServer) entityItem.worldObj;
 
-			// DEPLOY
-			// is linked, deploy
+
 			if (capsule.getTagCompound().hasKey("linkPosition")) {
 
+				// DEPLOY
+				// is linked, deploy
 				boolean deployed = deployCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
 				if (deployed && this.isOneUse(capsule)) {
 					entityItem.setDead();
 				}
 				return true;
 
-				// CAPTURE
-				// is not linked, capture
+				
 			} else {
 
+				// CAPTURE
+				// is not linked, capture
 				captureContentIntoCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
 				return true;
 			}
@@ -575,8 +577,9 @@ public class CapsuleItem extends Item {
 	private CapsuleSavedData getCapsulePlacer(WorldServer capsuleWorld) {
 		CapsuleSavedData capsulePlacer = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsulePositions");
 		if (capsulePlacer == null) {
-			capsulePlacer = new CapsuleSavedData("capsule");
+			capsulePlacer = new CapsuleSavedData("capsulePositions");
 			capsuleWorld.setItemData("capsulePositions", capsulePlacer);
+			capsulePlacer.setDirty(true);
 		}
 		return capsulePlacer;
 	}

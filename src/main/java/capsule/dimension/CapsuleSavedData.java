@@ -33,7 +33,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		for(Object keyObj : nbt.getKeySet()){
 			String key = String.valueOf(keyObj);
 			NBTTagCompound blockNBT = nbt.getCompoundTag(key);
-			BlockPos pos = new BlockPos(blockNBT.getInteger("x"), blockNBT.getInteger("y"), blockNBT.getInteger("Z"));
+			BlockPos pos = new BlockPos(blockNBT.getInteger("x"), blockNBT.getInteger("y"), blockNBT.getInteger("z"));
 			lastReservedPosition.put(Integer.parseInt(key), pos);
 		}
 	}
