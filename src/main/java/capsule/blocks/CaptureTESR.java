@@ -4,7 +4,10 @@ import java.awt.Color;
 
 import org.lwjgl.opengl.GL11;
 
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
@@ -40,55 +43,30 @@ public class CaptureTESR extends TileEntitySpecialRenderer {
 		int red = c.getRed();
 		int green = c.getGreen();
 		int blue = c.getBlue();
+		int alpha = c.getAlpha();
 
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-		GL11.glLineWidth(3.0F);
+		GL11.glLineWidth(2.0F);
 		GlStateManager.disableTexture2D();
 		GlStateManager.depthMask(false);
+		GlStateManager.disableLighting();
 		GlStateManager.pushMatrix();
 		GlStateManager.translate(relativeX, relativeY, relativeZ);
-		GlStateManager.color(red,green,blue, 0.5F);
-		
 
 		Tessellator tessellator = Tessellator.getInstance();
 		WorldRenderer worldrenderer = tessellator.getWorldRenderer();
 
 		AxisAlignedBB boundingBox = AxisAlignedBB.fromBounds(-extendSize - 0.01, 1.01, -extendSize - 0.01,
 				extendSize + 1.01, size + 1.01, extendSize + 1.01);
-
-		worldrenderer.startDrawing(GL11.GL_LINE_LOOP);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.minY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.minY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
-		tessellator.draw();
-
-		worldrenderer.startDrawing(GL11.GL_LINE_LOOP);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.maxY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.maxY, boundingBox.minZ);
-		tessellator.draw();
-
-		worldrenderer.startDrawing(GL11.GL_LINE_LOOP);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.maxY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.minY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.minY, boundingBox.maxZ);
-		worldrenderer.addVertex(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ);
-		tessellator.draw();
+		
+		RenderGlobal.drawOutlinedBoundingBox(boundingBox, red, green, blue, 255);
 
 		GlStateManager.popMatrix();
+		GlStateManager.enableLighting();
 		GlStateManager.depthMask(true);
 		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
 		GL11.glLineWidth(1.0F);
 	}
+	
+	
 
 }

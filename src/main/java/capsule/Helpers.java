@@ -18,6 +18,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 
@@ -243,7 +244,7 @@ public class Helpers {
 
 		for (int range = 1; range < maxRange; range++) {
 			@SuppressWarnings("unchecked")
-			Iterable<BlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
+			Iterable<MutableBlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
 					new BlockPos(i + range, j + range, k + range));
 			for (BlockPos pos : blockPoss) {
 				Block block = entityItem.worldObj.getBlockState(pos).getBlock();

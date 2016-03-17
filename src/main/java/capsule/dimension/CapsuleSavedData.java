@@ -8,6 +8,7 @@ import java.util.HashMap;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.world.WorldSavedData;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
@@ -75,7 +76,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 		BlockPos nextPosEnd = nextPos.add(sideLength+1, sideLength+1, sideLength+1);
 		@SuppressWarnings("unchecked")
-		Iterable<BlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);
+		Iterable<MutableBlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);
 		for (BlockPos pos : borders) {
 			if(pos.getX() == nextPos.getX() || pos.getX() == nextPosEnd.getX() || pos.getZ() == nextPos.getZ() || pos.getZ() == nextPosEnd.getZ()) {
 				capsuleWorld.setBlockState(pos, Blocks.bedrock.getDefaultState());

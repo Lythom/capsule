@@ -22,7 +22,7 @@ public class CapsuleCommand extends CommandBase {
 	 * @see net.minecraft.command.ICommand#getName()
 	 */
 	@Override
-	public String getName() {
+	public String getCommandName() {
 		return "capsule";
 	}
 
@@ -37,6 +37,7 @@ public class CapsuleCommand extends CommandBase {
 	public String getCommandUsage(ICommandSender sender) {
 		return "/capsule isReward true|false";
 	}
+	
 
 	/*
 	 * (non-Javadoc)
@@ -45,7 +46,7 @@ public class CapsuleCommand extends CommandBase {
 	 * ICommandSender, java.lang.String[])
 	 */
 	@Override
-	public void execute(ICommandSender sender, String[] args) throws CommandException {
+	public void processCommand(ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 2) {
 			// set the held item as reward (or not)
 			if ("isReward".equalsIgnoreCase(args[0])) {
