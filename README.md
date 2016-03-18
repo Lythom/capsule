@@ -35,6 +35,7 @@ Blocks :
 * captures base
 
 ## In Progress ##
+* OP capsule with netherstar
 * Capture entities
 * Have a capsule dimension template loaded
 * the spawn location is set again on bed deployment

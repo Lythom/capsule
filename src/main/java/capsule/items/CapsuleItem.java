@@ -159,6 +159,12 @@ public class CapsuleItem extends Item {
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
 		tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")){
+			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
+			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
+			+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt() ? " (" + StatCollector.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
+			
+		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
 			StatCollector.translateToLocal("capsule.tooltip.one_use").trim();
 		}
