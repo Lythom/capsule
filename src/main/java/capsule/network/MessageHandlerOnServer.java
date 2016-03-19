@@ -26,11 +26,11 @@ public class MessageHandlerOnServer implements IMessageHandler<LabelEditedMessag
    */
   public IMessage onMessage(final LabelEditedMessageToServer message, MessageContext ctx) {
     if (ctx.side != Side.SERVER) {
-      System.err.println("AirstrikeMessageToServer received on wrong side:" + ctx.side);
+      System.err.println("LabelEditedMessageToServer received on wrong side:" + ctx.side);
       return null;
     }
     if (!message.isMessageValid()) {
-      System.err.println("AirstrikeMessageToServer was invalid" + message.toString());
+      System.err.println("LabelEditedMessageToServer was invalid" + message.toString());
       return null;
     }
 

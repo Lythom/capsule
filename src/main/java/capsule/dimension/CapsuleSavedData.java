@@ -75,7 +75,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		// create a bedrock barrier around
 		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 		BlockPos nextPosEnd = nextPos.add(sideLength+1, sideLength+1, sideLength+1);
-		@SuppressWarnings("unchecked")
+
 		Iterable<MutableBlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);
 		for (BlockPos pos : borders) {
 			if(pos.getX() == nextPos.getX() || pos.getX() == nextPosEnd.getX() || pos.getZ() == nextPos.getZ() || pos.getZ() == nextPosEnd.getZ()) {

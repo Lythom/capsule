@@ -1,7 +1,6 @@
 package capsule.network;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 
@@ -9,7 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
  * This Network Message is sent from the client to the server
  */
 public class LabelEditedMessageToServer implements IMessage {
-	private ItemStack stack;
+
 	private String label;
 	private boolean messageIsValid;
 
