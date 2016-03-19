@@ -1,7 +1,6 @@
 package capsule.items;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +16,13 @@ import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import capsule.enchantments.Enchantments;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
@@ -31,7 +30,6 @@ import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -113,7 +111,7 @@ public class CapsuleItem extends Item {
 		if (!this.isLinked(stack)) {
 			return StatCollector.translateToLocal("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && stack.getTagCompound().getString("label") != "") {
-			return "“" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "”";
+			return "â€œ" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "â€�";
 		}
 		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
 	}
@@ -159,11 +157,16 @@ public class CapsuleItem extends Item {
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
 		tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")){
+		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
 			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
 			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
-			+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt() ? " (" + StatCollector.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
-			
+					+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt()
+							? " (" + StatCollector.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
+
+		}
+		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") && stack.getTagCompound().getByte("overpowered") == (byte)1) {
+			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.overpowered"));
+
 		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
 			StatCollector.translateToLocal("capsule.tooltip.one_use").trim();
@@ -180,19 +183,25 @@ public class CapsuleItem extends Item {
 
 		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
-		ironCapsule.setTagInfo("size", new NBTTagInt(3));
+		ironCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "ironCapsuleSize", "1").getInt()));
 
 		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
-		goldCapsule.setTagInfo("size", new NBTTagInt(5));
+		goldCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "goldCapsuleSize", "3").getInt()));
 
 		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
-		diamondCapsule.setTagInfo("size", new NBTTagInt(7));
+		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "diamondCapsuleSize", "5").getInt()));
+
+		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
+		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
+		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 
 		subItems.add(ironCapsule);
 		subItems.add(goldCapsule);
 		subItems.add(diamondCapsule);
+		subItems.add(opCapsule);
 
 	}
 
@@ -285,7 +294,6 @@ public class CapsuleItem extends Item {
 			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 			WorldServer playerWorld = (WorldServer) entityItem.worldObj;
 
-
 			if (capsule.getTagCompound().hasKey("linkPosition")) {
 
 				// DEPLOY
@@ -296,7 +304,6 @@ public class CapsuleItem extends Item {
 				}
 				return true;
 
-				
 			} else {
 
 				// CAPTURE
@@ -333,9 +340,9 @@ public class CapsuleItem extends Item {
 			// get free room to store
 			BlockPos dest = capsulePlacer.reserveNextAvailablePositionForSize(size);
 
-			// do the transportation. Can't fail because destination is always
-			// empty
-			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, Config.excludedBlocks, false, null, null, null);
+			// do the transportation. Can't fail because destination is always empty
+			
+			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule), false, null, null, null);
 
 			// register the link in the capsule
 			this.setState(capsule, STATE_LINKED);
@@ -423,9 +430,9 @@ public class CapsuleItem extends Item {
 
 			// do the transportation
 			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
-			List<String> outEntityBlocking = new ArrayList<String>(); 
-			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, Config.overridableBlocks, Config.excludedBlocks, this.isReward(capsule), null,
-					occupiedSpawnPositions, outEntityBlocking);
+			List<String> outEntityBlocking = new ArrayList<String>();
+			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule),
+					this.isReward(capsule), null, occupiedSpawnPositions, outEntityBlocking);
 			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 
 			if (result) {
@@ -443,16 +450,13 @@ public class CapsuleItem extends Item {
 				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
 				if (player != null) {
 					if (outEntityBlocking.size() > 0) {
-						player.addChatMessage(new ChatComponentText(
-								String.format(
-										StatCollector.translateToLocal("capsule.error.cantMergeWithDestinationEntity").trim(),
-										StringUtils.join(outEntityBlocking, ", ")
-								)
-						));
+						player.addChatMessage(
+								new ChatComponentText(String.format(StatCollector.translateToLocal("capsule.error.cantMergeWithDestinationEntity").trim(),
+										StringUtils.join(outEntityBlocking, ", "))));
 					} else {
 						player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.cantMergeWithDestination").trim()));
 					}
-					
+
 				}
 			}
 		}
@@ -473,8 +477,8 @@ public class CapsuleItem extends Item {
 		int size = getSize(itemStackIn);
 
 		// do the transportation
-		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, Config.excludedBlocks, false, this.getOccupiedSourcePos(itemStackIn),
-				null, null);
+		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(itemStackIn), false,
+				this.getOccupiedSourcePos(itemStackIn), null, null);
 
 		this.setState(itemStackIn, STATE_LINKED);
 		itemStackIn.getTagCompound().removeTag("spawnPosition");
@@ -482,6 +486,14 @@ public class CapsuleItem extends Item {
 
 	public void setState(ItemStack stack, int state) {
 		stack.setItemDamage(state);
+	}
+	
+	public List<Block> getExcludedBlocs(ItemStack stack) {
+		List<Block> excludedBlocks = Config.excludedBlocks;
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") &&  stack.getTagCompound().getByte("overpowered") == ((byte)1)){
+			excludedBlocks = Config.opExcludedBlocks;
+		}
+		return excludedBlocks;
 	}
 
 	/**

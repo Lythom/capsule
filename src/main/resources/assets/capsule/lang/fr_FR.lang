@@ -12,6 +12,7 @@ capsule.tooltip.crafttorepair=Placer dans une grille de craft pour réparer
 capsule.tooltip.one_use=Cette capsule sera détruite après déploiement
 capsule.tooltip.upgraded=Améliorations
 capsule.tooltip.maxedout=Au max
+capsule.tooltip.overpowered=Surpuissante
 capsule.error.noCaptureBase=Il n'y a pas de socle de capture a proximité.
 capsule.error.cantMergeWithDestination=Impossible de fusionner avec l'espace de destination, un bloc empêche le déploiement.
 capsule.error.cantMergeWithDestinationEntity=Impossible de déployer : %s est en travers du chemin !

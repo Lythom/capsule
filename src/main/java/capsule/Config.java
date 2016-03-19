@@ -9,4 +9,5 @@ public class Config {
 	public static Configuration config = null;
 	public static List<Block> excludedBlocks;
 	public static List<Block> overridableBlocks;
+	public static List<Block> opExcludedBlocks;
 }

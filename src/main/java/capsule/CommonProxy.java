@@ -10,13 +10,12 @@ import capsule.items.CapsuleItemsRegistrer;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.network.MessageHandlerOnServer;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -45,16 +44,17 @@ public class CommonProxy {
 	}
 
 	public void init(FMLInitializationEvent event) {
-		FMLCommonHandler.instance().bus().register(Enchantments.recallEnchant);
+		MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
 	}
 
 	public void postInit(FMLPostInitializationEvent event) {
 		CapsuleItemsRegistrer.registerRecipes();
 		CapsuleBlocksRegistrer.registerRecipes();
 		
+		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.bedrock }));
-		excludedBlocksProp.comment = "List of block ids that will never be captured. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner";
+				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.bedrock, Blocks.mob_spawner, Blocks.end_portal, Blocks.end_portal_frame }));
+		excludedBlocksProp.comment = "List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner";
 		Block[] exBlocks = null;
 		try {
 			exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
@@ -64,7 +64,22 @@ public class CommonProxy {
 		if (exBlocks != null) {
 			Config.excludedBlocks = Arrays.asList(exBlocks);
 		}
-
+		
+		// OP Excluded
+		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",
+				Helpers.serializeBlockArray(new Block[] { Blocks.air }));
+		opExcludedBlocksProp.comment = "List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner";
+		Block[] opExBlocks = null;
+		try {
+			opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
+		} catch (NumberInvalidException e) {
+			e.printStackTrace();
+		}
+		if (opExBlocks != null) {
+			Config.opExcludedBlocks = Arrays.asList(opExBlocks);
+		}
+		
+		// Overridable
 		Property overridableBlocksProp = Config.config.get("Balancing", "overridableBlocks",
 				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.water, Blocks.leaves,
 						Blocks.leaves2, Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower,

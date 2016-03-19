@@ -12,6 +12,7 @@ capsule.tooltip.crafttorepair=Положите в сетку крафта, чт�
 capsule.tooltip.one_use=Это капсула будет уничтожена после открытия.
 capsule.tooltip.upgraded=Upgrades
 capsule.tooltip.maxedout=Maxed out
+capsule.tooltip.overpowered=Overpowered
 capsule.error.noCaptureBase=Не найдено ни одной «Основа захвата».
 capsule.error.cantMergeWithDestination=Не возможно объединить с местом назначения, существо или блок предотвращает размещению.
 capsule.error.cantMergeWithDestinationEntity=Не возможно объединить с местом назначения, существо или блок предотвращает размещению (%s).
