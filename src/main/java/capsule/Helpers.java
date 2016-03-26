@@ -185,7 +185,6 @@ public class Helpers {
 		return true;
 	}
 
-	@SuppressWarnings({ "unchecked" })
 	public static BlockPos findBottomBlock(EntityItem entityItem, List<Block> excludedBlocks) {
 		if (entityItem.getEntityWorld() == null)
 			return null;
@@ -217,7 +216,6 @@ public class Helpers {
 		double j = entityItem.posY;
 		double k = entityItem.posZ;
 
-		@SuppressWarnings("unchecked")
 		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i - 1, j - 1, k - 1), new BlockPos(i + 1, j + 1, k + 1));
 		BlockPos closest = null;
 		double closestDistance = 1000;
@@ -243,7 +241,6 @@ public class Helpers {
 		double k = entityItem.posZ;
 
 		for (int range = 1; range < maxRange; range++) {
-			@SuppressWarnings("unchecked")
 			Iterable<MutableBlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
 					new BlockPos(i + range, j + range, k + range));
 			for (BlockPos pos : blockPoss) {

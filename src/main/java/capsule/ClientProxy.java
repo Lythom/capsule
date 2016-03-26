@@ -11,9 +11,9 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -25,7 +25,7 @@ public class ClientProxy extends CommonProxy {
 		String modid = Main.MODID;
 
 		// Item renderer
-		ModelBakery.addVariantName(CapsuleItemsRegistrer.capsule, modid+":capsule_empty", modid+":capsule_activated", modid+":capsule_linked", modid+":capsule_deployed", modid+":capsule_empty_activated", modid+":capsule_one_use", modid+":capsule_one_use_activated");
+		ModelBakery.registerItemVariants(CapsuleItemsRegistrer.capsule, new ResourceLocation(modid+":capsule_empty"), new ResourceLocation(modid+":capsule_activated"), new ResourceLocation(modid+":capsule_linked"), new ResourceLocation(modid+":capsule_deployed"), new ResourceLocation(modid+":capsule_empty_activated"), new ResourceLocation(modid+":capsule_one_use"), new ResourceLocation(modid+":capsule_one_use_activated"));
 	}
 	
 	public void init(FMLInitializationEvent event) {
@@ -39,9 +39,10 @@ public class ClientProxy extends CommonProxy {
 		// for the undeploy preview
 		MinecraftForge.EVENT_BUS.register(cph);
 		// for the capture preview
-		FMLCommonHandler.instance().bus().register(cph);
+		MinecraftForge.EVENT_BUS.register(cph);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void registerBlockRenderer() {
 		ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
 		mesher.register(Item.getItemFromBlock(CapsuleBlocksRegistrer.blockCapsuleMarker), 0, new ModelResourceLocation(Main.MODID+":capsulemarker", "inventory"));

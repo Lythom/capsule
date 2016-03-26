@@ -3,14 +3,12 @@
 [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
 
 ## Changelog ##
-**1.8-1.0.4 : Migrate to 1.8.9 + more configuration options **
+**1.8-1.1.0 : Migrate to 1.8.9 + more configuration options **
 
 * Add item "Capsule : overpowered" crafted with a nether star instead of ender pearl. Overpowered capsule as a different "excluded blocks" config (to allow more blocks to be captured).
 * Add a recipe to upgrades empty capsules capacity (surround with 8 ender pearls). Number of upgrades can be configured, default 5.
 * Add Configuration options for default capsules sizes
 
-* Fix : capsule content messing up after server restart (last available storage space was not retrieved correctly after server restart)
-* Fix : network payload error with big custome capsules
 
 **1.8-1.0.3 : Bugfixes : capsule content messing up after server restart + network error with large payload **
 
@@ -44,6 +42,3 @@ Blocks :
 
 ## Planned ##
 * Reward capsules holding the content as NBT data rather than in the dimension
-* Capture entities
-* Have a capsule dimension template chunk loaded
-* the spawn location is set again on bed deployment

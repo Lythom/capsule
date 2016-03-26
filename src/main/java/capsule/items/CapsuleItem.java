@@ -111,7 +111,7 @@ public class CapsuleItem extends Item {
 		if (!this.isLinked(stack)) {
 			return StatCollector.translateToLocal("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && stack.getTagCompound().getString("label") != "") {
-			return "â€œ" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "â€�";
+			return "“" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "”";
 		}
 		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
 	}

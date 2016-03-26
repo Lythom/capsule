@@ -1,0 +1,47 @@
+Modpack makers
+I got a few things for you :
+The mod is shipped with 3 sizes of capsules (3x3x3, 5x5x5, 7x7x7) but you can create custom capsule recipes using you favorite recipe injection mod by configuring it's meta + NBTCompoundTag.
+This includes a special "Reward" mode, wich is basically a one-use capsule that duplicate source content. The content will not be teleported but duplicated : several identicial reward caspules can be used by players to retrieve the reward.
+How to - quick customization
+Create a custom capsule by exemple
+Tip: you can convert RGB color hexa using http://www.binaryhexconverter.com/hex-to-decimal-converter. ex: FF0000 will give you the decimal value for red (16711680).
+ # 17x17x17 black Empty Capsule with Recall I
+/give @p capsule:capsule 1 0 {color:0, size:17, ench:{id:101,lvl:1}}
+ # 9x9x9 green labeled, black Empty Capsule, named "Redstone Capsule". Label and name will appear once some content is captured.
+/give @p capsule:capsule 1 0 {color:16711680, size:9, label:"Redstone", display:{color:65280}}
+ # 69x69x69 black labeled, white Empty Capsule with Recall I. Label will appear once some content is captured.
+/give @p capsule:capsule 1 0 {color:16777215, size:69, ench:{id:101,lvl:1}, display:{color:0}}
+Create a reward capsule
+Spawn or craft an empty capsule (exemples of custom empty capsule in the previous paragraph)
+Capture content on a capture base
+Craft a Recovery capsule using your capsule and a glass_bottle
+With the Recovery capsule in hand, use the command /capsule isReward true
+If it worked, the capsule should be name "One Use <label> Capsule". Use this item as reward.
+Capsule item full documentation
+Capsule item id : "capsule:capsule"
+Capsule item Meta:
+0 - Empty capsule (The state you want to use in the first place for a custom capsule with standard behaviour)
+5 - One-Use Empty capsule (The state you want to use in the first place while creating for a custom recovery or reward capsule with one-use behaviour)
+Capsule item other Meta, for information :
+1 - Empty-Activated capsule (internal state, do not create capsule with this state)
+2 - Linked capsule (means that the capsule has a content, use only if you know what you are doing)
+3 - Deployed capsule (means that the capsule has a deployed content, use only if you know what you are doing)
+4 - Linked-Activated capsule (internal state, do not create capsule with this state)
+6 - One-Use-Activated capsule (internal state, do not create capsule with this state)
+Capsule NBTTagCompound :
+{
+    color, #Color of the capsule material. Will affect capsule item color and capture preview wireframes color. RGB 24 bits integer. Ex: 16711680.
+    size, #Size of the capsule, must be an odd number between 1 and 69 included. There is a hard limit to prevent numbers higher than 69 and even numbers. ex: 17.
+    label, #Label of the capsule. The capsule will indicate "Unlabeled" in the name if not existing, or will use the value otherwise. Ex: "AnytimeLadder".
+    ench: { # Vanilla enchant format for items (compound tag with id and lvl). 101 is the Recall enchant and it has only one level.
+        id: 101,
+        lvl: 1
+    },
+    display: { # Vanilla way of indicating a died item. Color of the label. Will affect capsule item label color only. RGB 24 bits integer. Ex: 16711680.
+        color
+    },
+    oneUse, # If the capsule should be destroyed once deployed. If true, the capsule will be considered as a Recovery capsule. 0 or ommited for false, 1 for true.
+    isReward # If the capsule should deploy a duplicated content. If true, the capsule will be considered as a Reward capsule. Won't work if the capsule is not oneUse as well. 0 or ommited for false, 1 for true.
+}
+Other Tags are used as internal state. To have them properly created on your item, you should simply always spawn an empty capsule, then have it in the state you want by using it (capturing, deploying, etc.).
+ 

@@ -1,2 +1,2 @@
-SET GRADLE_OPTS="-Dfile.encoding=utf-8"
+SET GRADLE_OPTS="-Dfile.encoding=UTF-8"
 gradlew build
