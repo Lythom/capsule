@@ -76,7 +76,8 @@ public class Helpers {
 						// store the dest block if it's overridable
 						if (air.equals(destState.getBlock()) || overridable.contains(destState.getBlock())) {
 							// copy block without update
-							destWorld.setBlockState(destPos, srcState, 4);
+							destWorld.setBlockState(destPos, srcState, 7);
+							destWorld.notifyNeighborsOfStateChange(destPos, srcState.getBlock());
 
 							// check tileEntity
 							TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
@@ -94,18 +95,28 @@ public class Helpers {
 
 						if (!keepSource) {
 							sourceWorld.removeTileEntity(srcPos);
-							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 4);
+							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 7);
 						}
 
 					} // end if must copy
 				}
 			}
 		}
-
-		// mark everything for update
-		// update surrounding blocks as well
-		sourceWorld.markBlockRangeForRenderUpdate(srcOriginPos.add(-1, -1, -1), srcOriginPos.add(size+1, size+1, size+1));
-		destWorld.markBlockRangeForRenderUpdate(destOriginPos.add(-1, -1, -1), destOriginPos.add(size+1, size+1, size+1));
+		
+		// attempt to TP armor stand. Not working for now : they don't land on the right position, and it's really CPU intensive
+//		List<EntityArmorStand> armorstands = sourceWorld.getEntitiesWithinAABB(
+//			EntityArmorStand.class, 
+//			new AxisAlignedBB(
+//				srcOriginPos.getX(), srcOriginPos.getY(), srcOriginPos.getZ(), 
+//				srcOriginPos.getX() + size + 1, srcOriginPos.getY() + size + 1, srcOriginPos.getZ() + size + 1
+//			)
+//		);
+//		
+//		for(EntityArmorStand armorstand : armorstands){
+//			BlockPos relativePos = armorstand.getPosition().add(-srcOriginPos.getX(), -srcOriginPos.getY(), -srcOriginPos.getZ());
+//			armorstand.changeDimension(destWorld.provider.getDimension());
+//			armorstand.setPositionAndUpdate(destOriginPos.getX() + relativePos.getX(), destOriginPos.getY() + relativePos.getY(), destOriginPos.getZ() + relativePos.getZ());
+//		}
 
 		return true;
 
