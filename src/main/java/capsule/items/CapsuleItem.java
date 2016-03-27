@@ -15,7 +15,6 @@ import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -38,7 +37,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 
-public class CapsuleItem extends Item implements IItemColor {
+public class CapsuleItem extends Item {
 
 	public final static int STATE_EMPTY = 0;
 	public final static int STATE_EMPTY_ACTIVATED = 4;
@@ -113,7 +112,7 @@ public class CapsuleItem extends Item implements IItemColor {
 			return "";
 		if (!this.isLinked(stack)) {
 			return I18n.translateToLocal("item.capsule.content_empty");
-		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && stack.getTagCompound().getString("label") != "") {
+		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
 			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
 		}
 		return I18n.translateToLocal("item.capsule.content_unlabeled");
@@ -463,6 +462,10 @@ public class CapsuleItem extends Item implements IItemColor {
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {
 		// store again
 		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
+		if (capsuleWorld == null) {
+			System.err.println("Can't get Capsule World from DimensionManager");
+			return;
+		}
 		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
 
 		NBTTagCompound linkPos = itemStackIn.getTagCompound().getCompoundTag("linkPosition");
@@ -519,7 +522,6 @@ public class CapsuleItem extends Item implements IItemColor {
 	/**
 	 * renderPass 0 => The material color renderPass 1 => The label color
 	 */
-	@Override
 	public int getColorFromItemstack(ItemStack stack, int renderPass) {
 		int color = 0xFFFFFF;
 

@@ -96,7 +96,7 @@ public class CapsulePreviewHandler {
 			size = capsule.getTagCompound().getInteger("size");
 		}
 		int extendSize = (size - 1) / 2;
-		IItemColor capsuleItem = (IItemColor)capsule.getItem();
+		CapsuleItem capsuleItem = (CapsuleItem)capsule.getItem();
 		int color = capsuleItem.getColorFromItemstack(capsule, 0);
 
 		CaptureTESR.drawCaptureZone(
