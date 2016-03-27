@@ -19,7 +19,6 @@ import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
@@ -41,9 +40,13 @@ public class CommonProxy {
 		// network stuff
 		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
 		simpleNetworkWrapper.registerMessage(MessageHandlerOnServer.class, LabelEditedMessageToServer.class, LABEL_EDITED_ID, Side.SERVER);
+		
+		// register dimension on both client and server
+		CapsuleDimensionRegistrer.registerDimension();
 	}
 
 	public void init(FMLInitializationEvent event) {
+		
 		MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
 	}
 
@@ -97,10 +100,6 @@ public class CommonProxy {
 		}
 		
 		Config.config.save();
-	}
-
-	public void serverAboutToStart(FMLServerAboutToStartEvent evt) {
-		CapsuleDimensionRegistrer.registerDimension();
 	}
 
 	public void serverStarting(FMLServerStartingEvent e) {

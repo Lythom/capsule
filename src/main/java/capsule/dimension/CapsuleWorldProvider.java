@@ -22,6 +22,7 @@ public class CapsuleWorldProvider extends WorldProvider {
 		BiomeGenBase.BiomeProperties props = new BiomeGenBase.BiomeProperties("Capsule Biome");
 		props.setRainDisabled();
 		props.setTemperature(-100);
+		props.setRainfall(0);
 		
 		super.worldChunkMgr = new BiomeProviderSingle(new CapsuleBiomeGen(props));
 	}
@@ -102,7 +103,7 @@ public class CapsuleWorldProvider extends WorldProvider {
 	@Override
 	public boolean canDoLightning( Chunk chunk )
 	{
-		return true;
+		return false;
 	}
 	
 	@Override
@@ -113,6 +114,14 @@ public class CapsuleWorldProvider extends WorldProvider {
 	@Override
 	public DimensionType getDimensionType() {
 		return CapsuleDimensionRegistrer.capsuleDimension;
+	}
+	
+	@Override
+	protected void generateLightBrightnessTable() {
+        for (int i = 0; i <= 15; ++i)
+        {
+            this.lightBrightnessTable[i] = 8;
+        }
 	}
 
 }
