@@ -7,7 +7,6 @@ import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -33,10 +32,7 @@ public class CapsulePreviewHandler {
 		if (event.player instanceof EntityPlayerSP && event.phase.equals(Phase.START)) {
 			EntityPlayerSP player = (EntityPlayerSP) event.player;
 			
-			boolean mainHandPreview = tryPreviewCapture(player, player.getHeldItemMainhand());
-			if (!mainHandPreview) {
-				tryPreviewCapture(player, player.getHeldItemOffhand());
-			}
+;			tryPreviewCapture(player, player.getHeldItemMainhand());
 		}
 	}
 
@@ -71,7 +67,6 @@ public class CapsulePreviewHandler {
 		Minecraft mc = Minecraft.getMinecraft();
 		if(mc.thePlayer != null) {
 			tryPreviewRecall(mc.thePlayer.getHeldItemMainhand());
-			tryPreviewRecall(mc.thePlayer.getHeldItemOffhand());
 		}
 	}
 
