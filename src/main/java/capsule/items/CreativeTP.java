@@ -7,6 +7,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.Teleporter;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -25,7 +28,7 @@ public class CreativeTP extends Item {
 	}
 
 	@Override
-	public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
+	public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
 
 		EntityPlayerMP playerMP = null;
 		if(playerIn instanceof EntityPlayerMP) {
@@ -36,15 +39,15 @@ public class CreativeTP extends Item {
 				overworldPos.setInteger("x", playerIn.getPosition().getX());
 				overworldPos.setInteger("y", playerIn.getPosition().getY());
 				overworldPos.setInteger("z", playerIn.getPosition().getZ());
-				playerMP.mcServer.getConfigurationManager().transferPlayerToDimension(playerMP, CapsuleDimensionRegistrer.dimensionId, new CTPTeleporter((WorldServer)worldIn,-1, 1, -1));
+				playerMP.mcServer.getPlayerList().transferPlayerToDimension(playerMP, CapsuleDimensionRegistrer.dimensionId, new CTPTeleporter((WorldServer)worldIn,-1, 1, -1));
 			} else {
 				NBTTagCompound overworldPos = itemStackIn.getSubCompound("overworldPos", true);
-				playerMP.mcServer.getConfigurationManager().transferPlayerToDimension(playerMP, 0, new CTPTeleporter((WorldServer)worldIn,overworldPos.getInteger("x"), overworldPos.getInteger("y"), overworldPos.getInteger("z")));
+				playerMP.mcServer.getPlayerList().transferPlayerToDimension(playerMP, 0, new CTPTeleporter((WorldServer)worldIn,overworldPos.getInteger("x"), overworldPos.getInteger("y"), overworldPos.getInteger("z")));
 			}
 			
 		}
 
-		return itemStackIn;
+		return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemStackIn);
 	}
 
 	static class CTPTeleporter extends Teleporter

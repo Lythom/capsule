@@ -1,11 +1,12 @@
 package capsule.dimension;
 
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.biome.BiomeGenBase;
-import net.minecraft.world.biome.WorldChunkManagerHell;
+import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.chunk.IChunkGenerator;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -18,24 +19,17 @@ public class CapsuleWorldProvider extends WorldProvider {
 	@Override
 	protected void registerWorldChunkManager()
 	{
-		int biomeId = this.findAvailableBiomeId();
-		super.worldChunkMgr = new WorldChunkManagerHell( new CapsuleBiomeGen(biomeId), 0.0F);
-	}
-
-	private int findAvailableBiomeId() {
-		BiomeGenBase[] biomes = BiomeGenBase.getBiomeGenArray();
-		for( int i = 0; i < biomes.length; i++ ) {
-			if( biomes[i] == null ){
-				return i;
-			}
-		}
-		return -2;
+		BiomeGenBase.BiomeProperties props = new BiomeGenBase.BiomeProperties("Capsule Biome");
+		props.setRainDisabled();
+		props.setTemperature(-100);
+		
+		super.worldChunkMgr = new BiomeProviderSingle(new CapsuleBiomeGen(props));
 	}
 
 	@Override
-	public IChunkProvider createChunkGenerator()
+	public IChunkGenerator createChunkGenerator()
 	{
-		return new CapsuleChunkProvider( this.worldObj, 0 );
+		return new CapsuleChunkProvider(this.worldObj);
 	}
 
 	@Override
@@ -115,15 +109,10 @@ public class CapsuleWorldProvider extends WorldProvider {
 	public boolean canDoRainSnowIce(Chunk chunk) {
 		return false;
 	}
-
+	
 	@Override
-	public String getDimensionName() {
-		return "Capsule dimension";
-	}
-
-	@Override
-	public String getInternalNameSuffix() {
-		return null;
+	public DimensionType getDimensionType() {
+		return CapsuleDimensionRegistrer.capsuleDimension;
 	}
 
 }

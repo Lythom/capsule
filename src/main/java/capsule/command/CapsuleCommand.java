@@ -9,6 +9,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * @author Lythom
@@ -38,7 +39,6 @@ public class CapsuleCommand extends CommandBase {
 		return "/capsule isReward true|false";
 	}
 	
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -46,14 +46,14 @@ public class CapsuleCommand extends CommandBase {
 	 * ICommandSender, java.lang.String[])
 	 */
 	@Override
-	public void processCommand(ICommandSender sender, String[] args) throws CommandException {
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length == 2) {
 			// set the held item as reward (or not)
 			if ("isReward".equalsIgnoreCase(args[0])) {
 				boolean isReward = Boolean.parseBoolean(args[1]);
 				EntityPlayer player = getCommandSenderAsPlayer(sender);
 				if (player != null) {
-					ItemStack heldItem = player.getHeldItem();
+					ItemStack heldItem = player.getHeldItemMainhand();
 					if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 						heldItem.getTagCompound().setBoolean("isReward", isReward);
 					}

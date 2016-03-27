@@ -32,7 +32,6 @@ public class LabelGui extends GuiScreen {
 		this.player = player;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void initGui() {
 		buttonList.clear();
@@ -107,7 +106,7 @@ public class LabelGui extends GuiScreen {
 	}
 	
 	public ItemStack getItemStack() {
-		return this.player.getHeldItem();
+		return this.player.getHeldItemMainhand();
 	}
 
 	/**

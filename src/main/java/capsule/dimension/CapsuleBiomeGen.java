@@ -10,12 +10,10 @@ import net.minecraft.world.biome.BiomeGenBase;
  *
  */
 public class CapsuleBiomeGen extends BiomeGenBase {
-	public CapsuleBiomeGen(int id) {
-		super(id);
-		this.setBiomeName("Capsule Biome");
-
-		this.setDisableRain();
-		this.temperature = -100;
+	
+	public CapsuleBiomeGen(BiomeGenBase.BiomeProperties props) {
+		
+		super(props);
 
 		this.theBiomeDecorator.treesPerChunk = 0;
 		this.theBiomeDecorator.flowersPerChunk = 0;

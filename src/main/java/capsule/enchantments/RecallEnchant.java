@@ -7,6 +7,7 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
@@ -17,11 +18,9 @@ import net.minecraftforge.fml.relauncher.Side;
 
 public class RecallEnchant extends Enchantment {
 
-	protected RecallEnchant(int enchID, ResourceLocation enchName, int enchWeight, EnumEnchantmentType enchType) {
-		super(enchID, enchName, enchWeight, enchType);
+	protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnumEnchantmentType enchType) {
+		super(rarity, enchType, EntityEquipmentSlot.values());
 		this.setName("recall");
-
-		Enchantment.addToBookList(this);
 	}
 
 	@Override

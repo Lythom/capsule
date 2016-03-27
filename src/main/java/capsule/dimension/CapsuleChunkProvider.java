@@ -1,21 +1,25 @@
 package capsule.dimension;
 
-import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IChunkProvider;
-import net.minecraft.world.gen.ChunkProviderGenerate;
+import java.util.Collections;
+import java.util.List;
 
-public class CapsuleChunkProvider extends ChunkProviderGenerate {
+import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.BiomeGenBase.SpawnListEntry;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.IChunkGenerator;
+
+public class CapsuleChunkProvider implements IChunkGenerator {
 
 	public static final int SQUARE_CHUNK_SIZE = 256;
 	public static final int CHUNK_SIZE = 16;
 
 	final World world;
 
-	public CapsuleChunkProvider(World world, long i) {
-		super(world, i, false, null);
+	public CapsuleChunkProvider(World world) {
 		this.world = world;
 	}
 
@@ -39,26 +43,28 @@ public class CapsuleChunkProvider extends ChunkProviderGenerate {
 	}
 
 	@Override
-	public void populate(IChunkProvider par1iChunkProvider, int par2, int par3) {
-
-	}
-
-	@Override
-	public boolean unloadQueuedChunks() {
-		return true;
-	}
-	
-	@Override
 	public void recreateStructures(Chunk p_180514_1_, int p_180514_2_, int p_180514_3_) {
-
+		
 	}
 	
-	/**
-	 * Generate structures
-	 */
 	@Override
-	public boolean func_177460_a(IChunkProvider p_177460_1_, Chunk p_177460_2_, int p_177460_3_, int p_177460_4_) {
+	public boolean generateStructures(Chunk chunkIn, int x, int z) {
 		return false;
 	}
+	
+	@Override
+	public List<SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) {
+		return Collections.<BiomeGenBase.SpawnListEntry>emptyList();
+	}
+	
+	@Override
+	public BlockPos getStrongholdGen(World worldIn, String structureName, BlockPos position) {
+		return null;
+	}
 
+	@Override
+	public void populate(int x, int z) {
+				
+	}
+	
 }

@@ -7,8 +7,8 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemModelMesher;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.model.ModelBakery;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
@@ -42,7 +42,6 @@ public class ClientProxy extends CommonProxy {
 		MinecraftForge.EVENT_BUS.register(cph);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void registerBlockRenderer() {
 		ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
 		mesher.register(Item.getItemFromBlock(CapsuleBlocksRegistrer.blockCapsuleMarker), 0, new ModelResourceLocation(Main.MODID+":capsulemarker", "inventory"));

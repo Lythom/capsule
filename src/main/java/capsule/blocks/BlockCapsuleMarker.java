@@ -7,11 +7,12 @@ import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -33,7 +34,7 @@ public class BlockCapsuleMarker extends BlockContainer {
 		super(materialIn);
 		this.setDefaultState(this.blockState.getBaseState().withProperty(PROJECTING, Boolean.valueOf(false)));
 		this.setUnlocalizedName(unlocalizedName);
-		this.setHardness(20);
+		this.setHardness(5);
 		this.setResistance(1000);
 		this.setHarvestLevel("pickaxe", 0);
 
@@ -58,8 +59,8 @@ public class BlockCapsuleMarker extends BlockContainer {
 		return tec != null && tec.getTileData() != null && tec.getTileData().getInteger("size") > 0;
 	}
 
-	protected BlockState createBlockState() {
-		return new BlockState(this, new IProperty[] { PROJECTING });
+	protected BlockStateContainer createBlockState() {
+		return new BlockStateContainer(this, new IProperty[] { PROJECTING });
 	}
 
 	public int getMetaFromState(IBlockState state) {
@@ -67,23 +68,13 @@ public class BlockCapsuleMarker extends BlockContainer {
 	}
 
 	@SideOnly(Side.CLIENT)
-	public EnumWorldBlockLayer getBlockLayer() {
-		return EnumWorldBlockLayer.CUTOUT_MIPPED;
+	public BlockRenderLayer getBlockLayer() {
+		return BlockRenderLayer.CUTOUT_MIPPED;
 	}
 
 	@Override
-	public boolean isOpaqueCube() {
-		return false;
-	}
-
-	@Override
-	public boolean isFullCube() {
-		return false;
-	}
-
-	@Override
-	public int getRenderType() {
-		return 3;
+	public EnumBlockRenderType getRenderType(IBlockState state) {
+		return EnumBlockRenderType.MODEL;
 	}
 
 }

@@ -54,7 +54,7 @@ public class CommonProxy {
 		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
 				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.bedrock, Blocks.mob_spawner, Blocks.end_portal, Blocks.end_portal_frame }));
-		excludedBlocksProp.comment = "List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner";
+		excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] exBlocks = null;
 		try {
 			exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
@@ -68,7 +68,7 @@ public class CommonProxy {
 		// OP Excluded
 		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",
 				Helpers.serializeBlockArray(new Block[] { Blocks.air }));
-		opExcludedBlocksProp.comment = "List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner";
+		opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] opExBlocks = null;
 		try {
 			opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
@@ -84,7 +84,7 @@ public class CommonProxy {
 				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.water, Blocks.leaves,
 						Blocks.leaves2, Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower,
 						Blocks.snow_layer, Blocks.brown_mushroom, Blocks.red_mushroom }));
-		overridableBlocksProp.comment = "List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.";
+		overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 		
 		Block[] ovBlocks = null;
 		try {

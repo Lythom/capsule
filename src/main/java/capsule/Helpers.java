@@ -16,10 +16,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.WorldServer;
 
 public class Helpers {
@@ -104,19 +104,8 @@ public class Helpers {
 
 		// mark everything for update
 		// update surrounding blocks as well
-		for (int y = size; y >= -1; y--) {
-			for (int x = -1; x < size+1; x++) {
-				for (int z = -1; z < size+1; z++) {
-
-					BlockPos srcPos = srcOriginPos.add(x, y, z);
-					BlockPos destPos = destOriginPos.add(x, y, z);
-
-					sourceWorld.markBlockForUpdate(srcPos);
-					destWorld.markBlockForUpdate(destPos);
-
-				}
-			}
-		}
+		sourceWorld.markBlockRangeForRenderUpdate(srcOriginPos.add(-1, -1, -1), srcOriginPos.add(size+1, size+1, size+1));
+		destWorld.markBlockRangeForRenderUpdate(destOriginPos.add(-1, -1, -1), destOriginPos.add(size+1, size+1, size+1));
 
 		return true;
 
@@ -160,7 +149,7 @@ public class Helpers {
 					@SuppressWarnings("rawtypes")
 					List entities = destWorld.getEntitiesWithinAABB(
 							EntityLivingBase.class,
-							AxisAlignedBB.fromBounds(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() +1, destPos.getY()+1, destPos.getZ()+1)
+							new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() +1, destPos.getY()+1, destPos.getZ()+1)
 					);
 
 					// if destination is occupied, and source is neither

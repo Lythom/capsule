@@ -6,10 +6,10 @@ import java.util.List;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -43,15 +43,15 @@ public class TileEntityCapture extends TileEntity {
 	// When the world loads from disk, the server needs to send the TileEntity information to the client
 	//  it uses getDescriptionPacket() and onDataPacket() to do this
 	@Override
-	public Packet getDescriptionPacket() {
+	public Packet<?> getDescriptionPacket() {
 		NBTTagCompound nbtTagCompound = new NBTTagCompound();
 		writeToNBT(nbtTagCompound);
 		int metadata = getBlockMetadata();
-		return new S35PacketUpdateTileEntity(this.pos, metadata, nbtTagCompound);
+		return new SPacketUpdateTileEntity(this.pos, metadata, nbtTagCompound);
 	}
 
 	@Override
-	public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+	public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
 		readFromNBT(pkt.getNbtCompound());
 	}
 
@@ -107,7 +107,7 @@ public class TileEntityCapture extends TileEntity {
 		BlockPos source = this.getPos().add(-exdendLength, 1, -exdendLength);
 		BlockPos end = source.add(size, size, size);
 
-		AxisAlignedBB box = AxisAlignedBB.fromBounds(source.getX(), source.getY(), source.getZ(), end.getX(),
+		AxisAlignedBB box = new AxisAlignedBB(source.getX(), source.getY(), source.getZ(), end.getX(),
 				end.getY(), end.getZ());
 
 		return box;

@@ -29,19 +29,19 @@ public class CapsuleItemsRegistrer {
 	public static void registerRecipes() {
 
 		Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
-		ironCapsuleSize.comment = "Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1";
+		ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 
 		Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "3");
-		goldCapsuleSize.comment = "Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3";
+		goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
 
 		Property diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "5");
-		diamondCapsuleSize.comment = "Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5";
+		diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
 
 		Property opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
-		opCapsuleSize.comment = "Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1";
+		opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 
 		Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 5);
-		upgradesLimit.comment = "Number of upgrades an empty capsules can get to improve capacity. If <= 0, remove the upgrade recipe.";
+		upgradesLimit.setComment("Number of upgrades an empty capsules can get to improve capacity. If <= 0, remove the upgrade recipe.");
 
 		Config.config.save();
 
@@ -87,4 +87,5 @@ public class CapsuleItemsRegistrer {
 		stack.setTagInfo("size", new NBTTagInt(size));
 		return stack;
 	}
+
 }

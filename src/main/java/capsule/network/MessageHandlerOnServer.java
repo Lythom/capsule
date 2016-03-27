@@ -62,7 +62,7 @@ public class MessageHandlerOnServer implements IMessageHandler<LabelEditedMessag
   //   It spawns a random number of the given projectile at a position above the target location
   void processMessage(LabelEditedMessageToServer message, EntityPlayerMP sendingPlayer)
   {
-	  ItemStack serverStack = sendingPlayer.getHeldItem();
+	  ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
 	  if(serverStack.getItem() instanceof CapsuleItem){
 		  // of the player didn't swap item during ui opening
 		  CapsuleItem item = (CapsuleItem)serverStack.getItem();

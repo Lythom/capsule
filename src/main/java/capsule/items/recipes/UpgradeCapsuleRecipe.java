@@ -1,12 +1,10 @@
 package capsule.items.recipes;
 
 import capsule.items.CapsuleItem;
-import capsule.items.CapsuleItemsRegistrer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.world.World;
 
@@ -68,7 +66,6 @@ public class UpgradeCapsuleRecipe implements IRecipe {
 		if (middleitemstack != null && middleitemstack.getItem() instanceof CapsuleItem
 				&& middleitemstack.getItemDamage() == CapsuleItem.STATE_EMPTY) {
 			ItemStack copy = middleitemstack.copy();
-			CapsuleItem item = (CapsuleItem) copy.getItem();
 			copy.setTagInfo("size", new NBTTagInt(middleitemstack.getTagCompound().getInteger("size") + 2));
 			copy.setTagInfo("upgraded", new NBTTagInt(middleitemstack.getTagCompound().hasKey("upgraded")
 					? middleitemstack.getTagCompound().getInteger("upgraded") + 1 : 1));

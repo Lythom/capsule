@@ -14,8 +14,8 @@ import capsule.Main;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
-import capsule.enchantments.Enchantments;
 import net.minecraft.block.Block;
+import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -26,16 +26,19 @@ import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 
-public class CapsuleItem extends Item {
+public class CapsuleItem extends Item implements IItemColor {
 
 	public final static int STATE_EMPTY = 0;
 	public final static int STATE_EMPTY_ACTIVATED = 4;
@@ -57,26 +60,26 @@ public class CapsuleItem extends Item {
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
-		String name = StatCollector.translateToLocal("item.capsule.name");
+		String name = I18n.translateToLocal("item.capsule.name");
 
 		String state = "";
 		switch (stack.getItemDamage()) {
 		case CapsuleItem.STATE_ACTIVATED:
 		case CapsuleItem.STATE_EMPTY_ACTIVATED:
 		case CapsuleItem.STATE_ONE_USE_ACTIVATED:
-			state = EnumChatFormatting.DARK_GREEN + StatCollector.translateToLocal("item.capsule.state_activated") + EnumChatFormatting.RESET;
+			state = TextFormatting.DARK_GREEN + I18n.translateToLocal("item.capsule.state_activated") + TextFormatting.RESET;
 			break;
 		case CapsuleItem.STATE_LINKED:
 			state = "";
 			break;
 		case CapsuleItem.STATE_DEPLOYED:
-			state = StatCollector.translateToLocal("item.capsule.state_deployed");
+			state = I18n.translateToLocal("item.capsule.state_deployed");
 			break;
 		case CapsuleItem.STATE_ONE_USE:
 			if (this.isReward(stack)) {
-				state = StatCollector.translateToLocal("item.capsule.state_one_use");
+				state = I18n.translateToLocal("item.capsule.state_one_use");
 			} else {
-				state = StatCollector.translateToLocal("item.capsule.state_recovery");
+				state = I18n.translateToLocal("item.capsule.state_recovery");
 			}
 
 			break;
@@ -90,7 +93,7 @@ public class CapsuleItem extends Item {
 			content = content + " ";
 		}
 
-		return EnumChatFormatting.RESET + state + content + name;
+		return TextFormatting.RESET + state + content + name;
 	}
 
 	public boolean isReward(ItemStack stack) {
@@ -109,11 +112,11 @@ public class CapsuleItem extends Item {
 		if (stack == null)
 			return "";
 		if (!this.isLinked(stack)) {
-			return StatCollector.translateToLocal("item.capsule.content_empty");
+			return I18n.translateToLocal("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && stack.getTagCompound().getString("label") != "") {
-			return "“" + EnumChatFormatting.ITALIC + stack.getTagCompound().getString("label") + EnumChatFormatting.RESET + "”";
+			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
 		}
-		return StatCollector.translateToLocal("item.capsule.content_unlabeled");
+		return I18n.translateToLocal("item.capsule.content_unlabeled");
 	}
 
 	private boolean isLinked(ItemStack stack) {
@@ -130,11 +133,6 @@ public class CapsuleItem extends Item {
 	@Override
 	public int getItemEnchantability() {
 		return 5;
-	}
-
-	@Override
-	public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
-		return Helpers.getStoredEnchantmentLevel(Enchantments.recallEnchant.effectId, book) > 0;
 	}
 
 	@Override
@@ -156,20 +154,20 @@ public class CapsuleItem extends Item {
 	@Override
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
-		tooltip.add(StatCollector.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
+		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
 			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
-			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
+			tooltip.add(I18n.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
 					+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt()
-							? " (" + StatCollector.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
+							? " (" + I18n.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
 
 		}
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") && stack.getTagCompound().getByte("overpowered") == (byte)1) {
-			tooltip.add(StatCollector.translateToLocal("capsule.tooltip.overpowered"));
+			tooltip.add(I18n.translateToLocal("capsule.tooltip.overpowered"));
 
 		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
-			StatCollector.translateToLocal("capsule.tooltip.one_use").trim();
+			I18n.translateToLocal("capsule.tooltip.one_use").trim();
 		}
 		super.addInformation(stack, playerIn, tooltip, advanced);
 	}
@@ -209,9 +207,7 @@ public class CapsuleItem extends Item {
 	 * Activate or power throw on right click.
 	 */
 	@Override
-	public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
-
-		ItemStack ret = super.onItemRightClick(itemStackIn, worldIn, playerIn);
+	public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
 
 		if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
 			Main.proxy.openGuiScreen(playerIn);
@@ -248,7 +244,7 @@ public class CapsuleItem extends Item {
 			}
 		}
 
-		return ret;
+		return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemStackIn);
 	}
 
 	private boolean isActivated(ItemStack itemStackIn) {
@@ -359,7 +355,7 @@ public class CapsuleItem extends Item {
 			// send a chat message to explain failure
 			EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
 			if (player != null) {
-				player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.noCaptureBase").trim()));
+				player.addChatMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
 			}
 		}
 
@@ -451,10 +447,10 @@ public class CapsuleItem extends Item {
 				if (player != null) {
 					if (outEntityBlocking.size() > 0) {
 						player.addChatMessage(
-								new ChatComponentText(String.format(StatCollector.translateToLocal("capsule.error.cantMergeWithDestinationEntity").trim(),
-										StringUtils.join(outEntityBlocking, ", "))));
+								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+										StringUtils.join(outEntityBlocking, ", ")));
 					} else {
-						player.addChatMessage(new ChatComponentText(StatCollector.translateToLocal("capsule.error.cantMergeWithDestination").trim()));
+						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
 					}
 
 				}
@@ -524,7 +520,7 @@ public class CapsuleItem extends Item {
 	 * renderPass 0 => The material color renderPass 1 => The label color
 	 */
 	@Override
-	public int getColorFromItemStack(ItemStack stack, int renderPass) {
+	public int getColorFromItemstack(ItemStack stack, int renderPass) {
 		int color = 0xFFFFFF;
 
 		// material color
@@ -565,7 +561,7 @@ public class CapsuleItem extends Item {
 				* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
 		entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
 
-		playerIn.joinEntityItemWithWorld(entityitem);
+		playerIn.dropItemAndGetStack(entityitem);
 
 		return entityitem;
 	}
