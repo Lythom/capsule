@@ -3,6 +3,7 @@ package capsule.enchantments;
 import com.google.common.base.Predicate;
 
 import capsule.Config;
+import capsule.Main;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -17,6 +18,7 @@ public class Enchantments {
 	public static Enchantment recallEnchant = null;
 	
 	public static void initEnchantments(){
+
 		Property enchantId = Config.config.get("Compatibility", "recallEnchantId", 101);
 		enchantId.setComment("Id used to register the Enchantment \"Recall\".\n This enchantment allow a dropped item to come back into the thrower inventory (if not full) when it collided something.");
 		
@@ -36,10 +38,12 @@ public class Enchantments {
 		Config.config.save();
 		
 		Enchantments.recallEnchant = new RecallEnchant(
-			new ResourceLocation("recall"), // name
+			new ResourceLocation(Main.MODID, "recall"), // name
 			enchantRarity, // weight (chances to appear)
-			Enum.valueOf(EnumEnchantmentType.class, recallEnchantType.getString()) // possible targets
+			EnumEnchantmentType.ALL // possible targets
 		);
+		
+		Enchantment.enchantmentRegistry.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
 	}
 	
 	
