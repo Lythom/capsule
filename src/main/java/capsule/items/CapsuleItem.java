@@ -207,6 +207,10 @@ public class CapsuleItem extends Item {
 	 */
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
+		
+		if(hand == EnumHand.OFF_HAND){
+			return new ActionResult<ItemStack>(EnumActionResult.FAIL, itemStackIn);
+		}
 
 		if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
 			Main.proxy.openGuiScreen(playerIn);
