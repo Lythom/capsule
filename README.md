@@ -3,6 +3,14 @@
 [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
 
 ## Changelog ##
+
+**1.9-1.1.1 : Migrate to 1.9 + more configuration options **
+
+* Update to minecraft forge 1.9
+* Offhand currently not able to throw capsules
+* Fix weird behaviour when teleporting to capsule dimensions with creativePlayer2CapsuleTP
+* Visually lighten capsule dimension
+
 **1.8-1.1.0 : Migrate to 1.8.9 + more configuration options **
 
 * Add item "Capsule : overpowered" crafted with a nether star instead of ender pearl. Overpowered capsule as a different "excluded blocks" config (to allow more blocks to be captured).

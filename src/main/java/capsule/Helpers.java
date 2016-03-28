@@ -94,6 +94,7 @@ public class Helpers {
 						} // end if dest is overridable
 
 						if (!keepSource) {
+							sourceWorld.removeTileEntity(srcPos);
 							TileEntity te = sourceWorld.getTileEntity(srcPos);
 							if (te != null) {
 								sourceWorld.markTileEntityForRemoval(te);

@@ -14,7 +14,7 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "1.9-1.1.1"
+version = "1.9-1.1.2"
 group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "capsule"
 
