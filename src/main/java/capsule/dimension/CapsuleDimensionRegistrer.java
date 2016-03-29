@@ -6,7 +6,6 @@ import net.minecraftforge.common.config.Property;
 
 public class CapsuleDimensionRegistrer {
 
-	public static int providerId;
 	public static int dimensionId;
 
 	public CapsuleDimensionRegistrer() {
@@ -15,24 +14,16 @@ public class CapsuleDimensionRegistrer {
 	
 	public static void registerDimension(){
 		
-		Property providerIdProp = Config.config.get("Compatibility", "providerId", 7);
+		Property providerIdProp = Config.config.get("Compatibility", "dimensionId", 2);
 		providerIdProp.comment = "Provider id of the capsule dimension (where blocks are sent inside the capsule).\nChange needed only if there is conflict with an other mod using the same providerId.";
-		CapsuleDimensionRegistrer.providerId = providerIdProp.getInt();
+		CapsuleDimensionRegistrer.dimensionId = providerIdProp.getInt();
 		Config.config.save();
-		DimensionManager.registerProviderType(CapsuleDimensionRegistrer.providerId, CapsuleWorldProvider.class, true);
 		
-		CapsuleDimensionRegistrer.dimensionId = -1;
-		for (Integer id : DimensionManager.getStaticDimensionIDs()) {
-			if(DimensionManager.getProviderType(id) == CapsuleDimensionRegistrer.providerId){
-				CapsuleDimensionRegistrer.dimensionId = id;
-				break;
-			}
+		if(!DimensionManager.isDimensionRegistered(CapsuleDimensionRegistrer.dimensionId)){
+			DimensionManager.registerProviderType(CapsuleDimensionRegistrer.dimensionId, CapsuleWorldProvider.class, true);
+			DimensionManager.registerDimension(CapsuleDimensionRegistrer.dimensionId, CapsuleDimensionRegistrer.dimensionId);
 		}
 		
-		if(CapsuleDimensionRegistrer.dimensionId == -1){
-			CapsuleDimensionRegistrer.dimensionId = DimensionManager.getNextFreeDimId();
-			DimensionManager.registerDimension(CapsuleDimensionRegistrer.dimensionId, CapsuleDimensionRegistrer.providerId);
-		}
 	}
 
 }

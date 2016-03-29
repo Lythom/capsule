@@ -3,6 +3,11 @@
 [http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
 
 ## Changelog ##
+
+**1.8-1.1.1 : Small enhancements and fixes **
+
+* Small enhancement from 1.9 migration (teleporting, rendering)
+
 **1.8-1.1.0 : Migrate to 1.8.9 + more configuration options **
 
 * Add item "Capsule : overpowered" crafted with a nether star instead of ender pearl. Overpowered capsule as a different "excluded blocks" config (to allow more blocks to be captured).
@@ -41,4 +46,5 @@ Blocks :
 * captures base
 
 ## Planned ##
+* AlexisMachina : Capsule shirts, Capsules banner logo
 * Reward capsules holding the content as NBT data rather than in the dimension

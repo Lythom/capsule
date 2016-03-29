@@ -125,5 +125,13 @@ public class CapsuleWorldProvider extends WorldProvider {
 	public String getInternalNameSuffix() {
 		return null;
 	}
+	
+	@Override
+	protected void generateLightBrightnessTable() {
+        for (int i = 0; i <= 15; ++i)
+        {
+            this.lightBrightnessTable[i] = 8;
+        }
+	}
 
 }

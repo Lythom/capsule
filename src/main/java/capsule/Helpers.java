@@ -94,7 +94,7 @@ public class Helpers {
 
 						if (!keepSource) {
 							sourceWorld.removeTileEntity(srcPos);
-							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 4);
+							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 7);
 						}
 
 					} // end if must copy

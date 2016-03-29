@@ -42,7 +42,6 @@ public class ClientProxy extends CommonProxy {
 		MinecraftForge.EVENT_BUS.register(cph);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void registerBlockRenderer() {
 		ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
 		mesher.register(Item.getItemFromBlock(CapsuleBlocksRegistrer.blockCapsuleMarker), 0, new ModelResourceLocation(Main.MODID+":capsulemarker", "inventory"));

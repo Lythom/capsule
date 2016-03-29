@@ -43,7 +43,7 @@ public class TileEntityCapture extends TileEntity {
 	// When the world loads from disk, the server needs to send the TileEntity information to the client
 	//  it uses getDescriptionPacket() and onDataPacket() to do this
 	@Override
-	public Packet getDescriptionPacket() {
+	public Packet<?> getDescriptionPacket() {
 		NBTTagCompound nbtTagCompound = new NBTTagCompound();
 		writeToNBT(nbtTagCompound);
 		int metadata = getBlockMetadata();
