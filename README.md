@@ -4,6 +4,9 @@
 
 ## Changelog ##
 
+**1.9-1.1.2 : Minor fixes **
+* Transfert logic fix
+
 **1.9-1.1.1 : Migrate to 1.9 + more configuration options **
 
 * Update to minecraft forge 1.9
@@ -49,4 +52,6 @@ Blocks :
 * captures base
 
 ## Planned ##
+
 * Reward capsules holding the content as NBT data rather than in the dimension
+* Capsule shirts, Capsules banner logo (idea of AlexisMachina)
