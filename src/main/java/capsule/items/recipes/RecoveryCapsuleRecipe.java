@@ -35,7 +35,7 @@ public class RecoveryCapsuleRecipe implements IRecipe
             ItemStack itemstack = p_179532_1_.getStackInSlot(i);
             aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
             if(aitemstack[i] == null && itemstack != null && itemstack.getItem() instanceof CapsuleItem){
-            	aitemstack[i] = itemstack;
+            	aitemstack[i] = itemstack.copy();
             }
         }
 
@@ -58,11 +58,15 @@ public class RecoveryCapsuleRecipe implements IRecipe
                 if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && (itemstack.getMetadata() == this.inputCapsule.getMetadata()))
                 {
                 	sourceCapsule++;
-                }
+                } 
                 
-                if (itemstack != null && itemstack.getItem() == this.inputMaterial.getItem() && (itemstack.getMetadata() == this.inputMaterial.getMetadata()))
+                else if (itemstack != null && itemstack.getItem() == this.inputMaterial.getItem() && (itemstack.getMetadata() == this.inputMaterial.getMetadata()))
                 {
                 	material++;
+                }
+                
+                else if (itemstack != null) {
+                	return false;
                 }
             }
         }

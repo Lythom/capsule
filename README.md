@@ -4,6 +4,10 @@
 
 ## Changelog ##
 
+**1.8-1.1.2 : Fix recovery capsule recipe **
+
+* Fix recovery capsule recipe
+
 **1.8-1.1.1 : Small enhancements and fixes **
 
 * Small enhancement from 1.9 migration (teleporting, rendering)
