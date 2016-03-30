@@ -4,7 +4,12 @@
 
 ## Changelog ##
 
+**1.9-1.1.3 : Fix recovery capsule recipe **
+
+* Fix recovery capsule recipe
+
 **1.9-1.1.2 : Minor fixes **
+
 * Transfert logic fix
 
 **1.9-1.1.1 : Migrate to 1.9 + more configuration options **
