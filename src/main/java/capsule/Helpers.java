@@ -1,6 +1,7 @@
 package capsule;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,15 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class Helpers {
+	
+	static byte BLOCK_UPDATE = 1;
+	static byte BLOCK_SEND_TO_CLIENT = 2;
+	static byte BLOCK_PREVENT_RERENDER = 4;
+	
 
 	/**
 	 * 
@@ -56,9 +64,14 @@ public class Helpers {
 		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, outOccupiedDestPos, outEntityBlocking)) {
 			return false;
 		}
+		
+		boolean flagdoTileDrops = sourceWorld.getGameRules().getBoolean("doTileDrops");
+		sourceWorld.getGameRules().setOrCreateGameRule("doTileDrops", "false");
+		
+		Map<BlockPos, IBlockState> transferedBlocks = new HashMap<BlockPos,IBlockState>();
 
-		// 1st copy to dest world
-		for (int y = size - 1; y >= 0; y--) {
+		// 1st copy from srcWorld
+		for (int y = 0; y < size; y++) {
 			for (int x = 0; x < size; x++) {
 				for (int z = 0; z < size; z++) {
 
@@ -75,37 +88,65 @@ public class Helpers {
 
 						// store the dest block if it's overridable
 						if (air.equals(destState.getBlock()) || overridable.contains(destState.getBlock())) {
-							// copy block without update
-							destWorld.setBlockState(destPos, srcState, 7);
-							destWorld.notifyNeighborsOfStateChange(destPos, srcState.getBlock());
+							
+							// remember the final state the block should be
+							transferedBlocks.put(destPos, srcState);
 
-							// check tileEntity
-							TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
-							TileEntity destTE = destWorld.getTileEntity(destPos);
-
-							if (srcTE != null && destTE != null) {
-								NBTTagCompound nbt = new NBTTagCompound();
-								srcTE.setPos(destPos);
-								srcTE.setWorldObj(destWorld);
-								srcTE.writeToNBT(nbt);
-								destTE.readFromNBT(nbt);
-
-							}
 						} // end if dest is overridable
-
-						if (!keepSource) {
-							sourceWorld.removeTileEntity(srcPos);
-							TileEntity te = sourceWorld.getTileEntity(srcPos);
-							if (te != null) {
-								sourceWorld.markTileEntityForRemoval(te);
-							}
-							sourceWorld.setBlockState(srcPos, Blocks.air.getDefaultState(), 7);
-						}
 
 					} // end if must copy
 				}
 			}
 		}
+		
+		Map<BlockPos, IBlockState> postlist = new HashMap<BlockPos,IBlockState>();
+		Map<BlockPos, BlockPos> postlistSource = new HashMap<BlockPos,BlockPos>();
+		
+		// 2 copy to dest world and remove src world
+		// mark everything for update
+		for (int y = 0; y < size; y++) {
+			for (int x = 0; x < size; x++) {
+				for (int z = 0; z < size; z++) {
+
+					BlockPos srcPos = srcOriginPos.add(x, y, z);
+					BlockPos destPos = destOriginPos.add(x, y, z);
+
+					if (transferedBlocks.containsKey(destPos)) {
+
+						// try move block
+						IBlockState destState = transferedBlocks.get(destPos);
+						setBlockState(destWorld, destPos, destState);
+
+						// in case the set didn't work, try again later
+						if (destState != destWorld.getBlockState(destPos)) {
+							postlist.put(destPos, destState);
+							postlistSource.put(destPos, srcPos);
+							continue;
+						}
+
+						transferBlock(sourceWorld, destWorld, keepSource, srcPos, destPos);
+
+						// destWorld.notifyNeighborsOfStateChange(destPos,
+						// destState.getBlock());
+					}
+				}
+			}
+		}
+		
+		// finally copy blocks that could not by copied first pass
+		for (BlockPos destPos : postlist.keySet()) {
+			IBlockState destState = postlist.get(destPos);
+			
+			// try move block again
+			setBlockState(destWorld, destPos, destState);
+			transferBlock(sourceWorld, destWorld, keepSource, postlistSource.get(destPos), destPos);
+		}
+		
+		for (BlockPos destPos : transferedBlocks.keySet()) {
+			destWorld.notifyNeighborsOfStateChange(destPos, transferedBlocks.get(destPos).getBlock());
+		}
+		
+		
 		
 		// attempt to TP armor stand. Not working for now : they don't land on the right position, and it's really CPU intensive
 //		List<EntityArmorStand> armorstands = sourceWorld.getEntitiesWithinAABB(
@@ -121,9 +162,50 @@ public class Helpers {
 //			armorstand.changeDimension(destWorld.provider.getDimension());
 //			armorstand.setPositionAndUpdate(destOriginPos.getX() + relativePos.getX(), destOriginPos.getY() + relativePos.getY(), destOriginPos.getZ() + relativePos.getZ());
 //		}
+		
+		sourceWorld.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
 
 		return true;
 
+	}
+	
+	public static void setBlockState(WorldServer world, BlockPos pos, IBlockState newState){
+		Chunk chunk = world.getChunkFromBlockCoords(pos);
+		IBlockState oldState = world.getBlockState(pos);
+		
+		ExtendedBlockStorage[] ea = chunk.getBlockStorageArray();
+		int i = pos.getX() & 15;
+        int j = pos.getY();
+        int k = pos.getZ() & 15;
+		ExtendedBlockStorage extendedblockstorage = ea[j >> 4];
+        if (extendedblockstorage == null)
+        {
+            extendedblockstorage = ea[j >> 4] = new ExtendedBlockStorage(j >> 4 << 4, !world.provider.getHasNoSky());
+        }
+        extendedblockstorage.set(i, j & 15, k, newState);
+        
+        world.notifyBlockUpdate(pos, oldState, newState, BLOCK_SEND_TO_CLIENT);
+        world.updateBlockTick(pos, newState.getBlock(), 0, 0);
+	}
+
+	public static void transferBlock(WorldServer sourceWorld, WorldServer destWorld, boolean keepSource, BlockPos srcPos, BlockPos destPos) {
+		// check tileEntity
+		TileEntity srcTE = sourceWorld.getTileEntity(srcPos);
+		TileEntity destTE = destWorld.getTileEntity(destPos);
+
+		if (srcTE != null && destTE != null) {
+			NBTTagCompound nbt = new NBTTagCompound();
+			srcTE.setPos(destPos);
+			srcTE.setWorldObj(destWorld);
+			srcTE.writeToNBT(nbt);
+			destTE.readFromNBT(nbt);
+		}
+		
+		if (!keepSource) {
+			sourceWorld.removeTileEntity(srcPos);
+			setBlockState(sourceWorld, srcPos, Blocks.air.getDefaultState());
+			sourceWorld.notifyNeighborsOfStateChange(srcPos, Blocks.air);
+		}
 	}
 
 	/**
