@@ -4,6 +4,11 @@
 
 ## Changelog ##
 
+**1.8-1.1.3 : Transfer logic rework **
+
+* Rework transfer algorithm to force transfer without block update logic being executed during the move
+* Fixes bug with dependants blocks (torches on top of wall, doors powered by redstone) that would not be kept correctly during the transfer
+
 **1.8-1.1.2 : Fix recovery capsule recipe **
 
 * Fix recovery capsule recipe
