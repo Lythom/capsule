@@ -18,12 +18,19 @@ public class CapsuleItemsRegistrer {
 
 	public static Item capsule;
 	public static Item creativeTP;
+	
+	public static String CAPSULETP_REGISTERY_NAME = "capsule_CTP";
+	public static String CAPSULE_REGISTERY_NAME = "capsule";
 
 	public static void createItems(String modid) {
-		GameRegistry.registerItem(creativeTP = new CreativeTP("capsule_CTP"), "capsule_CTP");
+		creativeTP = new CreativeTP(CAPSULETP_REGISTERY_NAME);
 		creativeTP.setCreativeTab(Main.tabCapsule);
-		GameRegistry.registerItem(capsule = new CapsuleItem("capsule"), "capsule");
+		
+		capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
 		capsule.setCreativeTab(Main.tabCapsule);
+		
+		GameRegistry.register(creativeTP.setRegistryName(CAPSULETP_REGISTERY_NAME));
+		GameRegistry.register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
 	}
 
 	public static void registerRecipes() {

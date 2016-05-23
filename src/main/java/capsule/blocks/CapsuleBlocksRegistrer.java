@@ -2,20 +2,26 @@ package capsule.blocks;
 
 import capsule.Main;
 import capsule.items.CapsuleItem;
-import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class CapsuleBlocksRegistrer {
 	
-	public static Block blockCapsuleMarker;
+	public static BlockCapsuleMarker blockCapsuleMarker;
+	public static String CAPSULE_MARKER_REGISTERY_NAME = "capsulemarker";
+	public static String CAPSULE_MARKER_TE_REGISTERY_NAME = "capsulemarker-te";
 	
 	public static void createBlocks(String modid) {
-		GameRegistry.registerBlock(blockCapsuleMarker = new BlockCapsuleMarker("capsulemarker", Material.ground), "capsulemarker");
+		blockCapsuleMarker = new BlockCapsuleMarker(CAPSULE_MARKER_REGISTERY_NAME, Material.ground);
 		blockCapsuleMarker.setCreativeTab(Main.tabCapsule);
-		GameRegistry.registerTileEntity(TileEntityCapture.class, "capsulemarker_te");
+		ItemBlock blockCapsuleMarkerItemBlock = new ItemBlock(blockCapsuleMarker);
+		
+		GameRegistry.register(blockCapsuleMarker.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
+		GameRegistry.register(blockCapsuleMarkerItemBlock.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
+		GameRegistry.registerTileEntity(TileEntityCapture.class, CAPSULE_MARKER_TE_REGISTERY_NAME);
     }
 	
 	public static void registerRenderers(String modid) {
