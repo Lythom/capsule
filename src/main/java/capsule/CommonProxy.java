@@ -56,7 +56,7 @@ public class CommonProxy {
 		
 		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.bedrock, Blocks.mob_spawner, Blocks.end_portal, Blocks.end_portal_frame }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }));
 		excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] exBlocks = null;
 		try {
@@ -70,7 +70,7 @@ public class CommonProxy {
 		
 		// OP Excluded
 		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.air }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR }));
 		opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] opExBlocks = null;
 		try {
@@ -84,9 +84,9 @@ public class CommonProxy {
 		
 		// Overridable
 		Property overridableBlocksProp = Config.config.get("Balancing", "overridableBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.air, Blocks.water, Blocks.leaves,
-						Blocks.leaves2, Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower,
-						Blocks.snow_layer, Blocks.brown_mushroom, Blocks.red_mushroom }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.WATER, Blocks.LEAVES,
+						Blocks.LEAVES2, Blocks.TALLGRASS, Blocks.RED_FLOWER, Blocks.YELLOW_FLOWER,
+						Blocks.SNOW_LAYER, Blocks.BROWN_MUSHROOM, Blocks.RED_MUSHROOM }));
 		overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 		
 		Block[] ovBlocks = null;

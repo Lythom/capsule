@@ -5,7 +5,6 @@ import java.util.List;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -41,9 +40,9 @@ public class TileEntityCapture extends TileEntity {
 	}
 	
 	// When the world loads from disk, the server needs to send the TileEntity information to the client
-	//  it uses getDescriptionPacket() and onDataPacket() to do this
+	//  it uses getUpdatePacket() and onDataPacket() to do this
 	@Override
-	public Packet<?> getDescriptionPacket() {
+	public SPacketUpdateTileEntity getUpdatePacket() {
 		NBTTagCompound nbtTagCompound = new NBTTagCompound();
 		writeToNBT(nbtTagCompound);
 		int metadata = getBlockMetadata();
@@ -57,12 +56,13 @@ public class TileEntityCapture extends TileEntity {
 
 	// we only update the position and id, the rest is client side only
 	@Override
-	public void writeToNBT(NBTTagCompound parentNBTTagCompound)
+	public NBTTagCompound writeToNBT(NBTTagCompound parentNBTTagCompound)
 	{
 		parentNBTTagCompound.setString("id", "capsulemarker_te");
 		parentNBTTagCompound.setInteger("x", this.pos.getX());
 		parentNBTTagCompound.setInteger("y", this.pos.getY());
 		parentNBTTagCompound.setInteger("z", this.pos.getZ());
+		return parentNBTTagCompound;
 	}
 
 	// This is where you load the data that you saved in writeToNBT

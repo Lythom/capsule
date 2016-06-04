@@ -43,7 +43,7 @@ public class Enchantments {
 			EnumEnchantmentType.ALL // possible targets
 		);
 		
-		Enchantment.enchantmentRegistry.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
+		Enchantment.REGISTRY.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
 	}
 	
 	

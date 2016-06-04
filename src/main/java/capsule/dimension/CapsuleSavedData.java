@@ -40,7 +40,7 @@ public class CapsuleSavedData extends WorldSavedData {
 	}
 
 	@Override
-	public void writeToNBT(NBTTagCompound nbt) {
+	public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
 		// serialize lastReservedPosition
 		for(Integer size : lastReservedPosition.keySet()){
 			NBTTagCompound pos = new NBTTagCompound();
@@ -51,8 +51,8 @@ public class CapsuleSavedData extends WorldSavedData {
 				pos.setInteger("z", lastBlockpos.getZ());
 				nbt.setTag(size.toString(), pos);
 			}
-			
 		}
+		return nbt;
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class CapsuleSavedData extends WorldSavedData {
 		Iterable<MutableBlockPos> borders = BlockPos.getAllInBoxMutable(nextPos, nextPosEnd);
 		for (BlockPos pos : borders) {
 			if(pos.getX() == nextPos.getX() || pos.getX() == nextPosEnd.getX() || pos.getZ() == nextPos.getZ() || pos.getZ() == nextPosEnd.getZ()) {
-				capsuleWorld.setBlockState(pos, Blocks.bedrock.getDefaultState());
+				capsuleWorld.setBlockState(pos, Blocks.BEDROCK.getDefaultState());
 			}
 		}
 		

@@ -32,7 +32,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
@@ -59,26 +59,26 @@ public class CapsuleItem extends Item {
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
-		String name = I18n.translateToLocal("item.capsule.name");
+		String name = I18n.format("item.capsule.name");
 
 		String state = "";
 		switch (stack.getItemDamage()) {
 		case CapsuleItem.STATE_ACTIVATED:
 		case CapsuleItem.STATE_EMPTY_ACTIVATED:
 		case CapsuleItem.STATE_ONE_USE_ACTIVATED:
-			state = TextFormatting.DARK_GREEN + I18n.translateToLocal("item.capsule.state_activated") + TextFormatting.RESET;
+			state = TextFormatting.DARK_GREEN + I18n.format("item.capsule.state_activated") + TextFormatting.RESET;
 			break;
 		case CapsuleItem.STATE_LINKED:
 			state = "";
 			break;
 		case CapsuleItem.STATE_DEPLOYED:
-			state = I18n.translateToLocal("item.capsule.state_deployed");
+			state = I18n.format("item.capsule.state_deployed");
 			break;
 		case CapsuleItem.STATE_ONE_USE:
 			if (this.isReward(stack)) {
-				state = I18n.translateToLocal("item.capsule.state_one_use");
+				state = I18n.format("item.capsule.state_one_use");
 			} else {
-				state = I18n.translateToLocal("item.capsule.state_recovery");
+				state = I18n.format("item.capsule.state_recovery");
 			}
 
 			break;
@@ -111,11 +111,11 @@ public class CapsuleItem extends Item {
 		if (stack == null)
 			return "";
 		if (!this.isLinked(stack)) {
-			return I18n.translateToLocal("item.capsule.content_empty");
+			return I18n.format("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
 			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
 		}
-		return I18n.translateToLocal("item.capsule.content_unlabeled");
+		return I18n.format("item.capsule.content_unlabeled");
 	}
 
 	private boolean isLinked(ItemStack stack) {
@@ -153,20 +153,20 @@ public class CapsuleItem extends Item {
 	@Override
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
-		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
+		tooltip.add(I18n.format("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
 			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
+			tooltip.add(I18n.format("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
 					+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt()
-							? " (" + I18n.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
+							? " (" + I18n.format("capsule.tooltip.maxedout") + ")" : ""));
 
 		}
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") && stack.getTagCompound().getByte("overpowered") == (byte)1) {
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.overpowered"));
+			tooltip.add(I18n.format("capsule.tooltip.overpowered"));
 
 		}
 		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
-			I18n.translateToLocal("capsule.tooltip.one_use").trim();
+			I18n.format("capsule.tooltip.one_use").trim();
 		}
 		super.addInformation(stack, playerIn, tooltip, advanced);
 	}
@@ -194,11 +194,24 @@ public class CapsuleItem extends Item {
 		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
 		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
 		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
+		
+		ItemStack unlabelledCapsule = ironCapsule.copy();
+		unlabelledCapsule.setItemDamage(STATE_LINKED);
+		unlabelledCapsule.getTagCompound().setTag("linkPosition", new NBTTagCompound());
+		
+		ItemStack recoveryCapsule = ironCapsule.copy();
+		recoveryCapsule.setItemDamage(STATE_ONE_USE);
+		recoveryCapsule.getTagCompound().setBoolean("oneUse", true);
+		recoveryCapsule.getTagCompound().setTag("linkPosition", new NBTTagCompound());
 
 		subItems.add(ironCapsule);
 		subItems.add(goldCapsule);
 		subItems.add(diamondCapsule);
 		subItems.add(opCapsule);
+		
+		subItems.add(unlabelledCapsule);
+		subItems.add(recoveryCapsule);
+
 
 	}
 
@@ -602,6 +615,11 @@ public class CapsuleItem extends Item {
 			capsulePlacer.setDirty(true);
 		}
 		return capsulePlacer;
+	}
+
+	public void clearCapsule(ItemStack capsule) {
+		this.setState(capsule, CapsuleItem.STATE_EMPTY);
+		capsule.getTagCompound().removeTag("linkPosition");
 	}
 
 }

@@ -7,8 +7,8 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
-import net.minecraft.world.biome.BiomeGenBase.SpawnListEntry;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biome.SpawnListEntry;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkGenerator;
 
@@ -29,7 +29,7 @@ public class CapsuleChunkProvider implements IChunkGenerator {
 
 		for (int xc = 0; xc < CHUNK_SIZE; xc++) {
 			for (int zc = 0; zc < CHUNK_SIZE; zc++) {
-				chunk.setBlockState(new BlockPos(xc, 0, zc), Blocks.bedrock.getDefaultState());
+				chunk.setBlockState(new BlockPos(xc, 0, zc), Blocks.BEDROCK.getDefaultState());
 			}
 		}
 		
@@ -54,7 +54,7 @@ public class CapsuleChunkProvider implements IChunkGenerator {
 	
 	@Override
 	public List<SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) {
-		return Collections.<BiomeGenBase.SpawnListEntry>emptyList();
+		return Collections.<Biome.SpawnListEntry>emptyList();
 	}
 	
 	@Override

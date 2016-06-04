@@ -60,7 +60,7 @@ public class Helpers {
 			List<Block> overridable, List<Block> excluded, boolean keepSource, Map<BlockPos, Block> sourceIgnorePos,
 			Map<BlockPos, Block> outOccupiedDestPos, List<String> outEntityBlocking) {
 
-		Block air = Blocks.air;
+		Block air = Blocks.AIR;
 		if (!isDestinationValid(sourceWorld, destWorld, srcOriginPos, destOriginPos, size, overridable, excluded, outOccupiedDestPos, outEntityBlocking)) {
 			return false;
 		}
@@ -203,8 +203,8 @@ public class Helpers {
 		
 		if (!keepSource) {
 			sourceWorld.removeTileEntity(srcPos);
-			setBlockState(sourceWorld, srcPos, Blocks.air.getDefaultState());
-			sourceWorld.notifyNeighborsOfStateChange(srcPos, Blocks.air);
+			setBlockState(sourceWorld, srcPos, Blocks.AIR.getDefaultState());
+			sourceWorld.notifyNeighborsOfStateChange(srcPos, Blocks.AIR);
 		}
 	}
 
@@ -225,7 +225,7 @@ public class Helpers {
 	public static boolean isDestinationValid(WorldServer sourceWorld, WorldServer destWorld, BlockPos srcOriginPos, BlockPos destOriginPos, int size,
 			List<Block> overridable, List<Block> excluded, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
 
-		IBlockState air = Blocks.air.getDefaultState();
+		IBlockState air = Blocks.AIR.getDefaultState();
 
 		for (int y = size - 1; y >= 0; y--) {
 			for (int x = 0; x < size; x++) {
@@ -446,7 +446,7 @@ public class Helpers {
 
 		String[] blocksNames = new String[states.length];
 		for(int i = 0; i < states.length; i++){
-			blocksNames[i] = ((ResourceLocation)Block.blockRegistry.getNameForObject(states[i])).toString();
+			blocksNames[i] = ((ResourceLocation)Block.REGISTRY.getNameForObject(states[i])).toString();
 		}
 		return blocksNames;
 

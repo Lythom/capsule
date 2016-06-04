@@ -3,7 +3,7 @@ package capsule.dimension;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkGenerator;
@@ -17,14 +17,14 @@ public class CapsuleWorldProvider extends WorldProvider {
 	}
 	
 	@Override
-	protected void registerWorldChunkManager()
+	protected void createBiomeProvider()
 	{
-		BiomeGenBase.BiomeProperties props = new BiomeGenBase.BiomeProperties("Capsule Biome");
+		Biome.BiomeProperties props = new Biome.BiomeProperties("Capsule Biome");
 		props.setRainDisabled();
 		props.setTemperature(-100);
 		props.setRainfall(0);
 		
-		super.worldChunkMgr = new BiomeProviderSingle(new CapsuleBiomeGen(props));
+		super.biomeProvider = new BiomeProviderSingle(new CapsuleBiomeGen(props));
 	}
 
 	@Override

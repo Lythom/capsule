@@ -38,7 +38,7 @@ public class DyeCapsuleRecipe implements IRecipe
                 }
                 else
                 {
-                    if (itemstack1.getItem() != Items.dye)
+                    if (itemstack1.getItem() != Items.DYE)
                     {
                         return false;
                     }
@@ -93,7 +93,7 @@ public class DyeCapsuleRecipe implements IRecipe
                 }
                 else
                 {
-                    if (itemstack1.getItem() != Items.dye)
+                    if (itemstack1.getItem() != Items.DYE)
                     {
                         return null;
                     }

@@ -3,15 +3,15 @@
  */
 package capsule.dimension;
 
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 
 /**
  * @author Lythom
  *
  */
-public class CapsuleBiomeGen extends BiomeGenBase {
+public class CapsuleBiomeGen extends Biome {
 	
-	public CapsuleBiomeGen(BiomeGenBase.BiomeProperties props) {
+	public CapsuleBiomeGen(Biome.BiomeProperties props) {
 		
 		super(props);
 

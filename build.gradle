@@ -15,11 +15,12 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 
 version = "1.9.4-1.1.6"
 group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "capsule"
+archivesBaseName = "Capsule"
 
 minecraft {
-    version = "1.9.4-12.17.0.1910-1.9.4"
+    version = "1.9.4-12.17.0.1950"
     runDir = "run"
+    useDepAts = true
     
     // the mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   snapshot are built nightly.
@@ -28,6 +29,12 @@ minecraft {
     // simply re-run your setup task after changing the mappings to update your workspace.
     mappings = "snapshot_20160518"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+}
+
+repositories {
+    maven {
+    	url = "http://dvs1.progwml6.com/files/maven"
+	}
 }
 
 dependencies {
@@ -51,6 +58,8 @@ dependencies {
     // for more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+    
+    deobfCompile "mezz.jei:jei_1.9.4:3.4.3.207"
 
 }
 
