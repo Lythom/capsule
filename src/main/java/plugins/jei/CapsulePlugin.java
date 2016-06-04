@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
+import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 
@@ -35,12 +36,9 @@ public class CapsulePlugin extends BlankModPlugin {
 		jeiHelpers.getNbtIgnoreList().ignoreNbtTagNames(
 				"color",
 				"size",
-				"upgraded",
-				"linkPosition"
+				"upgraded"
 		);
-			
 
-        
         List<IRecipe> recipes = new ArrayList<IRecipe>();
         // upgrade
         ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt());
@@ -53,8 +51,9 @@ public class CapsulePlugin extends BlankModPlugin {
 		ItemStack diamondCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, CapsuleItemsRegistrer.diamondCapsuleSize.getInt() + 2);
 		diamondCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
 		ItemStack opCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt());
+		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		ItemStack opCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt() + 2);
-		opCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
+		opCapsuleUp.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		
 		ItemStack unlabelledCapsule = ironCapsule.copy();
 		unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
@@ -72,7 +71,8 @@ public class CapsulePlugin extends BlankModPlugin {
         recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,diamondCapsule,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, diamondCapsuleUp));
         recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,opCapsule,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, opCapsuleUp));
         
-        recipes.add(new ShapelessRecipes(recoveryCapsule, Arrays.asList(new ItemStack[] { ironCapsule, new ItemStack(Items.GLASS_BOTTLE) })));
+        recipes.add(new ShapelessRecipes(recoveryCapsule, Arrays.asList(new ItemStack[] { unlabelledCapsule, new ItemStack(Items.GLASS_BOTTLE) })));
+        recipes.add(new ShapelessRecipes(ironCapsule, Arrays.asList(new ItemStack[] { unlabelledCapsule })));
 
         registry.addRecipes(recipes);
         
