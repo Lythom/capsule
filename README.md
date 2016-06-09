@@ -4,6 +4,11 @@
 
 ## Changelog ##
 
+**1.9.4-1.1.7 : Compatibility fixes **
+
+* Fix #5 - Mod crashing when CapsuleItem.getItemStackDisplayName is called server-side
+
+
 **1.9.4-1.1.6 : Update for 1.9.4 version of forge + JEI integration + new recipe **
 
 * Update for forge 1.9.4 (thank you @Walter Daniel for the help =) )

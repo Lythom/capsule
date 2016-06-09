@@ -1,4 +1,4 @@
-package plugins.jei;
+package capsule.plugins.jei;
 
 import java.util.ArrayList;
 import java.util.Arrays;
