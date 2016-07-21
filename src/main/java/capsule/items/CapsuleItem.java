@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import capsule.Config;
 import capsule.Helpers;
 import capsule.Main;
+import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.dimension.CapsuleSavedData;
@@ -119,7 +120,7 @@ public class CapsuleItem extends Item {
 	}
 
 	private boolean isLinked(ItemStack stack) {
-		return stack.hasTagCompound() && stack.getTagCompound().hasKey("linkPosition");
+		return stack.hasTagCompound() && stack.getTagCompound().hasKey("structureName");
 	}
 
 	public void setLabel(ItemStack stack, String label) {
@@ -197,12 +198,12 @@ public class CapsuleItem extends Item {
 		
 		ItemStack unlabelledCapsule = ironCapsule.copy();
 		unlabelledCapsule.setItemDamage(STATE_LINKED);
-		unlabelledCapsule.getTagCompound().setTag("linkPosition", new NBTTagCompound());
+		unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeLinkedCapsule)");
 		
 		ItemStack recoveryCapsule = ironCapsule.copy();
 		recoveryCapsule.setItemDamage(STATE_ONE_USE);
 		recoveryCapsule.getTagCompound().setBoolean("oneUse", true);
-		recoveryCapsule.getTagCompound().setTag("linkPosition", new NBTTagCompound());
+		unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeOneUseCapsule)");
 
 		subItems.add(ironCapsule);
 		subItems.add(goldCapsule);
@@ -306,7 +307,7 @@ public class CapsuleItem extends Item {
 			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 			WorldServer playerWorld = (WorldServer) entityItem.worldObj;
 
-			if (capsule.getTagCompound().hasKey("linkPosition")) {
+			if (isLinked(capsule)) {
 
 				// DEPLOY
 				// is linked, deploy
@@ -340,8 +341,7 @@ public class CapsuleItem extends Item {
 	 */
 	private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld,
 			WorldServer playerWorld) {
-		// get available space data
-		CapsuleSavedData capsulePlacer = getCapsulePlacer(capsuleWorld);
+
 		boolean didCapture = false;
 
 		// specify target to capture
@@ -349,16 +349,20 @@ public class CapsuleItem extends Item {
 		if (marker != null) {
 			BlockPos source = marker.add(-exdendLength, 1, -exdendLength);
 
-			// get free room to store
-			BlockPos dest = capsulePlacer.reserveNextAvailablePositionForSize(size);
-
-			// do the transportation. Can't fail because destination is always empty
-			
-			Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule), false, null, null, null);
+			// Save the region in a structure block file
+			String player = "CapsuleMod";
+			if(entityItem.getThrower() != null){
+				player = entityItem.getThrower();
+			}
+			CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
+			// TODO : create folder structures/capsule if it does not exists
+			String capsuleID = "capsule/C-" + player + "-" + csd.getNextCount();
+			StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null);
+			// Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule), false, null, null, null);
 
 			// register the link in the capsule
 			this.setState(capsule, STATE_LINKED);
-			savePosition("linkPosition", capsule, dest);
+			capsule.getTagCompound().setString("structureName", capsuleID);
 			didCapture = true;
 
 		} else {
@@ -432,72 +436,71 @@ public class CapsuleItem extends Item {
 	 */
 	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
 		// specify target to capture
-		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
-		boolean didSpawn = false;
-
-		if (bottomBlockPos != null) {
-			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
-			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
-			BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
-
-			// do the transportation
-			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
-			List<String> outEntityBlocking = new ArrayList<String>();
-			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule),
-					this.isReward(capsule), null, occupiedSpawnPositions, outEntityBlocking);
-			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
-
-			if (result) {
-				// register the link in the capsule
-				this.setState(capsule, STATE_DEPLOYED);
-				savePosition("spawnPosition", capsule, dest);
-				didSpawn = true;
-
-			} else {
-				revertStateFromActivated(capsule);
-				if (entityItem == null || playerWorld == null) {
-					return false;
-				}
-				// send a chat message to explain failure
-				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
-				if (player != null) {
-					if (outEntityBlocking.size() > 0) {
-						player.addChatMessage(
-								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-										StringUtils.join(outEntityBlocking, ", ")));
-					} else {
-						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-					}
-
-				}
-			}
-		}
-
-		return didSpawn;
+//		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
+//		boolean didSpawn = false;
+//
+//		if (bottomBlockPos != null) {
+//			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
+//			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
+//			BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
+//
+//			// do the transportation
+//			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
+//			List<String> outEntityBlocking = new ArrayList<String>();
+//			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule),
+//					this.isReward(capsule), null, occupiedSpawnPositions, outEntityBlocking);
+//			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
+//
+//			if (result) {
+//				// register the link in the capsule
+//				this.setState(capsule, STATE_DEPLOYED);
+//				savePosition("spawnPosition", capsule, dest);
+//				didSpawn = true;
+//
+//			} else {
+//				revertStateFromActivated(capsule);
+//				if (entityItem == null || playerWorld == null) {
+//					return false;
+//				}
+//				// send a chat message to explain failure
+//				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
+//				if (player != null) {
+//					if (outEntityBlocking.size() > 0) {
+//						player.addChatMessage(
+//								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+//										StringUtils.join(outEntityBlocking, ", ")));
+//					} else {
+//						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+//					}
+//
+//				}
+//			}
+//		}
+//
+//		return didSpawn;
+		return false;
 	}
 
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {
 		// store again
-		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
-		if (capsuleWorld == null) {
-			System.err.println("Can't get Capsule World from DimensionManager");
-			return;
-		}
-		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
-
-		NBTTagCompound linkPos = itemStackIn.getTagCompound().getCompoundTag("linkPosition");
-		BlockPos dest = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
-		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
-		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
-
-		int size = getSize(itemStackIn);
-
-		// do the transportation
-		Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(itemStackIn), false,
-				this.getOccupiedSourcePos(itemStackIn), null, null);
-
-		this.setState(itemStackIn, STATE_LINKED);
-		itemStackIn.getTagCompound().removeTag("spawnPosition");
+//		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
+//		if (capsuleWorld == null) {
+//			System.err.println("Can't get Capsule World from DimensionManager");
+//			return;
+//		}
+//		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
+//
+//		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+//		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+//
+//		int size = getSize(itemStackIn);
+//
+//		// do the transportation
+//		Helpers.swapRegions(playerWorld, capsuleWorld, source, null, size, Config.overridableBlocks, getExcludedBlocs(itemStackIn), false,
+//				this.getOccupiedSourcePos(itemStackIn), null, null);
+//
+//		this.setState(itemStackIn, STATE_LINKED);
+//		itemStackIn.getTagCompound().removeTag("spawnPosition");
 	}
 
 	public void setState(ItemStack stack, int state) {
@@ -600,6 +603,11 @@ public class CapsuleItem extends Item {
 		capsule.getTagCompound().setTag(key, pos);
 	}
 
+	public void clearCapsule(ItemStack capsule) {
+		this.setState(capsule, CapsuleItem.STATE_EMPTY);
+		capsule.getTagCompound().removeTag("structureName");
+	}
+	
 	/**
 	 * Get the Capsule saving tool that can allocate a new Capsule zone in the
 	 * capsule dimension.
@@ -607,19 +615,14 @@ public class CapsuleItem extends Item {
 	 * @param capsuleWorld
 	 * @return
 	 */
-	private CapsuleSavedData getCapsulePlacer(WorldServer capsuleWorld) {
-		CapsuleSavedData capsulePlacer = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsulePositions");
-		if (capsulePlacer == null) {
-			capsulePlacer = new CapsuleSavedData("capsulePositions");
-			capsuleWorld.setItemData("capsulePositions", capsulePlacer);
-			capsulePlacer.setDirty(true);
+	private CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
+		CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
+		if (capsuleSavedData == null) {
+			capsuleSavedData = new CapsuleSavedData("capsuleData");
+			capsuleWorld.setItemData("capsuleData", capsuleSavedData);
+			capsuleSavedData.setDirty(true);
 		}
-		return capsulePlacer;
-	}
-
-	public void clearCapsule(ItemStack capsule) {
-		this.setState(capsule, CapsuleItem.STATE_EMPTY);
-		capsule.getTagCompound().removeTag("linkPosition");
+		return capsuleSavedData;
 	}
 
 }
