@@ -32,7 +32,7 @@ public class Enchantments {
 		}
 				
 		
-		Property recallEnchantType = Config.config.get("Balancing", "recallEnchantType", "ALL");
+		Property recallEnchantType = Config.config.get("Balancing", "recallEnchantType", "null");
 		recallEnchantType.setComment("Possible targets for the enchantment. By default : ALL.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.");
 		
 		Config.config.save();
@@ -40,7 +40,7 @@ public class Enchantments {
 		Enchantments.recallEnchant = new RecallEnchant(
 			new ResourceLocation(Main.MODID, "recall"), // name
 			enchantRarity, // weight (chances to appear)
-			EnumEnchantmentType.ALL // possible targets
+			EnumEnchantmentType.valueOf(recallEnchantType.getString()) // possible targets
 		);
 		
 		Enchantment.REGISTRY.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
