@@ -4,7 +4,7 @@
 
 ## Changelog ##
 
-**1.9.4-1.1.7 : Compatibility fixes **
+**1.9.4-1.1.8 : Enchantment Fixes **
 
 * Fix #9 - Enchantment "Recall" not anymore present on every item whatever the config
 * Default config now allow Recall only on capsules (see config file for more options)
