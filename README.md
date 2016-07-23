@@ -6,6 +6,11 @@
 
 **1.9.4-1.1.7 : Compatibility fixes **
 
+* Fix #9 - Enchantment "Recall" not anymore present on every item whatever the config
+* Default config now allow Recall only on capsules (see config file for more options)
+
+**1.9.4-1.1.7 : Compatibility fixes **
+
 * Fix #5 - Mod crashing when CapsuleItem.getItemStackDisplayName is called server-side
 
 

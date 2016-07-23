@@ -34,13 +34,18 @@ public class Enchantments {
 		
 		Property recallEnchantType = Config.config.get("Balancing", "recallEnchantType", "null");
 		recallEnchantType.setComment("Possible targets for the enchantment. By default : ALL.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.");
+		EnumEnchantmentType recallEnchantTypeEnumValue = null;
+		try{
+			recallEnchantTypeEnumValue = EnumEnchantmentType.valueOf(recallEnchantType.getString());
+		} catch(IllegalArgumentException e) {}
+		
 		
 		Config.config.save();
 		
 		Enchantments.recallEnchant = new RecallEnchant(
 			new ResourceLocation(Main.MODID, "recall"), // name
 			enchantRarity, // weight (chances to appear)
-			EnumEnchantmentType.valueOf(recallEnchantType.getString()) // possible targets
+			recallEnchantTypeEnumValue // possible targets
 		);
 		
 		Enchantment.REGISTRY.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
