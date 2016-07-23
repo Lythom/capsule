@@ -4,6 +4,21 @@
 
 ## Changelog ##
 
+**1.9.4-1.1.7 : Compatibility fixes **
+
+* Fix #5 - Mod crashing when CapsuleItem.getItemStackDisplayName is called server-side
+
+
+**1.9.4-1.1.6 : Update for 1.9.4 version of forge + JEI integration + new recipe **
+
+* Update for forge 1.9.4 (thank you @Walter Daniel for the help =) )
+* Add JEI integration with descriptions and special recipes (recovery, upgrade, clear)
+* Add a new recipe to clear the content of a capsule (to allow upgrades and new recaptures of existing capsules)
+
+**1.9-1.1.5 : Update for forge 12.16.1.1887 **
+
+* Update Capsule mod for forge 1.9 - 12.16.1.1887 (recommanded)
+
 **1.9-1.1.4 : Transfer logic rework **
 
 * Rework transfer algorithm to force transfer without block update logic being executed during the move
@@ -54,7 +69,7 @@
 
 Items :
 
-* capsule item (iron, gold and diamon)
+* capsule item (iron, gold and diamond)
 * creative player2Capsule teleporter
 
 Blocks :
@@ -64,4 +79,6 @@ Blocks :
 ## Planned ##
 
 * Reward capsules holding the content as NBT data rather than in the dimension
+* Bette system for modpack makers to deliverate pre-fileld capsuels as gifts
+* Blueprint capsules that can be loaded with material and then spawn several times the same pattern
 * Capsule shirts, Capsules banner logo (idea of AlexisMachina)
