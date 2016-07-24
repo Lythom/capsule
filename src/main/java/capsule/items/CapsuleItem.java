@@ -356,10 +356,8 @@ public class CapsuleItem extends Item {
 				player = entityItem.getThrower();
 			}
 			CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
-			// TODO : create folder structures/capsule if it does not exists
-			String capsuleID = "capsule/C-" + player + "-" + csd.getNextCount();
-			StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null);
-			// Helpers.swapRegions(playerWorld, capsuleWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule), false, null, null, null);
+			String capsuleID = "@capsule-" + player + "-" + csd.getNextCount();
+			StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null, false);
 
 			// register the link in the capsule
 			this.setState(capsule, STATE_LINKED);
@@ -437,49 +435,52 @@ public class CapsuleItem extends Item {
 	 */
 	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
 		// specify target to capture
-//		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
-//		boolean didSpawn = false;
-//
-//		if (bottomBlockPos != null) {
-//			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
-//			NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("linkPosition");
-//			BlockPos source = new BlockPos(linkPos.getInteger("x"), linkPos.getInteger("y"), linkPos.getInteger("z"));
-//
-//			// do the transportation
-//			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
-//			List<String> outEntityBlocking = new ArrayList<String>();
-//			boolean result = Helpers.swapRegions(capsuleWorld, playerWorld, source, dest, size, Config.overridableBlocks, getExcludedBlocs(capsule),
-//					this.isReward(capsule), null, occupiedSpawnPositions, outEntityBlocking);
-//			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
-//
-//			if (result) {
-//				// register the link in the capsule
-//				this.setState(capsule, STATE_DEPLOYED);
-//				savePosition("spawnPosition", capsule, dest);
-//				didSpawn = true;
-//
-//			} else {
-//				revertStateFromActivated(capsule);
-//				if (entityItem == null || playerWorld == null) {
-//					return false;
-//				}
-//				// send a chat message to explain failure
-//				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
-//				if (player != null) {
-//					if (outEntityBlocking.size() > 0) {
-//						player.addChatMessage(
-//								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-//										StringUtils.join(outEntityBlocking, ", ")));
-//					} else {
-//						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-//					}
-//
-//				}
-//			}
-//		}
-//
-//		return didSpawn;
-		return false;
+		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
+		boolean didSpawn = false;
+
+		if (bottomBlockPos != null) {
+			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
+			String structureName = capsule.getTagCompound().getString("structureName");
+
+			// do the transportation
+			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
+			List<String> outEntityBlocking = new ArrayList<String>();
+			
+			boolean result = StructureSaver.deploy(playerWorld, entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
+			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
+			
+			if (result) {
+				// register the link in the capsule
+				if(!this.isReward(capsule)){
+					this.setState(capsule, STATE_DEPLOYED);
+					savePosition("spawnPosition", capsule, dest);
+					didSpawn = true;
+				}				
+
+			} else {
+				// could not deploy, either entity or block preventing merge
+				revertStateFromActivated(capsule);
+				if (entityItem == null || playerWorld == null) {
+					return false;
+				}
+				// send a chat message to explain failure
+				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
+				if (player != null) {
+					if (outEntityBlocking.size() > 0) {
+						player.addChatMessage(
+								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+										StringUtils.join(outEntityBlocking, ", ")));
+					} else if(occupiedSpawnPositions.size() == 0) {
+						player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", structureName));
+					} else {
+						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+					}
+
+				}
+			}
+		}
+
+		return didSpawn;
 	}
 
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {

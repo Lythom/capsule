@@ -56,7 +56,7 @@ public class CommonProxy {
 		
 		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME, Blocks.END_PORTAL }));
 		excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] exBlocks = null;
 		try {
@@ -70,7 +70,7 @@ public class CommonProxy {
 		
 		// OP Excluded
 		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.AIR }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.STRUCTURE_VOID }));
 		opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] opExBlocks = null;
 		try {
