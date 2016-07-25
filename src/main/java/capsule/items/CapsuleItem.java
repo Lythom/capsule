@@ -13,7 +13,6 @@ import capsule.Helpers;
 import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.dimension.CapsuleDimensionRegistrer;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -35,7 +34,6 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
 
 @SuppressWarnings("deprecation")
 public class CapsuleItem extends Item {
@@ -155,7 +153,7 @@ public class CapsuleItem extends Item {
 							? " (" + I18n.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
 
 		}
-		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") && stack.getTagCompound().getByte("overpowered") == (byte)1) {
+		if (isOverpowered(stack)) {
 			tooltip.add(I18n.translateToLocal("capsule.tooltip.overpowered"));
 
 		}
@@ -163,6 +161,10 @@ public class CapsuleItem extends Item {
 			I18n.translateToLocal("capsule.tooltip.one_use").trim();
 		}
 		super.addInformation(stack, playerIn, tooltip, advanced);
+	}
+	
+	public boolean isOverpowered(ItemStack stack){
+		return stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") && stack.getTagCompound().getByte("overpowered") == (byte)1;
 	}
 
 	/**
@@ -294,17 +296,16 @@ public class CapsuleItem extends Item {
 		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule) && entityItem.getEntityWorld() != null) {
 
 			int size = getSize(capsule);
-			int exdendLength = (size - 1) / 2;
+			int extendLength = (size - 1) / 2;
 
 			// get destination world available position
-			WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
 			WorldServer playerWorld = (WorldServer) entityItem.worldObj;
 
 			if (isLinked(capsule)) {
 
 				// DEPLOY
 				// is linked, deploy
-				boolean deployed = deployCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
+				boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, playerWorld);
 				if (deployed && this.isOneUse(capsule)) {
 					entityItem.setDead();
 				}
@@ -314,7 +315,7 @@ public class CapsuleItem extends Item {
 
 				// CAPTURE
 				// is not linked, capture
-				captureContentIntoCapsule(entityItem, capsule, size, exdendLength, capsuleWorld, playerWorld);
+				captureContentIntoCapsule(entityItem, capsule, size, extendLength, playerWorld);
 				return true;
 			}
 		}
@@ -328,19 +329,18 @@ public class CapsuleItem extends Item {
 	 * @param entityItem
 	 * @param capsule
 	 * @param size
-	 * @param exdendLength
+	 * @param extendLength
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld,
-			WorldServer playerWorld) {
+	private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 
 		boolean didCapture = false;
 
 		// specify target to capture
 		BlockPos marker = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
 		if (marker != null) {
-			BlockPos source = marker.add(-exdendLength, 1, -exdendLength);
+			BlockPos source = marker.add(-extendLength, 1, -extendLength);
 
 			// Save the region in a structure block file
 			String player = "CapsuleMod";
@@ -420,17 +420,17 @@ public class CapsuleItem extends Item {
 	 * @param entityItem
 	 * @param capsule
 	 * @param size
-	 * @param exdendLength
+	 * @param extendLength
 	 * @param capsuleWorld
 	 * @param playerWorld
 	 */
-	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int exdendLength, WorldServer capsuleWorld, WorldServer playerWorld) {
+	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 		// specify target to capture
 		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
 		boolean didSpawn = false;
 
 		if (bottomBlockPos != null) {
-			BlockPos dest = bottomBlockPos.add(-exdendLength, 1, -exdendLength);
+			BlockPos dest = bottomBlockPos.add(-extendLength, 1, -extendLength);
 			String structureName = capsule.getTagCompound().getString("structureName");
 
 			// do the transportation
@@ -541,21 +541,21 @@ public class CapsuleItem extends Item {
 	public int getColorFromItemstack(ItemStack stack, int renderPass) {
 		int color = 0xFFFFFF;
 
-		// material color
+		// material color on label surronding
 		if (renderPass == 0) {
+			color = Helpers.getColor(stack);
+			
+		} else if (renderPass == 1) {
+			if(isOverpowered(stack)){
+				return Math.min((int)Math.round(Math.random()*0xFFFFFF), 0xFFFFFF);
+			}
 			if (stack.hasTagCompound() && stack.getTagCompound().hasKey("color")) {
 				color = stack.getTagCompound().getInteger("color");
 			}
 
-			// label color
-		} else if (renderPass == 1) {
-			if (this.isLinked(stack)) {
-				color = Helpers.getColor(stack);
-			} else {
-				return -1;
-			}
-
-		}
+		} else if (renderPass == 2) {
+			color = 0xFFFFFF;
+		} 
 		return color;
 	}
 

@@ -22,9 +22,7 @@ public class CapsuleItemsRegistrer {
 
 	public static Item capsule;
 	public static Item recoveryCapsule;
-	public static Item creativeTP;
 	
-	public static String CAPSULETP_REGISTERY_NAME = "capsule_CTP";
 	public static String CAPSULE_REGISTERY_NAME = "capsule";
 	
 	public static UpgradeCapsuleRecipe upgradeCapsuleRecipe;
@@ -37,13 +35,9 @@ public class CapsuleItemsRegistrer {
 	public static Property opCapsuleSize;
 
 	public static void createItems(String modid) {
-		creativeTP = new CreativeTP(CAPSULETP_REGISTERY_NAME);
-		creativeTP.setCreativeTab(Main.tabCapsule);
-		
 		capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
 		capsule.setCreativeTab(Main.tabCapsule);
 
-		GameRegistry.register(creativeTP.setRegistryName(CAPSULETP_REGISTERY_NAME));
 		GameRegistry.register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
 	}
 

@@ -80,9 +80,6 @@ public class ClientProxy extends CommonProxy {
 		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE_ACTIVATED,
 				new ModelResourceLocation(modid + ":capsule_one_use_activated", "inventory"));
 
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.creativeTP, 0,
-				new ModelResourceLocation(modid + ":capsule_CTP", "inventory"));
-
 		Minecraft.getMinecraft().getItemColors().registerItemColorHandler(new IItemColor() {
 			public int getColorFromItemstack(ItemStack stack, int tintIndex) {
 				if (stack.getItem() instanceof CapsuleItem) {

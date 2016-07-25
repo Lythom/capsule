@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
-import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -463,8 +462,7 @@ public class StructureSaver {
 	}
 	
 	/**
-	 * Get the Capsule saving tool that can allocate a new Capsule zone in the
-	 * capsule dimension.
+	 * Get the Capsule saving tool that remembers last caspule id.
 	 * 
 	 * @param capsuleWorld
 	 * @return

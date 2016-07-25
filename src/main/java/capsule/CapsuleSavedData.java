@@ -1,7 +1,7 @@
 /**
  * 
  */
-package capsule.dimension;
+package capsule;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.WorldSavedData;

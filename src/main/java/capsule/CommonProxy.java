@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
-import capsule.dimension.CapsuleDimensionRegistrer;
 import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.network.LabelEditedMessageToServer;
@@ -40,9 +39,6 @@ public class CommonProxy {
 		// network stuff
 		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
 		simpleNetworkWrapper.registerMessage(MessageHandlerOnServer.class, LabelEditedMessageToServer.class, LABEL_EDITED_ID, Side.SERVER);
-		
-		// register dimension on both client and server
-		CapsuleDimensionRegistrer.registerDimension();
 	}
 
 	public void init(FMLInitializationEvent event) {
