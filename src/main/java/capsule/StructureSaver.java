@@ -1,6 +1,8 @@
 package capsule;
 
-import java.lang.reflect.Field;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,13 +16,16 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
+import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.init.Blocks;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
@@ -33,33 +38,60 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
+import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 public class StructureSaver {
 
 	protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
+	
+	public static final Map<WorldServer,TemplateManager> MANAGERS = new HashMap<WorldServer,TemplateManager>();
 
 	public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos position, int size, List<Block> excluded,
 			Map<BlockPos, Block> excludedPositions, boolean keepSource) {
 
 		MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-		TemplateManager templatemanager = worldserver.getStructureTemplateManager();
+		List<Entity> outCapturedEntities = new ArrayList<>();
+		
+		TemplateManager templatemanager = getTemplateManager(worldserver);
 		Template template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
 		List<BlockPos> transferedPositions = takeBlocksFromWorldIntoCapsule(template, worldserver, position, new BlockPos(size, size, size), excludedPositions,
-				excluded);
+				excluded, outCapturedEntities);
 		template.setAuthor(playerID);
 		boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
 		if (writingOK && !keepSource) {
 			removeTransferedBlockFromWorld(transferedPositions, worldserver);
+			for(Entity e : outCapturedEntities){
+				e.setDropItemsWhenDead(false);
+				e.setDead();
+			}
 		}
 
 		return writingOK;
 
 	}
 
+	private static TemplateManager getTemplateManager(WorldServer worldserver) {
+		if(!MANAGERS.containsKey(worldserver)){
+			File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
+			capsuleDir.mkdirs();
+			MANAGERS.put(worldserver, new TemplateManager(capsuleDir.toString()));
+		}
+		return MANAGERS.get(worldserver);
+		
+	}
+
+	/**
+	 * Use with caution, delete the blocks at the indicated positions.
+	 * @param transferedPositions
+	 * @param world
+	 */
 	public static void removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
 
 		// disable tileDrop during the operation so that broken block are not
@@ -91,10 +123,11 @@ public class StructureSaver {
 	 */
 
 	/**
+	 * Rewritten from Template.takeBlocksFromWorld
 	 * takes blocks from the world and puts the data them into this template
 	 */
 	public static List<BlockPos> takeBlocksFromWorldIntoCapsule(Template template, World worldIn, BlockPos startPos, BlockPos endPos,
-			Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded) {
+			Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
 
 		// As it can't be extended, hacking template to use it as a saving
 		// mechanics with reflexion
@@ -143,7 +176,7 @@ public class StructureSaver {
 					} else {
 						list.add(new Template.BlockInfo(blockpos3, iblockstate, (NBTTagCompound) null));
 					}
-					transferedBlocks.add(blockpos$mutableblockpos.add(0, 0, 0)); // save
+					transferedBlocks.add(new BlockPos(blockpos$mutableblockpos.getX(), blockpos$mutableblockpos.getY(), blockpos$mutableblockpos.getZ())); // save
 																					// a
 																					// copy
 				}
@@ -154,7 +187,10 @@ public class StructureSaver {
 			blocks.addAll(list1);
 			blocks.addAll(list2);
 
-			takeNonLivingEntitiesFromWorld(template, worldIn, blockpos1, blockpos2.add(1, 1, 1));
+			List<Entity> capturedEntities = takeNonLivingEntitiesFromWorld(template, worldIn, blockpos1, blockpos2.add(1, 1, 1));
+			if(outCapturedEntities != null && capturedEntities != null){
+				outCapturedEntities.addAll(capturedEntities);
+			}
 
 			return transferedBlocks;
 		}
@@ -165,29 +201,15 @@ public class StructureSaver {
 	/**
 	 * takes blocks from the world and puts the data them into this template
 	 */
-	@SuppressWarnings("unchecked")
-	public static void takeNonLivingEntitiesFromWorld(Template template, World worldIn, BlockPos startPos, BlockPos endPos) {
+	public static List<Entity> takeNonLivingEntitiesFromWorld(Template template, World worldIn, BlockPos startPos, BlockPos endPos) {
 		// Hacking template to access entities, since it cannont be extended
-		Field entitiesField = null;
-		try {
-			entitiesField = template.getClass().getDeclaredField("entities");
-			entitiesField.setAccessible(true);
-		} catch (NoSuchFieldException | SecurityException e1) {
-			e1.printStackTrace();
-		}
-
-		List<Template.EntityInfo> entities = null;
-		try {
-			entities = (List<Template.EntityInfo>) entitiesField.get(template);
-		} catch (IllegalArgumentException | IllegalAccessException e1) {
-			LOGGER.error("Error while saving capsule into structureBlock Template.", e1);
-			return;
-		}
-
+		List<Template.EntityInfo> entities = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "entities");
+		if(entities == null) return null;
+		
 		// rewritten vanilla code from Template.takeEntitiesFromWorld
 		List<Entity> list = worldIn.<Entity> getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(startPos, endPos), new Predicate<Entity>() {
 			public boolean apply(@Nullable Entity p_apply_1_) {
-				return !(p_apply_1_ instanceof EntityLivingBase) || (p_apply_1_ instanceof EntityArmorStand);
+				return !(p_apply_1_ instanceof EntityItem) && (!(p_apply_1_ instanceof EntityLivingBase) || (p_apply_1_ instanceof EntityArmorStand));
 			}
 		});
 		entities.clear();
@@ -206,12 +228,14 @@ public class StructureSaver {
 
 			entities.add(new Template.EntityInfo(vec3d, blockpos, nbttagcompound));
 		}
+		
+		return list;
 	}
 
 	public static boolean deploy(WorldServer playerWorld, String thrower, String structureName, BlockPos dest, int size, List<Block> overridableBlocks,
 			Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
-		TemplateManager templatemanager = playerWorld.getStructureTemplateManager();
+		TemplateManager templatemanager = getTemplateManager(playerWorld);
 		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
 		if (template != null)
         {
@@ -219,7 +243,7 @@ public class StructureSaver {
         	PlacementSettings placementsettings = (new PlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos)null).setReplacedBlock((Block)null).setIgnoreStructureBlock(false);
         	boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
         	if(destValid){
-        		template.addBlocksToWorldChunk(playerWorld, dest, placementsettings);
+        		spawnBlocksAndEntities(template, playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks);
         		return true;
         	}
         }
@@ -246,6 +270,7 @@ public class StructureSaver {
 		IBlockState air = Blocks.AIR.getDefaultState();
 		
 		List<Template.BlockInfo> srcblocks = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
+		if(srcblocks == null) return false;
 		
 		Map<BlockPos,Template.BlockInfo> blockInfoByPosition = new HashMap<>();
 		for (Template.BlockInfo template$blockinfo : srcblocks)
@@ -267,11 +292,11 @@ public class StructureSaver {
 					}
 		
 					BlockPos destPos = destOriginPos.add(x,y,z);
-					Block destState = destWorld.getBlockState(destPos).getBlock();
+					IBlockState destState = destWorld.getBlockState(destPos);
 		
-					boolean destOccupied = (destState != air && !overridable.contains(destState));
+					boolean destOccupied = (destState != air && !overridable.contains(destState.getBlock()));
 					if (destState != air && outOccupiedPositions != null) {
-						outOccupiedPositions.put(destPos, destState);
+						outOccupiedPositions.put(destPos, destState.getBlock());
 					}
 					
 					boolean srcOccupied = (srcState != air && !overridable.contains(srcState.getBlock()));
@@ -302,5 +327,155 @@ public class StructureSaver {
 
 		return true;
 	}
+	
+	/**
+	 * Rewritten from Template.func_189960_a
+	 * @param p_189960_1_
+	 * @param p_189960_2_
+	 * @param p_189960_3_
+	 * @param p_189960_4_
+	 * @param p_189960_5_
+	 */
+	public static void spawnBlocksAndEntities(Template template, World p_189960_1_, BlockPos p_189960_2_, PlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks)
+    {
+		// As it can't be extended, hacking template to use it as a saving mechanics with reflexion		
+		List<Template.BlockInfo> blocks = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
+		BlockPos size = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "size");
+		ITemplateProcessor p_189960_3_ = new BlockRotationProcessor(p_189960_2_, p_189960_4_);
+		int p_189960_5_ = 2;
+		
+		if(blocks == null || size == null || p_189960_3_== null) return; 
+		
 
+        if (!blocks.isEmpty() && size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1)
+        {
+            Block block = p_189960_4_.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = p_189960_4_.getBoundingBox();
+
+            for (Template.BlockInfo template$blockinfo : blocks)
+            {
+                BlockPos blockpos = Template.transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
+                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.func_189943_a(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
+
+                if (template$blockinfo1 != null)
+                {
+                    Block block1 = template$blockinfo1.blockState.getBlock();
+
+                    if (
+                    		(block == null || block != block1) && 
+                    		(!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && 
+                    		(structureboundingbox == null || structureboundingbox.isVecInside(blockpos)) &&
+                    		// add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
+                    		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos))) 
+                    )
+                    {
+                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
+                        IBlockState iblockstate1 = iblockstate.withRotation(p_189960_4_.getRotation());
+
+                        if (template$blockinfo1.tileentityData != null)
+                        {
+                            TileEntity tileentity = p_189960_1_.getTileEntity(blockpos);
+
+                            if (tileentity != null)
+                            {
+                                if (tileentity instanceof IInventory)
+                                {
+                                    ((IInventory)tileentity).clear();
+                                }
+
+                                p_189960_1_.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 4);
+                            }
+                        }
+
+                        if (p_189960_1_.setBlockState(blockpos, iblockstate1, p_189960_5_) && template$blockinfo1.tileentityData != null)
+                        {
+                            TileEntity tileentity2 = p_189960_1_.getTileEntity(blockpos);
+
+                            if (tileentity2 != null)
+                            {
+                                template$blockinfo1.tileentityData.setInteger("x", blockpos.getX());
+                                template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
+                                template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
+                                tileentity2.readFromNBT(template$blockinfo1.tileentityData);
+                                tileentity2.func_189668_a(p_189960_4_.getMirror());
+                                tileentity2.func_189667_a(p_189960_4_.getRotation());
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (Template.BlockInfo template$blockinfo2 : blocks)
+            {
+                if (block == null || block != template$blockinfo2.blockState.getBlock())
+                {
+                    BlockPos blockpos1 = Template.transformedBlockPos(p_189960_4_, template$blockinfo2.pos).add(p_189960_2_);
+
+                    if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
+                    {
+                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock());
+
+                        if (template$blockinfo2.tileentityData != null)
+                        {
+                            TileEntity tileentity1 = p_189960_1_.getTileEntity(blockpos1);
+
+                            if (tileentity1 != null)
+                            {
+                                tileentity1.markDirty();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!p_189960_4_.getIgnoreEntities())
+            {
+				Method addEntitiesToWorld = ReflectionHelper.findMethod(
+						Template.class, template, 
+						new String[] { "func_186263_a", "addEntitiesToWorld" },
+						World.class, BlockPos.class, Mirror.class, Rotation.class, StructureBoundingBox.class
+				);
+				try {
+					addEntitiesToWorld.invoke(template, p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					LOGGER.error("Error while invoking method addEntitiesToWorld during capsule spawning.", e);
+				}
+            }
+        }
+    }
+
+	/**
+	 * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
+	 * @param playerWorld
+	 * @param player
+	 * @return
+	 */
+	public static String getUniqueName(WorldServer playerWorld, String player) {
+		CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
+		String capsuleID = "C-" + player + "-" + csd.getNextCount();
+		TemplateManager templatemanager = getTemplateManager(playerWorld);
+		
+		while(templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+			capsuleID = "C-" + player + "-" + csd.getNextCount();
+		}
+		
+		return capsuleID;
+	}
+	
+	/**
+	 * Get the Capsule saving tool that can allocate a new Capsule zone in the
+	 * capsule dimension.
+	 * 
+	 * @param capsuleWorld
+	 * @return
+	 */
+	public static CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
+		CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
+		if (capsuleSavedData == null) {
+			capsuleSavedData = new CapsuleSavedData("capsuleData");
+			capsuleWorld.setItemData("capsuleData", capsuleSavedData);
+			capsuleSavedData.setDirty(true);
+		}
+		return capsuleSavedData;
+	}
 }

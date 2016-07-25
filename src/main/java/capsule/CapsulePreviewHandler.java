@@ -30,9 +30,8 @@ public class CapsulePreviewHandler {
 
 		// do something to player every update tick:
 		if (event.player instanceof EntityPlayerSP && event.phase.equals(Phase.START)) {
-			EntityPlayerSP player = (EntityPlayerSP) event.player;
-			
-;			tryPreviewCapture(player, player.getHeldItemMainhand());
+			EntityPlayerSP player = (EntityPlayerSP) event.player;			
+			tryPreviewCapture(player, player.getHeldItemMainhand());
 		}
 	}
 
@@ -41,9 +40,9 @@ public class CapsulePreviewHandler {
 		if (heldItem != null) {
 			Item heldItemItem = heldItem.getItem();
 			// it's an empty capsule : show capture zones
-			if (heldItemItem instanceof CapsuleItem && heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+			if (heldItemItem instanceof CapsuleItem && (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY || heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
 				CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
-				if (heldItem.getTagCompound().hasKey("size") && heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+				if (heldItem.getTagCompound().hasKey("size")) {
 					setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), capsule.getColorFromItemstack(heldItem, 0), player.worldObj);
 					return true;
 				}
@@ -101,7 +100,11 @@ public class CapsulePreviewHandler {
 				extendSize, color);
 	}
 
+	private int lastSize = 0;
+	private int lastColor = 0;
 	private void setCaptureTESizeColor(int size, int color, World worldIn) {
+		if(size == lastSize && color == lastColor) return;
+		
 		// change NBT of all existing TileEntityCapture in the world to make them display the preview zone
 		// remember it's client side only
 		for (Iterator<TileEntityCapture> iterator = TileEntityCapture.instances.iterator(); iterator.hasNext();) {
@@ -113,5 +116,7 @@ public class CapsulePreviewHandler {
 				worldIn.markBlockRangeForRenderUpdate(te.getPos(), te.getPos());
 			}
 		}
+		lastSize = size;
+		lastColor = color;
 	}
 }

@@ -332,7 +332,7 @@ public class Helpers {
 			for (BlockPos pos : blockPoss) {
 				Block block = entityItem.worldObj.getBlockState(pos).getBlock();
 				if (block.getClass().equals(searchedBlock)) {
-					return pos.add(0, 0, 0); // return a copy
+					return new BlockPos(pos.getX(),pos.getY(),pos.getZ()); // return a copy
 				}
 			}
 		}

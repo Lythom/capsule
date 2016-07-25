@@ -14,7 +14,6 @@ import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.dimension.CapsuleDimensionRegistrer;
-import capsule.dimension.CapsuleSavedData;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -100,14 +99,7 @@ public class CapsuleItem extends Item {
 	public boolean isReward(ItemStack stack) {
 		return (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && this.isOneUse(stack));
 	}
-
-	public void setIsReward(ItemStack stack, boolean isReward) {
-		if (!stack.hasTagCompound()) {
-			stack.setTagCompound(new NBTTagCompound());
-		}
-		stack.getTagCompound().setBoolean("isReward", isReward);
-	}
-
+	
 	public String getLabel(ItemStack stack) {
 
 		if (stack == null)
@@ -355,8 +347,7 @@ public class CapsuleItem extends Item {
 			if(entityItem.getThrower() != null){
 				player = entityItem.getThrower();
 			}
-			CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
-			String capsuleID = "@capsule-" + player + "-" + csd.getNextCount();
+			String capsuleID = StructureSaver.getUniqueName(playerWorld, player);
 			StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null, false);
 
 			// register the link in the capsule
@@ -454,8 +445,8 @@ public class CapsuleItem extends Item {
 				if(!this.isReward(capsule)){
 					this.setState(capsule, STATE_DEPLOYED);
 					savePosition("spawnPosition", capsule, dest);
-					didSpawn = true;
-				}				
+				}
+				didSpawn = true;
 
 			} else {
 				// could not deploy, either entity or block preventing merge
@@ -485,24 +476,27 @@ public class CapsuleItem extends Item {
 
 	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {
 		// store again
-//		WorldServer capsuleWorld = DimensionManager.getWorld(CapsuleDimensionRegistrer.dimensionId);
-//		if (capsuleWorld == null) {
-//			System.err.println("Can't get Capsule World from DimensionManager");
-//			return;
-//		}
-//		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
-//
-//		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
-//		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
-//
-//		int size = getSize(itemStackIn);
-//
-//		// do the transportation
-//		Helpers.swapRegions(playerWorld, capsuleWorld, source, null, size, Config.overridableBlocks, getExcludedBlocs(itemStackIn), false,
-//				this.getOccupiedSourcePos(itemStackIn), null, null);
-//
-//		this.setState(itemStackIn, STATE_LINKED);
-//		itemStackIn.getTagCompound().removeTag("spawnPosition");
+		
+		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
+
+		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+
+		int size = getSize(itemStackIn);
+
+		// do the transportation
+		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), this.getOccupiedSourcePos(itemStackIn), false);
+
+		if(storageOK){
+			this.setState(itemStackIn, STATE_LINKED);
+			itemStackIn.getTagCompound().removeTag("spawnPosition");
+			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+		} else {
+			if (playerIn != null) {
+				playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+			}
+		}
+		
 	}
 
 	public void setState(ItemStack stack, int state) {
@@ -608,23 +602,6 @@ public class CapsuleItem extends Item {
 	public void clearCapsule(ItemStack capsule) {
 		this.setState(capsule, CapsuleItem.STATE_EMPTY);
 		capsule.getTagCompound().removeTag("structureName");
-	}
-	
-	/**
-	 * Get the Capsule saving tool that can allocate a new Capsule zone in the
-	 * capsule dimension.
-	 * 
-	 * @param capsuleWorld
-	 * @return
-	 */
-	private CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
-		CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
-		if (capsuleSavedData == null) {
-			capsuleSavedData = new CapsuleSavedData("capsuleData");
-			capsuleWorld.setItemData("capsuleData", capsuleSavedData);
-			capsuleSavedData.setDirty(true);
-		}
-		return capsuleSavedData;
 	}
 
 }
