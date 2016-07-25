@@ -102,7 +102,6 @@ public class CapsulePlugin extends BlankModPlugin {
 		@Override
         public String getSubtypeInfo(@Nonnull ItemStack itemStack) {
         	if(itemStack == null || !(itemStack.getItem() instanceof CapsuleItem)) return null;
-        	CapsuleItem item = (CapsuleItem) itemStack.getItem();
         	return String.valueOf(itemStack.getItemDamage()) + itemStack.getTagCompound().getBoolean("overpowered");
         }
     }

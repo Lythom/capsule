@@ -138,7 +138,7 @@ public class CapsuleItem extends Item {
 
 	@Override
 	public boolean hasEffect(ItemStack stack) {
-		return false;
+		return isOverpowered(stack);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -507,7 +507,7 @@ public class CapsuleItem extends Item {
 	
 	public List<Block> getExcludedBlocs(ItemStack stack) {
 		List<Block> excludedBlocks = Config.excludedBlocks;
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("overpowered") &&  stack.getTagCompound().getByte("overpowered") == ((byte)1)){
+		if(isOverpowered(stack)){
 			excludedBlocks = Config.opExcludedBlocks;
 		}
 		return excludedBlocks;
@@ -548,9 +548,6 @@ public class CapsuleItem extends Item {
 			color = Helpers.getColor(stack);
 			
 		} else if (renderPass == 1) {
-			if(isOverpowered(stack)){
-				return Math.min((int)Math.round(Math.random()*0xFFFFFF), 0xFFFFFF);
-			}
 			if (stack.hasTagCompound() && stack.getTagCompound().hasKey("color")) {
 				color = stack.getTagCompound().getInteger("color");
 			}
