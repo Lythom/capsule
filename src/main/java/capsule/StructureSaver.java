@@ -109,6 +109,24 @@ public class StructureSaver {
 		world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
 
 	}
+	
+
+	public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
+		MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+		
+		TemplateManager templatemanager = getTemplateManager(worldserver);
+		Template template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+		
+		List<Template.BlockInfo> blocks = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
+		List<Template.EntityInfo> entities = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "entities");
+		if(entities == null || blocks == null) return false;
+		
+		blocks.clear();
+		entities.clear();
+
+		return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+		
+	}
 
 	/**
 	 * Reflexion id mappings : [0] private final java.util.List
@@ -476,4 +494,5 @@ public class StructureSaver {
 		}
 		return capsuleSavedData;
 	}
+
 }

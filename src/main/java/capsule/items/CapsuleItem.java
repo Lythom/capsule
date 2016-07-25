@@ -446,6 +446,8 @@ public class CapsuleItem extends Item {
 					this.setState(capsule, STATE_DEPLOYED);
 					savePosition("spawnPosition", capsule, dest);
 				}
+				// remove the content from the structure block to prevent dupe using recovery capsules
+				StructureSaver.clearTemplate(playerWorld, structureName);
 				didSpawn = true;
 
 			} else {
