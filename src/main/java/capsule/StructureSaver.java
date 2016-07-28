@@ -76,7 +76,7 @@ public class StructureSaver {
 
 	}
 
-	private static TemplateManager getTemplateManager(WorldServer worldserver) {
+	public static TemplateManager getTemplateManager(WorldServer worldserver) {
 		if(!MANAGERS.containsKey(worldserver)){
 			File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
 			capsuleDir.mkdirs();

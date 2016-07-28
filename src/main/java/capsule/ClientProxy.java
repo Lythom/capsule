@@ -43,8 +43,8 @@ public class ClientProxy extends CommonProxy {
 		CapsulePreviewHandler cph = new CapsulePreviewHandler();
 		// for the undeploy preview
 		MinecraftForge.EVENT_BUS.register(cph);
-		// for the capture preview
-		MinecraftForge.EVENT_BUS.register(cph);
+		
+		
 	}
 
 	private void registerBlockRenderer() {
