@@ -42,6 +42,8 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 		int blue = c.getBlue();
 		int alpha = 150;
 
+		GlStateManager.pushMatrix();
+		
 		GL11.glLineWidth(3.0F);
 		
 		GlStateManager.enableBlend();
@@ -51,7 +53,6 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
         GlStateManager.disableTexture2D();
         GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
 		
-		GlStateManager.pushMatrix();
 		GlStateManager.translate(relativeX, relativeY, relativeZ);
 
 		AxisAlignedBB boundingBox = new AxisAlignedBB(-extendSize - 0.01, 1.01, -extendSize - 0.01,
@@ -84,13 +85,16 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
         vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
         tessellator.draw();
 
-		GlStateManager.popMatrix();
+		
 
 		GlStateManager.enableTexture2D();
 		GlStateManager.disableBlend();
 		GlStateManager.enableLighting();
-		
 		GL11.glLineWidth(1.0F);
+		
+		GlStateManager.popMatrix();
+		
+		
 	}
 	
 	
