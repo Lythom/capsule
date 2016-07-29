@@ -8,12 +8,16 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
+import capsule.CommonProxy;
 import capsule.Config;
 import capsule.Helpers;
 import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
+import capsule.network.AskCapsuleContentPreviewMessageToServer;
+import capsule.network.LabelEditedMessageToServer;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -29,6 +33,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
@@ -229,7 +234,8 @@ public class CapsuleItem extends Item {
 
 			// an activated capsule is thrown farther on right click
 			if (isActivated(itemStackIn)) {
-				throwItem(itemStackIn, playerIn);
+				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.rayTracePreview(playerIn, Minecraft.getMinecraft().getRenderPartialTicks()) : null;
+				throwCapsule(itemStackIn, playerIn, rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos() : null);
 				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 			}
 
@@ -253,6 +259,15 @@ public class CapsuleItem extends Item {
 			// an opened capsule revoke deployed content on right click
 			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
 				resentToCapsule(itemStackIn, playerIn);
+			}
+		} else {
+			// client side, if is going to get activated, ask for server preview
+			if(itemStackIn.getItemDamage() == STATE_LINKED
+					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
+				BlockPos anchor = Minecraft.getMinecraft().objectMouseOver.getBlockPos();
+				if(anchor != null){
+					CommonProxy.simpleNetworkWrapper.sendToServer(new AskCapsuleContentPreviewMessageToServer(itemStackIn.getTagCompound().getString("structureName")));
+				}
 			}
 		}
 
@@ -426,50 +441,58 @@ public class CapsuleItem extends Item {
 	 */
 	private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 		// specify target to capture
-		BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem, Config.excludedBlocks);
+		
 		boolean didSpawn = false;
 
-		if (bottomBlockPos != null) {
-			BlockPos dest = bottomBlockPos.add(-extendLength, 1, -extendLength);
-			String structureName = capsule.getTagCompound().getString("structureName");
+		BlockPos dest = null;
+		if(capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
+			BlockPos centerDest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
+			dest = centerDest.add(-extendLength, 1, -extendLength);
+			capsule.getTagCompound().removeTag("deployAt");
+			// TODO : find a better way to have the capsule go where it should
+			entityItem.setPosition(centerDest.getX()+0.5, centerDest.getY(), centerDest.getZ()+0.5);
+		} else {
+			BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem);
+			dest = bottomBlockPos.add(-extendLength, 1, -extendLength);
+		}
+		String structureName = capsule.getTagCompound().getString("structureName");
 
-			// do the transportation
-			Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
-			List<String> outEntityBlocking = new ArrayList<String>();
-			
-			boolean result = StructureSaver.deploy(playerWorld, entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
-			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
-			
-			if (result) {
-				// register the link in the capsule
-				if(!this.isReward(capsule)){
-					this.setState(capsule, STATE_DEPLOYED);
-					savePosition("spawnPosition", capsule, dest);
-				}
-				// remove the content from the structure block to prevent dupe using recovery capsules
-				StructureSaver.clearTemplate(playerWorld, structureName);
-				didSpawn = true;
+		// do the transportation
+		Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
+		List<String> outEntityBlocking = new ArrayList<String>();
+		
+		boolean result = StructureSaver.deploy(playerWorld, entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
+		this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
+		
+		if (result) {
+			// register the link in the capsule
+			if(!this.isReward(capsule)){
+				this.setState(capsule, STATE_DEPLOYED);
+				savePosition("spawnPosition", capsule, dest);
+			}
+			// remove the content from the structure block to prevent dupe using recovery capsules
+			StructureSaver.clearTemplate(playerWorld, structureName);
+			didSpawn = true;
 
-			} else {
-				// could not deploy, either entity or block preventing merge
-				revertStateFromActivated(capsule);
-				if (entityItem == null || playerWorld == null) {
-					return false;
+		} else {
+			// could not deploy, either entity or block preventing merge
+			revertStateFromActivated(capsule);
+			if (entityItem == null || playerWorld == null) {
+				return false;
+			}
+			// send a chat message to explain failure
+			EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
+			if (player != null) {
+				if (outEntityBlocking.size() > 0) {
+					player.addChatMessage(
+							new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+									StringUtils.join(outEntityBlocking, ", ")));
+				} else if(occupiedSpawnPositions.size() == 0) {
+					player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", structureName));
+				} else {
+					player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
 				}
-				// send a chat message to explain failure
-				EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
-				if (player != null) {
-					if (outEntityBlocking.size() > 0) {
-						player.addChatMessage(
-								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-										StringUtils.join(outEntityBlocking, ", ")));
-					} else if(occupiedSpawnPositions.size() == 0) {
-						player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", structureName));
-					} else {
-						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-					}
 
-				}
 			}
 		}
 
@@ -566,17 +589,31 @@ public class CapsuleItem extends Item {
 	 * @param playerIn
 	 * @return
 	 */
-	private EntityItem throwItem(ItemStack itemStackIn, EntityPlayer playerIn) {
+	private EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
+		
 		double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
 		EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
 		entityitem.setPickupDelay(10);
 		entityitem.setThrower(playerIn.getName());
-		float f = 0.5F;
-		entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-				* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-		entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-				* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-		entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
+		
+		if(destination != null){
+			float f = 0.5F;
+			entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
+					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
+			entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
+					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
+			entityitem.motionY = (double) (0.3);
+			itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
+		} else {
+			float f = 0.5F;
+			entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
+					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
+			entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
+					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
+			entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
+		}
+		
+		
 
 		playerIn.dropItemAndGetStack(entityitem);
 

@@ -6,8 +6,12 @@ import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
+import capsule.network.AskCapsuleContentPreviewMessageToServer;
+import capsule.network.AskCapsuleContentPreviewMessageToServerMessageHandler;
+import capsule.network.CapsuleContentPreviewMessageToClient;
 import capsule.network.LabelEditedMessageToServer;
-import capsule.network.MessageHandlerOnServer;
+import capsule.network.LabelEditedMessageToServerMessageHandler;
+import capsule.network.MessageHandlerOnClient;
 import net.minecraft.block.Block;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.player.EntityPlayer;
@@ -26,7 +30,7 @@ import net.minecraftforge.fml.relauncher.Side;
 public class CommonProxy {
 
 	public static SimpleNetworkWrapper simpleNetworkWrapper;
-	public static final byte LABEL_EDITED_ID = 1;
+	public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
 	public void preInit(FMLPreInitializationEvent event) {
 		Config.config = new Configuration(event.getSuggestedConfigurationFile());
@@ -38,7 +42,12 @@ public class CommonProxy {
 
 		// network stuff
 		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
-		simpleNetworkWrapper.registerMessage(MessageHandlerOnServer.class, LabelEditedMessageToServer.class, LABEL_EDITED_ID, Side.SERVER);
+		// client ask server to edit capsule label
+		simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerMessageHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+		// client ask server data needed to preview a deploy
+		simpleNetworkWrapper.registerMessage(AskCapsuleContentPreviewMessageToServerMessageHandler.class, AskCapsuleContentPreviewMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+		// server sends to client the data needed to preview a deploy
+		simpleNetworkWrapper.registerMessage(MessageHandlerOnClient.class, CapsuleContentPreviewMessageToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
 	}
 
 	public void init(FMLInitializationEvent event) {

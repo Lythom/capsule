@@ -7,36 +7,40 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.world.World;
 
 public class Helpers {
-	
-	static byte BLOCK_UPDATE = 1;
-	static byte BLOCK_SEND_TO_CLIENT = 2;
-	static byte BLOCK_PREVENT_RERENDER = 4;
-	
 
-	public static BlockPos findBottomBlock(EntityItem entityItem, List<Block> excludedBlocks) {
+	public static BlockPos findBottomBlock(EntityItem entityItem) {
 		if (entityItem.getEntityWorld() == null)
 			return null;
 
-		double i = entityItem.posX;
-		double j = entityItem.posY;
-		double k = entityItem.posZ;
+		return findBottomBlock(entityItem.getEntityWorld(), entityItem.posX, entityItem.posY, entityItem.posZ);
+	}
+	
+	public static BlockPos findBottomBlock(World world, double x, double y, double z) {
+
+		double i = x;
+		double j = y;
+		double k = z;
 
 		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i, j - 1, k), new BlockPos(i + 1, j + 1, k + 1));
 		BlockPos closest = null;
 		double closestDistance = 1000;
 		for (BlockPos pos : blockPoss) {
-			IBlockState blockState = entityItem.worldObj.getBlockState(new BlockPos(i, j - 1, k));
+			IBlockState blockState = world.getBlockState(new BlockPos(i, j - 1, k));
 			double distance = pos.distanceSqToCenter(i, j, k);
-			if (!excludedBlocks.contains(blockState) && distance < closestDistance) {
+			if (distance < closestDistance) {
 				closest = pos;
 				closestDistance = distance;
 			}
@@ -44,28 +48,14 @@ public class Helpers {
 
 		return closest;
 	}
-
-	public static BlockPos findClosestBlock(EntityItem entityItem, List<Block> excludedBlocks) {
-		if (entityItem.getEntityWorld() == null)
-			return null;
-
-		double i = entityItem.posX;
-		double j = entityItem.posY;
-		double k = entityItem.posZ;
-
-		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i - 1, j - 1, k - 1), new BlockPos(i + 1, j + 1, k + 1));
-		BlockPos closest = null;
-		double closestDistance = 1000;
-		for (BlockPos pos : blockPoss) {
-			Block block = entityItem.worldObj.getBlockState(pos).getBlock();
-			double distance = pos.distanceSqToCenter(i, j, k);
-			if (!excludedBlocks.contains(block) && distance < closestDistance) {
-				closest = pos;
-				closestDistance = distance;
-			}
-		}
-
-		return closest;
+	
+	public static RayTraceResult rayTracePreview(EntityPlayer thePlayer, float partialTicks) {
+		int blockReachDistance = 18;
+		Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
+		Vec3d vec3d1 = thePlayer.getLook(partialTicks);
+		Vec3d vec3d2 = vec3d.addVector(vec3d1.xCoord * blockReachDistance, vec3d1.yCoord * blockReachDistance, vec3d1.zCoord * blockReachDistance);
+		RayTraceResult rtc = thePlayer.getEntityWorld().rayTraceBlocks(vec3d, vec3d2, false, true, true);
+		return rtc;
 	}
 
 	@SuppressWarnings("rawtypes")
