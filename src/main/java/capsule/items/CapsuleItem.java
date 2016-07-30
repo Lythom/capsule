@@ -15,7 +15,6 @@ import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.network.AskCapsuleContentPreviewMessageToServer;
-import capsule.network.LabelEditedMessageToServer;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
@@ -308,7 +307,7 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
-		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule) && entityItem.getEntityWorld() != null) {
+		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)) {
 
 			int size = getSize(capsule);
 			int extendLength = (size - 1) / 2;
@@ -333,6 +332,14 @@ public class CapsuleItem extends Item {
 				captureContentIntoCapsule(entityItem, capsule, size, extendLength, playerWorld);
 				return true;
 			}
+		}
+		
+		// throwing the capsule toward the right place
+		if (!entityItem.worldObj.isRemote && !entityItem.isCollided && this.isActivated(capsule) && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
+			BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
+			BlockPos centerDest = dest;
+			entityItem.motionX = (centerDest.getX() + 0.5 - entityItem.posX)/12;
+			entityItem.motionZ = (centerDest.getZ() + 0.5 - entityItem.posZ)/12;
 		}
 
 		return false;
@@ -449,8 +456,6 @@ public class CapsuleItem extends Item {
 			BlockPos centerDest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
 			dest = centerDest.add(-extendLength, 1, -extendLength);
 			capsule.getTagCompound().removeTag("deployAt");
-			// TODO : find a better way to have the capsule go where it should
-			entityItem.setPosition(centerDest.getX()+0.5, centerDest.getY(), centerDest.getZ()+0.5);
 		} else {
 			BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem);
 			dest = bottomBlockPos.add(-extendLength, 1, -extendLength);
@@ -602,7 +607,7 @@ public class CapsuleItem extends Item {
 					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
 			entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
 					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-			entityitem.motionY = (double) (0.3);
+			entityitem.motionY = (double) (0.4);
 			itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
 		} else {
 			float f = 0.5F;
