@@ -6,8 +6,6 @@ package capsule.command;
 import java.util.Collections;
 import java.util.List;
 
-import capsule.Config;
-import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
 import net.minecraft.command.CommandBase;
@@ -128,9 +126,6 @@ public class CapsuleCommand extends CommandBase {
 					structureCapsule.setTagInfo("size", new NBTTagInt(size));
 					structureCapsule.getTagCompound().setBoolean("oneUse", true);
 					structureCapsule.getTagCompound().setBoolean("isReward", true);
-					
-					String capsuleName = StructureSaver.getUniqueName((WorldServer)player.worldObj, player.getDisplayNameString());
-					
 					
 					EntityItem entity = new EntityItem(player.worldObj, player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), structureCapsule);
 					entity.setNoPickupDelay();

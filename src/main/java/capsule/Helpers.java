@@ -1,10 +1,8 @@
 package capsule;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,9 +12,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.World;
 
 public class Helpers {
@@ -38,7 +36,6 @@ public class Helpers {
 		BlockPos closest = null;
 		double closestDistance = 1000;
 		for (BlockPos pos : blockPoss) {
-			IBlockState blockState = world.getBlockState(new BlockPos(i, j - 1, k));
 			double distance = pos.distanceSqToCenter(i, j, k);
 			if (distance < closestDistance) {
 				closest = pos;

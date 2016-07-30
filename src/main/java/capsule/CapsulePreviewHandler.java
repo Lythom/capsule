@@ -1,51 +1,33 @@
 package capsule;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.lwjgl.opengl.GL11;
-
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraft.world.gen.structure.template.Template;
-import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class CapsulePreviewHandler {
 	public CapsulePreviewHandler() {
@@ -123,7 +105,6 @@ public class CapsulePreviewHandler {
 							List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
 	
 							int extendSize = (getSize(heldItemMainhand) - 1) / 2;
-							CapsuleItem capsuleItem = (CapsuleItem) heldItemMainhand.getItem();
 
 							GlStateManager.pushMatrix();
 							
@@ -176,9 +157,7 @@ public class CapsulePreviewHandler {
 		int alpha = 150;
 
 		AxisAlignedBB boundingBox = boundingBox1;
-		
-		int glMode = 2;
-		
+	
 		if(color == 0xaa0000){
 			GlStateManager.glLineWidth(5);
 			boundingBox = extboundingBox1;
