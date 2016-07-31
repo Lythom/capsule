@@ -23,7 +23,7 @@ public class Main {
 	@Instance
 	public static Main instance = new Main();
 	
-	@SidedProxy(serverSide = "capsule.CommonProxy", clientSide = "capsule.ClientProxy")
+	@SidedProxy(serverSide = "capsule.CommonProxy", clientSide = "capsule.client.ClientProxy")
 	public static CommonProxy proxy;
 
 	@EventHandler

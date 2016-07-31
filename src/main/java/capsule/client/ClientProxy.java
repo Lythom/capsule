@@ -1,5 +1,7 @@
-package capsule;
+package capsule.client;
 
+import capsule.CommonProxy;
+import capsule.Main;
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
@@ -43,7 +45,6 @@ public class ClientProxy extends CommonProxy {
 		CapsulePreviewHandler cph = new CapsulePreviewHandler();
 		// for the undeploy preview
 		MinecraftForge.EVENT_BUS.register(cph);
-		
 		
 	}
 

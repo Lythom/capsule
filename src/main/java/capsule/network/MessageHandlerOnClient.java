@@ -1,5 +1,5 @@
 package capsule.network;
-import capsule.CapsulePreviewHandler;
+import capsule.client.CapsulePreviewHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;

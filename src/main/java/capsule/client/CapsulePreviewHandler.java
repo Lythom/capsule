@@ -1,4 +1,4 @@
-package capsule;
+package capsule.client;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import capsule.Config;
+import capsule.Helpers;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
