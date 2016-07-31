@@ -4,10 +4,18 @@
 
 ## Changelog ##
 
+**1.10.2-1.2.0 : The Big 1.10.2 update : the modpack maker update : the StructureBlocks update
+
+* Tons of stuff
+
+**1.9.4-1.1.8 : BugFix fix **
+ 
+* Fix #9 - Enchantment "Recall" not anymore present on every item whatever the config
+* Default config now allow Recall only on capsules (see config file for more options)
+
 **1.9.4-1.1.7 : Compatibility fixes **
 
 * Fix #5 - Mod crashing when CapsuleItem.getItemStackDisplayName is called server-side
-
 
 **1.9.4-1.1.6 : Update for 1.9.4 version of forge + JEI integration + new recipe **
 

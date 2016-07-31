@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 
 import capsule.CommonProxy;
@@ -27,6 +29,7 @@ import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -42,6 +45,8 @@ import net.minecraft.world.WorldServer;
 @SuppressWarnings("deprecation")
 public class CapsuleItem extends Item {
 
+	public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
+	
 	public final static int STATE_EMPTY = 0;
 	public final static int STATE_EMPTY_ACTIVATED = 4;
 	public final static int STATE_ACTIVATED = 1;
@@ -50,14 +55,63 @@ public class CapsuleItem extends Item {
 	public final static int STATE_ONE_USE = 5;
 	public final static int STATE_ONE_USE_ACTIVATED = 6;
 
-	private static final int CAPSULE_MAX_CAPTURE_SIZE = 69;
+	private static final int CAPSULE_MAX_CAPTURE_SIZE = 32; // max size of the StructureBlocks Templates
 
+	/**
+	 * Capsule Mod main item. Used to store region data to be deployed and undeployed.
+	 * 
+	 * Damage values :
+	 * see STATE_<state> constants.
+	 * 
+	 * NBTData reference: 
+	 * * int color 													// material color
+	 * * tag display : {int color} 									// base color
+	 * * int size													// odd number, size of the square side the capsule can hold
+	 * * string label												// User customizable label
+	 * * byte overpowered											// If the capsule can capture powerfull blocks
+	 * * bool isReward												// if the content of the template must be kept when capsule is deployed.
+	 * * string structureName										// name of the template file name without the .nbt extension. 
+	 * 																// Lookup paths are /<worldsave>/structures/capsules for non-rewards, and /config/capsules/rewards + lootTemplatesPaths (see config file) for rewards and loots
+	 * * tag activetimer : {int starttime} 							// used to time the moment when the capsule must deactivate
+	 * * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
+	 * * long deployAt												// when thrown with preview, position to deploy the capsule to match preview
+	 * 
+	 * @param unlocalizedName
+	 */
 	public CapsuleItem(String unlocalizedName) {
 		super();
 		this.setHasSubtypes(true);
 		this.setUnlocalizedName(unlocalizedName);
 		this.setMaxStackSize(1);
 		this.setMaxDamage(0);
+	}
+	
+	public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
+		// TODO : use the new CapsuleItem.create method instead
+		ItemStack capsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		Helpers.setColor(capsule, baseColor); // standard dye is for baseColor
+		capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
+		capsule.setTagInfo("size", new NBTTagInt(size));
+		if(upgraded != null){
+			capsule.setTagInfo("upgraded", new NBTTagInt(upgraded));
+		}
+		if(overpowered){
+			capsule.setTagInfo("overpowered", new NBTTagByte((byte)1));
+		}
+		if(label != null){
+			capsule.setTagInfo("label",  new NBTTagString(label));
+		}
+		
+		return capsule;
+	}
+	
+	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
+		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
+		capsule.setItemDamage(STATE_ONE_USE);
+		capsule.getTagCompound().setBoolean("isReward", true);
+		capsule.getTagCompound().setString("structureName", structureName);
+		
+		return capsule;
 	}
 
 	@Override
@@ -178,18 +232,22 @@ public class CapsuleItem extends Item {
 	@Override
 	public void getSubItems(Item itemIn, CreativeTabs tab, List subItems) {
 
+		// TODO : use the new CapsuleItem.create method instead
 		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
 		ironCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "ironCapsuleSize", "1").getInt()));
 
+		// TODO : use the new CapsuleItem.create method instead
 		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
 		goldCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "goldCapsuleSize", "3").getInt()));
 
+		// TODO : use the new CapsuleItem.create method instead
 		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
 		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "diamondCapsuleSize", "5").getInt()));
 
+		// TODO : use the new CapsuleItem.create method instead
 		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
 		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
@@ -288,10 +346,9 @@ public class CapsuleItem extends Item {
 		if (!worldIn.isRemote) {
 
 			// disable capsule after some time
-			NBTTagCompound timer = stack.getSubCompound("activetimer", true);
-			int tickDuration = 60; // 3 sec at 20 ticks/sec;
-			if (this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + tickDuration) {
-
+			NBTTagCompound timer = stack.getSubCompound("activetimer", false);
+			
+			if (this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
 				revertStateFromActivated(stack);
 			}
 		}
@@ -338,8 +395,8 @@ public class CapsuleItem extends Item {
 		if (!entityItem.worldObj.isRemote && !entityItem.isCollided && this.isActivated(capsule) && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
 			BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
 			BlockPos centerDest = dest;
-			entityItem.motionX = (centerDest.getX() + 0.5 - entityItem.posX)/12;
-			entityItem.motionZ = (centerDest.getZ() + 0.5 - entityItem.posZ)/12;
+			entityItem.motionX = (centerDest.getX() + 0.5 - entityItem.posX) / 12;
+			entityItem.motionZ = (centerDest.getZ() + 0.5 - entityItem.posZ) / 12;
 		}
 
 		return false;
@@ -466,7 +523,7 @@ public class CapsuleItem extends Item {
 		Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
 		List<String> outEntityBlocking = new ArrayList<String>();
 		
-		boolean result = StructureSaver.deploy(playerWorld, entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
+		boolean result = StructureSaver.deploy(playerWorld, this.isReward(capsule), entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
 		this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 		
 		if (result) {
@@ -474,9 +531,9 @@ public class CapsuleItem extends Item {
 			if(!this.isReward(capsule)){
 				this.setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
+				// remove the content from the structure block to prevent dupe using recovery capsules
+				StructureSaver.clearTemplate(playerWorld, structureName);
 			}
-			// remove the content from the structure block to prevent dupe using recovery capsules
-			StructureSaver.clearTemplate(playerWorld, structureName);
 			didSpawn = true;
 
 		} else {

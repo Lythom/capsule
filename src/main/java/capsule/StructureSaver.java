@@ -1,6 +1,7 @@
 package capsule;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
+import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -49,8 +51,39 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 public class StructureSaver {
 
 	protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
+
+	private static TemplateManager RewardManager = null;	
+	public static Map<WorldServer,TemplateManager> CapsulesManagers = new HashMap<>();
+
 	
-	public static final Map<WorldServer,TemplateManager> MANAGERS = new HashMap<WorldServer,TemplateManager>();
+	public static void loadLootList(MinecraftServer server){
+		// Init the manager for reward Lists
+		for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
+			String path = Config.lootTemplatesPaths[i];
+			LootPathData data = Config.lootTemplatesData.get(path);
+
+			File templateFolder = new File(server.getDataDirectory(), path);
+			if(templateFolder.exists() && templateFolder.isDirectory()){
+				File[] fileList = templateFolder.listFiles(new FilenameFilter()
+		        {
+		            public boolean accept(File p_accept_1_, String p_accept_2_)
+		            {
+		                return p_accept_2_.endsWith(".nbt");
+		            }
+		        });
+				for (File templateFile : fileList) {
+					data.files.add(templateFile.getName().replaceAll(".nbt", ""));
+				}
+			}
+		}
+	}
+
+	public static TemplateManager getRewardManager(MinecraftServer server) {
+		if(RewardManager == null){
+			RewardManager = new TemplateManager(server.getDataDirectory().getPath());
+		}
+		return RewardManager;
+	}
 
 	public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos position, int size, List<Block> excluded,
 			Map<BlockPos, Block> excludedPositions, boolean keepSource) {
@@ -77,15 +110,16 @@ public class StructureSaver {
 	}
 
 	public static TemplateManager getTemplateManager(WorldServer worldserver) {
-		if(!MANAGERS.containsKey(worldserver)){
+		if(worldserver == null || worldserver.getSaveHandler() == null || worldserver.getSaveHandler().getWorldDirectory() == null) return null;
+
+		if(!CapsulesManagers.containsKey(worldserver)){
 			File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
 			capsuleDir.mkdirs();
-			MANAGERS.put(worldserver, new TemplateManager(capsuleDir.toString()));
+			CapsulesManagers.put(worldserver, new TemplateManager(capsuleDir.toString()));
 		}
-		return MANAGERS.get(worldserver);
-		
+		return CapsulesManagers.get(worldserver);
 	}
-
+	
 	/**
 	 * Use with caution, delete the blocks at the indicated positions.
 	 * @param transferedPositions
@@ -249,11 +283,16 @@ public class StructureSaver {
 		return list;
 	}
 
-	public static boolean deploy(WorldServer playerWorld, String thrower, String structureName, BlockPos dest, int size, List<Block> overridableBlocks,
+	public static boolean deploy(WorldServer playerWorld, boolean isReward, String thrower, String structureName, BlockPos dest, int size, List<Block> overridableBlocks,
 			Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
-		TemplateManager templatemanager = getTemplateManager(playerWorld);
-		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+		Template template = null;
+		if(isReward){
+			template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
+		} else {
+			template = getTemplateForCapsule(playerWorld, structureName);
+		}
+
 		if (template != null)
         {
         	// check if the destination is valid : no unoverwritable block and no entities in the way.
@@ -266,6 +305,18 @@ public class StructureSaver {
         }
 		
 		return false;
+	}
+
+	public static Template getTemplateForCapsule(WorldServer playerWorld, String structureName) {
+		TemplateManager templatemanager = getTemplateManager(playerWorld);
+		if(templatemanager == null) return null;
+		
+		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+		return template;
+	}
+	
+	public static Template getTemplateForReward(MinecraftServer server, String structureName) {
+		return getRewardManager(server).func_189942_b(server, new ResourceLocation(structureName));
 	}
 	
 	/**
@@ -480,7 +531,7 @@ public class StructureSaver {
 	}
 	
 	/**
-	 * Get the Capsule saving tool that remembers last caspule id.
+	 * Get the Capsule saving tool that remembers last capsule id.
 	 * 
 	 * @param capsuleWorld
 	 * @return
@@ -494,5 +545,6 @@ public class StructureSaver {
 		}
 		return capsuleSavedData;
 	}
+
 
 }

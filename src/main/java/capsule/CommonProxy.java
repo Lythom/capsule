@@ -6,6 +6,8 @@ import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
+import capsule.loot.CapsuleLootTableHook;
+import capsule.loot.LootPathData;
 import capsule.network.AskCapsuleContentPreviewMessageToServer;
 import capsule.network.AskCapsuleContentPreviewMessageToServerMessageHandler;
 import capsule.network.CapsuleContentPreviewMessageToClient;
@@ -61,7 +63,7 @@ public class CommonProxy {
 		
 		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME, Blocks.END_PORTAL }));
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }));
 		excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] exBlocks = null;
 		try {
@@ -104,11 +106,44 @@ public class CommonProxy {
 			Config.overridableBlocks = Arrays.asList(ovBlocks);
 		}
 		
+		// Template Paths
+		Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
+				"config/capsules/loot/common",
+				"config/capsules/loot/uncommon",
+				"config/capsules/loot/rare",
+				"assets/capsules/loot/common",
+				"assets/capsules/loot/uncommon",
+				"assets/capsules/loot/rare"
+			});
+		lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
+		Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
+		
+		Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsules/rewards");
+		rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromStructure <structureName>.");
+		Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
+		
+		// init paths properties from config
+		for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
+			String path = Config.lootTemplatesPaths[i];
+			
+			if(!Config.lootTemplatesData.containsKey(path)){
+				Config.lootTemplatesData.put(path, new LootPathData());
+			}
+			Property pathDataWeight = Config.config.get("loots:"+path, "weight", path.endsWith("rare") ? 4 : path.endsWith("uncommon") ? 8 : 12);
+			pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 4 (rare), 8 (uncommon) or 12 (common)");
+			Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
+		}
+		
 		Config.config.save();
+		
+		CapsuleLootTableHook lootTableHook = new CapsuleLootTableHook();
+		MinecraftForge.EVENT_BUS.register(lootTableHook);
+
 	}
 
 	public void serverStarting(FMLServerStartingEvent e) {
 		e.registerServerCommand(new CapsuleCommand());
+		StructureSaver.loadLootList(e.getServer());
 	}
 
 	public void openGuiScreen(EntityPlayer playerIn) {
