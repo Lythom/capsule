@@ -55,7 +55,7 @@ public class CapsuleItem extends Item {
 	public final static int STATE_ONE_USE = 5;
 	public final static int STATE_ONE_USE_ACTIVATED = 6;
 
-	private static final int CAPSULE_MAX_CAPTURE_SIZE = 32; // max size of the StructureBlocks Templates
+	private static final int CAPSULE_MAX_CAPTURE_SIZE = 31; // max size of the StructureBlocks Templates
 
 	/**
 	 * Capsule Mod main item. Used to store region data to be deployed and undeployed.
@@ -87,7 +87,6 @@ public class CapsuleItem extends Item {
 	}
 	
 	public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
-		// TODO : use the new CapsuleItem.create method instead
 		ItemStack capsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
 		Helpers.setColor(capsule, baseColor); // standard dye is for baseColor
 		capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
@@ -114,6 +113,77 @@ public class CapsuleItem extends Item {
 		
 		return capsule;
 	}
+	
+	public static boolean isOneUse(ItemStack stack) {
+		return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
+	}
+	
+	public static boolean isReward(ItemStack stack) {
+		return stack != null && (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && CapsuleItem.isOneUse(stack));
+	}
+
+	public static boolean isLinked(ItemStack stack) {
+		return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey("structureName");
+	}
+	
+	public static String getLabel(ItemStack stack) {
+
+		if (stack == null)
+			return "";
+		if (!CapsuleItem.isLinked(stack)) {
+			return I18n.translateToLocal("item.capsule.content_empty");
+		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
+			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
+		}
+		return I18n.translateToLocal("item.capsule.content_unlabeled");
+	}
+	
+	public static void setLabel(ItemStack capsule, String label) {
+		if (capsule != null && !capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setString("label", label);
+	}
+	
+	/**
+	 * The capsule capture size.
+	 * 
+	 * @param itemStackIn
+	 * @return
+	 */
+	public static int getSize(ItemStack itemStackIn) {
+		int size = 1;
+		if (itemStackIn != null && itemStackIn.hasTagCompound() && itemStackIn.getTagCompound().hasKey("size")) {
+			size = itemStackIn.getTagCompound().getInteger("size");
+		}
+		if (size > CAPSULE_MAX_CAPTURE_SIZE) {
+			size = CAPSULE_MAX_CAPTURE_SIZE;
+			itemStackIn.getTagCompound().setInteger("size", size);
+			System.err.println("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
+		} else if (size % 2 == 0) {
+			size--;
+			itemStackIn.getTagCompound().setInteger("size", size);
+			System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
+		}
+
+		return size;
+	}
+	
+
+	public static String getStructureName(ItemStack capsule) {
+		String name = null;
+		if (capsule != null && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("structureName")) {
+			name = capsule.getTagCompound().getString("structureName");
+		}
+		return name;
+	}
+	
+	public static void setStructureName(ItemStack capsule, String structureName) {
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setString("structureName", structureName);
+	}
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
@@ -133,7 +203,7 @@ public class CapsuleItem extends Item {
 			state = I18n.translateToLocal("item.capsule.state_deployed");
 			break;
 		case CapsuleItem.STATE_ONE_USE:
-			if (this.isReward(stack)) {
+			if (CapsuleItem.isReward(stack)) {
 				state = I18n.translateToLocal("item.capsule.state_one_use");
 			} else {
 				state = I18n.translateToLocal("item.capsule.state_recovery");
@@ -145,7 +215,7 @@ public class CapsuleItem extends Item {
 		if (state.length() > 0) {
 			state = state + " ";
 		}
-		String content = this.getLabel(stack);
+		String content = CapsuleItem.getLabel(stack);
 		if (content.length() > 0) {
 			content = content + " ";
 		}
@@ -153,32 +223,7 @@ public class CapsuleItem extends Item {
 		return TextFormatting.RESET + state + content + name;
 	}
 
-	public boolean isReward(ItemStack stack) {
-		return (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && this.isOneUse(stack));
-	}
 	
-	public String getLabel(ItemStack stack) {
-
-		if (stack == null)
-			return "";
-		if (!this.isLinked(stack)) {
-			return I18n.translateToLocal("item.capsule.content_empty");
-		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
-			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
-		}
-		return I18n.translateToLocal("item.capsule.content_unlabeled");
-	}
-
-	private boolean isLinked(ItemStack stack) {
-		return stack.hasTagCompound() && stack.getTagCompound().hasKey("structureName");
-	}
-
-	public void setLabel(ItemStack stack, String label) {
-		if (!stack.hasTagCompound()) {
-			stack.setTagCompound(new NBTTagCompound());
-		}
-		stack.getTagCompound().setString("label", label);
-	}
 
 	@Override
 	public int getItemEnchantability() {
@@ -378,7 +423,7 @@ public class CapsuleItem extends Item {
 				// DEPLOY
 				// is linked, deploy
 				boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, playerWorld);
-				if (deployed && this.isOneUse(capsule)) {
+				if (deployed && CapsuleItem.isOneUse(capsule)) {
 					entityItem.setDead();
 				}
 				return true;
@@ -481,18 +526,14 @@ public class CapsuleItem extends Item {
 	}
 
 	private void revertStateFromActivated(ItemStack capsule) {
-		if (this.isOneUse(capsule)) {
+		if (CapsuleItem.isOneUse(capsule)) {
 			this.setState(capsule, STATE_ONE_USE);
-		} else if (this.isLinked(capsule)) {
+		} else if (CapsuleItem.isLinked(capsule)) {
 			this.setState(capsule, STATE_LINKED);
 		} else {
 			this.setState(capsule, STATE_EMPTY);
 		}
 		capsule.getTagCompound().removeTag("activetimer");
-	}
-
-	private boolean isOneUse(ItemStack stack) {
-		return stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
 	}
 
 	/**
@@ -525,12 +566,12 @@ public class CapsuleItem extends Item {
 		Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
 		List<String> outEntityBlocking = new ArrayList<String>();
 		
-		boolean result = StructureSaver.deploy(playerWorld, this.isReward(capsule), entityItem.getThrower(), structureName, dest, size, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
+		boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
 		this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 		
 		if (result) {
 			// register the link in the capsule
-			if(!this.isReward(capsule)){
+			if(!CapsuleItem.isReward(capsule)){
 				this.setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
 				// remove the content from the structure block to prevent dupe using recovery capsules
@@ -600,29 +641,6 @@ public class CapsuleItem extends Item {
 		return excludedBlocks;
 	}
 
-	/**
-	 * The capsule capture size.
-	 * 
-	 * @param itemStackIn
-	 * @return
-	 */
-	private int getSize(ItemStack itemStackIn) {
-		int size = 1;
-		if (itemStackIn.hasTagCompound() && itemStackIn.getTagCompound().hasKey("size")) {
-			size = itemStackIn.getTagCompound().getInteger("size");
-		}
-		if (size > CAPSULE_MAX_CAPTURE_SIZE) {
-			size = CAPSULE_MAX_CAPTURE_SIZE;
-			itemStackIn.getTagCompound().setInteger("size", size);
-			System.err.println("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
-		} else if (size % 2 == 0) {
-			size--;
-			itemStackIn.getTagCompound().setInteger("size", size);
-			System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
-		}
-
-		return size;
-	}
 
 	/**
 	 * renderPass 0 => The material color renderPass 1 => The label color
@@ -703,5 +721,6 @@ public class CapsuleItem extends Item {
 		this.setState(capsule, CapsuleItem.STATE_EMPTY);
 		capsule.getTagCompound().removeTag("structureName");
 	}
+
 
 }

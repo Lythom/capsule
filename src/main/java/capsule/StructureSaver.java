@@ -11,12 +11,14 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
+import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -27,6 +29,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
@@ -285,18 +288,15 @@ public class StructureSaver {
 		return list;
 	}
 
-	public static boolean deploy(WorldServer playerWorld, boolean isReward, String thrower, String structureName, BlockPos dest, int size, List<Block> overridableBlocks,
+	public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
 			Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
-		Template template = null;
-		if(isReward){
-			template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
-		} else {
-			template = getTemplateForCapsule(playerWorld, structureName);
-		}
+		Pair<TemplateManager,Template> templatepair = getTemplate(capsule, playerWorld);
+		Template template = templatepair.getRight();
 
 		if (template != null)
         {
+			int size = CapsuleItem.getSize(capsule);
         	// check if the destination is valid : no unoverwritable block and no entities in the way.
         	PlacementSettings placementsettings = (new PlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos)null).setReplacedBlock((Block)null).setIgnoreStructureBlock(false);
         	boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
@@ -309,20 +309,33 @@ public class StructureSaver {
 		return false;
 	}
 
-	public static Template getTemplateForCapsule(WorldServer playerWorld, String structureName) {
-		TemplateManager templatemanager = getTemplateManager(playerWorld);
-		if(templatemanager == null) return null;
+	public static Pair<TemplateManager,Template> getTemplate(ItemStack capsule, WorldServer playerWorld) {
+		Pair<TemplateManager,Template> template = null;
 		
-		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+		boolean isReward = CapsuleItem.isReward(capsule);
+		String structureName = CapsuleItem.getStructureName(capsule);
+		if(isReward){
+			template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
+		} else {
+			template = getTemplateForCapsule(playerWorld, structureName);
+		}
 		return template;
 	}
+
+	public static Pair<TemplateManager,Template> getTemplateForCapsule(WorldServer playerWorld, String structureName) {
+		TemplateManager templatemanager = getTemplateManager(playerWorld);
+		if(templatemanager == null) Pair.of(null,null);
+		
+		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+		return Pair.of(templatemanager, template);
+	}
 	
-	public static Template getTemplateForReward(MinecraftServer server, String structurePath) {
+	public static Pair<TemplateManager,Template> getTemplateForReward(MinecraftServer server, String structurePath) {
 		TemplateManager templatemanager = getRewardManager(server);
-		if(templatemanager == null) return null;
+		if(templatemanager == null) return Pair.of(null,null);
 		
 		Template template = templatemanager.func_189942_b(server, new ResourceLocation(structurePath));
-		return template;
+		return Pair.of(templatemanager, template);
 	}
 	
 	/**

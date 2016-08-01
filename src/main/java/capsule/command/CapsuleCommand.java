@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
@@ -22,6 +24,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.event.ClickEvent;
@@ -29,6 +32,7 @@ import net.minecraft.util.text.event.ClickEvent.Action;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraft.world.storage.loot.LootContext;
 
 /**
@@ -61,18 +65,19 @@ public class CapsuleCommand extends CommandBase {
 	 */
 	@Override
 	public String getCommandUsage(ICommandSender sender) {
-		return 	"/capsule exportHeldItem                // Print the command that can be used to give this specific item.\n"+
+		return 	"\n/capsule exportHeldItem                // Print the command that can be used to give this specific item.\n"+
 				"/capsule fromHeldCapsule               // Create a new Reward Capsule by copying the template from held capsule into config/capsules/rewards.\n"+
 				"/capsule fromStructure <structureName> // Create a new Reward Capsule by copying the template from named structure block into config/capsules/rewards.\n"+
 				"/capsule giveRandomLoot [player]       // Give the player a random Loot Capsule using the loot generation configuration.\n"+
-				"/capsule reloadLootList                // Refresh the lootable capsules from reading configured directories.";
+				"/capsule reloadLootList                // Refresh the lootable capsules from reading configured directories.\n"+
+				"/capsule setAuthor [authorName]        // Save an author for both capsule and associated template";
 	}
 	
 	@Override
 	public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
 		switch(args.length){
 			case 1:
-				return getListOfStringsMatchingLastWord(args, new String[]{"convertToReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot","reloadLootList"});
+				return getListOfStringsMatchingLastWord(args, new String[]{"convertToReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot","reloadLootList","exportHeldItem"});
 			case 2:
 				switch(args[0]){
 				case "giveRandomLoot":
@@ -123,6 +128,41 @@ public class CapsuleCommand extends CommandBase {
 		}
 		
 		// set author
+		if ("setAuthor".equalsIgnoreCase(args[0])) {
+			if (args.length != 1 || args.length != 2) {
+				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+			}
+			
+			EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+			if (player != null) {
+				ItemStack heldItem = player.getHeldItemMainhand();
+				if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
+					
+					if(args.length == 1){
+						// set a new author
+						String author = args[1];
+						heldItem.getTagCompound().setString("author", args[1]);
+						Pair<TemplateManager,Template> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+						Template template = templatepair.getRight();
+						TemplateManager templatemanager = templatepair.getLeft();
+						template.setAuthor(author);
+						templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+						
+					
+					} else {
+						// called with one parameter = remove author information
+						heldItem.getTagCompound().removeTag("author");
+						Pair<TemplateManager,Template> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+						Template template = templatepair.getRight();
+						TemplateManager templatemanager = templatepair.getLeft();
+						template.setAuthor("?");
+						templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+					}
+					
+				}
+			}
+			
+		}
 		// TODO : create a command to specify the author of the structure /capsule setAuthor <structureName> <authorName>
 		
 		// set rarity
@@ -167,7 +207,7 @@ public class CapsuleCommand extends CommandBase {
 			EntityPlayer player = getCommandSenderAsPlayer(sender);
 			if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
 				// template
-				Template template = StructureSaver.getTemplateForReward(player.worldObj.getMinecraftServer(), structureName);
+				Template template = StructureSaver.getTemplateForReward(player.worldObj.getMinecraftServer(), structureName).getRight();
 				if(template != null){
 					int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 					if(size%2 == 1) size++;

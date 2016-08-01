@@ -66,8 +66,7 @@ public class LabelEditedMessageToServerMessageHandler implements IMessageHandler
 	  ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
 	  if(serverStack.getItem() instanceof CapsuleItem){
 		  // of the player didn't swap item during ui opening
-		  CapsuleItem item = (CapsuleItem)serverStack.getItem();
-		  item.setLabel(serverStack, message.getLabel());
+		  CapsuleItem.setLabel(serverStack, message.getLabel());
 		  
 	  }
   }
