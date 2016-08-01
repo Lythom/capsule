@@ -36,7 +36,7 @@ public class CapsuleLootTableHook {
 	@SubscribeEvent
 	public void hookCapsulesOnLootTable(LootTableLoadEvent event) {
 
-		if (!allowedTables.contains(event.getName()))
+		if (!allowedTables.contains(event.getName().toString()))
 			return;
 
 		// create a capsule loot entry per folder

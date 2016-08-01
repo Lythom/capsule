@@ -93,7 +93,7 @@ public class CapsulePreviewHandler {
 
 		if (heldItemMainhand != null ) {
 			if (heldItemMainhand.getItem() instanceof CapsuleItem
-					&& heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED) {
+					&& (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)) {
 				
 				RayTraceResult rtc = Helpers.rayTracePreview(thePlayer, partialTicks);
 				if(rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK)
@@ -104,9 +104,12 @@ public class CapsulePreviewHandler {
 					
 					synchronized (CapsulePreviewHandler.currentPreview) {
 						if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
-							List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-	
+							
 							int extendSize = (getSize(heldItemMainhand) - 1) / 2;
+							List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+							if(blockspos.isEmpty()){
+								blockspos.add(new BlockPos(extendSize,0,extendSize));
+							}
 
 							GlStateManager.pushMatrix();
 							

@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import capsule.StructureSaver;
+import capsule.items.CapsuleItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -59,19 +59,33 @@ public class AskCapsuleContentPreviewMessageToServerMessageHandler
 
 		// read the content of the template and send it back to the client
 		ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-		if(heldItem == null || !heldItem.hasTagCompound() || !heldItem.getTagCompound().hasKey("structureName")){
+		if(heldItem == null || !heldItem.hasTagCompound() || !heldItem.getTagCompound().hasKey("structureName") || !(heldItem.getItem() instanceof CapsuleItem)){
 			return null;
 		}
 		WorldServer serverworld = sendingPlayer.getServerWorld();
 		String structureName = sendingPlayer.getHeldItemMainhand().getTagCompound().getString("structureName");
-		TemplateManager templatemanager = StructureSaver.getTemplateManager(serverworld);
-		Template template = templatemanager.func_189942_b(serverworld.getMinecraftServer(), new ResourceLocation(structureName));
-		List<Template.BlockInfo> blocksInfos = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
-		List<BlockPos> blockspos = new ArrayList<BlockPos>();
-		for (Template.BlockInfo blockInfo: blocksInfos) {
-			blockspos.add(blockInfo.pos);
+		
+		CapsuleItem item = (CapsuleItem)heldItem.getItem();
+		Template template = null;
+		if(item.isReward(heldItem)){
+			template = StructureSaver.getTemplateForReward(serverworld.getMinecraftServer(), structureName);
+		} else {
+			template = StructureSaver.getTemplateForCapsule(serverworld, structureName);
 		}
-
-		return new CapsuleContentPreviewMessageToClient(blockspos, message.getStructureName());
+		if(template != null){
+			List<Template.BlockInfo> blocksInfos = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
+			List<BlockPos> blockspos = new ArrayList<BlockPos>();
+			for (Template.BlockInfo blockInfo: blocksInfos) {
+				blockspos.add(blockInfo.pos);
+			}
+			
+			return new CapsuleContentPreviewMessageToClient(blockspos, message.getStructureName());
+			
+		} else {
+			sendingPlayer.addChatMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
+		}
+		
+		return null;
+		
 	}
 }

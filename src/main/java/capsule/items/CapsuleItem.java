@@ -109,6 +109,7 @@ public class CapsuleItem extends Item {
 		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
 		capsule.setItemDamage(STATE_ONE_USE);
 		capsule.getTagCompound().setBoolean("isReward", true);
+		capsule.getTagCompound().setBoolean("oneUse", true);
 		capsule.getTagCompound().setString("structureName", structureName);
 		
 		return capsule;

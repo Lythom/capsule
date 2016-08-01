@@ -18,6 +18,7 @@ capsule.error.cantMergeWithDestination=Can't merge with destination, a block is 
 capsule.error.cantMergeWithDestinationEntity=Can't deploy : %s in the way !
 capsule.error.capsuleContentNotFound=Capsule "%s" was not found in the world "structures" folder
 capsule.error.technicalError=A technical error occured while using the Capsule Mod. Please check the logs.
+capsule.error.templateNotFound=Error: the capsule template file %s was not found.
 capsule.tooltip.size=Size
 enchantment.recall=Recall
 itemGroup.capsule=Capsules

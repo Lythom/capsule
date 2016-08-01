@@ -71,8 +71,10 @@ public class StructureSaver {
 		                return p_accept_2_.endsWith(".nbt");
 		            }
 		        });
+				data.files = new ArrayList<String>();
 				for (File templateFile : fileList) {
-					data.files.add(templateFile.getName().replaceAll(".nbt", ""));
+					if(templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
+						data.files.add(templateFile.getName().replaceAll(".nbt", ""));
 				}
 			}
 		}
@@ -315,8 +317,12 @@ public class StructureSaver {
 		return template;
 	}
 	
-	public static Template getTemplateForReward(MinecraftServer server, String structureName) {
-		return getRewardManager(server).func_189942_b(server, new ResourceLocation(structureName));
+	public static Template getTemplateForReward(MinecraftServer server, String structurePath) {
+		TemplateManager templatemanager = getRewardManager(server);
+		if(templatemanager == null) return null;
+		
+		Template template = templatemanager.func_189942_b(server, new ResourceLocation(structurePath));
+		return template;
 	}
 	
 	/**

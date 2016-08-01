@@ -24,7 +24,7 @@ import net.minecraft.world.storage.loot.conditions.LootConditionManager;
 /**
  * @author Lythom
  *
- */
+ */		
 public class CapsuleLootEntry extends LootEntry {
 
 	private String templatesPath = null;
@@ -57,11 +57,12 @@ public class CapsuleLootEntry extends LootEntry {
 
 			if(templatePair != null){
 				Template template = templatePair.getRight();
-				String templateName = templatePair.getLeft();
+				String templatePath = templatePair.getLeft();
 				int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
+				String[] path = templatePath.split("/");
+				if(path.length == 0) return;
 				
-				ItemStack capsule = CapsuleItem.createRewardCapsule(templateName, random.nextInt(0xFFFFFF), random.nextInt(0xFFFFFF), size, false, templateName, null);
-
+				ItemStack capsule = CapsuleItem.createRewardCapsule(templatePath, random.nextInt(0xFFFFFF), random.nextInt(0xFFFFFF), size, false, path[path.length-1], null);
 	            stacks.add(capsule);
 			}
 			
@@ -79,7 +80,7 @@ public class CapsuleLootEntry extends LootEntry {
 			int ri = (initRand + i) % lpd.files.size();
 			String structureName = lpd.files.get(ri);
 			Template template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName);
-			if(template != null) return Pair.of(structureName, template);
+			if(template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
 		}
 		return null;
 	}
