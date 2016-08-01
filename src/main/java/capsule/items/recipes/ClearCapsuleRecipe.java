@@ -30,8 +30,7 @@ public class ClearCapsuleRecipe implements IRecipe
             	ItemStack copy = itemstack.copy();
             	CapsuleItem item = (CapsuleItem)copy.getItem();
 				if (item != null) {
-                	item.setState(copy, CapsuleItem.STATE_ONE_USE);
-                	copy.getTagCompound().setBoolean("oneUse", true);
+                	CapsuleItem.setOneUse(copy);
 					aitemstack[i] = copy;
 				}
             }

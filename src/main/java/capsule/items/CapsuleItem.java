@@ -87,7 +87,7 @@ public class CapsuleItem extends Item {
 	}
 	
 	public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
-		ItemStack capsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		ItemStack capsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		Helpers.setColor(capsule, baseColor); // standard dye is for baseColor
 		capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
 		capsule.setTagInfo("size", new NBTTagInt(size));
@@ -106,10 +106,9 @@ public class CapsuleItem extends Item {
 	
 	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
 		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
-		capsule.setItemDamage(STATE_ONE_USE);
-		capsule.getTagCompound().setBoolean("isReward", true);
-		capsule.getTagCompound().setBoolean("oneUse", true);
-		capsule.getTagCompound().setString("structureName", structureName);
+		setIsReward(capsule);
+		setOneUse(capsule);
+		setStructureName(capsule, structureName);
 		
 		return capsule;
 	}
@@ -118,8 +117,25 @@ public class CapsuleItem extends Item {
 		return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
 	}
 	
+	public static void setOneUse(ItemStack capsule) {
+		if(!capsule.hasTagCompound()){
+			capsule.setTagCompound(new NBTTagCompound());
+    	}
+		capsule.setItemDamage(STATE_ONE_USE);
+		capsule.getTagCompound().setBoolean("oneUse", true);
+	}
+	
 	public static boolean isReward(ItemStack stack) {
-		return stack != null && (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && CapsuleItem.isOneUse(stack));
+		return stack != null && (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && isOneUse(stack));
+	}
+	
+	public static void setIsReward(ItemStack capsule) {
+		if(!capsule.hasTagCompound()){
+			capsule.setTagCompound(new NBTTagCompound());
+    	}
+
+		capsule.getTagCompound().setBoolean("isReward", true);
+		setOneUse(capsule);
 	}
 
 	public static boolean isLinked(ItemStack stack) {
@@ -130,7 +146,8 @@ public class CapsuleItem extends Item {
 
 		if (stack == null)
 			return "";
-		if (!CapsuleItem.isLinked(stack)) {
+		
+		if (!isLinked(stack)) {
 			return I18n.translateToLocal("item.capsule.content_empty");
 		} else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
 			return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
@@ -184,6 +201,21 @@ public class CapsuleItem extends Item {
 		}
 		capsule.getTagCompound().setString("structureName", structureName);
 	}
+	
+	public static String getAuthor(ItemStack capsule) {
+		String name = null;
+		if (capsule != null && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("author")) {
+			name = capsule.getTagCompound().getString("author");
+		}
+		return name;
+	}
+	
+	public static void setAuthor(ItemStack capsule, String author) {
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setString("author", author);
+	}
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
@@ -191,19 +223,19 @@ public class CapsuleItem extends Item {
 
 		String state = "";
 		switch (stack.getItemDamage()) {
-		case CapsuleItem.STATE_ACTIVATED:
-		case CapsuleItem.STATE_EMPTY_ACTIVATED:
-		case CapsuleItem.STATE_ONE_USE_ACTIVATED:
+		case STATE_ACTIVATED:
+		case STATE_EMPTY_ACTIVATED:
+		case STATE_ONE_USE_ACTIVATED:
 			state = TextFormatting.DARK_GREEN + I18n.translateToLocal("item.capsule.state_activated") + TextFormatting.RESET;
 			break;
-		case CapsuleItem.STATE_LINKED:
+		case STATE_LINKED:
 			state = "";
 			break;
-		case CapsuleItem.STATE_DEPLOYED:
+		case STATE_DEPLOYED:
 			state = I18n.translateToLocal("item.capsule.state_deployed");
 			break;
-		case CapsuleItem.STATE_ONE_USE:
-			if (CapsuleItem.isReward(stack)) {
+		case STATE_ONE_USE:
+			if (isReward(stack)) {
 				state = I18n.translateToLocal("item.capsule.state_one_use");
 			} else {
 				state = I18n.translateToLocal("item.capsule.state_recovery");
@@ -215,7 +247,7 @@ public class CapsuleItem extends Item {
 		if (state.length() > 0) {
 			state = state + " ";
 		}
-		String content = CapsuleItem.getLabel(stack);
+		String content = getLabel(stack);
 		if (content.length() > 0) {
 			content = content + " ";
 		}
@@ -249,10 +281,14 @@ public class CapsuleItem extends Item {
 	@Override
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
 		int size = getSize(stack);
-		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + " : " + size + "x" + size + "x" + size);
+		String author = getAuthor(stack);
+		if(author != null){
+			tooltip.add(I18n.translateToLocal("capsule.tooltip.author") + ": " + author);
+		}
+		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + size + "x" + size + "x" + size);
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
 			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.upgraded") + " : " + String.valueOf(upgradeLevel)
+			tooltip.add(I18n.translateToLocal("capsule.tooltip.upgraded") + ": " + String.valueOf(upgradeLevel)
 					+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt()
 							? " (" + I18n.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
 
@@ -261,7 +297,7 @@ public class CapsuleItem extends Item {
 			tooltip.add(I18n.translateToLocal("capsule.tooltip.overpowered"));
 
 		}
-		if (stack.getItemDamage() == CapsuleItem.STATE_ONE_USE) {
+		if (stack.getItemDamage() == STATE_ONE_USE) {
 			I18n.translateToLocal("capsule.tooltip.one_use").trim();
 		}
 		super.addInformation(stack, playerIn, tooltip, advanced);
@@ -278,23 +314,23 @@ public class CapsuleItem extends Item {
 	@Override
 	public void getSubItems(Item itemIn, CreativeTabs tab, List subItems) {
 
-		// TODO : use the new CapsuleItem.create method instead
-		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		// TODO : use the new create method instead
+		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
 		ironCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "ironCapsuleSize", "1").getInt()));
 
-		// TODO : use the new CapsuleItem.create method instead
-		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		// TODO : use the new create method instead
+		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
 		goldCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "goldCapsuleSize", "3").getInt()));
 
-		// TODO : use the new CapsuleItem.create method instead
-		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		// TODO : use the new create method instead
+		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
 		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "diamondCapsuleSize", "5").getInt()));
 
-		// TODO : use the new CapsuleItem.create method instead
-		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
+		// TODO : use the new create method instead
+		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
 		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
 		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
@@ -304,8 +340,7 @@ public class CapsuleItem extends Item {
 		unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeLinkedCapsule)");
 		
 		ItemStack recoveryCapsule = ironCapsule.copy();
-		recoveryCapsule.setItemDamage(STATE_ONE_USE);
-		recoveryCapsule.getTagCompound().setBoolean("oneUse", true);
+		CapsuleItem.setOneUse(recoveryCapsule);
 		unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeOneUseCapsule)");
 
 		subItems.add(ironCapsule);
@@ -346,13 +381,13 @@ public class CapsuleItem extends Item {
 			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
 					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
 				if (itemStackIn.getItemDamage() == STATE_EMPTY) {
-					this.setState(itemStackIn, STATE_EMPTY_ACTIVATED);
+					setState(itemStackIn, STATE_EMPTY_ACTIVATED);
 				}
 				if (itemStackIn.getItemDamage() == STATE_LINKED) {
-					this.setState(itemStackIn, STATE_ACTIVATED);
+					setState(itemStackIn, STATE_ACTIVATED);
 				}
 				if (itemStackIn.getItemDamage() == STATE_ONE_USE) {
-					this.setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
+					setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
 				}
 
 				NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
@@ -423,7 +458,7 @@ public class CapsuleItem extends Item {
 				// DEPLOY
 				// is linked, deploy
 				boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, playerWorld);
-				if (deployed && CapsuleItem.isOneUse(capsule)) {
+				if (deployed && isOneUse(capsule)) {
 					entityItem.setDead();
 				}
 				return true;
@@ -476,7 +511,7 @@ public class CapsuleItem extends Item {
 			StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null, false);
 
 			// register the link in the capsule
-			this.setState(capsule, STATE_LINKED);
+			setState(capsule, STATE_LINKED);
 			capsule.getTagCompound().setString("structureName", capsuleID);
 			didCapture = true;
 
@@ -526,12 +561,12 @@ public class CapsuleItem extends Item {
 	}
 
 	private void revertStateFromActivated(ItemStack capsule) {
-		if (CapsuleItem.isOneUse(capsule)) {
-			this.setState(capsule, STATE_ONE_USE);
-		} else if (CapsuleItem.isLinked(capsule)) {
-			this.setState(capsule, STATE_LINKED);
+		if (isOneUse(capsule)) {
+			setState(capsule, STATE_ONE_USE);
+		} else if (isLinked(capsule)) {
+			setState(capsule, STATE_LINKED);
 		} else {
-			this.setState(capsule, STATE_EMPTY);
+			setState(capsule, STATE_EMPTY);
 		}
 		capsule.getTagCompound().removeTag("activetimer");
 	}
@@ -571,8 +606,8 @@ public class CapsuleItem extends Item {
 		
 		if (result) {
 			// register the link in the capsule
-			if(!CapsuleItem.isReward(capsule)){
-				this.setState(capsule, STATE_DEPLOYED);
+			if(!isReward(capsule)){
+				setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
 				// remove the content from the structure block to prevent dupe using recovery capsules
 				StructureSaver.clearTemplate(playerWorld, structureName);
@@ -618,7 +653,7 @@ public class CapsuleItem extends Item {
 		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), this.getOccupiedSourcePos(itemStackIn), false);
 
 		if(storageOK){
-			this.setState(itemStackIn, STATE_LINKED);
+			setState(itemStackIn, STATE_LINKED);
 			itemStackIn.getTagCompound().removeTag("spawnPosition");
 			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
 		} else {
@@ -629,7 +664,7 @@ public class CapsuleItem extends Item {
 		
 	}
 
-	public void setState(ItemStack stack, int state) {
+	public static void setState(ItemStack stack, int state) {
 		stack.setItemDamage(state);
 	}
 	
@@ -718,9 +753,8 @@ public class CapsuleItem extends Item {
 	}
 
 	public void clearCapsule(ItemStack capsule) {
-		this.setState(capsule, CapsuleItem.STATE_EMPTY);
+		setState(capsule, STATE_EMPTY);
 		capsule.getTagCompound().removeTag("structureName");
 	}
-
 
 }

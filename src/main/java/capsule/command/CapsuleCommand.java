@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
-import capsule.items.CapsuleItemsRegistrer;
 import capsule.loot.CapsuleLootTableHook;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -22,7 +21,6 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -187,10 +185,7 @@ public class CapsuleCommand extends CommandBase {
 					// TODO : create a new template file under the Config.commandTemplatesPathProp from the template linked to the capsule
 					// TODO : create a new item from the held capsule but linked to the newly created structureBlock file
 					// TODO : use the new CapsuleItem.create method instead
-					
-					heldItem.getTagCompound().setBoolean("isReward", true);
-					heldItem.getTagCompound().setBoolean("oneUse", true);
-					heldItem.setItemDamage(CapsuleItem.STATE_ONE_USE);
+
 				}
 			}
 		}
@@ -215,13 +210,9 @@ public class CapsuleCommand extends CommandBase {
 					// TODO : create a new template file under the Config.commandTemplatesPathProp from the /structures template folder
 					// TODO : create a new item from the held capsule but linked to the newly created structureBlock file
 					// TODO : use the new CapsuleItem.create method instead
-					ItemStack structureCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_LINKED);
-					structureCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
-					structureCapsule.setTagInfo("size", new NBTTagInt(size));
-					structureCapsule.getTagCompound().setBoolean("oneUse", true);
-					structureCapsule.getTagCompound().setBoolean("isReward", true);
+
 					
-					giveCapsule(structureCapsule, player);
+					//giveCapsule(structureCapsule, player);
 				} else {
 					throw new CommandException("Structure \"%s\" not found ", structureName);
 				}					

@@ -84,7 +84,7 @@ public class CapsuleLootEntry extends LootEntry {
 		for (int i = 0; i < lpd.files.size(); i++) {
 			int ri = (initRand + i) % lpd.files.size();
 			String structureName = lpd.files.get(ri);
-			Template template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName);
+			Template template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName).getRight();
 			if(template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
 		}
 		return null;

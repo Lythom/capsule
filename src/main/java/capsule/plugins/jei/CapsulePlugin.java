@@ -41,41 +41,40 @@ public class CapsulePlugin extends BlankModPlugin {
         ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt() + 2);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
         ironCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-        ironCapsuleUp.getTagCompound().setString("structureName", "JEIExemple");
+        CapsuleItem.setStructureName(ironCapsuleUp, "JEIExemple");
 		ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt());
 		ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt() + 2);
 		goldCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
 		goldCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-		goldCapsuleUp.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(goldCapsuleUp, "JEIExemple");
 		ItemStack diamondCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, CapsuleItemsRegistrer.diamondCapsuleSize.getInt());
 		ItemStack diamondCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, CapsuleItemsRegistrer.diamondCapsuleSize.getInt() + 2);
 		diamondCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
 		diamondCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-		diamondCapsuleUp.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(diamondCapsuleUp, "JEIExemple");
 		ItemStack opCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt());
 		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		ItemStack opCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt() + 2);
 		opCapsuleUp.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		opCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-		opCapsuleUp.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(opCapsuleUp, "JEIExemple");
 		
 		ItemStack unlabelledCapsule = ironCapsule.copy();
 		unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
-		unlabelledCapsule.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(unlabelledCapsule, "JEIExemple");
 		ItemStack unlabelledCapsuleGold = goldCapsule.copy();
 		unlabelledCapsuleGold.setItemDamage(CapsuleItem.STATE_LINKED);
-		unlabelledCapsuleGold.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(unlabelledCapsuleGold, "JEIExemple");
 		ItemStack unlabelledCapsuleDiamond = diamondCapsule.copy();
 		unlabelledCapsuleDiamond.setItemDamage(CapsuleItem.STATE_LINKED);
-		unlabelledCapsuleDiamond.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(unlabelledCapsuleDiamond, "JEIExemple");
 		ItemStack unlabelledCapsuleOP = opCapsule.copy();
 		unlabelledCapsuleOP.setItemDamage(CapsuleItem.STATE_LINKED);
-		unlabelledCapsuleOP.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setStructureName(unlabelledCapsuleOP, "JEIExemple");
 		
 		ItemStack recoveryCapsule = ironCapsule.copy();
-		recoveryCapsule.setItemDamage(CapsuleItem.STATE_ONE_USE);
-		recoveryCapsule.getTagCompound().setBoolean("oneUse", true);
-		recoveryCapsule.getTagCompound().setString("structureName", "JEIExemple");
+		CapsuleItem.setOneUse(recoveryCapsule);
+		CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
 		
 
         ItemStack EnderPearlIS = new ItemStack(Items.ENDER_PEARL);

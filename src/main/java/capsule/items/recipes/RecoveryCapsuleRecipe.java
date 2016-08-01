@@ -4,7 +4,6 @@ import capsule.items.CapsuleItem;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 public class RecoveryCapsuleRecipe implements IRecipe
@@ -88,12 +87,8 @@ public class RecoveryCapsuleRecipe implements IRecipe
                 if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && itemstack.getMetadata() == this.inputCapsule.getMetadata())
                 {
                 	ItemStack copy = itemstack.copy();
-                	CapsuleItem item = (CapsuleItem)copy.getItem();
-                	item.setState(copy, this.targetMetadata);
-                	if(!copy.hasTagCompound()){
-                		copy.setTagCompound(new NBTTagCompound());
-                	}
-                	copy.getTagCompound().setBoolean("oneUse", true);
+                	CapsuleItem.setState(copy, this.targetMetadata);
+                	CapsuleItem.setOneUse(copy);
                     return copy;
                 }
             }
