@@ -488,6 +488,7 @@ public class CapsuleItem extends Item {
 		} else {
 			this.setState(capsule, STATE_EMPTY);
 		}
+		capsule.getTagCompound().removeTag("activetimer");
 	}
 
 	private boolean isOneUse(ItemStack stack) {
