@@ -44,9 +44,10 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 
 		GlStateManager.pushMatrix();
 		
-		GL11.glLineWidth(3.0F);
+		GlStateManager.glLineWidth(2.0F);
 		
-		GlStateManager.enableBlend();
+		//GlStateManager.enableBlend();
+		//GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		GlStateManager.disableLighting();
 		GlStateManager.disableTexture2D();
 		GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
@@ -85,11 +86,14 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
         vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
         tessellator.draw();
 
-		
-
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-		GlStateManager.enableLighting();
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GlStateManager.enableTexture2D();
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        
+        GlStateManager.enableLighting();
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableDepth();
+        GlStateManager.depthMask(true);
 		GL11.glLineWidth(1.0F);
 		
 		GlStateManager.popMatrix();

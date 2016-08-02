@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.lwjgl.opengl.GL11;
+
 import capsule.Config;
 import capsule.Helpers;
 import capsule.blocks.CaptureTESR;
@@ -112,8 +114,9 @@ public class CapsulePreviewHandler {
 							}
 
 							GlStateManager.pushMatrix();
-							
-							GlStateManager.enableBlend();
+
+							//GlStateManager.enableBlend();
+							//GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 							GlStateManager.disableLighting();
 							GlStateManager.disableTexture2D();
 							GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
@@ -139,9 +142,15 @@ public class CapsulePreviewHandler {
 								GlStateManager.popMatrix();
 							}
 	
-							GlStateManager.enableTexture2D();
-							GlStateManager.disableBlend();
-							GlStateManager.enableLighting();
+							GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+					        GlStateManager.enableTexture2D();
+					        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+					        
+					        GlStateManager.enableLighting();
+					        GlStateManager.enableTexture2D();
+					        GlStateManager.enableDepth();
+					        GlStateManager.depthMask(true);
+							GL11.glLineWidth(1.0F);
 							
 							GlStateManager.popMatrix();
 						}
@@ -230,6 +239,8 @@ public class CapsulePreviewHandler {
 		int extendSize = (size - 1) / 2;
 		CapsuleItem capsuleItem = (CapsuleItem)capsule.getItem();
 		int color = capsuleItem.getColorFromItemstack(capsule, 0);
+		
+		
 
 		CaptureTESR.drawCaptureZone(
 				linkPos.getInteger("x") + extendSize - TileEntityRendererDispatcher.staticPlayerX, 
