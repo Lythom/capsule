@@ -62,7 +62,7 @@ public class CapsuleLootEntry extends LootEntry {
 				String[] path = templatePath.split("/");
 				if(path.length == 0) return;
 				
-				ItemStack capsule = CapsuleItem.createRewardCapsule(templatePath, random.nextInt(0xFFFFFF), random.nextInt(0xFFFFFF), size, false, path[path.length-1], null);
+				ItemStack capsule = CapsuleItem.createRewardCapsule(templatePath, random.nextInt(0xFFFFFF), random.nextInt(0xFFFFFF), size, false, path[path.length-1], template.getAuthor() , null);
 	            stacks.add(capsule);
 			}
 			

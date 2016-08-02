@@ -12,6 +12,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class Enchantments {
 	
@@ -19,9 +20,6 @@ public class Enchantments {
 	
 	public static void initEnchantments(){
 
-		Property enchantId = Config.config.get("Compatibility", "recallEnchantId", 101);
-		enchantId.setComment("Id used to register the Enchantment \"Recall\".\n This enchantment allow a dropped item to come back into the thrower inventory (if not full) when it collided something.");
-		
 		Property enchantRarityConfig = Config.config.get("Balancing", "recallEnchantRarity", "RARE");
 		enchantRarityConfig.setComment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.");
 		Rarity enchantRarity = Rarity.RARE;
@@ -48,7 +46,7 @@ public class Enchantments {
 			recallEnchantTypeEnumValue // possible targets
 		);
 		
-		Enchantment.REGISTRY.register(enchantId.getInt(), new ResourceLocation(Main.MODID, "recall"), Enchantments.recallEnchant);
+		GameRegistry.register(Enchantments.recallEnchant);
 	}
 	
 	

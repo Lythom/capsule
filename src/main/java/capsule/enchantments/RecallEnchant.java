@@ -21,6 +21,7 @@ public class RecallEnchant extends Enchantment {
 	protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnumEnchantmentType enchType) {
 		super(rarity, enchType, EntityEquipmentSlot.values());
 		this.setName("recall");
+		this.setRegistryName(enchName);
 	}
 
 	@Override

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import capsule.items.CapsuleItem;
@@ -324,7 +325,7 @@ public class StructureSaver {
 
 	public static Pair<TemplateManager,Template> getTemplateForCapsule(WorldServer playerWorld, String structureName) {
 		TemplateManager templatemanager = getTemplateManager(playerWorld);
-		if(templatemanager == null) Pair.of(null,null);
+		if(templatemanager == null || Strings.isNullOrEmpty(structureName)) return Pair.of(null,null);
 		
 		Template template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
 		return Pair.of(templatemanager, template);
@@ -332,7 +333,7 @@ public class StructureSaver {
 	
 	public static Pair<TemplateManager,Template> getTemplateForReward(MinecraftServer server, String structurePath) {
 		TemplateManager templatemanager = getRewardManager(server);
-		if(templatemanager == null) return Pair.of(null,null);
+		if(templatemanager == null || Strings.isNullOrEmpty(structurePath)) return Pair.of(null,null);
 		
 		Template template = templatemanager.func_189942_b(server, new ResourceLocation(structurePath));
 		return Pair.of(templatemanager, template);
