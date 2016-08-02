@@ -3,6 +3,7 @@
  */
 package capsule.command;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,17 +11,23 @@ import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.google.common.base.Strings;
+
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
+import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -41,12 +48,7 @@ import net.minecraft.world.storage.loot.LootContext;
 public class CapsuleCommand extends CommandBase {
 
 	public static String[] COMMAND_LIST = new String[] {
-			"convertToReward", "exportHeldItem", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor",
-			"setMaterialColor"
-	};
-	
-	public static String[] COLOR_EXEMPLES = new String[] {
-			"0xCCCCCC","0x549b57","0xe08822","0x5e8eb7","0x6c6c6c","0xbd5757","0x99c33d","0x4a4cba","0x7b2e89","0x95d5e7","0xffffff"
+			"giveEmpty", "exportHeldItem", "fromExistingReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor", "setMaterialColor"
 	};
 
 	/*
@@ -83,19 +85,37 @@ public class CapsuleCommand extends CommandBase {
 
 	@Override
 	public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
+		
+		EntityPlayerMP player = null;
 		switch (args.length) {
 		case 1:
 			return getListOfStringsMatchingLastWord(args, COMMAND_LIST);
 		case 2:
 			switch (args[0]) {
-				case "giveRandomLoot":
-					return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+			case "giveRandomLoot":
+				return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+
+			case "setBaseColor":
+				return getListOfStringsMatchingLastWord(args, CapsuleLootEntry.COLOR_PALETTE);
+
+			case "setMaterialColor":
+				return getListOfStringsMatchingLastWord(args, CapsuleLootEntry.COLOR_PALETTE);
 				
-				case "setBaseColor":
-					return getListOfStringsMatchingLastWord(args, COLOR_EXEMPLES);
+			case "fromStructure":
+				try {
+					player = getCommandSenderAsPlayer(sender);
+				} catch (PlayerNotFoundException e) {}
+				if(player != null){
+					return getListOfStringsMatchingLastWord(args, (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list());
+				}
 				
-				case "setMaterialColor":
-					return getListOfStringsMatchingLastWord(args, COLOR_EXEMPLES);
+			case "fromExistingReward":
+				try {
+					player = getCommandSenderAsPlayer(sender);
+				} catch (PlayerNotFoundException e) {}
+				if(player != null){
+					return getListOfStringsMatchingLastWord(args, (new File(Config.rewardTemplatesPath)).list());
+				}
 			}
 		}
 		return Collections.<String> emptyList();
@@ -114,12 +134,27 @@ public class CapsuleCommand extends CommandBase {
 			throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 		}
 
+		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+		
+		 if ("giveEmpty".equalsIgnoreCase(args[0])) {
+			 if(player != null){
+				 ItemStack capsule = CapsuleItem.createEmptyCapsule(
+						 0xFFFFFF, 
+						 0xFFFFFF, 
+						 (args.length >= 2 ? (int)Integer.decode(args[1]) : 3), 
+						 (args.length >= 3 ? (boolean)Boolean.getBoolean(args[2]) : false), 
+						 null, 
+						 null
+					);
+				 giveCapsule(capsule, player);
+			 }
+		 }
+
 		// export give command exportHeldItem
 		else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
 			if (args.length != 1) {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
-			EntityPlayer player = getCommandSenderAsPlayer(sender);
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
 				if (heldItem != null) {
@@ -145,7 +180,6 @@ public class CapsuleCommand extends CommandBase {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
 
-			EntityPlayerMP player = getCommandSenderAsPlayer(sender);
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
 				if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
@@ -192,7 +226,6 @@ public class CapsuleCommand extends CommandBase {
 				throw new WrongUsageException("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456");
 			}
 
-			EntityPlayerMP player = getCommandSenderAsPlayer(sender);
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
 				if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
@@ -213,7 +246,6 @@ public class CapsuleCommand extends CommandBase {
 				throw new WrongUsageException("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456");
 			}
 
-			EntityPlayerMP player = getCommandSenderAsPlayer(sender);
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
 				if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
@@ -223,17 +255,46 @@ public class CapsuleCommand extends CommandBase {
 		}
 		// set the held item as reward (or not)
 		else if ("fromHeldCapsule".equalsIgnoreCase(args[0])) {
-			if (args.length != 1) {
+			if (args.length != 1 && args.length != 2) {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
-			EntityPlayer player = getCommandSenderAsPlayer(sender);
+
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
 				if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 
-					// TODO : create a new template file under the Config.commandTemplatesPathProp from the template linked to the capsule
-					// TODO : create a new item from the held capsule but linked to the newly created structureBlock file
-					// TODO : use the new CapsuleItem.create method instead
+					String outputName = null;
+					if (args.length == 1) {
+						outputName = heldItem.getTagCompound().getString("label");
+					} else {
+						outputName = args[1];
+					}
+					if (Strings.isNullOrEmpty(outputName)) {
+						throw new WrongUsageException(
+								"/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
+					}
+
+					// get source template data
+					Pair<TemplateManager, Template> sourcetemplatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+					NBTTagCompound data = new NBTTagCompound();
+					sourcetemplatepair.getRight().writeToNBT(data);
+
+					// create a destination template
+					ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + outputName);
+					TemplateManager destManager = StructureSaver.getRewardManager(server);
+					Template destTemplate = destManager.getTemplate(server, destinationLocation);
+					// write template from source data
+					destTemplate.read(data);
+					destManager.writeTemplate(server, destinationLocation);
+
+					ItemStack capsule = CapsuleItem.createRewardCapsule(
+							destinationLocation.toString(),
+							CapsuleItem.getBaseColor(heldItem),
+							CapsuleItem.getMaterialColor(heldItem),
+							CapsuleItem.getSize(heldItem),
+							outputName,
+							CapsuleItem.getAuthor(heldItem));
+					giveCapsule(capsule, player);
 
 				}
 			}
@@ -241,28 +302,88 @@ public class CapsuleCommand extends CommandBase {
 
 		else if ("fromStructure".equalsIgnoreCase(args[0])) {
 
-			if (args.length != 2) {
+			if (args.length == 1) {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
+			StringBuilder structureNameB = new StringBuilder();
+			for (int i = 1; i < args.length; i++) {
+				structureNameB.append(args[i]);
+				if(i < args.length - 1) structureNameB.append(" ");
+			}
 
-			String structureName = args[1];
+			String structureName = structureNameB.toString().replaceAll(".nbt", "");
 
-			EntityPlayer player = getCommandSenderAsPlayer(sender);
 			if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
 				// template
-				Template template = StructureSaver.getTemplateForReward(player.worldObj.getMinecraftServer(), structureName).getRight();
+				TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
+				Template template = templatemanager.func_189942_b(server, new ResourceLocation(structureName));
 				if (template != null) {
 					int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 					if (size % 2 == 1)
 						size++;
 
-					// TODO : create a new template file under the Config.commandTemplatesPathProp from the /structures template folder
-					// TODO : create a new item from the held capsule but linked to the newly created structureBlock file
-					// TODO : use the new CapsuleItem.create method instead
+					// get source template data
+					NBTTagCompound data = new NBTTagCompound();
+					template.writeToNBT(data);
 
-					//giveCapsule(structureCapsule, player);
+					// create a destination template
+					ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + structureName);
+					TemplateManager destManager = StructureSaver.getRewardManager(server);
+					Template destTemplate = destManager.getTemplate(server, destinationLocation);
+					// write template from source data
+					destTemplate.read(data);
+					destManager.writeTemplate(server, destinationLocation);
+
+					ItemStack capsule = CapsuleItem.createRewardCapsule(
+							destinationLocation.toString(),
+							CapsuleLootEntry.getRandomColor(),
+							CapsuleLootEntry.getRandomColor(),
+							size,
+							structureName,
+							template.getAuthor());
+					giveCapsule(capsule, player);
+
 				} else {
 					throw new CommandException("Structure \"%s\" not found ", structureName);
+				}
+			}
+
+		}
+		 
+		else if ("fromExistingReward".equalsIgnoreCase(args[0])) {
+
+			if (args.length == 1) {
+				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+			}
+			StringBuilder structureNameB = new StringBuilder();
+			for (int i = 1; i < args.length; i++) {
+				structureNameB.append(args[i]);
+				if(i < args.length - 1) structureNameB.append(" ");
+			}
+
+			String structureName = structureNameB.toString().replaceAll(".nbt", "");
+
+			if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
+				
+				String stucturePath = Config.rewardTemplatesPath + "/" + structureName;
+				
+				Template template = StructureSaver.getTemplateForReward(server, stucturePath).getRight();
+				if (template != null) {
+					int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
+					if (size % 2 == 1)
+						size++;
+
+					ItemStack capsule = CapsuleItem.createRewardCapsule(
+							stucturePath,
+							CapsuleLootEntry.getRandomColor(),
+							CapsuleLootEntry.getRandomColor(),
+							size,
+							structureName,
+							template.getAuthor());
+					giveCapsule(capsule, player);
+
+				} else {
+					throw new CommandException("Reward Capsule \"%s\" not found ", structureName);
 				}
 			}
 
@@ -273,7 +394,7 @@ public class CapsuleCommand extends CommandBase {
 			if (args.length != 1 && args.length != 2) {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
-			EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+
 			if (args.length == 2) {
 				player = CommandBase.getPlayer(server, sender, args[1]);
 			}

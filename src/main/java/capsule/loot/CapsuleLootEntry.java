@@ -43,6 +43,14 @@ public class CapsuleLootEntry extends LootEntry {
 		this.templatesPath  = path;
 	}
 
+	public static String[] COLOR_PALETTE = new String[] {
+			"0xCCCCCC", "0x549b57", "0xe08822", "0x5e8eb7", "0x6c6c6c", "0xbd5757", "0x99c33d", "0x4a4cba", "0x7b2e89", "0x95d5e7", "0xffffff"
+	};
+
+	public static int getRandomColor() {
+		return Integer.decode(COLOR_PALETTE[(int) (Math.random() * COLOR_PALETTE.length)]);
+	}
+
 	/**
 	 * Add all eligible capsules to the list to be picked from.
 	 */
@@ -55,18 +63,26 @@ public class CapsuleLootEntry extends LootEntry {
 			
 			Pair<String,Template> templatePair = getRandomTemplate(context);
 
-			if(templatePair != null){
+			if (templatePair != null) {
 				Template template = templatePair.getRight();
 				String templatePath = templatePair.getLeft();
 				int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 				String[] path = templatePath.split("/");
-				if(path.length == 0) return;
+				if (path.length == 0)
+					return;
+
+				ItemStack capsule = CapsuleItem.createRewardCapsule(
+						templatePath,
+						getRandomColor(),
+						getRandomColor(),
+						size,
+						path[path.length - 1],
+						template.getAuthor());
 				
-				ItemStack capsule = CapsuleItem.createRewardCapsule(templatePath, random.nextInt(0xFFFFFF), random.nextInt(0xFFFFFF), size, false, path[path.length-1], template.getAuthor() , null);
-	            stacks.add(capsule);
+				stacks.add(capsule);
 			}
-			
-        }
+
+		}
 
 	}
 

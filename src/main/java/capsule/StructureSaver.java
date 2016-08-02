@@ -87,6 +87,10 @@ public class StructureSaver {
 	public static TemplateManager getRewardManager(MinecraftServer server) {
 		if(RewardManager == null){
 			RewardManager = new TemplateManager(server.getDataDirectory().getPath());
+			File rewardDir = new File(Config.rewardTemplatesPath);
+			if(!rewardDir.exists()){
+				rewardDir.mkdirs();
+			}
 		}
 		return RewardManager;
 	}

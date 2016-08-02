@@ -17,6 +17,7 @@ import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.network.AskCapsuleContentPreviewMessageToServer;
+import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.creativetab.CreativeTabs;
@@ -104,8 +105,8 @@ public class CapsuleItem extends Item {
 		return capsule;
 	}
 	
-	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable String author, @Nullable Integer upgraded){
-		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
+	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, @Nullable String label, @Nullable String author){
+		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, false, label, null);
 		setIsReward(capsule);
 		setOneUse(capsule);
 		setStructureName(capsule, structureName);
@@ -215,14 +216,24 @@ public class CapsuleItem extends Item {
 		if (!capsule.hasTagCompound()) {
 			capsule.setTagCompound(new NBTTagCompound());
 		}
-		capsule.getTagCompound().setString("author", author);
+		if(!Strings.isNullOrEmpty(author)) capsule.getTagCompound().setString("author", author);
 	}
 	
 
+	public static int getBaseColor(ItemStack capsule) {
+		return Helpers.getColor(capsule);
+	}
 	public static void setBaseColor(ItemStack capsule, int color) {
 		Helpers.setColor(capsule, color);
 	}
 	
+	public static int getMaterialColor(ItemStack capsule) {
+		int color = 0;
+		if (capsule != null && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("color")) {
+			color = capsule.getTagCompound().getInteger("color");
+		}
+		return color;
+	}
 	public static void setMaterialColor(ItemStack capsule, int color) {
 		if (!capsule.hasTagCompound()) {
 			capsule.setTagCompound(new NBTTagCompound());
@@ -332,22 +343,18 @@ public class CapsuleItem extends Item {
 	@Override
 	public void getSubItems(Item itemIn, CreativeTabs tab, List subItems) {
 
-		// TODO : use the new create method instead
 		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
 		ironCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "ironCapsuleSize", "1").getInt()));
 
-		// TODO : use the new create method instead
 		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
 		goldCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "goldCapsuleSize", "3").getInt()));
 
-		// TODO : use the new create method instead
 		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
 		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "diamondCapsuleSize", "5").getInt()));
 
-		// TODO : use the new create method instead
 		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
 		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
