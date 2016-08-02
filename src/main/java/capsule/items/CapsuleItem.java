@@ -71,11 +71,11 @@ public class CapsuleItem extends Item {
 	 * * byte overpowered											// If the capsule can capture powerfull blocks
 	 * * bool isReward												// if the content of the template must be kept when capsule is deployed.
 	 * * string structureName										// name of the template file name without the .nbt extension. 
-	 * 																// Lookup paths are /<worldsave>/structures/capsules for non-rewards, and /config/capsules/rewards + lootTemplatesPaths (see config file) for rewards and loots
+	 * 																// Lookup paths are /<worldsave>/structures/capsules for non-rewards, and structureName must contains the full path for rewards and loots
 	 * * tag activetimer : {int starttime} 							// used to time the moment when the capsule must deactivate
 	 * * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
 	 * * long deployAt												// when thrown with preview, position to deploy the capsule to match preview
-	 * 
+	 * * arr ench:[0:{lvl:1s,id:101s}]
 	 * @param unlocalizedName
 	 */
 	public CapsuleItem(String unlocalizedName) {
@@ -104,11 +104,12 @@ public class CapsuleItem extends Item {
 		return capsule;
 	}
 	
-	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded){
+	public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable String author, @Nullable Integer upgraded){
 		ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
 		setIsReward(capsule);
 		setOneUse(capsule);
 		setStructureName(capsule, structureName);
+		setAuthor(capsule, author);
 		
 		return capsule;
 	}
@@ -216,6 +217,18 @@ public class CapsuleItem extends Item {
 		}
 		capsule.getTagCompound().setString("author", author);
 	}
+	
+
+	public static void setBaseColor(ItemStack capsule, int color) {
+		Helpers.setColor(capsule, color);
+	}
+	
+	public static void setMaterialColor(ItemStack capsule, int color) {
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setInteger("color", color);
+	}
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
@@ -252,7 +265,7 @@ public class CapsuleItem extends Item {
 			content = content + " ";
 		}
 
-		return TextFormatting.RESET + state + content + name;
+		return TextFormatting.RESET + state + content  + name;
 	}
 
 	
@@ -280,27 +293,32 @@ public class CapsuleItem extends Item {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
+
+		if (isOverpowered(stack)) {
+			tooltip.add(TextFormatting.DARK_PURPLE + I18n.translateToLocal("capsule.tooltip.overpowered") + TextFormatting.RESET);
+		}
+		
 		int size = getSize(stack);
 		String author = getAuthor(stack);
 		if(author != null){
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.author") + ": " + author);
+			tooltip.add(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.translateToLocal("capsule.tooltip.author") + " " + author + TextFormatting.RESET);
 		}
-		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + size + "x" + size + "x" + size);
+
+		int upgradeLevel = 0;
 		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
-			int upgradeLevel = stack.getTagCompound().getInteger("upgraded");
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.upgraded") + ": " + String.valueOf(upgradeLevel)
-					+ (upgradeLevel >= Config.config.get("Balancing", "capsuleUpgradesLimit", 10).getInt()
-							? " (" + I18n.translateToLocal("capsule.tooltip.maxedout") + ")" : ""));
-
+			upgradeLevel = stack.getTagCompound().getInteger("upgraded");
 		}
-		if (isOverpowered(stack)) {
-			tooltip.add(I18n.translateToLocal("capsule.tooltip.overpowered"));
-
+		String sizeTxt = String.valueOf(size) + "×" + String.valueOf(size) + "×" + String.valueOf(size);
+		if(upgradeLevel > 0){
+			sizeTxt +=  " (" + upgradeLevel + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";
 		}
+		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + sizeTxt);
+		
 		if (stack.getItemDamage() == STATE_ONE_USE) {
-			I18n.translateToLocal("capsule.tooltip.one_use").trim();
+			tooltip.add(I18n.translateToLocal("capsule.tooltip.one_use").trim());
 		}
-		super.addInformation(stack, playerIn, tooltip, advanced);
+		
+		
 	}
 	
 	public boolean isOverpowered(ItemStack stack){
@@ -756,5 +774,6 @@ public class CapsuleItem extends Item {
 		setState(capsule, STATE_EMPTY);
 		capsule.getTagCompound().removeTag("structureName");
 	}
+
 
 }
