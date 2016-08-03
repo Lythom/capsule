@@ -2,6 +2,8 @@ package capsule;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
@@ -67,8 +69,15 @@ public class CommonProxy {
 		Config.upgradeLimit = upgradesLimit.getInt();
 		
 		// Excluded
-		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }));
+		String[] excludedBlocksOP = ArrayUtils.addAll(
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.STRUCTURE_VOID }),
+				new String[] { "ic2:te" }
+		);
+		String[] excludedBlocks = ArrayUtils.addAll(
+				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }),
+				excludedBlocksOP
+		);
+		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",excludedBlocks);
 		excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] exBlocks = null;
 		try {
@@ -81,8 +90,7 @@ public class CommonProxy {
 		}
 		
 		// OP Excluded
-		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",
-				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.STRUCTURE_VOID }));
+		Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks",excludedBlocksOP);
 		opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
 		Block[] opExBlocks = null;
 		try {
