@@ -18,6 +18,8 @@ import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
+import capsule.structure.CapsuleTemplate;
+import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -188,9 +190,9 @@ public class CapsuleCommand extends CommandBase {
 						// set a new author
 						String author = args[1];
 						heldItem.getTagCompound().setString("author", args[1]);
-						Pair<TemplateManager, Template> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
-						Template template = templatepair.getRight();
-						TemplateManager templatemanager = templatepair.getLeft();
+						Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+						CapsuleTemplate template = templatepair.getRight();
+						CapsuleTemplateManager templatemanager = templatepair.getLeft();
 						if (template != null && templatemanager != null) {
 							template.setAuthor(author);
 							templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
@@ -199,9 +201,9 @@ public class CapsuleCommand extends CommandBase {
 					} else {
 						// called with one parameter = remove author information
 						heldItem.getTagCompound().removeTag("author");
-						Pair<TemplateManager, Template> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
-						Template template = templatepair.getRight();
-						TemplateManager templatemanager = templatepair.getLeft();
+						Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+						CapsuleTemplate template = templatepair.getRight();
+						CapsuleTemplateManager templatemanager = templatepair.getLeft();
 						if (template != null && templatemanager != null) {
 							template.setAuthor("?");
 							templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
@@ -275,14 +277,14 @@ public class CapsuleCommand extends CommandBase {
 					}
 
 					// get source template data
-					Pair<TemplateManager, Template> sourcetemplatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+					Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
 					NBTTagCompound data = new NBTTagCompound();
 					sourcetemplatepair.getRight().writeToNBT(data);
 
 					// create a destination template
 					ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + outputName);
-					TemplateManager destManager = StructureSaver.getRewardManager(server);
-					Template destTemplate = destManager.getTemplate(server, destinationLocation);
+					CapsuleTemplateManager destManager = StructureSaver.getRewardManager(server);
+					CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
 					// write template from source data
 					destTemplate.read(data);
 					destManager.writeTemplate(server, destinationLocation);
@@ -328,8 +330,8 @@ public class CapsuleCommand extends CommandBase {
 
 					// create a destination template
 					ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + structureName);
-					TemplateManager destManager = StructureSaver.getRewardManager(server);
-					Template destTemplate = destManager.getTemplate(server, destinationLocation);
+					CapsuleTemplateManager destManager = StructureSaver.getRewardManager(server);
+					CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
 					// write template from source data
 					destTemplate.read(data);
 					destManager.writeTemplate(server, destinationLocation);
@@ -367,7 +369,7 @@ public class CapsuleCommand extends CommandBase {
 				
 				String stucturePath = Config.rewardTemplatesPath + "/" + structureName;
 				
-				Template template = StructureSaver.getTemplateForReward(server, stucturePath).getRight();
+				CapsuleTemplate template = StructureSaver.getTemplateForReward(server, stucturePath).getRight();
 				if (template != null) {
 					int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 					if (size % 2 == 1)

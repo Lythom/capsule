@@ -111,7 +111,7 @@ public class CommonProxy {
 			Config.overridableBlocks = Arrays.asList(ovBlocks);
 		}
 		
-		// Template Paths
+		// CapsuleTemplate Paths
 		Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
 				"config/capsules/loot/common",
 				"config/capsules/loot/uncommon",

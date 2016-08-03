@@ -7,14 +7,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
+import capsule.structure.CapsuleTemplate;
+import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraft.world.gen.structure.template.TemplateManager;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
@@ -67,11 +67,11 @@ public class AskCapsuleContentPreviewMessageToServerMessageHandler
 		}
 		
 		WorldServer serverworld = sendingPlayer.getServerWorld();
-		Pair<TemplateManager,Template> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
-		Template template = templatepair.getRight();
+		Pair<CapsuleTemplateManager,CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
+		CapsuleTemplate template = templatepair.getRight();
 		
 		if(template != null){
-			List<Template.BlockInfo> blocksInfos = ObfuscationReflectionHelper.getPrivateValue(Template.class, template, "blocks");
+			List<Template.BlockInfo> blocksInfos = template.blocks;
 			List<BlockPos> blockspos = new ArrayList<BlockPos>();
 			for (Template.BlockInfo blockInfo: blocksInfos) {
 				blockspos.add(blockInfo.pos);

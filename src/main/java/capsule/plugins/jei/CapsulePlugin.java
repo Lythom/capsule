@@ -18,7 +18,6 @@ import mezz.jei.api.JEIPlugin;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagInt;
@@ -41,14 +40,13 @@ public class CapsulePlugin extends BlankModPlugin {
         ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt());
         ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt() + 2);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        ironCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
         ItemStack ironCapsuleUpUp = ironCapsuleUp.copy();
         ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
         ItemStack ironCapsuleUpUpUp = ironCapsuleUpUp.copy();
         ironCapsuleUpUpUp.setTagInfo("upgraded", new NBTTagInt(3));
         ItemStack ironCapsuleUpUpUpUp = ironCapsuleUpUpUp.copy();
         ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
-        CapsuleItem.setStructureName(ironCapsuleUp, "JEIExemple");
+
 		ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt());
 		ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt() + 2);
 		goldCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));

@@ -14,8 +14,8 @@ import com.google.gson.JsonSerializationContext;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
+import capsule.structure.CapsuleTemplate;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootEntry;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
@@ -61,10 +61,10 @@ public class CapsuleLootEntry extends LootEntry {
 		if (LootConditionManager.testAllConditions(this.conditions, rand, context) && Config.lootTemplatesData.containsKey(this.templatesPath))
         {
 			
-			Pair<String,Template> templatePair = getRandomTemplate(context);
+			Pair<String,CapsuleTemplate> templatePair = getRandomTemplate(context);
 
 			if (templatePair != null) {
-				Template template = templatePair.getRight();
+				CapsuleTemplate template = templatePair.getRight();
 				String templatePath = templatePair.getLeft();
 				int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 				String[] path = templatePath.split("/");
@@ -86,7 +86,7 @@ public class CapsuleLootEntry extends LootEntry {
 
 	}
 
-	public Pair<String,Template> getRandomTemplate(LootContext context) {
+	public Pair<String,CapsuleTemplate> getRandomTemplate(LootContext context) {
 		LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
 		if(lpd == null || lpd.files == null) {
 			StructureSaver.loadLootList(context.getWorld().getMinecraftServer());
@@ -100,7 +100,7 @@ public class CapsuleLootEntry extends LootEntry {
 		for (int i = 0; i < lpd.files.size(); i++) {
 			int ri = (initRand + i) % lpd.files.size();
 			String structureName = lpd.files.get(ri);
-			Template template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName).getRight();
+			CapsuleTemplate template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName).getRight();
 			if(template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
 		}
 		return null;
