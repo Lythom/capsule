@@ -55,8 +55,7 @@ public class CapsuleItemsRegistrer {
 		opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
 		opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 
-		Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 5);
-		upgradesLimit.setComment("Number of upgrades an empty capsules can get to improve capacity. If <= 0, remove the upgrade recipe.");
+		
 
 		Config.config.save();
 
@@ -68,16 +67,14 @@ public class CapsuleItemsRegistrer {
 
 		// base recipes
 		GameRegistry.addRecipe(ironCapsule, new Object[] { " B ", "#P#", " # ", '#', Items.IRON_INGOT, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
-		GameRegistry.addRecipe(goldCapsule, new Object[] { " B ", "#P#", " # ", '#', Items.GOLD_INGOT, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
-		GameRegistry.addRecipe(diamondCapsule, new Object[] { " B ", "#P#", " # ", '#', Items.DIAMOND, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
-		GameRegistry.addRecipe(opCapsule, new Object[] { " B ", "#N#", " # ", '#', Items.DIAMOND, 'N', Items.NETHER_STAR, 'B', Blocks.STONE_BUTTON });
+		GameRegistry.addRecipe(goldCapsule, new Object[] { " B ", "RPR", " # ", '#', Items.IRON_INGOT, 'R', Items.GOLD_INGOT, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
+		GameRegistry.addRecipe(diamondCapsule, new Object[] { " B ", "RPR", " # ", '#', Items.IRON_INGOT, 'R', Items.DIAMOND, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
+		GameRegistry.addRecipe(opCapsule, new Object[] { " B ", "#N#", " # ", '#', Items.IRON_INGOT, 'N', Items.NETHER_STAR, 'B', Blocks.STONE_BUTTON });
 
 		// capsule upgrade recipe
-		int upgradesMaxCount = upgradesLimit.getInt();
 		RecipeSorter.register(CAPSULE_REGISTERY_NAME+":upgrade", UpgradeCapsuleRecipe.class, SHAPELESS, "after:minecraft:shapeless");
-		CapsuleItemsRegistrer.upgradeCapsuleRecipe = new UpgradeCapsuleRecipe(Items.ENDER_PEARL, upgradesMaxCount);
+		CapsuleItemsRegistrer.upgradeCapsuleRecipe = new UpgradeCapsuleRecipe(Items.CHORUS_FRUIT_POPPED);
 		GameRegistry.addRecipe(CapsuleItemsRegistrer.upgradeCapsuleRecipe);		
-
 
 		// recovery capsule recipe
 		RecipeSorter.register(CAPSULE_REGISTERY_NAME+":recovery", RecoveryCapsuleRecipe.class, SHAPELESS, "after:minecraft:shapeless");

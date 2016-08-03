@@ -56,7 +56,7 @@ public class CapsuleItem extends Item {
 	public final static int STATE_ONE_USE = 5;
 	public final static int STATE_ONE_USE_ACTIVATED = 6;
 
-	private static final int CAPSULE_MAX_CAPTURE_SIZE = 31; // max size of the StructureBlocks Templates
+	public static final int CAPSULE_MAX_CAPTURE_SIZE = 31; // max size of the StructureBlocks Templates
 
 	/**
 	 * Capsule Mod main item. Used to store region data to be deployed and undeployed.
@@ -188,6 +188,20 @@ public class CapsuleItem extends Item {
 		return size;
 	}
 	
+	public static void setSize(ItemStack capsule, int size) {
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		if (size > CAPSULE_MAX_CAPTURE_SIZE) {
+			size = CAPSULE_MAX_CAPTURE_SIZE;
+			System.err.println("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
+		} else if (size % 2 == 0) {
+			size--;
+			System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
+		}
+		capsule.getTagCompound().setInteger("size", size);
+	}
+	
 
 	public static String getStructureName(ItemStack capsule) {
 		String name = null;
@@ -239,6 +253,21 @@ public class CapsuleItem extends Item {
 			capsule.setTagCompound(new NBTTagCompound());
 		}
 		capsule.getTagCompound().setInteger("color", color);
+	}
+	
+	public static int getUpgradeLevel(ItemStack stack) {
+		int upgradeLevel = 0;
+		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
+			upgradeLevel = stack.getTagCompound().getInteger("upgraded");
+		}
+		return upgradeLevel;
+	}
+	
+	public static void setUpgradeLevel(ItemStack capsule, int upgrades) {
+		if (!capsule.hasTagCompound()) {
+			capsule.setTagCompound(new NBTTagCompound());
+		}
+		capsule.getTagCompound().setInteger("upgraded", upgrades);
 	}
 
 	@Override
@@ -315,10 +344,7 @@ public class CapsuleItem extends Item {
 			tooltip.add(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.translateToLocal("capsule.tooltip.author") + " " + author + TextFormatting.RESET);
 		}
 
-		int upgradeLevel = 0;
-		if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgraded")) {
-			upgradeLevel = stack.getTagCompound().getInteger("upgraded");
-		}
+		int upgradeLevel = getUpgradeLevel(stack);
 		String sizeTxt = String.valueOf(size) + "×" + String.valueOf(size) + "×" + String.valueOf(size);
 		if(upgradeLevel > 0){
 			sizeTxt +=  " (" + upgradeLevel + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";

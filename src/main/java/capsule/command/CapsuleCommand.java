@@ -142,7 +142,7 @@ public class CapsuleCommand extends CommandBase {
 						 0xFFFFFF, 
 						 0xFFFFFF, 
 						 (args.length >= 2 ? (int)Integer.decode(args[1]) : 3), 
-						 (args.length >= 3 ? (boolean)Boolean.getBoolean(args[2]) : false), 
+						 (args.length >= 3 ? (boolean)Boolean.valueOf(args[2]) : false), 
 						 null, 
 						 null
 					);

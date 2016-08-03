@@ -61,6 +61,11 @@ public class CommonProxy {
 		CapsuleItemsRegistrer.registerRecipes();
 		CapsuleBlocksRegistrer.registerRecipes();
 		
+		// upgrade limits
+		Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
+		upgradesLimit.setComment("Number of upgrades an empty capsules can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
+		Config.upgradeLimit = upgradesLimit.getInt();
+		
 		// Excluded
 		Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks",
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }));

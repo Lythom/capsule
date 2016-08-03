@@ -16,4 +16,5 @@ public class Config {
 	public static String[] lootTemplatesPaths;
 	public static Map<String,LootPathData> lootTemplatesData = new HashMap<>();
 	public static String rewardTemplatesPath;
+	public static int upgradeLimit;
 }

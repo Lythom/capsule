@@ -4,6 +4,7 @@ import capsule.Main;
 import capsule.items.CapsuleItem;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -32,7 +33,7 @@ public class CapsuleBlocksRegistrer {
 		ItemStack capsulemarker = new ItemStack(CapsuleBlocksRegistrer.blockCapsuleMarker, 1, CapsuleItem.STATE_EMPTY);
 		
 		// base recipes
-		GameRegistry.addRecipe(capsulemarker, new Object[] {"# #", "#T#", "###", '#', Blocks.COBBLESTONE, 'T', Blocks.TORCH});
+		GameRegistry.addRecipe(capsulemarker, new Object[] {"#G#", "#C#", "#T#", '#', Blocks.COBBLESTONE, 'T', Blocks.TORCH, 'C', Items.COMPASS,'G', Blocks.GLASS_PANE});
 		
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
+import capsule.Config;
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
@@ -41,6 +42,12 @@ public class CapsulePlugin extends BlankModPlugin {
         ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt() + 2);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
         ironCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
+        ItemStack ironCapsuleUpUp = ironCapsuleUp.copy();
+        ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
+        ItemStack ironCapsuleUpUpUp = ironCapsuleUpUp.copy();
+        ironCapsuleUpUpUp.setTagInfo("upgraded", new NBTTagInt(3));
+        ItemStack ironCapsuleUpUpUpUp = ironCapsuleUpUpUp.copy();
+        ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
         CapsuleItem.setStructureName(ironCapsuleUp, "JEIExemple");
 		ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt());
 		ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt() + 2);
@@ -77,12 +84,12 @@ public class CapsulePlugin extends BlankModPlugin {
 		CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
 		
 
-        ItemStack EnderPearlIS = new ItemStack(Items.ENDER_PEARL);
-        recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,unlabelledCapsule,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, ironCapsuleUp));
-        recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,unlabelledCapsuleGold,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, goldCapsuleUp));
-        recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,unlabelledCapsuleDiamond,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, diamondCapsuleUp));
-        recipes.add(new ShapedRecipes(3,3, new ItemStack[]{EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS,unlabelledCapsuleOP,EnderPearlIS,EnderPearlIS,EnderPearlIS,EnderPearlIS}, opCapsuleUp));
-        
+        ItemStack chorusFruitIS = new ItemStack(Items.CHORUS_FRUIT_POPPED);
+        if(Config.upgradeLimit > 0) recipes.add(new ShapelessRecipes(ironCapsuleUp, Arrays.asList(new ItemStack[]{ironCapsule,chorusFruitIS})));
+        if(Config.upgradeLimit > 1) recipes.add(new ShapelessRecipes(ironCapsuleUpUp, Arrays.asList(new ItemStack[]{ironCapsule,chorusFruitIS,chorusFruitIS})));
+        if(Config.upgradeLimit > 2) recipes.add(new ShapelessRecipes(ironCapsuleUpUpUp, Arrays.asList(new ItemStack[]{ironCapsule,chorusFruitIS,chorusFruitIS,chorusFruitIS})));
+        if(Config.upgradeLimit > 3) recipes.add(new ShapelessRecipes(ironCapsuleUpUpUpUp, Arrays.asList(new ItemStack[]{ironCapsule,chorusFruitIS,chorusFruitIS,chorusFruitIS,chorusFruitIS})));
+       
         recipes.add(new ShapelessRecipes(recoveryCapsule, Arrays.asList(new ItemStack[] { unlabelledCapsule, new ItemStack(Items.GLASS_BOTTLE) })));
         recipes.add(new ShapelessRecipes(ironCapsule, Arrays.asList(new ItemStack[] { unlabelledCapsule })));
 
