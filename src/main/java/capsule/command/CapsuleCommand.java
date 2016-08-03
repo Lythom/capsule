@@ -14,12 +14,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.base.Strings;
 
 import capsule.Config;
+import capsule.Helpers;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -31,8 +34,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
@@ -50,7 +55,7 @@ import net.minecraft.world.storage.loot.LootContext;
 public class CapsuleCommand extends CommandBase {
 
 	public static String[] COMMAND_LIST = new String[] {
-			"giveEmpty", "exportHeldItem", "fromExistingReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor", "setMaterialColor"
+			"giveEmpty", "exportHeldItem", "exportSeenBlock", "fromExistingReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor", "setMaterialColor"
 	};
 
 	/*
@@ -164,6 +169,36 @@ public class CapsuleCommand extends CommandBase {
 					String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getItemDamage();
 					if (heldItem.hasTagCompound()) {
 						command += " " + heldItem.getTagCompound().toString();
+					}
+					TextComponentString msg = new TextComponentString(command);
+					msg.getStyle()
+							.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
+					msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
+
+					player.addChatMessage(msg);
+
+				}
+			}
+		}
+		 
+		else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
+			if (args.length != 1) {
+				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+			}
+			if (player != null) {
+				
+				RayTraceResult rtc = Helpers.rayTracePreview(player,  Minecraft.getMinecraft().getRenderPartialTicks());
+				
+				if(rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK)
+				{
+					
+					BlockPos position = rtc.getBlockPos();
+					IBlockState state = player.getServerWorld().getBlockState(position);
+					TileEntity tileentity = player.getServerWorld().getTileEntity(position);
+
+					String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 " + state.getBlock().getMetaFromState(state);
+					if (tileentity != null) {
+						command += " {BlockEntityTag:"+tileentity.serializeNBT().toString()+"}";
 					}
 					TextComponentString msg = new TextComponentString(command);
 					msg.getStyle()
