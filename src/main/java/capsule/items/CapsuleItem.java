@@ -490,46 +490,55 @@ public class CapsuleItem extends Item {
 	 * Detect a collision and act accordingly (deploy or capture or break)
 	 */
 	@Override
-	public boolean onEntityItemUpdate(EntityItem entityItem) {
+	public boolean onEntityItemUpdate(final EntityItem entityItem) {
 		super.onEntityItemUpdate(entityItem);
 
-		ItemStack capsule = entityItem.getEntityItem();
+		final ItemStack capsule = entityItem.getEntityItem();
 
 		// Deploying capsule content on collision with a block
 		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)) {
 
-			int size = getSize(capsule);
-			int extendLength = (size - 1) / 2;
+			final int size = getSize(capsule);
+			final int extendLength = (size - 1) / 2;
 
 			// get destination world available position
-			WorldServer playerWorld = (WorldServer) entityItem.worldObj;
+			final WorldServer itemWorld = (WorldServer) entityItem.worldObj;
 
-			if (isLinked(capsule)) {
-
-				// DEPLOY
-				// is linked, deploy
-				boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, playerWorld);
-				if (deployed && isOneUse(capsule)) {
-					entityItem.setDead();
-				}
-				return true;
-
-			} else {
-
-				// CAPTURE
-				// is not linked, capture
-				captureContentIntoCapsule(entityItem, capsule, size, extendLength, playerWorld);
-				return true;
-			}
+			itemWorld.addScheduledTask(new Runnable() {
+			      public void run() {
+					if (isLinked(capsule)) {
+						
+						// DEPLOY
+						// is linked, deploy
+						boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, itemWorld);
+						if (deployed && isOneUse(capsule)) {
+							entityItem.setDead();
+						}
+						
+					} else {
+		
+						// CAPTURE
+						// is not linked, capture
+						captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
+					}
+			      }
+			});
 		}
 		
 		// throwing the capsule toward the right place
 		if (!entityItem.worldObj.isRemote && !entityItem.isCollided && this.isActivated(capsule) && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
 			BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
 			BlockPos centerDest = dest;
-			entityItem.motionX = (centerDest.getX() + 0.5 - entityItem.posX) / 12;
-			entityItem.motionZ = (centerDest.getZ() + 0.5 - entityItem.posZ) / 12;
+			double diffX = (centerDest.getX() + 0.5 - entityItem.posX);
+			double diffZ =  (centerDest.getZ() + 0.5 - entityItem.posZ);
+			entityItem.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
+			entityItem.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
+			//entityItem.setPosition(centerDest.getX(), centerDest.getY(), centerDest.getZ());
+			//entityItem.motionY = -0.1;//(entityItem.getPosition().distanceSq(centerDest) + 9) / 18;
+			
 		}
+		//EntityPlayer player = entityItem.worldObj.getPlayerEntityByName(entityItem.getThrower());
+		//entityItem.setPosition(player.posX, player.posY, player.posZ);
 
 		return false;
 	}
@@ -690,28 +699,32 @@ public class CapsuleItem extends Item {
 		return didSpawn;
 	}
 
-	private void resentToCapsule(ItemStack itemStackIn, EntityPlayer playerIn) {
+	private void resentToCapsule(final ItemStack itemStackIn, final EntityPlayer playerIn) {
 		// store again
 		
-		WorldServer playerWorld = (WorldServer) playerIn.worldObj;
-
-		NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
-		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
-
-		int size = getSize(itemStackIn);
-
-		// do the transportation
-		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), this.getOccupiedSourcePos(itemStackIn), false);
-
-		if(storageOK){
-			setState(itemStackIn, STATE_LINKED);
-			itemStackIn.getTagCompound().removeTag("spawnPosition");
-			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
-		} else {
-			if (playerIn != null) {
-				playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-			}
-		}
+		final WorldServer playerWorld = (WorldServer) playerIn.worldObj;
+		
+		playerWorld.addScheduledTask(new Runnable() {
+		      public void run() {
+		    	  	NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+			  		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+	
+			  		int size = getSize(itemStackIn);
+	
+			  		// do the transportation
+			  		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
+	
+			  		if(storageOK){
+			  			setState(itemStackIn, STATE_LINKED);
+			  			itemStackIn.getTagCompound().removeTag("spawnPosition");
+			  			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+			  		} else {
+			  			if (playerIn != null) {
+			  				playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+			  			}
+			  		}
+		      }
+		});
 		
 	}
 
@@ -765,12 +778,14 @@ public class CapsuleItem extends Item {
 		entityitem.setThrower(playerIn.getName());
 		
 		if(destination != null){
-			float f = 0.5F;
-			entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-			entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-					* MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-			entityitem.motionY = (double) (0.4);
+			double distance = playerIn.getPosition().distanceSq(new BlockPos(destination.getX(), playerIn.posY, destination.getZ()));
+			double diffX = (destination.getX() + 0.5 - playerIn.posX);
+			double diffZ =  (destination.getZ() + 0.5 - playerIn.posZ);
+			playerIn.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
+			playerIn.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
+			double pitch = (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI));
+			if(pitch < 0) pitch = 0.08;
+			entityitem.motionY = (double) (pitch * 1.1 + (Math.min(distance/(18*18), 0.8)) + 0.1);
 			itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
 		} else {
 			float f = 0.5F;
