@@ -3,6 +3,8 @@ package capsule;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
@@ -32,6 +34,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
 public class CommonProxy {
+	
+	protected static final Logger LOGGER = LogManager.getLogger(CommonProxy.class);
 
 	public static SimpleNetworkWrapper simpleNetworkWrapper;
 	public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
@@ -71,7 +75,7 @@ public class CommonProxy {
 		// Excluded
 		String[] excludedBlocksOP = ArrayUtils.addAll(
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.STRUCTURE_VOID }),
-				new String[] { "ic2:te" }
+				new String[] { "ic2:te", "opencomputers:robot", "bloodmagic:BlockAlchemyTable"}
 		);
 		String[] excludedBlocks = ArrayUtils.addAll(
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }),
@@ -83,7 +87,7 @@ public class CommonProxy {
 		try {
 			exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
 		} catch (NumberInvalidException e) {
-			e.printStackTrace();
+			LOGGER.error("Error while decoding excludedBlocksProp property from config/capsule.cfg", e);
 		}
 		if (exBlocks != null) {
 			Config.excludedBlocks = Arrays.asList(exBlocks);
@@ -96,7 +100,7 @@ public class CommonProxy {
 		try {
 			opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
 		} catch (NumberInvalidException e) {
-			e.printStackTrace();
+			LOGGER.error("Error while decoding opExcludedBlocks property from config/capsule.cfg", e);
 		}
 		if (opExBlocks != null) {
 			Config.opExcludedBlocks = Arrays.asList(opExBlocks);
@@ -113,7 +117,7 @@ public class CommonProxy {
 		try {
 			ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
 		} catch (NumberInvalidException e) {
-			e.printStackTrace();
+			LOGGER.error("Error while decoding overridableBlocks property from config/capsule.cfg", e);
 		}
 		if (ovBlocks != null) {
 			Config.overridableBlocks = Arrays.asList(ovBlocks);

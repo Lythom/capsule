@@ -301,12 +301,12 @@ public class CapsuleTemplate
 
             if (!p_189960_4_.getIgnoreEntities())
             {
-                this.addEntitiesToWorld(p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox);
+                this.addEntitiesToWorld(p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, null);
             }
         }
     }
 
-    public void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb)
+    public void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities)
     {
         for (Template.EntityInfo template$entityinfo : this.entities)
         {
@@ -340,6 +340,7 @@ public class CapsuleTemplate
                     f = f + (entity.rotationYaw - entity.getRotatedYaw(rotationIn));
                     entity.setLocationAndAngles(vec3d1.xCoord, vec3d1.yCoord, vec3d1.zCoord, f, entity.rotationPitch);
                     worldIn.spawnEntityInWorld(entity);
+                    if(spawnedEntities != null) spawnedEntities.add(entity);
                 }
             }
         }
@@ -727,7 +728,7 @@ public class CapsuleTemplate
 		return list;
 	}
 	
-	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks)
+	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
 		
 		ITemplateProcessor p_189960_3_ = new BlockRotationProcessor(p_189960_2_, p_189960_4_);
@@ -758,6 +759,9 @@ public class CapsuleTemplate
                     		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos))) 
                     )
                     {
+                    	// capsule addition to allow a rollback in case of error while deploying
+                    	if(spawnedBlocks != null) spawnedBlocks.add(blockpos);
+                    	
                         IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
                         IBlockState iblockstate1 = iblockstate.withRotation(p_189960_4_.getRotation());
 
@@ -786,6 +790,7 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
+                                
                                 tileentity2.func_189668_a(p_189960_4_.getMirror());
                                 tileentity2.func_189667_a(p_189960_4_.getRotation());
                             }
@@ -819,7 +824,7 @@ public class CapsuleTemplate
 
             if (!p_189960_4_.getIgnoreEntities())
             {
-            	this.addEntitiesToWorld( p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox);
+            	this.addEntitiesToWorld( p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, spawnedEntities);
             }
         }
     }

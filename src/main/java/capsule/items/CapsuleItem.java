@@ -8,7 +8,8 @@ import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import capsule.CommonProxy;
 import capsule.Config;
@@ -46,6 +47,8 @@ import net.minecraft.world.WorldServer;
 @SuppressWarnings("deprecation")
 public class CapsuleItem extends Item {
 
+	protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);
+	
 	public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
 	
 	public final static int STATE_EMPTY = 0;
@@ -347,7 +350,7 @@ public class CapsuleItem extends Item {
 		int upgradeLevel = getUpgradeLevel(stack);
 		String sizeTxt = String.valueOf(size) + "×" + String.valueOf(size) + "×" + String.valueOf(size);
 		if(upgradeLevel > 0){
-			sizeTxt +=  " (" + upgradeLevel + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";
+			sizeTxt +=  " (" + upgradeLevel + "/" + Config.upgradeLimit + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";
 		}
 		tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + sizeTxt);
 		
@@ -415,7 +418,7 @@ public class CapsuleItem extends Item {
 			return new ActionResult<ItemStack>(EnumActionResult.FAIL, itemStackIn);
 		}
 
-		if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED)) {
+		if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
 			Main.proxy.openGuiScreen(playerIn);
 		}
 
@@ -447,7 +450,13 @@ public class CapsuleItem extends Item {
 
 			// an opened capsule revoke deployed content on right click
 			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
-				resentToCapsule(itemStackIn, playerIn);
+				
+				try{
+					resentToCapsule(itemStackIn, playerIn);
+				} catch(Exception e) {
+					LOGGER.error("Couldn't resend the content into the capsule", e);
+				}
+				
 			}
 		} else {
 			// client side, if is going to get activated, ask for server preview
@@ -480,7 +489,7 @@ public class CapsuleItem extends Item {
 			// disable capsule after some time
 			NBTTagCompound timer = stack.getSubCompound("activetimer", false);
 			
-			if (this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
+			if (this.isActivated(stack) && timer != null && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
 				revertStateFromActivated(stack);
 			}
 		}
@@ -494,35 +503,36 @@ public class CapsuleItem extends Item {
 		super.onEntityItemUpdate(entityItem);
 
 		final ItemStack capsule = entityItem.getEntityItem();
+		if(capsule == null) return false;
 
 		// Deploying capsule content on collision with a block
 		if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)) {
-
+			
 			final int size = getSize(capsule);
 			final int extendLength = (size - 1) / 2;
-
+	
 			// get destination world available position
 			final WorldServer itemWorld = (WorldServer) entityItem.worldObj;
-
-			itemWorld.addScheduledTask(new Runnable() {
-			      public void run() {
-					if (isLinked(capsule)) {
-						
-						// DEPLOY
-						// is linked, deploy
-						boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, itemWorld);
-						if (deployed && isOneUse(capsule)) {
-							entityItem.setDead();
-						}
-						
-					} else {
-		
-						// CAPTURE
-						// is not linked, capture
-						captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
-					}
-			      }
-			});
+	
+			if (isLinked(capsule)) {
+				
+				// DEPLOY
+				// is linked, deploy
+				boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, itemWorld);
+				if (deployed && isOneUse(capsule)) {
+					entityItem.setDead();
+				}
+				
+			} else {
+	
+				// CAPTURE
+				// is not linked, capture
+				try{
+					captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
+				} catch(Exception e) {
+					LOGGER.error("Couldn't capture the content into the capsule", e);
+				}
+			}
 		}
 		
 		// throwing the capsule toward the right place
@@ -533,12 +543,8 @@ public class CapsuleItem extends Item {
 			double diffZ =  (centerDest.getZ() + 0.5 - entityItem.posZ);
 			entityItem.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
 			entityItem.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
-			//entityItem.setPosition(centerDest.getX(), centerDest.getY(), centerDest.getZ());
-			//entityItem.motionY = -0.1;//(entityItem.getPosition().distanceSq(centerDest) + 9) / 18;
 			
 		}
-		//EntityPlayer player = entityItem.worldObj.getPlayerEntityByName(entityItem.getThrower());
-		//entityItem.setPosition(player.posX, player.posY, player.posZ);
 
 		return false;
 	}
@@ -607,11 +613,13 @@ public class CapsuleItem extends Item {
 	private Map<BlockPos, Block> setOccupiedSourcePos(ItemStack capsule, Map<BlockPos, Block> occupiedSpawnPositions) {
 		Map<BlockPos, Block> occupiedSources = new HashMap<BlockPos, Block>();
 		NBTTagList entries = new NBTTagList();
-		for (Entry<BlockPos, Block> entry : occupiedSpawnPositions.entrySet()) {
-			NBTTagCompound nbtEntry = new NBTTagCompound();
-			nbtEntry.setLong("pos", entry.getKey().toLong());
-			nbtEntry.setInteger("blockId", Block.getIdFromBlock(entry.getValue()));
-			entries.appendTag(nbtEntry);
+		if(occupiedSpawnPositions != null){
+			for (Entry<BlockPos, Block> entry : occupiedSpawnPositions.entrySet()) {
+				NBTTagCompound nbtEntry = new NBTTagCompound();
+				nbtEntry.setLong("pos", entry.getKey().toLong());
+				nbtEntry.setInteger("blockId", Block.getIdFromBlock(entry.getValue()));
+				entries.appendTag(nbtEntry);
+			}
 		}
 		if (!capsule.hasTagCompound()) {
 			capsule.setTagCompound(new NBTTagCompound());
@@ -660,40 +668,27 @@ public class CapsuleItem extends Item {
 		// do the transportation
 		Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
 		List<String> outEntityBlocking = new ArrayList<String>();
-		
+
 		boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
-		this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
 		
 		if (result) {
+			
+			this.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
+			
 			// register the link in the capsule
 			if(!isReward(capsule)){
+
 				setState(capsule, STATE_DEPLOYED);
 				savePosition("spawnPosition", capsule, dest);
 				// remove the content from the structure block to prevent dupe using recovery capsules
 				StructureSaver.clearTemplate(playerWorld, structureName);
 			}
+			
 			didSpawn = true;
 
 		} else {
 			// could not deploy, either entity or block preventing merge
 			revertStateFromActivated(capsule);
-			if (entityItem == null || playerWorld == null) {
-				return false;
-			}
-			// send a chat message to explain failure
-			EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
-			if (player != null) {
-				if (outEntityBlocking.size() > 0) {
-					player.addChatMessage(
-							new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-									StringUtils.join(outEntityBlocking, ", ")));
-				} else if(occupiedSpawnPositions.size() == 0) {
-					player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", structureName));
-				} else {
-					player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-				}
-
-			}
 		}
 
 		return didSpawn;
@@ -703,32 +698,29 @@ public class CapsuleItem extends Item {
 		// store again
 		
 		final WorldServer playerWorld = (WorldServer) playerIn.worldObj;
-		
-		playerWorld.addScheduledTask(new Runnable() {
-		      public void run() {
-		    	  	NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
-			  		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
-	
-			  		int size = getSize(itemStackIn);
-	
-			  		// do the transportation
-			  		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
-	
-			  		if(storageOK){
-			  			setState(itemStackIn, STATE_LINKED);
-			  			itemStackIn.getTagCompound().removeTag("spawnPosition");
-			  			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
-			  		} else {
-			  			if (playerIn != null) {
-			  				playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-			  			}
-			  		}
-		      }
-		});
-		
+
+	  	NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+  		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+
+  		int size = getSize(itemStackIn);
+
+  		// do the transportation
+  		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
+
+  		if(storageOK){
+  			setState(itemStackIn, STATE_LINKED);
+  			itemStackIn.getTagCompound().removeTag("spawnPosition");
+  			itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+  		} else {
+  			if (playerIn != null) {
+  				playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+  			}
+  		}
+
 	}
 
 	public static void setState(ItemStack stack, int state) {
+
 		stack.setItemDamage(state);
 	}
 	
@@ -774,7 +766,7 @@ public class CapsuleItem extends Item {
 		
 		double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
 		EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
-		entityitem.setPickupDelay(10);
+		entityitem.setPickupDelay(20);// cannot be picked up before deployment goes Yay or Nay
 		entityitem.setThrower(playerIn.getName());
 		
 		if(destination != null){

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +23,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -31,6 +33,7 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
 
@@ -159,6 +162,8 @@ public class StructureSaver {
 
 		Pair<CapsuleTemplateManager,CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
 		CapsuleTemplate template = templatepair.getRight();
+		
+		EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
 
 		if (template != null)
         {
@@ -166,11 +171,44 @@ public class StructureSaver {
         	// check if the destination is valid : no unoverwritable block and no entities in the way.
         	CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos)null).setReplacedBlock((Block)null).setIgnoreStructureBlock(false);
         	boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
-        	if(destValid){
-        		template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks);
-        		return true;
-        	}
-        }
+        	
+			if (destValid) {
+				List<BlockPos> spawnedBlocks = new ArrayList<>();
+				List<Entity> spawnedEntities = new ArrayList<>();
+				try {
+					template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+					return true;
+				} catch (Exception err) {
+					LOGGER.error("Couldn't deploy the capsule", err);
+					player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+					
+					// rollback
+					removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);
+					for(Entity e : spawnedEntities){
+						e.setDropItemsWhenDead(false);
+						e.setDead();
+					}
+					return false;
+				}
+			} else {
+				// send a chat message to explain failure
+				if (player != null) {
+					if (outOccupiedSpawnPositions.size() == 0) {
+						player.addChatMessage(
+								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+										StringUtils.join(outEntityBlocking, ", ")));
+					} else {
+						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+					}
+				}
+			}
+		} else {
+			// send a chat message to explain failure
+			if (player != null) {
+				player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
+			}
+		}
+
 		
 		return false;
 	}
