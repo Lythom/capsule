@@ -141,7 +141,12 @@ public class CapsuleCommand extends CommandBase {
 			throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 		}
 
-		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+		EntityPlayerMP player = null;
+		if (sender instanceof EntityPlayerMP)
+        {
+			player = (EntityPlayerMP)sender;
+        }
+
 		
 		 if ("giveEmpty".equalsIgnoreCase(args[0])) {
 			 if(player != null){
@@ -185,9 +190,9 @@ public class CapsuleCommand extends CommandBase {
 			if (args.length != 1) {
 				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
 			}
-			if (player != null) {
+			if (player != null && !server.isDedicatedServer()) {
 				
-				RayTraceResult rtc = Helpers.rayTracePreview(player,  Minecraft.getMinecraft().getRenderPartialTicks());
+				RayTraceResult rtc = Helpers.clientRayTracePreview(player,  Minecraft.getMinecraft().getRenderPartialTicks());
 				
 				if(rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK)
 				{
@@ -208,6 +213,8 @@ public class CapsuleCommand extends CommandBase {
 					player.addChatMessage(msg);
 
 				}
+			} else {
+				player.addChatMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
 			}
 		}
 
