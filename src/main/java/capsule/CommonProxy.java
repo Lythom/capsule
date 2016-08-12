@@ -12,12 +12,14 @@ import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.LootPathData;
-import capsule.network.AskCapsuleContentPreviewMessageToServer;
-import capsule.network.AskCapsuleContentPreviewMessageToServerMessageHandler;
-import capsule.network.CapsuleContentPreviewMessageToClient;
+import capsule.network.CapsuleContentPreviewQueryToServer;
+import capsule.network.CapsuleThrowQueryHandler;
+import capsule.network.CapsuleThrowQueryToServer;
+import capsule.network.CapsuleContentPreviewQueryHandler;
+import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.network.LabelEditedMessageToServerMessageHandler;
-import capsule.network.MessageHandlerOnClient;
+import capsule.network.CapsuleContentPreviewAnswerHandler;
 import net.minecraft.block.Block;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.player.EntityPlayer;
@@ -53,9 +55,11 @@ public class CommonProxy {
 		// client ask server to edit capsule label
 		simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerMessageHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
 		// client ask server data needed to preview a deploy
-		simpleNetworkWrapper.registerMessage(AskCapsuleContentPreviewMessageToServerMessageHandler.class, AskCapsuleContentPreviewMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+		simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+		// client ask server to throw item to a specific position
+		simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
 		// server sends to client the data needed to preview a deploy
-		simpleNetworkWrapper.registerMessage(MessageHandlerOnClient.class, CapsuleContentPreviewMessageToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
+		simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
 	}
 
 	public void init(FMLInitializationEvent event) {

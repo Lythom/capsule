@@ -97,11 +97,11 @@ public class CapsulePreviewHandler {
 			if (heldItemMainhand.getItem() instanceof CapsuleItem
 					&& (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)) {
 				
-				RayTraceResult rtc = Helpers.rayTracePreview(thePlayer, partialTicks);
+				RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
 				if(rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK)
 				{
-					BlockPos anchorPos = rtc.getBlockPos();
-	
+					BlockPos anchorPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec());
+
 					String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 					
 					synchronized (CapsulePreviewHandler.currentPreview) {
@@ -125,11 +125,11 @@ public class CapsulePreviewHandler {
 	
 							for (BlockPos blockpos : blockspos) {
 								
-								BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 1, -extendSize);
+								BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
 								
 								GlStateManager.pushMatrix();
 								GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX, 
-										anchorPos.getY() + blockpos.getY() + 1.01 - TileEntityRendererDispatcher.staticPlayerY, 
+										anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY, 
 										anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
 								
 								int color = 0xCCCCCC;

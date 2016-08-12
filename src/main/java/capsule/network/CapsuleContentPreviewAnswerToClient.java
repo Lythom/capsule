@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 /**
  * This Network Message is sent from the client to the server
  */
-public class CapsuleContentPreviewMessageToClient implements IMessage {
+public class CapsuleContentPreviewAnswerToClient implements IMessage {
 
 	private List<BlockPos> blockPositions = null;
 
@@ -19,13 +19,13 @@ public class CapsuleContentPreviewMessageToClient implements IMessage {
 	private String structureName = null;
 
 
-	public CapsuleContentPreviewMessageToClient(List<BlockPos> blockPositions, String structureName) {
+	public CapsuleContentPreviewAnswerToClient(List<BlockPos> blockPositions, String structureName) {
 		this.blockPositions = blockPositions;
 		this.structureName = structureName;
 	}
 
 	// for use by the message handler only.
-	public CapsuleContentPreviewMessageToClient() {
+	public CapsuleContentPreviewAnswerToClient() {
 		
 	}
 

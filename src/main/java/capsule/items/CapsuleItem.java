@@ -17,7 +17,8 @@ import capsule.Helpers;
 import capsule.Main;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.network.AskCapsuleContentPreviewMessageToServer;
+import capsule.network.CapsuleContentPreviewQueryToServer;
+import capsule.network.CapsuleThrowQueryToServer;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -32,6 +33,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -433,16 +435,8 @@ public class CapsuleItem extends Item {
 
 		else if (!worldIn.isRemote) {
 
-			// an activated capsule is thrown farther on right click
-			if (isActivated(itemStackIn)) {
-				// TODO : do this clientside and ask the server for a throw instead
-				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
-				throwCapsule(itemStackIn, playerIn, rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos() : null);
-				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
-			}
-
 			// an empty or a linked capsule is activated on right click
-			else if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
+			if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
 					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
 				if (itemStackIn.getItemDamage() == STATE_EMPTY) {
 					setState(itemStackIn, STATE_EMPTY_ACTIVATED);
@@ -459,7 +453,7 @@ public class CapsuleItem extends Item {
 			}
 
 			// an opened capsule revoke deployed content on right click
-			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED && !worldIn.isRemote) {
+			else if (itemStackIn.getItemDamage() == STATE_DEPLOYED) {
 				
 				try{
 					resentToCapsule(itemStackIn, playerIn);
@@ -476,8 +470,17 @@ public class CapsuleItem extends Item {
 					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
 				BlockPos anchor = Minecraft.getMinecraft().objectMouseOver.getBlockPos();
 				if(anchor != null){
-					CommonProxy.simpleNetworkWrapper.sendToServer(new AskCapsuleContentPreviewMessageToServer(itemStackIn.getTagCompound().getString("structureName")));
+					CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(itemStackIn.getTagCompound().getString("structureName")));
 				}
+			}
+			
+			// client side, is activated, ask for the server a throw at position
+			if (isActivated(itemStackIn)) {
+				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+				BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
+				CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest));
+				// TODO : as a reception throwCapsule(itemStackIn, playerIn, rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos() : null);
+				
 			}
 		}
 
@@ -549,16 +552,20 @@ public class CapsuleItem extends Item {
 		
 		// throwing the capsule toward the right place
 		if (!entityItem.worldObj.isRemote && !entityItem.isCollided && this.isActivated(capsule) && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
-			BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
-			BlockPos centerDest = dest;
-			double diffX = (centerDest.getX() + 0.5 - entityItem.posX);
-			double diffZ =  (centerDest.getZ() + 0.5 - entityItem.posZ);
-			entityItem.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
-			entityItem.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
+			moveEntityItemToDeployPos(entityItem, capsule);
 			
 		}
 
 		return false;
+	}
+
+	public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule) {
+		BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
+		BlockPos centerDest = dest;
+		double diffX = (centerDest.getX() + 0.5 - entityItem.posX);
+		double diffZ =  (centerDest.getZ() + 0.5 - entityItem.posZ);
+		entityItem.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
+		entityItem.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
 	}
 
 	/**
@@ -669,7 +676,7 @@ public class CapsuleItem extends Item {
 		BlockPos dest = null;
 		if(capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")){
 			BlockPos centerDest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
-			dest = centerDest.add(-extendLength, 1, -extendLength);
+			dest = centerDest.add(-extendLength, 0, -extendLength);
 			capsule.getTagCompound().removeTag("deployAt");
 		} else {
 			BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem);
@@ -710,7 +717,8 @@ public class CapsuleItem extends Item {
 		// store again
 		
 		Integer dimensionId = getDimension(itemStackIn);
-		final WorldServer capsuleWorld = dimensionId != null ? DimensionManager.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
+		MinecraftServer server = playerIn.getServer();
+		final WorldServer capsuleWorld = dimensionId != null ? server.worldServerForDimension(dimensionId) : (WorldServer) playerIn.getEntityWorld();
 
 	  	NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
   		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
@@ -775,7 +783,7 @@ public class CapsuleItem extends Item {
 	 * @param playerIn
 	 * @return
 	 */
-	private EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
+	public static EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
 		
 		double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
 		EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
@@ -783,15 +791,16 @@ public class CapsuleItem extends Item {
 		entityitem.setThrower(playerIn.getName());
 		
 		if(destination != null){
+			
+			itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
+			
+			moveEntityItemToDeployPos(entityitem, itemStackIn);
+			
 			double distance = playerIn.getPosition().distanceSq(new BlockPos(destination.getX(), playerIn.posY, destination.getZ()));
-			double diffX = (destination.getX() + 0.5 - playerIn.posX);
-			double diffZ =  (destination.getZ() + 0.5 - playerIn.posZ);
-			playerIn.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
-			playerIn.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
 			double pitch = (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI));
 			if(pitch < 0) pitch = 0.08;
 			entityitem.motionY = (double) (pitch * 1.1 + (Math.min(distance/(18*18), 0.8)) + 0.1);
-			itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
+			
 		} else {
 			float f = 0.5F;
 			entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
@@ -801,9 +810,8 @@ public class CapsuleItem extends Item {
 			entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
 		}
 		
-		
-
 		playerIn.dropItemAndGetStack(entityitem);
+		playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 
 		return entityitem;
 	}

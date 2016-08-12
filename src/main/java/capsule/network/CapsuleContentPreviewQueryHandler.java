@@ -10,6 +10,7 @@ import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -28,8 +29,8 @@ import net.minecraftforge.fml.relauncher.Side;
  * client or server thread as appropriate - see below. User: The Grey Ghost
  * Date: 15/01/2015
  */
-public class AskCapsuleContentPreviewMessageToServerMessageHandler
-		implements IMessageHandler<AskCapsuleContentPreviewMessageToServer, CapsuleContentPreviewMessageToClient> {
+public class CapsuleContentPreviewQueryHandler
+		implements IMessageHandler<CapsuleContentPreviewQueryToServer, CapsuleContentPreviewAnswerToClient> {
 
 	/**
 	 * Called when a message is received of the appropriate type. CALLED BY THE
@@ -38,7 +39,7 @@ public class AskCapsuleContentPreviewMessageToServerMessageHandler
 	 * @param message
 	 *            The message
 	 */
-	public CapsuleContentPreviewMessageToClient onMessage(final AskCapsuleContentPreviewMessageToServer message,
+	public CapsuleContentPreviewAnswerToClient onMessage(final CapsuleContentPreviewQueryToServer message,
 			MessageContext ctx) {
 		if (ctx.side != Side.SERVER) {
 			System.err.println("AskCapsuleContentPreviewMessageToServer received on wrong side:" + ctx.side);
@@ -74,10 +75,12 @@ public class AskCapsuleContentPreviewMessageToServerMessageHandler
 			List<Template.BlockInfo> blocksInfos = template.blocks;
 			List<BlockPos> blockspos = new ArrayList<BlockPos>();
 			for (Template.BlockInfo blockInfo: blocksInfos) {
-				blockspos.add(blockInfo.pos);
+				if(blockInfo.blockState != Blocks.AIR.getDefaultState()){
+					blockspos.add(blockInfo.pos);
+				}
 			}
 			
-			return new CapsuleContentPreviewMessageToClient(blockspos, message.getStructureName());
+			return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 			
 		} else {
 			String structureName = sendingPlayer.getHeldItemMainhand().getTagCompound().getString("structureName");

@@ -46,7 +46,7 @@ public class Helpers {
 		return closest;
 	}
 	
-	public static RayTraceResult rayTracePreview(EntityPlayer thePlayer, float partialTicks) {
+	public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks) {
 		int blockReachDistance = 18;
 		Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
 		Vec3d vec3d1 = thePlayer.getLook(partialTicks);

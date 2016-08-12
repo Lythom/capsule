@@ -7,16 +7,16 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 /**
  * This Network Message is sent from the client to the server
  */
-public class AskCapsuleContentPreviewMessageToServer implements IMessage {
+public class CapsuleContentPreviewQueryToServer implements IMessage {
 
 	private String structureName = null;
 
-	public AskCapsuleContentPreviewMessageToServer(String structureName) {
+	public CapsuleContentPreviewQueryToServer(String structureName) {
 		this.setStructureName(structureName);
 	}
 
 	// for use by the message handler only.
-	public AskCapsuleContentPreviewMessageToServer() {
+	public CapsuleContentPreviewQueryToServer() {
 		
 	}
 
