@@ -43,6 +43,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 
 @SuppressWarnings("deprecation")
 public class CapsuleItem extends Item {
@@ -272,6 +273,14 @@ public class CapsuleItem extends Item {
 		}
 		capsule.getTagCompound().setInteger("upgraded", upgrades);
 	}
+	
+	public static Integer getDimension(ItemStack capsule) {
+		Integer dim = null;
+		if (capsule != null && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("spawnPosition")) {
+			dim = capsule.getTagCompound().getCompoundTag("spawnPosition").getInteger("dim");
+		}
+		return dim;
+	}
 
 	@Override
 	public String getItemStackDisplayName(ItemStack stack) {
@@ -426,7 +435,8 @@ public class CapsuleItem extends Item {
 
 			// an activated capsule is thrown farther on right click
 			if (isActivated(itemStackIn)) {
-				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.rayTracePreview(playerIn, Minecraft.getMinecraft().getRenderPartialTicks()) : null;
+				// TODO : do this clientside and ask the server for a throw instead
+				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
 				throwCapsule(itemStackIn, playerIn, rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos() : null);
 				playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
 			}
@@ -458,7 +468,9 @@ public class CapsuleItem extends Item {
 				}
 				
 			}
-		} else {
+		}
+		
+		if(worldIn.isRemote) {
 			// client side, if is going to get activated, ask for server preview
 			if(itemStackIn.getItemDamage() == STATE_LINKED
 					|| itemStackIn.getItemDamage() == STATE_ONE_USE) {
@@ -679,7 +691,7 @@ public class CapsuleItem extends Item {
 			if(!isReward(capsule)){
 
 				setState(capsule, STATE_DEPLOYED);
-				savePosition("spawnPosition", capsule, dest);
+				savePosition("spawnPosition", capsule, dest, entityItem.getEntityWorld().provider.getDimension());
 				// remove the content from the structure block to prevent dupe using recovery capsules
 				StructureSaver.clearTemplate(playerWorld, structureName);
 			}
@@ -697,7 +709,8 @@ public class CapsuleItem extends Item {
 	private void resentToCapsule(final ItemStack itemStackIn, final EntityPlayer playerIn) {
 		// store again
 		
-		final WorldServer playerWorld = (WorldServer) playerIn.worldObj;
+		Integer dimensionId = getDimension(itemStackIn);
+		final WorldServer capsuleWorld = dimensionId != null ? DimensionManager.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
 
 	  	NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
   		BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
@@ -705,7 +718,7 @@ public class CapsuleItem extends Item {
   		int size = getSize(itemStackIn);
 
   		// do the transportation
-  		boolean storageOK = StructureSaver.store(playerWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
+  		boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
 
   		if(storageOK){
   			setState(itemStackIn, STATE_LINKED);
@@ -802,11 +815,12 @@ public class CapsuleItem extends Item {
 	 * @param capsule
 	 * @param dest
 	 */
-	private void savePosition(String key, ItemStack capsule, BlockPos dest) {
+	private void savePosition(String key, ItemStack capsule, BlockPos dest, int dimID) {
 		NBTTagCompound pos = new NBTTagCompound();
 		pos.setInteger("x", dest.getX());
 		pos.setInteger("y", dest.getY());
 		pos.setInteger("z", dest.getZ());
+		pos.setInteger("dim", dimID);
 		capsule.getTagCompound().setTag(key, pos);
 	}
 
