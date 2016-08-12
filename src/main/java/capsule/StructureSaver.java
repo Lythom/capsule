@@ -1,11 +1,24 @@
 package capsule;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -52,6 +65,11 @@ public class StructureSaver {
 			LootPathData data = Config.lootTemplatesData.get(path);
 
 			File templateFolder = new File(server.getDataDirectory(), path);
+			
+			if(path.startsWith("config/") && !templateFolder.exists()){
+				templateFolder.mkdirs();
+			}
+			
 			if(templateFolder.exists() && templateFolder.isDirectory()){
 				File[] fileList = templateFolder.listFiles(new FilenameFilter()
 		        {
@@ -65,9 +83,98 @@ public class StructureSaver {
 					if(templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
 						data.files.add(templateFile.getName().replaceAll(".nbt", ""));
 				}
+			} else {
+				
+				// another try reading from jar files
+				try {
+					LOGGER.debug("Listing files at " + "/" + path);
+					
+					String[] fileNames = getResourceListing(StructureSaver.class, path);
+					
+					data.files = new ArrayList<String>();
+					LOGGER.debug("Found " + fileNames.length + " files.");
+					for (String file : fileNames) {
+						LOGGER.debug("Found " + file);
+						if(file.endsWith(".nbt"))
+							data.files.add(file.replaceAll(".nbt", ""));
+					}
+					
+				} catch(Exception e) {
+					LOGGER.error("Error while listing files in the jar", e);
+				}
+				
 			}
 		}
 	}
+	
+
+	 /**
+	   * List directory contents for a resource folder. Not recursive.
+	   * This is basically a brute-force implementation.
+	   * Works for regular files and also JARs.
+	   * 
+	   * @author Greg Briggs
+	   * @param clazz Any java class that lives in the same place as the resources you want.
+	   * @param path Should end with "/", but not start with one.
+	   * @return Just the name of each member item, not the full paths.
+	   * @throws URISyntaxException 
+	   * @throws IOException 
+	   */
+	public static String[] getResourceListing(Class<?> clazz, String path) throws URISyntaxException, IOException {
+		URL dirURL = clazz.getClassLoader().getResource(path);
+
+		if (dirURL != null && dirURL.getProtocol().equals("file")) {
+			/* A file path: easy enough */
+			return new File(dirURL.toURI()).list();
+		}
+		
+		if (dirURL == null) {
+			/*
+			 * In case of a jar file, we can't actually find a directory. Have
+			 * to assume the same jar as clazz.
+			 */
+			String me = clazz.getName().replace(".", "/") + ".class";
+			dirURL = clazz.getClassLoader().getResource(me);
+		}
+
+		if (dirURL.getProtocol().equals("jar")) {
+			/* A JAR path */
+			String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+			
+			LOGGER.debug("Listing files in " + jarPath);
+			
+			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+			Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+			while (entries.hasMoreElements()) {
+				String name = entries.nextElement().getName();
+				if (name.startsWith(path)) { //filter according to the path
+					String entry = name.replace(path + "/", "");
+					result.add(entry);
+				}
+			}
+			jar.close();
+			return result.toArray(new String[result.size()]);
+			
+		} else {
+
+			InputStream inputstream = clazz.getResourceAsStream("/" + path);
+			if(inputstream != null){
+				final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
+				final BufferedReader br = new BufferedReader(isr);
+				
+				Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+				String filename = null;
+				while ((filename = br.readLine()) != null) {
+					result.add(filename);
+				}
+				return result.toArray(new String[result.size()]);
+			}
+
+		}
+
+		throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
+	  }
 
 	public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
 		if(RewardManager == null){

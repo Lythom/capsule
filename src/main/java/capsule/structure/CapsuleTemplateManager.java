@@ -114,14 +114,14 @@ public class CapsuleTemplateManager
      */
     private boolean readTemplateFromJar(ResourceLocation id)
     {
-        String s = id.getResourceDomain();
         String s1 = id.getResourcePath();
         InputStream inputstream = null;
         boolean flag;
 
         try
         {
-            inputstream = MinecraftServer.class.getResourceAsStream("/assets/" + s + "/structures/" + s1 + ".nbt");
+        	System.out.println("reading from jar at" + "/" + s1 + ".nbt");
+            inputstream = MinecraftServer.class.getResourceAsStream("/" + s1 + ".nbt");
             this.readTemplateFromStream(s1, inputstream);
             return true;
         }
@@ -140,7 +140,7 @@ public class CapsuleTemplateManager
     /**
      * reads a template from an inputstream
      */
-    private void readTemplateFromStream(String id, InputStream stream) throws IOException
+    public void readTemplateFromStream(String id, InputStream stream) throws IOException
     {
         NBTTagCompound nbttagcompound = CompressedStreamTools.readCompressed(stream);
         CapsuleTemplate template = new CapsuleTemplate();
