@@ -75,7 +75,12 @@ public class CommonProxy {
 		// Excluded
 		String[] excludedBlocksOP = ArrayUtils.addAll(
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.STRUCTURE_VOID }),
-				new String[] { "ic2:te", "opencomputers:robot", "bloodmagic:BlockAlchemyTable"}
+				new String[] { 
+						"ic2:te", 
+						"opencomputers:robot", 
+						"bloodmagic:BlockAlchemyTable",
+						"tconstruct:seared","tconstruct:smeltery_controller","tconstruct:seared_tank","tconstruct:faucet","tconstruct:casting","tconstruct:smeltery_io","tconstruct:seared_glass"
+				}
 		);
 		String[] excludedBlocks = ArrayUtils.addAll(
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME }),
@@ -146,8 +151,8 @@ public class CommonProxy {
 			if(!Config.lootTemplatesData.containsKey(path)){
 				Config.lootTemplatesData.put(path, new LootPathData());
 			}
-			Property pathDataWeight = Config.config.get("loots:"+path, "weight", path.endsWith("rare") ? 4 : path.endsWith("uncommon") ? 8 : 12);
-			pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 4 (rare), 8 (uncommon) or 12 (common)");
+			Property pathDataWeight = Config.config.get("loots:"+path, "weight", path.endsWith("rare") ? 1 : path.endsWith("uncommon") ? 6 : 12);
+			pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 1 (rare), 6 (uncommon) or 12 (common)");
 			Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
 		}
 		
