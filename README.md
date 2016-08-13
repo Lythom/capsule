@@ -4,9 +4,22 @@
 
 ## Changelog ##
 
-**1.10.2-1.2.0 : The Big 1.10.2 update : the modpack maker update : the StructureBlocks update
+**1.10.2-1.2.0 : The Big 1.10.2 update : the modpack maker update : the Structure blocks update**
 
-* Tons of stuff
+* Now uses structure blocks mechanics and file format to store capsule content.
+* Compatible with structure blocks (a structure template can be converted into capsule and a capsule can be load from structure block).
+* Add a preview of the future content deployment when the capsule is activated. Red wireframes indicates the deploy will fail.
+* The capsule will always deploy exactly where is was previewed.
+* Recipes tweaks, see NEI or wiki for new recipes (https://bitbucket.org/Lythom/mccapsule/wiki/Home).
+* Visual changes on blocks and items.
+* One use Loot capsules now appears in dungeon chests.
+* Add tools for modpack makers. See https://bitbucket.org/Lythom/mccapsule/wiki/Modpack%20maker%20How%20To's.
+* Fixes :
+* Fix enchantment registring to match latest forge pratices.
+* Fix preview rendering for capturing and undeploying
+* Fix undeploying from another dimension
+
+NOT BACKWARD COMPATIBLE with any previous version of the mod : backup, deploy all your capsule contents, and destroy all your capsules items before updating from a previous version.
 
 **1.9.4-1.1.8 : BugFix fix **
  
@@ -86,7 +99,5 @@ Blocks :
 
 ## Planned ##
 
-* Reward capsules holding the content as NBT data rather than in the dimension
-* Bette system for modpack makers to deliverate pre-fileld capsuels as gifts
 * Blueprint capsules that can be loaded with material and then spawn several times the same pattern
 * Capsule shirts, Capsules banner logo (idea of AlexisMachina)
