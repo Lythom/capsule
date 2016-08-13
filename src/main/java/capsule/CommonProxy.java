@@ -119,7 +119,7 @@ public class CommonProxy {
 		Property overridableBlocksProp = Config.config.get("Balancing", "overridableBlocks",
 				Helpers.serializeBlockArray(new Block[] { Blocks.AIR, Blocks.WATER, Blocks.LEAVES,
 						Blocks.LEAVES2, Blocks.TALLGRASS, Blocks.RED_FLOWER, Blocks.YELLOW_FLOWER,
-						Blocks.SNOW_LAYER, Blocks.BROWN_MUSHROOM, Blocks.RED_MUSHROOM }));
+						Blocks.SNOW_LAYER, Blocks.BROWN_MUSHROOM, Blocks.RED_MUSHROOM, Blocks.DOUBLE_PLANT }));
 		overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 		
 		Block[] ovBlocks = null;
