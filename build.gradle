@@ -15,12 +15,6 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
-version = "1.10-1.2.0"
-group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "Capsule"
 
 // External properties
 ext.configFile = file "build.properties"
@@ -30,6 +24,14 @@ configFile.withReader {
     prop.load(it)
     project.ext.config = new ConfigSlurper().parse prop
 }
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+version = config.minecraft_version + "-" + config.capsule_version
+group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "Capsule"
+
 
 minecraft {
     version = config.minecraft_version + "-" + config.forge_version
@@ -76,6 +78,13 @@ dependencies {
 
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDir 'resources'
+        }
+    }
+}
 processResources {
 
     inputs.property "version", project.version
