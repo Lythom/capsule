@@ -36,7 +36,7 @@ public class CapsuleThrowQueryToServer implements IMessage {
 			this.setPos(BlockPos.fromLong(buf.readLong()));
 			
 		} catch (IndexOutOfBoundsException ioe) {
-			System.err.println("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
+			// no block, normal throw
 			return;
 		}
 	}
@@ -55,11 +55,14 @@ public class CapsuleThrowQueryToServer implements IMessage {
 		// for Itemstacks - ByteBufUtils.writeItemStack()
 		// for NBT tags ByteBufUtils.writeTag();
 		// for Strings: ByteBufUtils.writeUTF8String();
-		buf.writeLong(this.getPos().toLong());
+		if(this.getPos() != null){
+			buf.writeLong(this.getPos().toLong());
+		}
+		
 	}
 	
 	public boolean isMessageValid(){
-		return this.getPos() != null;
+		return true;
 	}
 
 	@Override

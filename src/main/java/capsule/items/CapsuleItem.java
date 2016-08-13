@@ -45,7 +45,6 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.DimensionManager;
 
 @SuppressWarnings("deprecation")
 public class CapsuleItem extends Item {
@@ -479,8 +478,6 @@ public class CapsuleItem extends Item {
 				RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
 				BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
 				CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest));
-				// TODO : as a reception throwCapsule(itemStackIn, playerIn, rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos() : null);
-				
 			}
 		}
 
