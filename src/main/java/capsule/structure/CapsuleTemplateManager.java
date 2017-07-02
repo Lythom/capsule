@@ -20,7 +20,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 
 /**
- * Exact copy of mc original TemplateManager, but using CapsuleTemplate instead.
+ * Exact copy of mc original net.minecraft.world.gen.structure.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
  * @author Lythom
  */
 public class CapsuleTemplateManager
@@ -36,7 +36,7 @@ public class CapsuleTemplateManager
 
     public CapsuleTemplate getTemplate(@Nullable MinecraftServer server, ResourceLocation id)
     {
-    	CapsuleTemplate template = this.func_189942_b(server, id);
+    	CapsuleTemplate template = this.get(server, id);
 
         if (template == null)
         {
@@ -48,7 +48,7 @@ public class CapsuleTemplateManager
     }
 
     @Nullable
-    public CapsuleTemplate func_189942_b(@Nullable MinecraftServer p_189942_1_, ResourceLocation p_189942_2_)
+    public CapsuleTemplate get(@Nullable MinecraftServer p_189942_1_, ResourceLocation p_189942_2_)
     {
         String s = p_189942_2_.getResourcePath();
 
@@ -200,7 +200,7 @@ public class CapsuleTemplateManager
         }
     }
 
-    public void func_189941_a(ResourceLocation p_189941_1_)
+    public void remove(ResourceLocation p_189941_1_)
     {
         this.templates.remove(p_189941_1_.getResourcePath());
     }

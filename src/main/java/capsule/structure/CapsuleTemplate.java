@@ -43,7 +43,7 @@ import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.Template;
 
 /**
- * Exact copy of mc original Template class, but having fields public to allow external manipulation
+ * Exact copy of mc original net.minecraft.world.gen.structure.template.Template class, but having fields public to allow external manipulation
  * @author Lythom
  */
 public class CapsuleTemplate
@@ -214,15 +214,20 @@ public class CapsuleTemplate
      */
     public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
     {
-        this.func_189960_a(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, 2);
+        this.addBlocksToWorld(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, 2);
     }
 
-    public void func_189962_a(World p_189962_1_, BlockPos p_189962_2_, CapsulePlacementSettings p_189962_3_, int p_189962_4_)
+    /**
+     * This takes the data stored in this instance and puts them into the world.
+     *
+     * @param flags The flags to use when placing blocks.
+     */
+    public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, int flags)
     {
-        this.func_189960_a(p_189962_1_, p_189962_2_, new BlockRotationProcessor(p_189962_2_, p_189962_3_), p_189962_3_, p_189962_4_);
+        this.addBlocksToWorld(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, flags);
     }
 
-    public void func_189960_a(World p_189960_1_, BlockPos p_189960_2_, @Nullable ITemplateProcessor p_189960_3_, CapsulePlacementSettings p_189960_4_, int p_189960_5_)
+    public void addBlocksToWorld(World p_189960_1_, BlockPos p_189960_2_, @Nullable ITemplateProcessor p_189960_3_, CapsulePlacementSettings p_189960_4_, int p_189960_5_)
     {
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
@@ -232,7 +237,7 @@ public class CapsuleTemplate
             for (Template.BlockInfo template$blockinfo : this.blocks)
             {
                 BlockPos blockpos = transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
-                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.func_189943_a(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
+                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.processBlock(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null)
                 {
@@ -268,8 +273,8 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
-                                tileentity2.func_189668_a(p_189960_4_.getMirror());
-                                tileentity2.func_189667_a(p_189960_4_.getRotation());
+                                tileentity2.mirror(p_189960_4_.getMirror());
+                                tileentity2.rotate(p_189960_4_.getRotation());
                             }
                         }
                     }
@@ -306,7 +311,7 @@ public class CapsuleTemplate
         }
     }
 
-    public void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities)
+    private void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities)
     {
         for (Template.EntityInfo template$entityinfo : this.entities)
         {
@@ -422,7 +427,7 @@ public class CapsuleTemplate
         }
     }
 
-    public BlockPos func_189961_a(BlockPos p_189961_1_, Mirror p_189961_2_, Rotation p_189961_3_)
+    public BlockPos getZeroPositionWithTransform(BlockPos p_189961_1_, Mirror p_189961_2_, Rotation p_189961_3_)
     {
         int i = this.getSize().getX() - 1;
         int j = this.getSize().getZ() - 1;
@@ -457,7 +462,7 @@ public class CapsuleTemplate
         {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
             nbttagcompound.setTag("pos", this.writeInts(new int[] {template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()}));
-            nbttagcompound.setInteger("state", template$basicpalette.func_189954_a(template$blockinfo.blockState));
+            nbttagcompound.setInteger("state", template$basicpalette.idFor(template$blockinfo.blockState));
 
             if (template$blockinfo.tileentityData != null)
             {
@@ -487,7 +492,7 @@ public class CapsuleTemplate
 
         for (IBlockState iblockstate : template$basicpalette)
         {
-            nbttaglist2.appendTag(NBTUtil.func_190009_a(new NBTTagCompound(), iblockstate));
+            nbttaglist2.appendTag(NBTUtil.writeBlockState(new NBTTagCompound(), iblockstate));
         }
 
         nbt.setTag("palette", nbttaglist2);
@@ -511,7 +516,7 @@ public class CapsuleTemplate
 
         for (int i = 0; i < nbttaglist1.tagCount(); ++i)
         {
-            template$basicpalette.func_189956_a(NBTUtil.func_190008_d(nbttaglist1.getCompoundTagAt(i)), i);
+            template$basicpalette.addMapping(NBTUtil.readBlockState(nbttaglist1.getCompoundTagAt(i)), i);
         }
 
         NBTTagList nbttaglist3 = compound.getTagList("blocks", 10);
@@ -521,7 +526,7 @@ public class CapsuleTemplate
             NBTTagCompound nbttagcompound = nbttaglist3.getCompoundTagAt(j);
             NBTTagList nbttaglist2 = nbttagcompound.getTagList("pos", 3);
             BlockPos blockpos = new BlockPos(nbttaglist2.getIntAt(0), nbttaglist2.getIntAt(1), nbttaglist2.getIntAt(2));
-            IBlockState iblockstate = template$basicpalette.func_189955_a(nbttagcompound.getInteger("state"));
+            IBlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInteger("state"));
             NBTTagCompound nbttagcompound1;
 
             if (nbttagcompound.hasKey("nbt"))
@@ -580,43 +585,43 @@ public class CapsuleTemplate
 
     static class BasicPalette implements Iterable<IBlockState>
         {
-            public static final IBlockState field_189957_a = Blocks.AIR.getDefaultState();
-            final ObjectIntIdentityMap<IBlockState> field_189958_b;
-            private int field_189959_c;
+            public static final IBlockState DEFAULT_BLOCK_STATE = Blocks.AIR.getDefaultState();
+            final ObjectIntIdentityMap<IBlockState> ids;
+            private int lastId;
 
             private BasicPalette()
             {
-                this.field_189958_b = new ObjectIntIdentityMap<>(16);
+                this.ids = new ObjectIntIdentityMap(16);
             }
 
-            public int func_189954_a(IBlockState p_189954_1_)
+            public int idFor(IBlockState p_189954_1_)
             {
-                int i = this.field_189958_b.get(p_189954_1_);
+                int i = this.ids.get(p_189954_1_);
 
                 if (i == -1)
                 {
-                    i = this.field_189959_c++;
-                    this.field_189958_b.put(p_189954_1_, i);
+                    i = this.lastId++;
+                    this.ids.put(p_189954_1_, i);
                 }
 
                 return i;
             }
 
             @Nullable
-            public IBlockState func_189955_a(int p_189955_1_)
+            public IBlockState stateFor(int p_189955_1_)
             {
-                IBlockState iblockstate = (IBlockState)this.field_189958_b.getByValue(p_189955_1_);
-                return iblockstate == null ? field_189957_a : iblockstate;
+                IBlockState iblockstate = (IBlockState)this.ids.getByValue(p_189955_1_);
+                return iblockstate == null ? DEFAULT_BLOCK_STATE : iblockstate;
             }
 
             public Iterator<IBlockState> iterator()
             {
-                return this.field_189958_b.iterator();
+                return this.ids.iterator();
             }
 
-            public void func_189956_a(IBlockState p_189956_1_, int p_189956_2_)
+            public void addMapping(IBlockState p_189956_1_, int p_189956_2_)
             {
-                this.field_189958_b.put(p_189956_1_, p_189956_2_);
+                this.ids.put(p_189956_1_, p_189956_2_);
             }
         }
     
@@ -745,7 +750,7 @@ public class CapsuleTemplate
             for (Template.BlockInfo template$blockinfo : blocks)
             {
                 BlockPos blockpos = CapsuleTemplate.transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
-                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.func_189943_a(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
+                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.processBlock(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null)
                 {
@@ -791,8 +796,8 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
                                 
-                                tileentity2.func_189668_a(p_189960_4_.getMirror());
-                                tileentity2.func_189667_a(p_189960_4_.getRotation());
+                                tileentity2.mirror(p_189960_4_.getMirror());
+                                tileentity2.rotate(p_189960_4_.getRotation());
                             }
                         }
                     }
