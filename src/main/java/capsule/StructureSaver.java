@@ -235,14 +235,18 @@ public class StructureSaver {
 		world.getGameRules().setOrCreateGameRule("doTileDrops", "false");
 
 		// delete everything that as been saved in the capsule
-		for (BlockPos pos : transferedPositions) {
-			world.removeTileEntity(pos);
-			world.setBlockState(pos, Blocks.AIR.getDefaultState());
-			world.notifyNeighborsOfStateChange(pos, Blocks.AIR);
+		try {
+			for (BlockPos pos : transferedPositions) {
+				world.removeTileEntity(pos);
+				world.setBlockState(pos, Blocks.AIR.getDefaultState());
+				world.notifyNeighborsOfStateChange(pos, Blocks.AIR);
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			// revert rule to previous value even in case of crash
+			world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
 		}
-
-		// revert rule to previous value
-		world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
 
 	}
 	
