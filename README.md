@@ -99,5 +99,10 @@ Blocks :
 
 ## Planned ##
 
+* TODO : fix case where world or thrower is not available (thrown by a dropper ?)
+* TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
+			reverse to initial situation ?
+		    continue and ignore crashing block ?
+* Grieffing protection : plug-in to the claim chunk system | config force block @corners (so if all 4 blocks can't be placed the content can't be captured) | protective block.
 * Blueprint capsules that can be loaded with material and then spawn several times the same pattern
 * Capsule shirts, Capsules banner logo (idea of AlexisMachina)

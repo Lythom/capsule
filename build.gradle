@@ -35,7 +35,7 @@ archivesBaseName = "Capsule"
 
 minecraft {
     version = config.minecraft_version + "-" + config.forge_version
-    runDir = "run"
+    runDir = "r:\\run"
     
     // the mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   snapshot are built nightly.
@@ -78,32 +78,23 @@ dependencies {
 
 }
 
-sourceSets {
-    main {
-        resources {
-            srcDir 'resources'
-        }
-    }
-}
 processResources {
 
     inputs.property "version", project.version
     inputs.property "mcversion", project.minecraft.version
 
     from(sourceSets.main.resources.srcDirs) {
-        include '**/*.info'
-        include '**/*.properties'
+        include 'mcmod.info'
 
         // replaces
         expand ([
-            'modid': 'capsule',
-            'mod_version': project.version,
-            'minecraft_version': project.minecraft.version
+            'version': project.version,
+            'mcversion': project.minecraft.version
         ])
     }
 
+    // copy everything else, thats not the mcmod.info
     from(sourceSets.main.resources.srcDirs) {
-        exclude '**/*.info'
-        exclude '**/*.properties'
+        exclude 'mcmod.info'
     }
 }
