@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.base.Joiner;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.base.Strings;
@@ -87,7 +88,7 @@ public class CapsuleCommand extends CommandBase {
 				"see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://bitbucket.org/Lythom/mccapsule/wiki/Commands");
 		msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://bitbucket.org/Lythom/mccapsule/wiki/Commands"));
 		sender.addChatMessage(msg);
-		return "/capsule <" + String.join("|", COMMAND_LIST) + ">";
+		return "/capsule <" + Joiner.on("|").join(COMMAND_LIST) + ">";
 	}
 
 	@Override
@@ -125,7 +126,7 @@ public class CapsuleCommand extends CommandBase {
 				}
 			}
 		}
-		return Collections.<String> emptyList();
+		return Collections.emptyList();
 	}
 
 	/*
@@ -138,7 +139,7 @@ public class CapsuleCommand extends CommandBase {
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 
 		if (args.length < 1 || "help".equalsIgnoreCase(args[0])) {
-			throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+			throw new WrongUsageException(getCommandUsage(sender));
 		}
 
 		EntityPlayerMP player = null;
@@ -153,8 +154,8 @@ public class CapsuleCommand extends CommandBase {
 				 ItemStack capsule = CapsuleItem.createEmptyCapsule(
 						 0xFFFFFF, 
 						 0xFFFFFF, 
-						 (args.length >= 2 ? (int)Integer.decode(args[1]) : 3), 
-						 (args.length >= 3 ? (boolean)Boolean.valueOf(args[2]) : false), 
+						 (args.length >= 2 ? Integer.decode(args[1]) : 3),
+						 (args.length >= 3 && Boolean.valueOf(args[2])),
 						 null, 
 						 null
 					);
@@ -165,7 +166,7 @@ public class CapsuleCommand extends CommandBase {
 		// export give command exportHeldItem
 		else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
 			if (args.length != 1) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 			if (player != null) {
 				ItemStack heldItem = player.getHeldItemMainhand();
@@ -188,7 +189,7 @@ public class CapsuleCommand extends CommandBase {
 		 
 		else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
 			if (args.length != 1) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 			if (player != null && !server.isDedicatedServer()) {
 				
@@ -221,7 +222,7 @@ public class CapsuleCommand extends CommandBase {
 		// set author
 		else if ("setAuthor".equalsIgnoreCase(args[0])) {
 			if (args.length != 1 && args.length != 2) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 
 			if (player != null) {
@@ -260,7 +261,7 @@ public class CapsuleCommand extends CommandBase {
 		// set color
 		else if ("setBaseColor".equalsIgnoreCase(args[0])) {
 			if (args.length != 2) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 
 			int color = 0;
@@ -280,7 +281,7 @@ public class CapsuleCommand extends CommandBase {
 
 		else if ("setMaterialColor".equalsIgnoreCase(args[0])) {
 			if (args.length != 2) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 
 			int color = 0;
@@ -300,7 +301,7 @@ public class CapsuleCommand extends CommandBase {
 		// set the held item as reward (or not)
 		else if ("fromHeldCapsule".equalsIgnoreCase(args[0])) {
 			if (args.length != 1 && args.length != 2) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 
 			if (player != null) {
@@ -347,7 +348,7 @@ public class CapsuleCommand extends CommandBase {
 		else if ("fromStructure".equalsIgnoreCase(args[0])) {
 
 			if (args.length == 1) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 			StringBuilder structureNameB = new StringBuilder();
 			for (int i = 1; i < args.length; i++) {
@@ -360,7 +361,7 @@ public class CapsuleCommand extends CommandBase {
 			if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
 				// template
 				TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
-				Template template = templatemanager.func_189942_b(server, new ResourceLocation(structureName));
+				Template template = templatemanager.get(server, new ResourceLocation(structureName));
 				if (template != null) {
 					int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 					if (size % 2 == 1)
@@ -397,7 +398,7 @@ public class CapsuleCommand extends CommandBase {
 		else if ("fromExistingReward".equalsIgnoreCase(args[0])) {
 
 			if (args.length == 1) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 			StringBuilder structureNameB = new StringBuilder();
 			for (int i = 1; i < args.length; i++) {
@@ -436,7 +437,7 @@ public class CapsuleCommand extends CommandBase {
 		// give a random loot capsule
 		else if ("giveRandomLoot".equalsIgnoreCase(args[0])) {
 			if (args.length != 1 && args.length != 2) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 
 			if (args.length == 2) {
@@ -458,13 +459,13 @@ public class CapsuleCommand extends CommandBase {
 
 		else if ("reloadLootList".equalsIgnoreCase(args[0])) {
 			if (args.length != 1) {
-				throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+				throw new WrongUsageException(getCommandUsage(sender));
 			}
 			StructureSaver.loadLootList(server);
 		}
 
 		else {
-			throw new WrongUsageException(getCommandUsage(sender), new Object[0]);
+			throw new WrongUsageException(getCommandUsage(sender));
 		}
 	}
 

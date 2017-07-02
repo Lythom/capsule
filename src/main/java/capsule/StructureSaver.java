@@ -271,6 +271,12 @@ public class StructureSaver {
 	public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
 			Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
+
+		/*TODO : fix case where world or thrower is not available (thrown by a dropper ?)
+		TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
+			reverse to initial situation ?
+		    continue and ignore crashing block ?*/
+
 		Pair<CapsuleTemplateManager,CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
 		CapsuleTemplate template = templatepair.getRight();
 		
@@ -341,7 +347,7 @@ public class StructureSaver {
 		CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
 		if(templatemanager == null || Strings.isNullOrEmpty(structureName)) return Pair.of(null,null);
 		
-		CapsuleTemplate template = templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+		CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
 		return Pair.of(templatemanager, template);
 	}
 	
@@ -349,7 +355,7 @@ public class StructureSaver {
 		CapsuleTemplateManager templatemanager = getRewardManager(server);
 		if(templatemanager == null || Strings.isNullOrEmpty(structurePath)) return Pair.of(null,null);
 		
-		CapsuleTemplate template = templatemanager.func_189942_b(server, new ResourceLocation(structurePath));
+		CapsuleTemplate template = templatemanager.getTemplate(server, new ResourceLocation(structurePath));
 		return Pair.of(templatemanager, template);
 	}
 	
@@ -442,7 +448,7 @@ public class StructureSaver {
 		String capsuleID = "C-" + player + "-" + csd.getNextCount();
 		CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
 		
-		while(templatemanager.func_189942_b(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+		while(templatemanager.get(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
 			capsuleID = "C-" + player + "-" + csd.getNextCount();
 		}
 		
