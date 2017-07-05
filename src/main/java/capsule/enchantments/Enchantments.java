@@ -20,25 +20,18 @@ public class Enchantments {
 	
 	public static void initEnchantments(){
 
-		Property enchantRarityConfig = Config.config.get("Balancing", "recallEnchantRarity", "RARE");
-		enchantRarityConfig.setComment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.");
 		Rarity enchantRarity = Rarity.RARE;
 		try {
-			enchantRarity = Rarity.valueOf(enchantRarityConfig.getString());
+			enchantRarity = Rarity.valueOf(Config.enchantRarity);
 		} catch(Exception e) {
-			System.err.println("Couldn't find the rarity "+enchantRarityConfig.getString()+". Using RARE instead.");
+			System.err.println("Couldn't find the rarity "+Config.enchantRarity+". Using RARE instead.");
 		}
-				
 		
-		Property recallEnchantType = Config.config.get("Balancing", "recallEnchantType", "null");
-		recallEnchantType.setComment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.");
 		EnumEnchantmentType recallEnchantTypeEnumValue = null;
 		try {
-			recallEnchantTypeEnumValue = EnumEnchantmentType.valueOf(recallEnchantType.getString());
+			recallEnchantTypeEnumValue = EnumEnchantmentType.valueOf(Config.recallEnchantType);
 		} catch (IllegalArgumentException e) {
 		}
-
-		Config.config.save();
 		
 		Enchantments.recallEnchant = new RecallEnchant(
 			new ResourceLocation(Main.MODID, "recall"), // name

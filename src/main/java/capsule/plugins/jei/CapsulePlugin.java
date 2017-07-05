@@ -37,8 +37,8 @@ public class CapsulePlugin extends BlankModPlugin {
 
         List<IRecipe> recipes = new ArrayList<IRecipe>();
         // upgrade
-        ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt());
-        ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, CapsuleItemsRegistrer.ironCapsuleSize.getInt() + 2);
+        ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
+        ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
         ItemStack ironCapsuleUpUp = ironCapsuleUp.copy();
         ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
@@ -47,19 +47,19 @@ public class CapsulePlugin extends BlankModPlugin {
         ItemStack ironCapsuleUpUpUpUp = ironCapsuleUpUpUp.copy();
         ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
 
-		ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt());
-		ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, CapsuleItemsRegistrer.goldCapsuleSize.getInt() + 2);
+		ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
+		ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize + 2);
 		goldCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
 		goldCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
 		CapsuleItem.setStructureName(goldCapsuleUp, "JEIExemple");
-		ItemStack diamondCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, CapsuleItemsRegistrer.diamondCapsuleSize.getInt());
-		ItemStack diamondCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, CapsuleItemsRegistrer.diamondCapsuleSize.getInt() + 2);
+		ItemStack diamondCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize);
+		ItemStack diamondCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize + 2);
 		diamondCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
 		diamondCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
 		CapsuleItem.setStructureName(diamondCapsuleUp, "JEIExemple");
-		ItemStack opCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt());
+		ItemStack opCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize);
 		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
-		ItemStack opCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, CapsuleItemsRegistrer.opCapsuleSize.getInt() + 2);
+		ItemStack opCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize + 2);
 		opCapsuleUp.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		opCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
 		CapsuleItem.setStructureName(opCapsuleUp, "JEIExemple");
