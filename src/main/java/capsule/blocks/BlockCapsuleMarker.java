@@ -18,6 +18,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import javax.annotation.Nonnull;
+
 public class BlockCapsuleMarker extends BlockContainer {
 
     /**
@@ -30,7 +32,7 @@ public class BlockCapsuleMarker extends BlockContainer {
      */
     public BlockCapsuleMarker(String unlocalizedName, Material materialIn) {
         super(materialIn);
-        this.setDefaultState(this.blockState.getBaseState().withProperty(PROJECTING, Boolean.valueOf(false)));
+        this.setDefaultState(this.blockState.getBaseState().withProperty(PROJECTING, Boolean.FALSE));
         this.setUnlocalizedName(unlocalizedName);
         this.setHardness(5);
         this.setResistance(1000);

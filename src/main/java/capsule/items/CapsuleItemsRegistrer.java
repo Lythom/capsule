@@ -80,11 +80,11 @@ public class CapsuleItemsRegistrer {
      * @return new empty capsule ItemStack
      */
     public static ItemStack createCapsuleItemStack(int color, int size) {
-        if (size <= 0)
-            return null;
+        int actualSize = 1;
+        if (size > 0) actualSize = size;
         ItemStack stack = new ItemStack(CapsuleItemsRegistrer.capsule, 1, CapsuleItem.STATE_EMPTY);
         stack.setTagInfo("color", new NBTTagInt(color));
-        stack.setTagInfo("size", new NBTTagInt(size));
+        stack.setTagInfo("size", new NBTTagInt(actualSize));
         return stack;
     }
 
