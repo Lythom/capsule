@@ -17,14 +17,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 @JEIPlugin
 public class CapsulePlugin extends BlankModPlugin {
 
+    final private static int UPGRADE_STEP = 2;
+
+    @Override
+    public void registerItemSubtypes(ISubtypeRegistry subtypeRegistry) {
+        subtypeRegistry.registerSubtypeInterpreter(CapsuleItemsRegistrer.capsule, new CapsuleSubtypeInterpreter());
+    }
+
     @Override
     public void register(@Nonnull IModRegistry registry) {
-
-        IJeiHelpers jeiHelpers = registry.getJeiHelpers();
-        jeiHelpers.getSubtypeRegistry().registerNbtInterpreter(CapsuleItemsRegistrer.capsule, new CapsuleSubtypeInterpreter());
 
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
@@ -32,13 +37,13 @@ public class CapsulePlugin extends BlankModPlugin {
         List<IRecipe> recipes = new ArrayList<IRecipe>();
         // upgrade
         ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
-        ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2);
+        ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + UPGRADE_STEP);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        ItemStack ironCapsuleUpUp = ironCapsuleUp.copy();
+        ItemStack ironCapsuleUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2 * UPGRADE_STEP);
         ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
-        ItemStack ironCapsuleUpUpUp = ironCapsuleUpUp.copy();
+        ItemStack ironCapsuleUpUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 3 * UPGRADE_STEP);
         ironCapsuleUpUpUp.setTagInfo("upgraded", new NBTTagInt(3));
-        ItemStack ironCapsuleUpUpUpUp = ironCapsuleUpUpUp.copy();
+        ItemStack ironCapsuleUpUpUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 4 * UPGRADE_STEP);
         ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
 
         ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
@@ -103,8 +108,11 @@ public class CapsulePlugin extends BlankModPlugin {
 
         @Override
         public String getSubtypeInfo(@Nonnull ItemStack itemStack) {
-            if (itemStack == null || !(itemStack.getItem() instanceof CapsuleItem)) return null;
-            return String.valueOf(itemStack.getItemDamage()) + itemStack.getTagCompound().getBoolean("overpowered");
+            if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
+            String isOP = String.valueOf(itemStack.getTagCompound() != null && itemStack.getTagCompound().hasKey("overpowered") && itemStack.getTagCompound().getBoolean("overpowered"));
+            String capsuleState = String.valueOf(itemStack.getItemDamage());
+            String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
+            return capsuleState + capsuleColor + isOP;
         }
     }
 }
