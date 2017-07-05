@@ -384,19 +384,19 @@ public class CapsuleItem extends Item {
 
 		ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
-		ironCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "ironCapsuleSize", "1").getInt()));
+		ironCapsule.setTagInfo("size", new NBTTagInt(Config.ironCapsuleSize));
 
 		ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
-		goldCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "goldCapsuleSize", "3").getInt()));
+		goldCapsule.setTagInfo("size", new NBTTagInt(Config.goldCapsuleSize));
 
 		ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
-		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "diamondCapsuleSize", "5").getInt()));
+		diamondCapsule.setTagInfo("size", new NBTTagInt(Config.diamondCapsuleSize));
 
 		ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
 		opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
-		opCapsule.setTagInfo("size", new NBTTagInt(Config.config.get("Balancing", "opCapsuleSize", "1").getInt()));
+		opCapsule.setTagInfo("size", new NBTTagInt(Config.opCapsuleSize));
 		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 		
 		ItemStack unlabelledCapsule = ironCapsule.copy();

@@ -29,10 +29,6 @@ public class CapsuleItemsRegistrer {
 	public static RecoveryCapsuleRecipe recoveryCapsuleRecipe;
 	public static DyeCapsuleRecipe dyeCapsuleRecipe;
 	public static ClearCapsuleRecipe clearCapsuleRecipe;
-	public static Property ironCapsuleSize;
-	public static Property goldCapsuleSize;
-	public static Property diamondCapsuleSize;
-	public static Property opCapsuleSize;
 
 	public static void createItems(String modid) {
 		capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
@@ -43,27 +39,11 @@ public class CapsuleItemsRegistrer {
 
 	public static void registerRecipes() {
 
-		ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
-		ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-
-		goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "3");
-		goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
-
-		diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "5");
-		diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
-
-		opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
-		opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-
-		
-
-		Config.config.save();
-
-		ItemStack ironCapsule = createCapsuleItemStack(0xCCCCCC, ironCapsuleSize.getInt());
-		ItemStack goldCapsule = createCapsuleItemStack(0xFFD700, goldCapsuleSize.getInt());
-		ItemStack diamondCapsule = createCapsuleItemStack(0x00FFF2, diamondCapsuleSize.getInt());
-		ItemStack opCapsule = createCapsuleItemStack(0xFFFFFF, opCapsuleSize.getInt());
-		opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
+		ItemStack ironCapsule = createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
+		ItemStack goldCapsule = createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
+		ItemStack diamondCapsule = createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize);
+		ItemStack opCapsule = createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize);
+		if (opCapsule != null) opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 
 		// base recipes
 		GameRegistry.addRecipe(ironCapsule, new Object[] { " B ", "#P#", " # ", '#', Items.IRON_INGOT, 'P', Items.ENDER_PEARL, 'B', Blocks.STONE_BUTTON });
@@ -96,9 +76,9 @@ public class CapsuleItemsRegistrer {
 	/**
 	 * Create a Stack or return null if size <= 0
 	 * 
-	 * @param color
-	 * @param size
-	 * @return
+	 * @param color color of the capsule
+	 * @param size size of the capsule
+	 * @return new empty capsule ItemStack
 	 */
 	public static ItemStack createCapsuleItemStack(int color, int size) {
 		if (size <= 0)
