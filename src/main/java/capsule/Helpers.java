@@ -1,7 +1,5 @@
 package capsule;
 
-import java.util.ArrayList;
-
 import net.minecraft.block.Block;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.item.EntityItem;
@@ -17,26 +15,21 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+import java.util.ArrayList;
+
 public class Helpers {
 
 	public static BlockPos findBottomBlock(EntityItem entityItem) {
-		if (entityItem.getEntityWorld() == null)
-			return null;
-
 		return findBottomBlock(entityItem.getEntityWorld(), entityItem.posX, entityItem.posY, entityItem.posZ);
 	}
-	
+
 	public static BlockPos findBottomBlock(World world, double x, double y, double z) {
 
-		double i = x;
-		double j = y;
-		double k = z;
-
-		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(i, j - 1, k), new BlockPos(i + 1, j + 1, k + 1));
+		Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1));
 		BlockPos closest = null;
 		double closestDistance = 1000;
 		for (BlockPos pos : blockPoss) {
-			double distance = pos.distanceSqToCenter(i, j, k);
+			double distance = pos.distanceSqToCenter(x, y, z);
 			if (distance < closestDistance) {
 				closest = pos;
 				closestDistance = distance;
@@ -45,7 +38,7 @@ public class Helpers {
 
 		return closest;
 	}
-	
+
 	public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks) {
 		int blockReachDistance = 18;
 		Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
@@ -57,7 +50,7 @@ public class Helpers {
 
 	@SuppressWarnings("rawtypes")
 	public static BlockPos findSpecificBlock(EntityItem entityItem, int maxRange, Class searchedBlock) {
-		if (entityItem.getEntityWorld() == null || searchedBlock == null)
+		if (searchedBlock == null)
 			return null;
 
 		double i = entityItem.posX;
@@ -86,8 +79,9 @@ public class Helpers {
 	 * Return whether the specified armor has a color.
 	 */
 	public static boolean hasColor(ItemStack stack) {
-		return (!stack.hasTagCompound() ? false
-				: (!stack.getTagCompound().hasKey("display", 10) ? false : stack.getTagCompound().getCompoundTag("display").hasKey("color", 3)));
+		if (!stack.hasTagCompound()) return false;
+		if (!stack.getTagCompound().hasKey("display", 10)) return false;
+		return stack.getTagCompound().getCompoundTag("display").hasKey("color", 3);
 	}
 
 	/**
@@ -98,8 +92,7 @@ public class Helpers {
 
 		if (nbttagcompound != null) {
 			NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-
-			if (nbttagcompound1 != null && nbttagcompound1.hasKey("color", 3)) {
+			if (nbttagcompound1.hasKey("color", 3)) {
 				return nbttagcompound1.getInteger("color");
 			}
 		}
@@ -115,7 +108,6 @@ public class Helpers {
 
 		if (nbttagcompound != null) {
 			NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-
 			if (nbttagcompound1.hasKey("color")) {
 				nbttagcompound1.removeTag("color");
 			}
@@ -134,7 +126,6 @@ public class Helpers {
 		}
 
 		NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-
 		if (!nbttagcompound.hasKey("display", 10)) {
 			nbttagcompound.setTag("display", nbttagcompound1);
 		}
@@ -147,39 +138,33 @@ public class Helpers {
 			return 0;
 		} else {
 			NBTTagList nbttaglist = ((ItemEnchantedBook) stack.getItem()).getEnchantments(stack);
+			for (int j = 0; j < nbttaglist.tagCount(); ++j) {
+				short short1 = nbttaglist.getCompoundTagAt(j).getShort("id");
+				short short2 = nbttaglist.getCompoundTagAt(j).getShort("lvl");
 
-			if (nbttaglist == null) {
-				return 0;
-			} else {
-				for (int j = 0; j < nbttaglist.tagCount(); ++j) {
-					short short1 = nbttaglist.getCompoundTagAt(j).getShort("id");
-					short short2 = nbttaglist.getCompoundTagAt(j).getShort("lvl");
-
-					if (short1 == enchID) {
-						return short2;
-					}
+				if (short1 == enchID) {
+					return short2;
 				}
-
-				return 0;
 			}
+
+			return 0;
 		}
 	}
-	
-	public static Block[] deserializeBlockArray(String[] blockIds) throws NumberInvalidException {
-			ArrayList<Block> states = new ArrayList<Block>();
-			for (int i = 0; i < blockIds.length; i++) {
-				Block b = Block.getBlockFromName(blockIds[i]);
-				if(b != null){
-					states.add(b);
-				} else {
-					System.err.println(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockIds[i]));
-				}
-			}
-			Block[] output = new Block[states.size()];
-			return states.toArray(output);
 
+	public static Block[] deserializeBlockArray(String[] blockIds) throws NumberInvalidException {
+        ArrayList<Block> states = new ArrayList<Block>();
+		for (String blockId : blockIds) {
+			Block b = Block.getBlockFromName(blockId);
+			if (b != null) {
+				states.add(b);
+			} else {
+				System.err.println(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockId));
+			}
+		}
+        Block[] output = new Block[states.size()];
+        return states.toArray(output);
 	}
-	
+
 	public static String[] serializeBlockArray(Block[] states) {
 
 		String[] blocksNames = new String[states.length];
