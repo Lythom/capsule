@@ -18,9 +18,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-/**
- * @author Samuel
- */
 public class BlockCapsuleMarker extends BlockContainer {
 
     /**
@@ -57,7 +54,7 @@ public class BlockCapsuleMarker extends BlockContainer {
     }
 
     public Boolean isProjecting(TileEntityCapture tec) {
-        return tec != null && tec.getTileData() != null && tec.getTileData().getInteger("size") > 0;
+        return tec != null && tec.getTileData().getInteger("size") > 0;
     }
 
     protected BlockStateContainer createBlockState() {
