@@ -1,4 +1,5 @@
 package capsule.network;
+
 import capsule.client.CapsulePreviewHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -14,23 +15,23 @@ import net.minecraftforge.fml.relauncher.Side;
  * User: The Grey Ghost
  * Date: 15/01/2015
  */
-public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<CapsuleContentPreviewAnswerToClient, IMessage>
-{
-  /**
-   * Called when a message is received of the appropriate type.
-   * CALLED BY THE NETWORK THREAD
-   * @param message The message
-   */
-  public IMessage onMessage(final CapsuleContentPreviewAnswerToClient message, MessageContext ctx) {
-    if (ctx.side != Side.CLIENT) {
-      System.err.println("CapsuleContentPreviewMessageToClient received on wrong side:" + ctx.side);
-      return null;
-    }
-    
-    synchronized (CapsulePreviewHandler.currentPreview) {
-    	CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBlockPositions());
-	}
+public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<CapsuleContentPreviewAnswerToClient, IMessage> {
+    /**
+     * Called when a message is received of the appropriate type.
+     * CALLED BY THE NETWORK THREAD
+     *
+     * @param message The message
+     */
+    public IMessage onMessage(final CapsuleContentPreviewAnswerToClient message, MessageContext ctx) {
+        if (ctx.side != Side.CLIENT) {
+            System.err.println("CapsuleContentPreviewMessageToClient received on wrong side:" + ctx.side);
+            return null;
+        }
 
-    return null;
-  }
+        synchronized (CapsulePreviewHandler.currentPreview) {
+            CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBlockPositions());
+        }
+
+        return null;
+    }
 }

@@ -8,9 +8,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class CapsuleTabs extends CreativeTabs {
 
-	 public CapsuleTabs(int index, String label) {
-		super(index, label);
-	}
+    public CapsuleTabs(int index, String label) {
+        super(index, label);
+    }
 
     @SideOnly(Side.CLIENT)
     public Item getTabIconItem() {

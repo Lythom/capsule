@@ -11,18 +11,23 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import javax.annotation.Nullable;
 import java.util.Random;
 
-public class CapsulePlacementSettings extends PlacementSettings
-{
+public class CapsulePlacementSettings extends PlacementSettings {
     private Mirror mirror = Mirror.NONE;
     private Rotation rotation = Rotation.NONE;
     private boolean ignoreEntities = false;
-    /** the type of block in the world that will get replaced by the structure */
+    /**
+     * the type of block in the world that will get replaced by the structure
+     */
     @Nullable
     private Block replacedBlock;
-    /** the chunk the structure is within */
+    /**
+     * the chunk the structure is within
+     */
     @Nullable
     private ChunkPos chunk;
-    /** the bounds the structure is contained within */
+    /**
+     * the bounds the structure is contained within
+     */
     @Nullable
     private StructureBoundingBox boundingBox;
     private boolean ignoreStructureBlock = true;
@@ -32,9 +37,8 @@ public class CapsulePlacementSettings extends PlacementSettings
     @Nullable
     private Long field_189953_j;
 
-    public CapsulePlacementSettings copy()
-    {
-    	CapsulePlacementSettings placementsettings = new CapsulePlacementSettings();
+    public CapsulePlacementSettings copy() {
+        CapsulePlacementSettings placementsettings = new CapsulePlacementSettings();
         placementsettings.mirror = this.mirror;
         placementsettings.rotation = this.rotation;
         placementsettings.ignoreEntities = this.ignoreEntities;
@@ -48,144 +52,113 @@ public class CapsulePlacementSettings extends PlacementSettings
         return placementsettings;
     }
 
-    public CapsulePlacementSettings setMirror(Mirror mirrorIn)
-    {
-        this.mirror = mirrorIn;
-        return this;
-    }
-
-    public CapsulePlacementSettings setRotation(Rotation rotationIn)
-    {
-        this.rotation = rotationIn;
-        return this;
-    }
-
-    public CapsulePlacementSettings setIgnoreEntities(boolean ignoreEntitiesIn)
-    {
-        this.ignoreEntities = ignoreEntitiesIn;
-        return this;
-    }
-
-    public CapsulePlacementSettings setReplacedBlock(Block replacedBlockIn)
-    {
-        this.replacedBlock = replacedBlockIn;
-        return this;
-    }
-
-    public CapsulePlacementSettings setChunk(ChunkPos chunkPosIn)
-    {
+    public CapsulePlacementSettings setChunk(ChunkPos chunkPosIn) {
         this.chunk = chunkPosIn;
         return this;
     }
 
-    public CapsulePlacementSettings setBoundingBox(StructureBoundingBox boundingBoxIn)
-    {
-        this.boundingBox = boundingBoxIn;
-        return this;
-    }
-
-    public CapsulePlacementSettings func_189949_a(@Nullable Long p_189949_1_)
-    {
+    public CapsulePlacementSettings func_189949_a(@Nullable Long p_189949_1_) {
         this.field_189953_j = p_189949_1_;
         return this;
     }
 
-    public CapsulePlacementSettings func_189950_a(@Nullable Random p_189950_1_)
-    {
+    public CapsulePlacementSettings func_189950_a(@Nullable Random p_189950_1_) {
         this.field_189952_i = p_189950_1_;
         return this;
     }
 
-    public CapsulePlacementSettings func_189946_a(float p_189946_1_)
-    {
+    public CapsulePlacementSettings func_189946_a(float p_189946_1_) {
         this.field_189951_h = p_189946_1_;
         return this;
     }
 
-    public Mirror getMirror()
-    {
+    public Mirror getMirror() {
         return this.mirror;
     }
 
-    public CapsulePlacementSettings setIgnoreStructureBlock(boolean ignoreStructureBlockIn)
-    {
-        this.ignoreStructureBlock = ignoreStructureBlockIn;
+    public CapsulePlacementSettings setMirror(Mirror mirrorIn) {
+        this.mirror = mirrorIn;
         return this;
     }
 
-    public Rotation getRotation()
-    {
+    public Rotation getRotation() {
         return this.rotation;
     }
 
-    public Random func_189947_a(@Nullable BlockPos p_189947_1_)
-    {
-        if (this.field_189952_i != null)
-        {
+    public CapsulePlacementSettings setRotation(Rotation rotationIn) {
+        this.rotation = rotationIn;
+        return this;
+    }
+
+    public Random func_189947_a(@Nullable BlockPos p_189947_1_) {
+        if (this.field_189952_i != null) {
             return this.field_189952_i;
-        }
-        else if (this.field_189953_j != null)
-        {
+        } else if (this.field_189953_j != null) {
             return this.field_189953_j.longValue() == 0L ? new Random(System.currentTimeMillis()) : new Random(this.field_189953_j.longValue());
-        }
-        else if (p_189947_1_ == null)
-        {
+        } else if (p_189947_1_ == null) {
             return new Random(System.currentTimeMillis());
-        }
-        else
-        {
+        } else {
             int i = p_189947_1_.getX();
             int j = p_189947_1_.getZ();
-            return new Random((long)(i * i * 4987142 + i * 5947611) + (long)(j * j) * 4392871L + (long)(j * 389711) ^ 987234911L);
+            return new Random((long) (i * i * 4987142 + i * 5947611) + (long) (j * j) * 4392871L + (long) (j * 389711) ^ 987234911L);
         }
     }
 
-    public float func_189948_f()
-    {
+    public float func_189948_f() {
         return this.field_189951_h;
     }
 
-    public boolean getIgnoreEntities()
-    {
+    public boolean getIgnoreEntities() {
         return this.ignoreEntities;
     }
 
-    @Nullable
-    public Block getReplacedBlock()
-    {
-        return this.replacedBlock;
+    public CapsulePlacementSettings setIgnoreEntities(boolean ignoreEntitiesIn) {
+        this.ignoreEntities = ignoreEntitiesIn;
+        return this;
     }
 
     @Nullable
-    public StructureBoundingBox getBoundingBox()
-    {
-        if (this.boundingBox == null && this.chunk != null)
-        {
+    public Block getReplacedBlock() {
+        return this.replacedBlock;
+    }
+
+    public CapsulePlacementSettings setReplacedBlock(Block replacedBlockIn) {
+        this.replacedBlock = replacedBlockIn;
+        return this;
+    }
+
+    @Nullable
+    public StructureBoundingBox getBoundingBox() {
+        if (this.boundingBox == null && this.chunk != null) {
             this.setBoundingBoxFromChunk();
         }
 
         return this.boundingBox;
     }
 
-    public boolean getIgnoreStructureBlock()
-    {
+    public CapsulePlacementSettings setBoundingBox(StructureBoundingBox boundingBoxIn) {
+        this.boundingBox = boundingBoxIn;
+        return this;
+    }
+
+    public boolean getIgnoreStructureBlock() {
         return this.ignoreStructureBlock;
     }
 
-    public void setBoundingBoxFromChunk()
-    {
+    public CapsulePlacementSettings setIgnoreStructureBlock(boolean ignoreStructureBlockIn) {
+        this.ignoreStructureBlock = ignoreStructureBlockIn;
+        return this;
+    }
+
+    public void setBoundingBoxFromChunk() {
         this.boundingBox = this.getBoundingBoxFromChunk(this.chunk);
     }
 
     @Nullable
-    private StructureBoundingBox getBoundingBoxFromChunk(@Nullable ChunkPos pos)
-    {
-        if (pos == null)
-        {
+    private StructureBoundingBox getBoundingBoxFromChunk(@Nullable ChunkPos pos) {
+        if (pos == null) {
             return null;
-        }
-        else
-        {
+        } else {
             int i = pos.chunkXPos * 16;
             int j = pos.chunkZPos * 16;
             return new StructureBoundingBox(i, 0, j, i + 16 - 1, 255, j + 16 - 1);

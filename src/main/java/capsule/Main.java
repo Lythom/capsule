@@ -14,35 +14,36 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 @Mod(modid = Main.MODID, name = Main.MODNAME, version = Main.VERSION)
 public class Main {
 
-	public static final String MODID = "capsule";
-	public static final String MODNAME = "Capsule";
-	public static final String VERSION = "1.10.2-1.2.0";
-	
+    public static final String MODID = "capsule";
+    public static final String MODNAME = "Capsule";
+    public static final String VERSION = "1.10.2-1.2.0";
+
     public static CreativeTabs tabCapsule = new CapsuleTabs(CreativeTabs.getNextID(), "capsule");
 
-	@Instance
-	public static Main instance = new Main();
-	
-	@SidedProxy(serverSide = "capsule.CommonProxy", clientSide = "capsule.client.ClientProxy")
-	public static CommonProxy proxy;
+    @Instance
+    public static Main instance = new Main();
 
-	@EventHandler
-	public void preInit(FMLPreInitializationEvent e) {
-		proxy.preInit(e);
-	}
+    @SidedProxy(serverSide = "capsule.CommonProxy", clientSide = "capsule.client.ClientProxy")
+    public static CommonProxy proxy;
 
-	@EventHandler
-	public void init(FMLInitializationEvent e) {
-		proxy.init(e);
-	}
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent e) {
+        proxy.preInit(e);
+    }
 
-	@EventHandler
-	public void postInit(FMLPostInitializationEvent e) {
-		proxy.postInit(e);
-	}
-	
-	@EventHandler public void serverStarting(FMLServerStartingEvent e){
-		proxy.serverStarting(e);
-	}
+    @EventHandler
+    public void init(FMLInitializationEvent e) {
+        proxy.init(e);
+    }
+
+    @EventHandler
+    public void postInit(FMLPostInitializationEvent e) {
+        proxy.postInit(e);
+    }
+
+    @EventHandler
+    public void serverStarting(FMLServerStartingEvent e) {
+        proxy.serverStarting(e);
+    }
 
 }

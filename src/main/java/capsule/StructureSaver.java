@@ -39,176 +39,173 @@ import java.util.jar.JarFile;
 
 public class StructureSaver {
 
-	protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
+    protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
+    public static Map<WorldServer, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
+    private static CapsuleTemplateManager RewardManager = null;
 
-	private static CapsuleTemplateManager RewardManager = null;	
-	public static Map<WorldServer,CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
+    public static void loadLootList(MinecraftServer server) {
+        // Init the manager for reward Lists
+        for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
+            String path = Config.lootTemplatesPaths[i];
+            LootPathData data = Config.lootTemplatesData.get(path);
 
-	
-	public static void loadLootList(MinecraftServer server){
-		// Init the manager for reward Lists
-		for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
-			String path = Config.lootTemplatesPaths[i];
-			LootPathData data = Config.lootTemplatesData.get(path);
+            File templateFolder = new File(server.getDataDirectory(), path);
 
-			File templateFolder = new File(server.getDataDirectory(), path);
-			
-			if(path.startsWith("config/") && !templateFolder.exists()){
-				templateFolder.mkdirs();
-			}
-			
-			if(templateFolder.exists() && templateFolder.isDirectory()){
-				File[] fileList = templateFolder.listFiles(new FilenameFilter()
-		        {
-		            public boolean accept(File p_accept_1_, String p_accept_2_)
-		            {
-		                return p_accept_2_.endsWith(".nbt");
-		            }
-		        });
-				data.files = new ArrayList<String>();
-				for (File templateFile : fileList) {
-					if(templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
-						data.files.add(templateFile.getName().replaceAll(".nbt", ""));
-				}
-			} else {
-				
-				// another try reading from jar files
-				try {
-					LOGGER.debug("Listing files at " + "/" + path);
-					
-					String[] fileNames = getResourceListing(StructureSaver.class, path);
-					
-					data.files = new ArrayList<String>();
-					LOGGER.debug("Found " + fileNames.length + " files.");
-					for (String file : fileNames) {
-						LOGGER.debug("Found " + file);
-						if(file.endsWith(".nbt"))
-							data.files.add(file.replaceAll(".nbt", ""));
-					}
-					
-				} catch(Exception e) {
-					LOGGER.error("Error while listing files in the jar", e);
-				}
-				
-			}
-		}
-	}
-	
+            if (path.startsWith("config/") && !templateFolder.exists()) {
+                templateFolder.mkdirs();
+            }
 
-	 /**
-	   * List directory contents for a resource folder. Not recursive.
-	   * This is basically a brute-force implementation.
-	   * Works for regular files and also JARs.
-	   * 
-	   * @author Greg Briggs
-	   * @param clazz Any java class that lives in the same place as the resources you want.
-	   * @param path Should end with "/", but not start with one.
-	   * @return Just the name of each member item, not the full paths.
-	   * @throws URISyntaxException 
-	   * @throws IOException 
-	   */
-	public static String[] getResourceListing(Class<?> clazz, String path) throws URISyntaxException, IOException {
-		URL dirURL = clazz.getClassLoader().getResource(path);
+            if (templateFolder.exists() && templateFolder.isDirectory()) {
+                File[] fileList = templateFolder.listFiles(new FilenameFilter() {
+                    public boolean accept(File p_accept_1_, String p_accept_2_) {
+                        return p_accept_2_.endsWith(".nbt");
+                    }
+                });
+                data.files = new ArrayList<String>();
+                for (File templateFile : fileList) {
+                    if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
+                        data.files.add(templateFile.getName().replaceAll(".nbt", ""));
+                }
+            } else {
 
-		if (dirURL != null && dirURL.getProtocol().equals("file")) {
-			/* A file path: easy enough */
-			return new File(dirURL.toURI()).list();
-		}
-		
-		if (dirURL == null) {
+                // another try reading from jar files
+                try {
+                    LOGGER.debug("Listing files at " + "/" + path);
+
+                    String[] fileNames = getResourceListing(StructureSaver.class, path);
+
+                    data.files = new ArrayList<String>();
+                    LOGGER.debug("Found " + fileNames.length + " files.");
+                    for (String file : fileNames) {
+                        LOGGER.debug("Found " + file);
+                        if (file.endsWith(".nbt"))
+                            data.files.add(file.replaceAll(".nbt", ""));
+                    }
+
+                } catch (Exception e) {
+                    LOGGER.error("Error while listing files in the jar", e);
+                }
+
+            }
+        }
+    }
+
+
+    /**
+     * List directory contents for a resource folder. Not recursive.
+     * This is basically a brute-force implementation.
+     * Works for regular files and also JARs.
+     *
+     * @param clazz Any java class that lives in the same place as the resources you want.
+     * @param path  Should end with "/", but not start with one.
+     * @return Just the name of each member item, not the full paths.
+     * @throws URISyntaxException
+     * @throws IOException
+     * @author Greg Briggs
+     */
+    public static String[] getResourceListing(Class<?> clazz, String path) throws URISyntaxException, IOException {
+        URL dirURL = clazz.getClassLoader().getResource(path);
+
+        if (dirURL != null && dirURL.getProtocol().equals("file")) {
+            /* A file path: easy enough */
+            return new File(dirURL.toURI()).list();
+        }
+
+        if (dirURL == null) {
 			/*
 			 * In case of a jar file, we can't actually find a directory. Have
 			 * to assume the same jar as clazz.
 			 */
-			String me = clazz.getName().replace(".", "/") + ".class";
-			dirURL = clazz.getClassLoader().getResource(me);
-		}
+            String me = clazz.getName().replace(".", "/") + ".class";
+            dirURL = clazz.getClassLoader().getResource(me);
+        }
 
-		if (dirURL.getProtocol().equals("jar")) {
+        if (dirURL.getProtocol().equals("jar")) {
 			/* A JAR path */
-			String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
-			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
-			
-			LOGGER.debug("Listing files in " + jarPath);
-			
-			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-			Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
-			while (entries.hasMoreElements()) {
-				String name = entries.nextElement().getName();
-				if (name.startsWith(path)) { //filter according to the path
-					String entry = name.replace(path + "/", "");
-					result.add(entry);
-				}
-			}
-			jar.close();
-			return result.toArray(new String[result.size()]);
-			
-		} else {
+            String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+            JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
 
-			InputStream inputstream = clazz.getResourceAsStream("/" + path);
-			if(inputstream != null){
-				final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
-				final BufferedReader br = new BufferedReader(isr);
-				
-				Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
-				String filename = null;
-				while ((filename = br.readLine()) != null) {
-					result.add(filename);
-				}
-				return result.toArray(new String[result.size()]);
-			}
+            LOGGER.debug("Listing files in " + jarPath);
 
-		}
+            Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+            Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+            while (entries.hasMoreElements()) {
+                String name = entries.nextElement().getName();
+                if (name.startsWith(path)) { //filter according to the path
+                    String entry = name.replace(path + "/", "");
+                    result.add(entry);
+                }
+            }
+            jar.close();
+            return result.toArray(new String[result.size()]);
 
-		throw new UnsupportedOperationException("Cannot list files for URL "+dirURL);
-	  }
+        } else {
 
-	public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
-		if(RewardManager == null){
-			RewardManager = new CapsuleTemplateManager(server.getDataDirectory().getPath());
-			File rewardDir = new File(Config.rewardTemplatesPath);
-			if(!rewardDir.exists()){
-				rewardDir.mkdirs();
-			}
-		}
-		return RewardManager;
-	}
+            InputStream inputstream = clazz.getResourceAsStream("/" + path);
+            if (inputstream != null) {
+                final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
+                final BufferedReader br = new BufferedReader(isr);
 
-	public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos position, int size, List<Block> excluded,
-			Map<BlockPos, Block> excludedPositions, boolean keepSource) {
+                Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+                String filename = null;
+                while ((filename = br.readLine()) != null) {
+                    result.add(filename);
+                }
+                return result.toArray(new String[result.size()]);
+            }
 
-		MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-		List<Entity> outCapturedEntities = new ArrayList<>();
-		
-		CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-		CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-		List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, position, new BlockPos(size, size, size), excludedPositions,
-				excluded, outCapturedEntities);
-		template.setAuthor(playerID);
-		boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-		if (writingOK && !keepSource) {
-			removeTransferedBlockFromWorld(transferedPositions, worldserver);
-			for(Entity e : outCapturedEntities){
-				e.setDropItemsWhenDead(false);
-				e.setDead();
-			}
-			// TODO here : check if some remove failed, exclude those blocks from the template.
-		}
+        }
 
-		return writingOK;
+        throw new UnsupportedOperationException("Cannot list files for URL " + dirURL);
+    }
 
-	}
+    public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
+        if (RewardManager == null) {
+            RewardManager = new CapsuleTemplateManager(server.getDataDirectory().getPath());
+            File rewardDir = new File(Config.rewardTemplatesPath);
+            if (!rewardDir.exists()) {
+                rewardDir.mkdirs();
+            }
+        }
+        return RewardManager;
+    }
 
-	public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
-		if(worldserver == null || worldserver.getSaveHandler() == null || worldserver.getSaveHandler().getWorldDirectory() == null) return null;
+    public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos position, int size, List<Block> excluded,
+                                Map<BlockPos, Block> excludedPositions, boolean keepSource) {
 
-		if(!CapsulesManagers.containsKey(worldserver)){
-			File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
-			capsuleDir.mkdirs();
-			CapsulesManagers.put(worldserver, new CapsuleTemplateManager(capsuleDir.toString()));
-		}
-		return CapsulesManagers.get(worldserver);
-	}
+        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        List<Entity> outCapturedEntities = new ArrayList<>();
+
+        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
+        CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+        List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, position, new BlockPos(size, size, size), excludedPositions,
+                excluded, outCapturedEntities);
+        template.setAuthor(playerID);
+        boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+        if (writingOK && !keepSource) {
+            removeTransferedBlockFromWorld(transferedPositions, worldserver);
+            for (Entity e : outCapturedEntities) {
+                e.setDropItemsWhenDead(false);
+                e.setDead();
+            }
+            // TODO here : check if some remove failed, exclude those blocks from the template.
+        }
+
+        return writingOK;
+
+    }
+
+    public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
+        if (worldserver == null || worldserver.getSaveHandler() == null || worldserver.getSaveHandler().getWorldDirectory() == null)
+            return null;
+
+        if (!CapsulesManagers.containsKey(worldserver)) {
+            File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
+            capsuleDir.mkdirs();
+            CapsulesManagers.put(worldserver, new CapsuleTemplateManager(capsuleDir.toString()));
+        }
+        return CapsulesManagers.get(worldserver);
+    }
 
     /**
      * Use with caution, delete the blocks at the indicated positions.
@@ -244,25 +241,25 @@ public class StructureSaver {
     }
 
 
-	public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
-		MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-		
-		CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-		CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-		
-		List<Template.BlockInfo> blocks = template.blocks;
-		List<Template.EntityInfo> entities = template.entities;
-		if(entities == null || blocks == null) return false;
-		
-		blocks.clear();
-		entities.clear();
+    public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
+        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
 
-		return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-		
-	}
-	
-	public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
-			Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
+        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
+        CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+
+        List<Template.BlockInfo> blocks = template.blocks;
+        List<Template.EntityInfo> entities = template.entities;
+        if (entities == null || blocks == null) return false;
+
+        blocks.clear();
+        entities.clear();
+
+        return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+
+    }
+
+    public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
+                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
 
 		/*TODO : fix case where world or thrower is not available (thrown by a dropper ?)
@@ -270,199 +267,197 @@ public class StructureSaver {
 			reverse to initial situation ?
 		    continue and ignore crashing block ?*/
 
-		Pair<CapsuleTemplateManager,CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
-		CapsuleTemplate template = templatepair.getRight();
-		
-		EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
+        Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
+        CapsuleTemplate template = templatepair.getRight();
 
-		if (template != null)
-        {
-			int size = CapsuleItem.getSize(capsule);
-        	// check if the destination is valid : no unoverwritable block and no entities in the way.
-        	CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos)null).setReplacedBlock((Block)null).setIgnoreStructureBlock(false);
-        	boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
-        	
-			if (destValid) {
-				List<BlockPos> spawnedBlocks = new ArrayList<>();
-				List<Entity> spawnedEntities = new ArrayList<>();
-				try {
-					template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
-					return true;
-				} catch (Exception err) {
-					LOGGER.error("Couldn't deploy the capsule", err);
-					player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-					
-					// rollback
-					removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);
-					for(Entity e : spawnedEntities){
-						e.setDropItemsWhenDead(false);
-						e.setDead();
-					}
-					return false;
-				}
-			} else {
-				// send a chat message to explain failure
-				if (player != null) {
-					if (outOccupiedSpawnPositions.size() == 0) {
-						player.addChatMessage(
-								new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-										StringUtils.join(outEntityBlocking, ", ")));
-					} else {
-						player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-					}
-				}
-			}
-		} else {
-			// send a chat message to explain failure
-			if (player != null) {
-				player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
-			}
-		}
+        EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
 
-		
-		return false;
-	}
+        if (template != null) {
+            int size = CapsuleItem.getSize(capsule);
+            // check if the destination is valid : no unoverwritable block and no entities in the way.
+            CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos) null).setReplacedBlock((Block) null).setIgnoreStructureBlock(false);
+            boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
 
-	public static Pair<CapsuleTemplateManager,CapsuleTemplate> getTemplate(ItemStack capsule, WorldServer playerWorld) {
-		Pair<CapsuleTemplateManager,CapsuleTemplate> template = null;
-		
-		boolean isReward = CapsuleItem.isReward(capsule);
-		String structureName = CapsuleItem.getStructureName(capsule);
-		if(isReward){
-			template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
-		} else {
-			template = getTemplateForCapsule(playerWorld, structureName);
-		}
-		return template;
-	}
+            if (destValid) {
+                List<BlockPos> spawnedBlocks = new ArrayList<>();
+                List<Entity> spawnedEntities = new ArrayList<>();
+                try {
+                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+                    return true;
+                } catch (Exception err) {
+                    LOGGER.error("Couldn't deploy the capsule", err);
+                    player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
 
-	public static Pair<CapsuleTemplateManager,CapsuleTemplate> getTemplateForCapsule(WorldServer playerWorld, String structureName) {
-		CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
-		if(templatemanager == null || Strings.isNullOrEmpty(structureName)) return Pair.of(null,null);
-		
-		CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
-		return Pair.of(templatemanager, template);
-	}
-	
-	public static Pair<CapsuleTemplateManager,CapsuleTemplate> getTemplateForReward(MinecraftServer server, String structurePath) {
-		CapsuleTemplateManager templatemanager = getRewardManager(server);
-		if(templatemanager == null || Strings.isNullOrEmpty(structurePath)) return Pair.of(null,null);
-		
-		CapsuleTemplate template = templatemanager.getTemplate(server, new ResourceLocation(structurePath));
-		return Pair.of(templatemanager, template);
-	}
-	
-	/**
-	 * Check whether a merge can be done at the destination
-	 * 
-	 * @param template
-	 * @param destWorld
-	 * @param destOriginPos
-	 * @param size
-	 * @param overridable
-	 * @param outOccupiedPositions
-	 *            Output param, the positions occupied a destination that will
-	 *            have to be ignored on
-	 * @return List<BlockPos> occupied but not blocking positions
-	 */
-	public static boolean isDestinationValid(CapsuleTemplate template, CapsulePlacementSettings placementIn, WorldServer destWorld, BlockPos destOriginPos, int size,
-			List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
+                    // rollback
+                    removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);
+                    for (Entity e : spawnedEntities) {
+                        e.setDropItemsWhenDead(false);
+                        e.setDead();
+                    }
+                    return false;
+                }
+            } else {
+                // send a chat message to explain failure
+                if (player != null) {
+                    if (outOccupiedSpawnPositions.size() == 0) {
+                        player.addChatMessage(
+                                new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+                                        StringUtils.join(outEntityBlocking, ", ")));
+                    } else {
+                        player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+                    }
+                }
+            }
+        } else {
+            // send a chat message to explain failure
+            if (player != null) {
+                player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
+            }
+        }
 
-		IBlockState air = Blocks.AIR.getDefaultState();
-		
-		List<Template.BlockInfo> srcblocks = template.blocks;
-		if(srcblocks == null) return false;
-		
-		Map<BlockPos,Template.BlockInfo> blockInfoByPosition = new HashMap<>();
-		for (Template.BlockInfo template$blockinfo : srcblocks)
-        {
+
+        return false;
+    }
+
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, WorldServer playerWorld) {
+        Pair<CapsuleTemplateManager, CapsuleTemplate> template = null;
+
+        boolean isReward = CapsuleItem.isReward(capsule);
+        String structureName = CapsuleItem.getStructureName(capsule);
+        if (isReward) {
+            template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
+        } else {
+            template = getTemplateForCapsule(playerWorld, structureName);
+        }
+        return template;
+    }
+
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForCapsule(WorldServer playerWorld, String structureName) {
+        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
+        if (templatemanager == null || Strings.isNullOrEmpty(structureName)) return Pair.of(null, null);
+
+        CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+        return Pair.of(templatemanager, template);
+    }
+
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForReward(MinecraftServer server, String structurePath) {
+        CapsuleTemplateManager templatemanager = getRewardManager(server);
+        if (templatemanager == null || Strings.isNullOrEmpty(structurePath)) return Pair.of(null, null);
+
+        CapsuleTemplate template = templatemanager.getTemplate(server, new ResourceLocation(structurePath));
+        return Pair.of(templatemanager, template);
+    }
+
+    /**
+     * Check whether a merge can be done at the destination
+     *
+     * @param template
+     * @param destWorld
+     * @param destOriginPos
+     * @param size
+     * @param overridable
+     * @param outOccupiedPositions Output param, the positions occupied a destination that will
+     *                             have to be ignored on
+     * @return List<BlockPos> occupied but not blocking positions
+     */
+    public static boolean isDestinationValid(CapsuleTemplate template, CapsulePlacementSettings placementIn, WorldServer destWorld, BlockPos destOriginPos, int size,
+                                             List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
+
+        IBlockState air = Blocks.AIR.getDefaultState();
+
+        List<Template.BlockInfo> srcblocks = template.blocks;
+        if (srcblocks == null) return false;
+
+        Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
+        for (Template.BlockInfo template$blockinfo : srcblocks) {
             BlockPos blockpos = CapsuleTemplate.transformedBlockPos(placementIn, template$blockinfo.pos);
             blockInfoByPosition.put(blockpos, template$blockinfo);
         }
-		
-		// check the destination is ok for every block of the template
-		for (int y = size - 1; y >= 0; y--) {
-			for (int x = 0; x < size; x++) {
-				for (int z = 0; z < size; z++) {
-					
-					BlockPos srcPos = new BlockPos(x,y,z);
-					Template.BlockInfo srcInfo = blockInfoByPosition.get(srcPos);
-					IBlockState srcState = air;
-					if(srcInfo != null){
-						srcState = srcInfo.blockState;
-					}
-		
-					BlockPos destPos = destOriginPos.add(x,y,z);
-					IBlockState destState = destWorld.getBlockState(destPos);
-		
-					boolean destOccupied = (destState != air && !overridable.contains(destState.getBlock()));
-					if (destState != air && outOccupiedPositions != null) {
-						outOccupiedPositions.put(destPos, destState.getBlock());
-					}
-					
-					boolean srcOccupied = (srcState != air && !overridable.contains(srcState.getBlock()));
-					@SuppressWarnings("rawtypes")
-					List entities = destWorld.getEntitiesWithinAABB(
-							EntityLivingBase.class,
-							new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() +1, destPos.getY()+1, destPos.getZ()+1)
-					);
-		
-					// if destination is occupied, and source is neither
-					// excluded from transportation, nor can't be overriden by
-					// destination, then the merge can't be done.
-					if ((entities.size() > 0 && srcOccupied) || (destOccupied && !overridable.contains(srcState.getBlock()))) {
-						if(entities.size() > 0 && outEntityBlocking != null){
-							for(Object e : entities){
-								Entity entity = (Entity)e;
-								if(entity != null){
-									outEntityBlocking.add(entity.getName());
-								}
-							}
-							
-						}
-						return false;
-					}
-				}
-			}
-		}
 
-		return true;
-	}
+        // check the destination is ok for every block of the template
+        for (int y = size - 1; y >= 0; y--) {
+            for (int x = 0; x < size; x++) {
+                for (int z = 0; z < size; z++) {
+
+                    BlockPos srcPos = new BlockPos(x, y, z);
+                    Template.BlockInfo srcInfo = blockInfoByPosition.get(srcPos);
+                    IBlockState srcState = air;
+                    if (srcInfo != null) {
+                        srcState = srcInfo.blockState;
+                    }
+
+                    BlockPos destPos = destOriginPos.add(x, y, z);
+                    IBlockState destState = destWorld.getBlockState(destPos);
+
+                    boolean destOccupied = (destState != air && !overridable.contains(destState.getBlock()));
+                    if (destState != air && outOccupiedPositions != null) {
+                        outOccupiedPositions.put(destPos, destState.getBlock());
+                    }
+
+                    boolean srcOccupied = (srcState != air && !overridable.contains(srcState.getBlock()));
+                    @SuppressWarnings("rawtypes")
+                    List entities = destWorld.getEntitiesWithinAABB(
+                            EntityLivingBase.class,
+                            new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() + 1, destPos.getY() + 1, destPos.getZ() + 1)
+                    );
+
+                    // if destination is occupied, and source is neither
+                    // excluded from transportation, nor can't be overriden by
+                    // destination, then the merge can't be done.
+                    if ((entities.size() > 0 && srcOccupied) || (destOccupied && !overridable.contains(srcState.getBlock()))) {
+                        if (entities.size() > 0 && outEntityBlocking != null) {
+                            for (Object e : entities) {
+                                Entity entity = (Entity) e;
+                                if (entity != null) {
+                                    outEntityBlocking.add(entity.getName());
+                                }
+                            }
+
+                        }
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
 
-	/**
-	 * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
-	 * @param playerWorld
-	 * @param player
-	 * @return
-	 */
-	public static String getUniqueName(WorldServer playerWorld, String player) {
-		CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
-		String capsuleID = "C-" + player + "-" + csd.getNextCount();
-		CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
-		
-		while(templatemanager.get(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
-			capsuleID = "C-" + player + "-" + csd.getNextCount();
-		}
-		
-		return capsuleID;
-	}
-	
-	/**
-	 * Get the Capsule saving tool that remembers last capsule id.
-	 * 
-	 * @param capsuleWorld
-	 * @return
-	 */
-	public static CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
-		CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
-		if (capsuleSavedData == null) {
-			capsuleSavedData = new CapsuleSavedData("capsuleData");
-			capsuleWorld.setItemData("capsuleData", capsuleSavedData);
-			capsuleSavedData.setDirty(true);
-		}
-		return capsuleSavedData;
-	}
+    /**
+     * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
+     *
+     * @param playerWorld
+     * @param player
+     * @return
+     */
+    public static String getUniqueName(WorldServer playerWorld, String player) {
+        CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
+        String capsuleID = "C-" + player + "-" + csd.getNextCount();
+        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
+
+        while (templatemanager.get(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+            capsuleID = "C-" + player + "-" + csd.getNextCount();
+        }
+
+        return capsuleID;
+    }
+
+    /**
+     * Get the Capsule saving tool that remembers last capsule id.
+     *
+     * @param capsuleWorld
+     * @return
+     */
+    public static CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
+        CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
+        if (capsuleSavedData == null) {
+            capsuleSavedData = new CapsuleSavedData("capsuleData");
+            capsuleWorld.setItemData("capsuleData", capsuleSavedData);
+            capsuleSavedData.setDirty(true);
+        }
+        return capsuleSavedData;
+    }
 
 
 }

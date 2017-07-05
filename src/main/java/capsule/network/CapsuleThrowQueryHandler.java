@@ -18,43 +18,42 @@ import net.minecraftforge.fml.relauncher.Side;
  * Date: 15/01/2015
  */
 public class CapsuleThrowQueryHandler
-		implements IMessageHandler<CapsuleThrowQueryToServer, IMessage> {
+        implements IMessageHandler<CapsuleThrowQueryToServer, IMessage> {
 
-	/**
-	 * Called when a message is received of the appropriate type. CALLED BY THE
-	 * NETWORK THREAD
-	 * 
-	 * @param message
-	 *            The message
-	 */
-	public IMessage onMessage(final CapsuleThrowQueryToServer message,
-			MessageContext ctx) {
-		if (ctx.side != Side.SERVER) {
-			System.err.println("CapsuleThrowQueryToServer received on wrong side:" + ctx.side);
-			return null;
-		}
-		if (!message.isMessageValid()) {
-			System.err.println("CapsuleThrowQueryToServer was invalid" + message.toString());
-			return null;
-		}
+    /**
+     * Called when a message is received of the appropriate type. CALLED BY THE
+     * NETWORK THREAD
+     *
+     * @param message The message
+     */
+    public IMessage onMessage(final CapsuleThrowQueryToServer message,
+                              MessageContext ctx) {
+        if (ctx.side != Side.SERVER) {
+            System.err.println("CapsuleThrowQueryToServer received on wrong side:" + ctx.side);
+            return null;
+        }
+        if (!message.isMessageValid()) {
+            System.err.println("CapsuleThrowQueryToServer was invalid" + message.toString());
+            return null;
+        }
 
-		// we know for sure that this handler is only used on the server side,
-		// so it is ok to assume
-		// that the ctx handler is a serverhandler, and that WorldServer exists.
-		// Packets received on the client side must be handled differently! See
-		// MessageHandlerOnClient
-		final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
-		if (sendingPlayer == null) {
-			System.err.println("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
-			return null;
-		}
+        // we know for sure that this handler is only used on the server side,
+        // so it is ok to assume
+        // that the ctx handler is a serverhandler, and that WorldServer exists.
+        // Packets received on the client side must be handled differently! See
+        // MessageHandlerOnClient
+        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
+        if (sendingPlayer == null) {
+            System.err.println("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
+            return null;
+        }
 
-		// read the content of the template and send it back to the client
-		ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-		
-		CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.getPos());
-		
-		return null;
-		
-	}
+        // read the content of the template and send it back to the client
+        ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+
+        CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.getPos());
+
+        return null;
+
+    }
 }
