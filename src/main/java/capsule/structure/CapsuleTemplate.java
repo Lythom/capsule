@@ -1,17 +1,8 @@
 package capsule.structure;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import javax.annotation.Nullable;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -23,11 +14,7 @@ import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagDouble;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTUtil;
+import net.minecraft.nbt.*;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityStructure;
 import net.minecraft.util.Mirror;
@@ -41,6 +28,9 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.Template;
+
+import javax.annotation.Nullable;
+import java.util.*;
 
 /**
  * Exact copy of mc original net.minecraft.world.gen.structure.template.Template class, but having fields public to allow external manipulation
@@ -624,12 +614,12 @@ public class CapsuleTemplate
                 this.ids.put(p_189956_1_, p_189956_2_);
             }
         }
-    
-    
-    
-    
+
+
+
+
     // CAPSULE additions
-    
+
     /**
 	 * Rewritten from CapsuleTemplate.takeBlocksFromWorld
 	 * takes blocks from the world and puts the data them into this template
@@ -701,12 +691,12 @@ public class CapsuleTemplate
 
 		return null;
 	}
-	
+
 	/**
 	 * takes blocks from the world and puts the data them into this template
 	 */
 	public List<Entity> takeNonLivingEntitiesFromWorld(World worldIn, BlockPos startPos, BlockPos endPos) {
-		
+
 		// rewritten vanilla code from CapsuleTemplate.takeEntitiesFromWorld
 		List<Entity> list = worldIn.<Entity> getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(startPos, endPos), new Predicate<Entity>() {
 			public boolean apply(@Nullable Entity p_apply_1_) {
@@ -729,18 +719,18 @@ public class CapsuleTemplate
 
 			entities.add(new Template.EntityInfo(vec3d, blockpos, nbttagcompound));
 		}
-		
+
 		return list;
 	}
-	
+
 	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
-		
+
 		ITemplateProcessor p_189960_3_ = new BlockRotationProcessor(p_189960_2_, p_189960_4_);
 		int p_189960_5_ = 2;
-		
-		if(blocks == null || size == null || p_189960_3_== null) return; 
-		
+
+		if(blocks == null || size == null || p_189960_3_== null) return;
+
 
         if (!blocks.isEmpty() && size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1)
         {
@@ -757,16 +747,16 @@ public class CapsuleTemplate
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
                     if (
-                    		(block == null || block != block1) && 
-                    		(!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && 
+                    		(block == null || block != block1) &&
+                    		(!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
                     		(structureboundingbox == null || structureboundingbox.isVecInside(blockpos)) &&
                     		// add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
-                    		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos))) 
+                    		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos)))
                     )
                     {
                     	// capsule addition to allow a rollback in case of error while deploying
                     	if(spawnedBlocks != null) spawnedBlocks.add(blockpos);
-                    	
+
                         IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
                         IBlockState iblockstate1 = iblockstate.withRotation(p_189960_4_.getRotation());
 
@@ -795,7 +785,7 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
-                                
+
                                 tileentity2.mirror(p_189960_4_.getMirror());
                                 tileentity2.rotate(p_189960_4_.getRotation());
                             }

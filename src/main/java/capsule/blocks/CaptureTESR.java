@@ -1,9 +1,5 @@
 package capsule.blocks;
 
-import java.awt.Color;
-
-import org.lwjgl.opengl.GL11;
-
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
@@ -11,6 +7,9 @@ import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.AxisAlignedBB;
+import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
 
 public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 

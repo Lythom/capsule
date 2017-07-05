@@ -1,12 +1,12 @@
 package capsule.network;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.netty.buffer.ByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This Network Message is sent from the client to the server

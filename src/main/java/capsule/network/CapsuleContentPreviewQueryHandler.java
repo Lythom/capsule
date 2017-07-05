@@ -1,10 +1,5 @@
 package capsule.network;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
@@ -19,6 +14,10 @@ import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The MessageHandlerOnServer is used to process the network message once it has

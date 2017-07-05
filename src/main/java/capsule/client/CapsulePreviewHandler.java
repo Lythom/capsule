@@ -1,13 +1,5 @@
 package capsule.client;
 
-import java.awt.Color;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.lwjgl.opengl.GL11;
-
 import capsule.Config;
 import capsule.Helpers;
 import capsule.blocks.CaptureTESR;
@@ -32,6 +24,13 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
+import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class CapsulePreviewHandler {
 	public CapsulePreviewHandler() {

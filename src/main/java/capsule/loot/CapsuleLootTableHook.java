@@ -1,9 +1,5 @@
 package capsule.loot;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import capsule.Config;
 import net.minecraft.world.storage.loot.LootEntry;
 import net.minecraft.world.storage.loot.LootPool;
@@ -12,6 +8,10 @@ import net.minecraft.world.storage.loot.RandomValueRange;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CapsuleLootTableHook {
 

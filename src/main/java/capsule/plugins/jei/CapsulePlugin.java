@@ -1,26 +1,21 @@
 package capsule.plugins.jei;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-
 import capsule.Config;
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
-import mezz.jei.api.BlankModPlugin;
-import mezz.jei.api.IJeiHelpers;
-import mezz.jei.api.IModRegistry;
-import mezz.jei.api.ISubtypeRegistry;
-import mezz.jei.api.JEIPlugin;
+import mezz.jei.api.*;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagInt;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @JEIPlugin
 public class CapsulePlugin extends BlankModPlugin {

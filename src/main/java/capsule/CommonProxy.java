@@ -1,32 +1,14 @@
 package capsule;
 
-import java.util.Arrays;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItemsRegistrer;
 import capsule.loot.CapsuleLootTableHook;
-import capsule.loot.LootPathData;
-import capsule.network.CapsuleContentPreviewQueryToServer;
-import capsule.network.CapsuleThrowQueryHandler;
-import capsule.network.CapsuleThrowQueryToServer;
-import capsule.network.CapsuleContentPreviewQueryHandler;
-import capsule.network.CapsuleContentPreviewAnswerToClient;
-import capsule.network.LabelEditedMessageToServer;
-import capsule.network.LabelEditedMessageToServerMessageHandler;
-import capsule.network.CapsuleContentPreviewAnswerHandler;
-import net.minecraft.block.Block;
-import net.minecraft.command.NumberInvalidException;
+import capsule.network.*;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -34,6 +16,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CommonProxy {
 	
