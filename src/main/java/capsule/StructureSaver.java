@@ -205,6 +205,7 @@ public class StructureSaver {
 				e.setDropItemsWhenDead(false);
 				e.setDead();
 			}
+			// TODO here : check if some remove failed, exclude those blocks from the template.
 		}
 
 		return writingOK;
@@ -221,35 +222,40 @@ public class StructureSaver {
 		}
 		return CapsulesManagers.get(worldserver);
 	}
-	
-	/**
-	 * Use with caution, delete the blocks at the indicated positions.
-	 * @param transferedPositions
-	 * @param world
-	 */
-	public static void removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
 
-		// disable tileDrop during the operation so that broken block are not
-		// itemized on the ground.
-		boolean flagdoTileDrops = world.getGameRules().getBoolean("doTileDrops");
-		world.getGameRules().setOrCreateGameRule("doTileDrops", "false");
+    /**
+     * Use with caution, delete the blocks at the indicated positions.
+     *
+     * @param transferedPositions
+     * @param world
+     */
+    public static void removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
 
-		// delete everything that as been saved in the capsule
-		try {
-			for (BlockPos pos : transferedPositions) {
-				world.removeTileEntity(pos);
-				world.setBlockState(pos, Blocks.AIR.getDefaultState());
-				world.notifyNeighborsOfStateChange(pos, Blocks.AIR);
-			}
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			// revert rule to previous value even in case of crash
-			world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
-		}
+        // disable tileDrop during the operation so that broken block are not
+        // itemized on the ground.
+        boolean flagdoTileDrops = world.getGameRules().getBoolean("doTileDrops");
+        world.getGameRules().setOrCreateGameRule("doTileDrops", "false");
+        world.restoringBlockSnapshots = true;
 
-	}
-	
+        // delete everything that as been saved in the capsule
+
+        for (BlockPos pos : transferedPositions) {
+            IBlockState b = world.getBlockState(pos);
+            try {
+                // uses same mechanic for TileEntity than net.minecraft.world.gen.structure.template.Template
+                world.setBlockToAir(pos);
+
+            } catch (Exception e) {
+                LOGGER.info("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
+                world.setBlockState(pos, b);
+            }
+        }
+
+        // revert rule to previous value even in case of crash
+        world.restoringBlockSnapshots = false;
+        world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
+    }
+
 
 	public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
 		MinecraftServer minecraftserver = worldserver.getMinecraftServer();
