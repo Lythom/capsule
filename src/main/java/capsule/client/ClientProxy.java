@@ -24,71 +24,71 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 public class ClientProxy extends CommonProxy {
 
-	public void preInit(FMLPreInitializationEvent event) {
-		super.preInit(event);
-		String modid = Main.MODID;
+    public static void registerItemRenderers(String modid) {
 
-		// Item renderer
-		ModelBakery.registerItemVariants(CapsuleItemsRegistrer.capsule, new ResourceLocation(modid + ":capsule_empty"),
-				new ResourceLocation(modid + ":capsule_activated"), new ResourceLocation(modid + ":capsule_linked"),
-				new ResourceLocation(modid + ":capsule_deployed"), new ResourceLocation(modid + ":capsule_empty_activated"),
-				new ResourceLocation(modid + ":capsule_one_use"), new ResourceLocation(modid + ":capsule_one_use_activated"));
-	}
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_EMPTY,
+                new ModelResourceLocation(modid + ":capsule_empty", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ACTIVATED,
+                new ModelResourceLocation(modid + ":capsule_activated", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_LINKED,
+                new ModelResourceLocation(modid + ":capsule_linked", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_DEPLOYED,
+                new ModelResourceLocation(modid + ":capsule_deployed", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_EMPTY_ACTIVATED,
+                new ModelResourceLocation(modid + ":capsule_empty_activated", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE,
+                new ModelResourceLocation(modid + ":capsule_one_use", "inventory"));
+        Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE_ACTIVATED,
+                new ModelResourceLocation(modid + ":capsule_one_use_activated", "inventory"));
 
-	public void init(FMLInitializationEvent event) {
-		super.init(event);
-		registerItemRenderers(Main.MODID);
+        Minecraft.getMinecraft().getItemColors().registerItemColorHandler(new IItemColor() {
+            public int getColorFromItemstack(ItemStack stack, int tintIndex) {
+                if (stack.getItem() instanceof CapsuleItem) {
+                    return ((CapsuleItem) stack.getItem()).getColorFromItemstack(stack, tintIndex);
+                }
+                return 0xFFFFFF;
+            }
+        }, CapsuleItemsRegistrer.capsule);
+    }
 
-		// block renderers
-		registerBlockRenderer();
+    public void preInit(FMLPreInitializationEvent event) {
+        super.preInit(event);
+        String modid = Main.MODID;
 
-		CapsulePreviewHandler cph = new CapsulePreviewHandler();
-		// for the undeploy preview
-		MinecraftForge.EVENT_BUS.register(cph);
-		
-	}
+        // Item renderer
+        ModelBakery.registerItemVariants(CapsuleItemsRegistrer.capsule, new ResourceLocation(modid + ":capsule_empty"),
+                new ResourceLocation(modid + ":capsule_activated"), new ResourceLocation(modid + ":capsule_linked"),
+                new ResourceLocation(modid + ":capsule_deployed"), new ResourceLocation(modid + ":capsule_empty_activated"),
+                new ResourceLocation(modid + ":capsule_one_use"), new ResourceLocation(modid + ":capsule_one_use_activated"));
+    }
 
-	private void registerBlockRenderer() {
-		ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
-		mesher.register(Item.getItemFromBlock(CapsuleBlocksRegistrer.blockCapsuleMarker), 0,
-				new ModelResourceLocation(Main.MODID + ":capsulemarker", "inventory"));
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCapture.class, new CaptureTESR());
-	}
+    public void init(FMLInitializationEvent event) {
+        super.init(event);
+        registerItemRenderers(Main.MODID);
 
-	public void postInit(FMLPostInitializationEvent event) {
-		super.postInit(event);
-	}
+        // block renderers
+        registerBlockRenderer();
 
-	public void openGuiScreen(EntityPlayer playerIn) {
-		capsule.gui.LabelGui screen = new capsule.gui.LabelGui(playerIn);
-		Minecraft.getMinecraft().displayGuiScreen(screen);
-	}
+        CapsulePreviewHandler cph = new CapsulePreviewHandler();
+        // for the undeploy preview
+        MinecraftForge.EVENT_BUS.register(cph);
 
-	public static void registerItemRenderers(String modid) {
+    }
 
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_EMPTY,
-				new ModelResourceLocation(modid + ":capsule_empty", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ACTIVATED,
-				new ModelResourceLocation(modid + ":capsule_activated", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_LINKED,
-				new ModelResourceLocation(modid + ":capsule_linked", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_DEPLOYED,
-				new ModelResourceLocation(modid + ":capsule_deployed", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_EMPTY_ACTIVATED,
-				new ModelResourceLocation(modid + ":capsule_empty_activated", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE,
-				new ModelResourceLocation(modid + ":capsule_one_use", "inventory"));
-		Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE_ACTIVATED,
-				new ModelResourceLocation(modid + ":capsule_one_use_activated", "inventory"));
+    private void registerBlockRenderer() {
+        ItemModelMesher mesher = Minecraft.getMinecraft().getRenderItem().getItemModelMesher();
+        mesher.register(Item.getItemFromBlock(CapsuleBlocksRegistrer.blockCapsuleMarker), 0,
+                new ModelResourceLocation(Main.MODID + ":capsulemarker", "inventory"));
+        ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCapture.class, new CaptureTESR());
+    }
 
-		Minecraft.getMinecraft().getItemColors().registerItemColorHandler(new IItemColor() {
-			public int getColorFromItemstack(ItemStack stack, int tintIndex) {
-				if (stack.getItem() instanceof CapsuleItem) {
-					return ((CapsuleItem) stack.getItem()).getColorFromItemstack(stack, tintIndex);
-				}
-				return 0xFFFFFF;
-			}
-		}, CapsuleItemsRegistrer.capsule);
-	}
+    public void postInit(FMLPostInitializationEvent event) {
+        super.postInit(event);
+    }
+
+    public void openGuiScreen(EntityPlayer playerIn) {
+        capsule.gui.LabelGui screen = new capsule.gui.LabelGui(playerIn);
+        Minecraft.getMinecraft().displayGuiScreen(screen);
+    }
 
 }

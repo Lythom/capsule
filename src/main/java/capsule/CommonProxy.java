@@ -20,57 +20,57 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CommonProxy {
-	
-	protected static final Logger LOGGER = LogManager.getLogger(CommonProxy.class);
 
-	public static SimpleNetworkWrapper simpleNetworkWrapper;
-	public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
+    protected static final Logger LOGGER = LogManager.getLogger(CommonProxy.class);
 
-	public void preInit(FMLPreInitializationEvent event) {
-		Configuration config = new Configuration(event.getSuggestedConfigurationFile());
-		Config.readConfig(config);
+    public static SimpleNetworkWrapper simpleNetworkWrapper;
+    public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
-		Enchantments.initEnchantments();
-		CapsuleItemsRegistrer.createItems(Main.MODID);
-		CapsuleBlocksRegistrer.createBlocks(Main.MODID);
+    public void preInit(FMLPreInitializationEvent event) {
+        Configuration config = new Configuration(event.getSuggestedConfigurationFile());
+        Config.readConfig(config);
 
-		// network stuff
-		simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
-		// client ask server to edit capsule label
-		simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerMessageHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
-		// client ask server data needed to preview a deploy
-		simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
-		// client ask server to throw item to a specific position
-		simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
-		// server sends to client the data needed to preview a deploy
-		simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
-	}
+        Enchantments.initEnchantments();
+        CapsuleItemsRegistrer.createItems(Main.MODID);
+        CapsuleBlocksRegistrer.createBlocks(Main.MODID);
 
-	public void init(FMLInitializationEvent event) {
-		
-		MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
-	}
+        // network stuff
+        simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
+        // client ask server to edit capsule label
+        simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerMessageHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        // client ask server data needed to preview a deploy
+        simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        // client ask server to throw item to a specific position
+        simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        // server sends to client the data needed to preview a deploy
+        simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
+    }
 
-	public void postInit(FMLPostInitializationEvent event) {
-		CapsuleItemsRegistrer.registerRecipes();
-		CapsuleBlocksRegistrer.registerRecipes();
+    public void init(FMLInitializationEvent event) {
 
-		Config.config.save();
-		if (Config.config.hasChanged()) {
-			Config.config.save();
-		}
-		
-		CapsuleLootTableHook lootTableHook = new CapsuleLootTableHook();
-		MinecraftForge.EVENT_BUS.register(lootTableHook);
+        MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
+    }
 
-	}
+    public void postInit(FMLPostInitializationEvent event) {
+        CapsuleItemsRegistrer.registerRecipes();
+        CapsuleBlocksRegistrer.registerRecipes();
 
-	public void serverStarting(FMLServerStartingEvent e) {
-		e.registerServerCommand(new CapsuleCommand());
-		StructureSaver.loadLootList(e.getServer());
-	}
+        Config.config.save();
+        if (Config.config.hasChanged()) {
+            Config.config.save();
+        }
 
-	public void openGuiScreen(EntityPlayer playerIn) {
+        CapsuleLootTableHook lootTableHook = new CapsuleLootTableHook();
+        MinecraftForge.EVENT_BUS.register(lootTableHook);
 
-	}
+    }
+
+    public void serverStarting(FMLServerStartingEvent e) {
+        e.registerServerCommand(new CapsuleCommand());
+        StructureSaver.loadLootList(e.getServer());
+    }
+
+    public void openGuiScreen(EntityPlayer playerIn) {
+
+    }
 }

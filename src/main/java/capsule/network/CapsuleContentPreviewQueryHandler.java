@@ -29,64 +29,63 @@ import java.util.List;
  * Date: 15/01/2015
  */
 public class CapsuleContentPreviewQueryHandler
-		implements IMessageHandler<CapsuleContentPreviewQueryToServer, CapsuleContentPreviewAnswerToClient> {
+        implements IMessageHandler<CapsuleContentPreviewQueryToServer, CapsuleContentPreviewAnswerToClient> {
 
-	/**
-	 * Called when a message is received of the appropriate type. CALLED BY THE
-	 * NETWORK THREAD
-	 * 
-	 * @param message
-	 *            The message
-	 */
-	public CapsuleContentPreviewAnswerToClient onMessage(final CapsuleContentPreviewQueryToServer message,
-			MessageContext ctx) {
-		if (ctx.side != Side.SERVER) {
-			System.err.println("AskCapsuleContentPreviewMessageToServer received on wrong side:" + ctx.side);
-			return null;
-		}
-		if (!message.isMessageValid()) {
-			System.err.println("AskCapsuleContentPreviewMessageToServer was invalid" + message.toString());
-			return null;
-		}
+    /**
+     * Called when a message is received of the appropriate type. CALLED BY THE
+     * NETWORK THREAD
+     *
+     * @param message The message
+     */
+    public CapsuleContentPreviewAnswerToClient onMessage(final CapsuleContentPreviewQueryToServer message,
+                                                         MessageContext ctx) {
+        if (ctx.side != Side.SERVER) {
+            System.err.println("AskCapsuleContentPreviewMessageToServer received on wrong side:" + ctx.side);
+            return null;
+        }
+        if (!message.isMessageValid()) {
+            System.err.println("AskCapsuleContentPreviewMessageToServer was invalid" + message.toString());
+            return null;
+        }
 
-		// we know for sure that this handler is only used on the server side,
-		// so it is ok to assume
-		// that the ctx handler is a serverhandler, and that WorldServer exists.
-		// Packets received on the client side must be handled differently! See
-		// MessageHandlerOnClient
-		final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
-		if (sendingPlayer == null) {
-			System.err.println("EntityPlayerMP was null when LabelEditedMessageToServer was received");
-			return null;
-		}
+        // we know for sure that this handler is only used on the server side,
+        // so it is ok to assume
+        // that the ctx handler is a serverhandler, and that WorldServer exists.
+        // Packets received on the client side must be handled differently! See
+        // MessageHandlerOnClient
+        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
+        if (sendingPlayer == null) {
+            System.err.println("EntityPlayerMP was null when LabelEditedMessageToServer was received");
+            return null;
+        }
 
-		// read the content of the template and send it back to the client
-		ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-		if(CapsuleItem.getStructureName(heldItem) == null || !(heldItem.getItem() instanceof CapsuleItem)){
-			return null;
-		}
-		
-		WorldServer serverworld = sendingPlayer.getServerWorld();
-		Pair<CapsuleTemplateManager,CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
-		CapsuleTemplate template = templatepair.getRight();
-		
-		if(template != null){
-			List<Template.BlockInfo> blocksInfos = template.blocks;
-			List<BlockPos> blockspos = new ArrayList<BlockPos>();
-			for (Template.BlockInfo blockInfo: blocksInfos) {
-				if(blockInfo.blockState != Blocks.AIR.getDefaultState()){
-					blockspos.add(blockInfo.pos);
-				}
-			}
-			
-			return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
-			
-		} else {
-			String structureName = sendingPlayer.getHeldItemMainhand().getTagCompound().getString("structureName");
-			sendingPlayer.addChatMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
-		}
-		
-		return null;
-		
-	}
+        // read the content of the template and send it back to the client
+        ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+        if (CapsuleItem.getStructureName(heldItem) == null || !(heldItem.getItem() instanceof CapsuleItem)) {
+            return null;
+        }
+
+        WorldServer serverworld = sendingPlayer.getServerWorld();
+        Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
+        CapsuleTemplate template = templatepair.getRight();
+
+        if (template != null) {
+            List<Template.BlockInfo> blocksInfos = template.blocks;
+            List<BlockPos> blockspos = new ArrayList<BlockPos>();
+            for (Template.BlockInfo blockInfo : blocksInfos) {
+                if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {
+                    blockspos.add(blockInfo.pos);
+                }
+            }
+
+            return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
+
+        } else {
+            String structureName = sendingPlayer.getHeldItemMainhand().getTagCompound().getString("structureName");
+            sendingPlayer.addChatMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
+        }
+
+        return null;
+
+    }
 }
