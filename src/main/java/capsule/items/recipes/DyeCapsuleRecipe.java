@@ -1,11 +1,8 @@
 package capsule.items.recipes;
 
-import java.util.ArrayList;
-
-import com.google.common.collect.Lists;
-
 import capsule.Helpers;
 import capsule.items.CapsuleItem;
+import com.google.common.collect.Lists;
 import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
@@ -13,6 +10,8 @@ import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.World;
+
+import java.util.ArrayList;
 
 public class DyeCapsuleRecipe implements IRecipe
 {

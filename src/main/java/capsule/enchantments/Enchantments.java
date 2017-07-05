@@ -1,9 +1,8 @@
 package capsule.enchantments;
 
-import com.google.common.base.Predicate;
-
 import capsule.Config;
 import capsule.Main;
+import com.google.common.base.Predicate;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -11,7 +10,6 @@ import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class Enchantments {

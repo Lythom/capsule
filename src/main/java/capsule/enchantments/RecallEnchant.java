@@ -1,7 +1,5 @@
 package capsule.enchantments;
 
-import java.util.List;
-
 import capsule.items.CapsuleItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
@@ -15,6 +13,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.util.List;
 
 public class RecallEnchant extends Enchantment {
 

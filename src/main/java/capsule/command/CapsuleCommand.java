@@ -3,17 +3,6 @@
  */
 package capsule.command;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-
-import com.google.common.base.Joiner;
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.google.common.base.Strings;
-
 import capsule.Config;
 import capsule.Helpers;
 import capsule.StructureSaver;
@@ -22,13 +11,11 @@ import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.PlayerNotFoundException;
-import net.minecraft.command.WrongUsageException;
+import net.minecraft.command.*;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -48,6 +35,13 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraft.world.storage.loot.LootContext;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author Lythom

@@ -3,23 +3,21 @@
  */
 package capsule.loot;
 
-import java.util.Collection;
-import java.util.Random;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootEntry;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 import net.minecraft.world.storage.loot.conditions.LootConditionManager;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Collection;
+import java.util.Random;
 
 /**
  * @author Lythom

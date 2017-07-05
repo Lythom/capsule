@@ -1,7 +1,5 @@
 package capsule.items;
 
-import static net.minecraftforge.oredict.RecipeSorter.Category.SHAPELESS;
-
 import capsule.Config;
 import capsule.Main;
 import capsule.items.recipes.ClearCapsuleRecipe;
@@ -14,9 +12,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagInt;
-import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.oredict.RecipeSorter;
+
+import static net.minecraftforge.oredict.RecipeSorter.Category.SHAPELESS;
 
 public class CapsuleItemsRegistrer {
 
