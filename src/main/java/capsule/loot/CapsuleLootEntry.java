@@ -1,6 +1,3 @@
-/**
- *
- */
 package capsule.loot;
 
 import capsule.Config;
@@ -37,9 +34,9 @@ public class CapsuleLootEntry extends LootEntry {
      * @param conditionsIn
      * @param entryName
      */
-    protected CapsuleLootEntry(String path, int weightIn, int qualityIn, LootCondition[] conditionsIn, String entryName) {
+    protected CapsuleLootEntry(String templatesPath, int weightIn, int qualityIn, LootCondition[] conditionsIn, String entryName) {
         super(weightIn, qualityIn, conditionsIn, entryName);
-        this.templatesPath = path;
+        this.templatesPath = templatesPath;
     }
 
     public static int getRandomColor() {
