@@ -20,10 +20,10 @@ import java.util.ArrayList;
 public class Helpers {
 
     public static BlockPos findBottomBlock(EntityItem entityItem) {
-        return findBottomBlock(entityItem.getEntityWorld(), entityItem.posX, entityItem.posY, entityItem.posZ);
+        return findBottomBlock(entityItem.posX, entityItem.posY, entityItem.posZ);
     }
 
-    public static BlockPos findBottomBlock(World world, double x, double y, double z) {
+    public static BlockPos findBottomBlock(double x, double y, double z) {
 
         Iterable<BlockPos> blockPoss = BlockPos.getAllInBox(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1));
         BlockPos closest = null;
@@ -78,6 +78,7 @@ public class Helpers {
     /**
      * Return whether the specified armor has a color.
      */
+    @SuppressWarnings("ConstantConditions")
     public static boolean hasColor(ItemStack stack) {
         if (!stack.hasTagCompound()) return false;
         if (!stack.getTagCompound().hasKey("display", 10)) return false;
@@ -101,20 +102,6 @@ public class Helpers {
     }
 
     /**
-     * Remove the color from the specified ItemStack.
-     */
-    public static void removeColor(ItemStack stack) {
-        NBTTagCompound nbttagcompound = stack.getTagCompound();
-
-        if (nbttagcompound != null) {
-            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-            if (nbttagcompound1.hasKey("color")) {
-                nbttagcompound1.removeTag("color");
-            }
-        }
-    }
-
-    /**
      * Sets the color of the specified ItemStack
      */
     public static void setColor(ItemStack stack, int color) {
@@ -133,26 +120,8 @@ public class Helpers {
         nbttagcompound1.setInteger("color", color);
     }
 
-    public static int getStoredEnchantmentLevel(int enchID, ItemStack stack) {
-        if (stack == null || !(stack.getItem() instanceof ItemEnchantedBook)) {
-            return 0;
-        } else {
-            NBTTagList nbttaglist = ((ItemEnchantedBook) stack.getItem()).getEnchantments(stack);
-            for (int j = 0; j < nbttaglist.tagCount(); ++j) {
-                short short1 = nbttaglist.getCompoundTagAt(j).getShort("id");
-                short short2 = nbttaglist.getCompoundTagAt(j).getShort("lvl");
-
-                if (short1 == enchID) {
-                    return short2;
-                }
-            }
-
-            return 0;
-        }
-    }
-
-    public static Block[] deserializeBlockArray(String[] blockIds) throws NumberInvalidException {
-        ArrayList<Block> states = new ArrayList<Block>();
+    public static Block[] deserializeBlockArray(String[] blockIds) {
+        ArrayList<Block> states = new ArrayList<>();
         for (String blockId : blockIds) {
             Block b = Block.getBlockFromName(blockId);
             if (b != null) {
@@ -169,7 +138,7 @@ public class Helpers {
 
         String[] blocksNames = new String[states.length];
         for (int i = 0; i < states.length; i++) {
-            blocksNames[i] = ((ResourceLocation) Block.REGISTRY.getNameForObject(states[i])).toString();
+            blocksNames[i] = Block.REGISTRY.getNameForObject(states[i]).toString();
         }
         return blocksNames;
 

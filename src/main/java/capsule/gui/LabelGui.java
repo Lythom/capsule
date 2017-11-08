@@ -1,6 +1,3 @@
-/**
- *
- */
 package capsule.gui;
 
 import capsule.CommonProxy;
@@ -20,9 +17,10 @@ import java.io.IOException;
  * @author Lythom
  */
 public class LabelGui extends GuiScreen {
+    public static int GUI_WIDTH = 250;
+    public static int GUI_HEIGHT = 20;
+
     private GuiTextField textInput;
-    private int guiWidth = 250;
-    private int guiHeight = 20;
     private EntityPlayer player;
     private GuiButton buttonDone;
 
@@ -35,7 +33,7 @@ public class LabelGui extends GuiScreen {
         buttonList.clear();
         Keyboard.enableRepeatEvents(true);
 
-        textInput = new GuiTextField(0, this.fontRendererObj, this.width / 2 - guiWidth / 2, this.height / 2 - guiHeight / 2, guiWidth, guiHeight);
+        textInput = new GuiTextField(0, this.fontRendererObj, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT);
         textInput.setMaxStringLength(32);
         textInput.setFocused(true);
 
@@ -47,6 +45,7 @@ public class LabelGui extends GuiScreen {
         String label = "";
         ItemStack itemStack = this.getItemStack();
         if (itemStack != null && itemStack.hasTagCompound()) {
+            //noinspection ConstantConditions
             label = itemStack.getTagCompound().getString("label");
         }
         textInput.setText(label);
@@ -78,7 +77,7 @@ public class LabelGui extends GuiScreen {
     }
 
     private void closeGui() {
-        this.mc.displayGuiScreen((GuiScreen) null);
+        this.mc.displayGuiScreen(null);
         if (this.mc.currentScreen == null) {
             this.mc.setIngameFocus();
         }
@@ -118,18 +117,10 @@ public class LabelGui extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 
-        // int guix =(width - guiWidth) /2 ;
-        // int guiy =(height - guiHeight) /2;
-
         GL11.glColor4f(1, 1, 1, 1);
         if (this.mc != null) {
             drawDefaultBackground();
         }
-
-        // mc.renderEngine.bindTexture(new ResourceLocation(Main.MODID,
-        // "textures/gui/label.png"));
-
-        // drawTexturedModalRect(guix, guiy, 0, 0, guiWidth, guiHeight);
 
         if (this.textInput != null) {
             this.textInput.drawTextBox();

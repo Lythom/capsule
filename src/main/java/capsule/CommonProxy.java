@@ -21,8 +21,6 @@ import org.apache.logging.log4j.Logger;
 
 public class CommonProxy {
 
-    protected static final Logger LOGGER = LogManager.getLogger(CommonProxy.class);
-
     public static SimpleNetworkWrapper simpleNetworkWrapper;
     public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
@@ -31,8 +29,8 @@ public class CommonProxy {
         Config.readConfig(config);
 
         Enchantments.initEnchantments();
-        CapsuleItemsRegistrer.createItems(Main.MODID);
-        CapsuleBlocksRegistrer.createBlocks(Main.MODID);
+        CapsuleItemsRegistrer.createItems();
+        CapsuleBlocksRegistrer.createBlocks();
 
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");

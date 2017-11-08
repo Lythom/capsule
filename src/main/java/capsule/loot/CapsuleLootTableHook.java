@@ -15,7 +15,9 @@ import java.util.List;
 
 public class CapsuleLootTableHook {
 
-    public static List<String> allowedTables = Arrays.asList(new String[]{
+    private static final int DEFAULT_WEIGHT = 3;
+
+    public static List<String> allowedTables = Arrays.asList(
             LootTableList.CHESTS_ABANDONED_MINESHAFT.toString(),
             LootTableList.CHESTS_DESERT_PYRAMID.toString(),
             LootTableList.CHESTS_END_CITY_TREASURE.toString(),
@@ -27,8 +29,9 @@ public class CapsuleLootTableHook {
             LootTableList.CHESTS_STRONGHOLD_LIBRARY.toString(),
             LootTableList.CHESTS_VILLAGE_BLACKSMITH.toString(),
             LootTableList.GAMEPLAY_FISHING_TREASURE.toString()
-    });
+    );
     public static LootPool capsulePool = null;
+
     public CapsuleLootTableHook() {
 
     }
@@ -43,7 +46,7 @@ public class CapsuleLootTableHook {
         if (capsulePool == null) {
             List<CapsuleLootEntry> entries = new ArrayList<>();
             for (String path : Config.lootTemplatesPaths) {
-                int weight = findConfiguredWeight(path, 3);
+                int weight = findConfiguredWeight(path);
                 entries.add(new CapsuleLootEntry(path, weight, 0, new LootCondition[0], "capsule:capsuleLootsEntry" + path.replace("/", "_")));
             }
 
@@ -60,8 +63,8 @@ public class CapsuleLootTableHook {
 
     }
 
-    public int findConfiguredWeight(String path, int defaultWeight) {
-        int weight = defaultWeight;
+    public int findConfiguredWeight(String path) {
+        int weight = DEFAULT_WEIGHT;
         if (Config.lootTemplatesData.containsKey(path)) {
             weight = Config.lootTemplatesData.get(path).weigth;
         }

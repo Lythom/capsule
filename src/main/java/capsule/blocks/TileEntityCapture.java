@@ -14,7 +14,7 @@ import java.util.List;
 
 public class TileEntityCapture extends TileEntity {
 
-    public static List<TileEntityCapture> instances = new ArrayList<TileEntityCapture>();
+    public static List<TileEntityCapture> instances = new ArrayList<>();
 
     public TileEntityCapture() {
         super();

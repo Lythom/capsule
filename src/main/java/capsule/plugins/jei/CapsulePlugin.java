@@ -4,7 +4,10 @@ import capsule.Config;
 import capsule.blocks.CapsuleBlocksRegistrer;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItemsRegistrer;
-import mezz.jei.api.*;
+import mezz.jei.api.BlankModPlugin;
+import mezz.jei.api.IModRegistry;
+import mezz.jei.api.ISubtypeRegistry;
+import mezz.jei.api.JEIPlugin;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -34,7 +37,7 @@ public class CapsulePlugin extends BlankModPlugin {
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
 
-        List<IRecipe> recipes = new ArrayList<IRecipe>();
+        List<IRecipe> recipes = new ArrayList<>();
         // upgrade
         ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
         ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + UPGRADE_STEP);

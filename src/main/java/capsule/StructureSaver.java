@@ -56,15 +56,13 @@ public class StructureSaver {
             }
 
             if (templateFolder.exists() && templateFolder.isDirectory()) {
-                File[] fileList = templateFolder.listFiles(new FilenameFilter() {
-                    public boolean accept(File p_accept_1_, String p_accept_2_) {
-                        return p_accept_2_.endsWith(".nbt");
+                File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt"));
+                data.files = new ArrayList<>();
+                if (fileList != null) {
+                    for (File templateFile : fileList) {
+                        if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
+                            data.files.add(templateFile.getName().replaceAll(".nbt", ""));
                     }
-                });
-                data.files = new ArrayList<String>();
-                for (File templateFile : fileList) {
-                    if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
-                        data.files.add(templateFile.getName().replaceAll(".nbt", ""));
                 }
             } else {
 
@@ -74,7 +72,7 @@ public class StructureSaver {
 
                     String[] fileNames = getResourceListing(StructureSaver.class, path);
 
-                    data.files = new ArrayList<String>();
+                    data.files = new ArrayList<>();
                     LOGGER.debug("Found " + fileNames.length + " files.");
                     for (String file : fileNames) {
                         LOGGER.debug("Found " + file);
@@ -112,15 +110,15 @@ public class StructureSaver {
         }
 
         if (dirURL == null) {
-			/*
-			 * In case of a jar file, we can't actually find a directory. Have
+            /*
+             * In case of a jar file, we can't actually find a directory. Have
 			 * to assume the same jar as clazz.
 			 */
             String me = clazz.getName().replace(".", "/") + ".class";
             dirURL = clazz.getClassLoader().getResource(me);
         }
 
-        if (dirURL.getProtocol().equals("jar")) {
+        else if (dirURL.getProtocol().equals("jar")) {
 			/* A JAR path */
             String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
             JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
@@ -128,7 +126,7 @@ public class StructureSaver {
             LOGGER.debug("Listing files in " + jarPath);
 
             Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-            Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+            Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
             while (entries.hasMoreElements()) {
                 String name = entries.nextElement().getName();
                 if (name.startsWith(path)) { //filter according to the path
@@ -146,7 +144,7 @@ public class StructureSaver {
                 final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
                 final BufferedReader br = new BufferedReader(isr);
 
-                Set<String> result = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+                Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
                 String filename = null;
                 while ((filename = br.readLine()) != null) {
                     result.add(filename);
@@ -180,7 +178,9 @@ public class StructureSaver {
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, position, new BlockPos(size, size, size), excludedPositions,
                 excluded, outCapturedEntities);
-        template.setAuthor(playerID);
+        if (playerID != null) {
+            template.setAuthor(playerID);
+        }
         boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         if (writingOK && !keepSource) {
             removeTransferedBlockFromWorld(transferedPositions, worldserver);
@@ -196,8 +196,7 @@ public class StructureSaver {
     }
 
     public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
-        if (worldserver == null || worldserver.getSaveHandler() == null || worldserver.getSaveHandler().getWorldDirectory() == null)
-            return null;
+        if (worldserver == null) return null;
 
         if (!CapsulesManagers.containsKey(worldserver)) {
             File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
@@ -249,7 +248,6 @@ public class StructureSaver {
 
         List<Template.BlockInfo> blocks = template.blocks;
         List<Template.EntityInfo> entities = template.entities;
-        if (entities == null || blocks == null) return false;
 
         blocks.clear();
         entities.clear();
@@ -262,20 +260,18 @@ public class StructureSaver {
                                  Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
 
 
-		/*TODO : fix case where world or thrower is not available (thrown by a dropper ?)
-		TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
-			reverse to initial situation ?
-		    continue and ignore crashing block ?*/
-
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
 
-        EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
+        EntityPlayer player = null;
+        if (thrower != null) {
+            player = playerWorld.getPlayerEntityByName(thrower);
+        }
 
         if (template != null) {
             int size = CapsuleItem.getSize(capsule);
             // check if the destination is valid : no unoverwritable block and no entities in the way.
-            CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk((ChunkPos) null).setReplacedBlock((Block) null).setIgnoreStructureBlock(false);
+            CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk(null).setReplacedBlock(null).setIgnoreStructureBlock(false);
             boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
 
             if (destValid) {
@@ -286,7 +282,14 @@ public class StructureSaver {
                     return true;
                 } catch (Exception err) {
                     LOGGER.error("Couldn't deploy the capsule", err);
-                    player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                    if (player != null) {
+                        player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                    }
+
+
+                    /* TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
+                        reverse to initial situation ?
+                        continue and ignore crashing block ?*/
 
                     // rollback
                     removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);

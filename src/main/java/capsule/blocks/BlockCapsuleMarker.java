@@ -1,6 +1,3 @@
-/**
- *
- */
 package capsule.blocks;
 
 import net.minecraft.block.BlockContainer;
@@ -18,8 +15,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import javax.annotation.Nonnull;
-
 public class BlockCapsuleMarker extends BlockContainer {
 
     /**
@@ -27,9 +22,6 @@ public class BlockCapsuleMarker extends BlockContainer {
      */
     public static final PropertyBool PROJECTING = PropertyBool.create("projecting");
 
-    /**
-     * @param materialIn
-     */
     public BlockCapsuleMarker(String unlocalizedName, Material materialIn) {
         super(materialIn);
         this.setDefaultState(this.blockState.getBaseState().withProperty(PROJECTING, Boolean.FALSE));

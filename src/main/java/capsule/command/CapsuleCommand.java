@@ -1,6 +1,3 @@
-/**
- *
- */
 package capsule.command;
 
 import capsule.Config;
@@ -105,19 +102,23 @@ public class CapsuleCommand extends CommandBase {
                     case "fromStructure":
                         try {
                             player = getCommandSenderAsPlayer(sender);
-                        } catch (PlayerNotFoundException e) {
+                        } catch (PlayerNotFoundException ignored) {
                         }
                         if (player != null) {
-                            return getListOfStringsMatchingLastWord(args, (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list());
+                            String[] structuresList = (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list();
+                            if (structuresList == null) return new ArrayList<>();
+                            return getListOfStringsMatchingLastWord(args, structuresList);
                         }
 
                     case "fromExistingReward":
                         try {
                             player = getCommandSenderAsPlayer(sender);
-                        } catch (PlayerNotFoundException e) {
+                        } catch (PlayerNotFoundException ignored) {
                         }
                         if (player != null) {
-                            return getListOfStringsMatchingLastWord(args, (new File(Config.rewardTemplatesPath)).list());
+                            String[] rewardsList = (new File(Config.rewardTemplatesPath)).list();
+                            if (rewardsList == null) return new ArrayList<>();
+                            return getListOfStringsMatchingLastWord(args, rewardsList);
                         }
                 }
         }
@@ -168,6 +169,7 @@ public class CapsuleCommand extends CommandBase {
 
                     String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getItemDamage();
                     if (heldItem.hasTagCompound()) {
+                        //noinspection ConstantConditions
                         command += " " + heldItem.getTagCompound().toString();
                     }
                     TextComponentString msg = new TextComponentString(command);
@@ -183,30 +185,31 @@ public class CapsuleCommand extends CommandBase {
             if (args.length != 1) {
                 throw new WrongUsageException(getCommandUsage(sender));
             }
-            if (player != null && !server.isDedicatedServer()) {
+            if (player != null) {
+                if (!server.isDedicatedServer()) {
+                    RayTraceResult rtc = Helpers.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks());
 
-                RayTraceResult rtc = Helpers.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks());
+                    if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
 
-                if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
+                        BlockPos position = rtc.getBlockPos();
+                        IBlockState state = player.getServerWorld().getBlockState(position);
+                        TileEntity tileentity = player.getServerWorld().getTileEntity(position);
 
-                    BlockPos position = rtc.getBlockPos();
-                    IBlockState state = player.getServerWorld().getBlockState(position);
-                    TileEntity tileentity = player.getServerWorld().getTileEntity(position);
+                        String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 " + state.getBlock().getMetaFromState(state);
+                        if (tileentity != null) {
+                            command += " {BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
+                        }
+                        TextComponentString msg = new TextComponentString(command);
+                        msg.getStyle()
+                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
+                        msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                    String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 " + state.getBlock().getMetaFromState(state);
-                    if (tileentity != null) {
-                        command += " {BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
+                        player.addChatMessage(msg);
+
                     }
-                    TextComponentString msg = new TextComponentString(command);
-                    msg.getStyle()
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
-                    msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
-
-                    player.addChatMessage(msg);
-
+                } else {
+                    player.addChatMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
                 }
-            } else {
-                player.addChatMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
             }
         }
 
@@ -218,11 +221,12 @@ public class CapsuleCommand extends CommandBase {
 
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
+                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 
                     if (args.length == 2) {
                         // set a new author
                         String author = args[1];
+                        //noinspection ConstantConditions
                         heldItem.getTagCompound().setString("author", args[1]);
                         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
                         CapsuleTemplate template = templatepair.getRight();
@@ -234,6 +238,7 @@ public class CapsuleCommand extends CommandBase {
 
                     } else {
                         // called with one parameter = remove author information
+                        //noinspection ConstantConditions
                         heldItem.getTagCompound().removeTag("author");
                         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
                         CapsuleTemplate template = templatepair.getRight();
@@ -297,8 +302,9 @@ public class CapsuleCommand extends CommandBase {
                 ItemStack heldItem = player.getHeldItemMainhand();
                 if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 
-                    String outputName = null;
+                    String outputName;
                     if (args.length == 1) {
+                        //noinspection ConstantConditions
                         outputName = heldItem.getTagCompound().getString("label");
                     } else {
                         outputName = args[1];

@@ -51,11 +51,7 @@ public class LabelEditedMessageToServerMessageHandler implements IMessageHandler
         //      this.theProfiler.startSection("jobs");
         //  In this case, the task is to call messageHandlerOnServer.processMessage(message, sendingPlayer)
         final WorldServer playerWorldServer = sendingPlayer.getServerWorld();
-        playerWorldServer.addScheduledTask(new Runnable() {
-            public void run() {
-                processMessage(message, sendingPlayer);
-            }
-        });
+        playerWorldServer.addScheduledTask(() -> processMessage(message, sendingPlayer));
 
         return null;
     }
@@ -64,7 +60,7 @@ public class LabelEditedMessageToServerMessageHandler implements IMessageHandler
     //   It spawns a random number of the given projectile at a position above the target location
     void processMessage(LabelEditedMessageToServer message, EntityPlayerMP sendingPlayer) {
         ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
-        if (serverStack.getItem() instanceof CapsuleItem) {
+        if (serverStack != null && serverStack.getItem() instanceof CapsuleItem) {
             // of the player didn't swap item during ui opening
             CapsuleItem.setLabel(serverStack, message.getLabel());
 
