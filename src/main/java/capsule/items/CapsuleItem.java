@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "ConstantConditions"})
 public class CapsuleItem extends Item {
 
     public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
@@ -70,7 +70,7 @@ public class CapsuleItem extends Item {
      * * long deployAt												// when thrown with preview, position to deploy the capsule to match preview
      * * arr ench:[0:{lvl:1s,id:101s}]
      *
-     * @param unlocalizedName
+     * @param unlocalizedName registry name
      */
     public CapsuleItem(String unlocalizedName) {
         super();
@@ -159,9 +159,6 @@ public class CapsuleItem extends Item {
 
     /**
      * The capsule capture size.
-     *
-     * @param itemStackIn
-     * @return
      */
     public static int getSize(ItemStack itemStackIn) {
         int size = 1;
@@ -274,6 +271,7 @@ public class CapsuleItem extends Item {
     }
 
     public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule) {
+        if (!capsule.hasTagCompound()) return;
         BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
         BlockPos centerDest = dest;
         double diffX = (centerDest.getX() + 0.5 - entityItem.posX);
@@ -290,13 +288,8 @@ public class CapsuleItem extends Item {
     /**
      * Throw an item and return the new EntityItem created. Simulated a drop
      * with stronger throw.
-     *
-     * @param itemStackIn
-     * @param playerIn
-     * @return
      */
     public static EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
-
         double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
         EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
         entityitem.setPickupDelay(20);// cannot be picked up before deployment goes Yay or Nay
@@ -311,7 +304,7 @@ public class CapsuleItem extends Item {
             double distance = playerIn.getPosition().distanceSq(new BlockPos(destination.getX(), playerIn.posY, destination.getZ()));
             double pitch = (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI));
             if (pitch < 0) pitch = 0.08;
-            entityitem.motionY = (double) (pitch * 1.1 + (Math.min(distance / (18 * 18), 0.8)) + 0.1);
+            entityitem.motionY = pitch * 1.1 + (Math.min(distance / (18 * 18), 0.8)) + 0.1;
 
         } else {
             float f = 0.5F;
@@ -468,7 +461,7 @@ public class CapsuleItem extends Item {
     public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
 
         if (hand == EnumHand.OFF_HAND) {
-            return new ActionResult<ItemStack>(EnumActionResult.FAIL, itemStackIn);
+            return new ActionResult<>(EnumActionResult.FAIL, itemStackIn);
         }
 
         if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
@@ -506,8 +499,8 @@ public class CapsuleItem extends Item {
 
         if (worldIn.isRemote) {
             // client side, if is going to get activated, ask for server preview
-            if (itemStackIn.getItemDamage() == STATE_LINKED
-                    || itemStackIn.getItemDamage() == STATE_ONE_USE) {
+            if (itemStackIn.hasTagCompound()
+                    && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
                 BlockPos anchor = Minecraft.getMinecraft().objectMouseOver.getBlockPos();
                 if (anchor != null) {
                     CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(itemStackIn.getTagCompound().getString("structureName")));
@@ -522,7 +515,7 @@ public class CapsuleItem extends Item {
             }
         }
 
-        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemStackIn);
+        return new ActionResult<>(EnumActionResult.SUCCESS, itemStackIn);
     }
 
     private boolean isActivated(ItemStack itemStackIn) {
@@ -559,7 +552,10 @@ public class CapsuleItem extends Item {
         if (capsule == null) return false;
 
         // Deploying capsule content on collision with a block
-        if (!entityItem.worldObj.isRemote && entityItem.isCollided && this.isActivated(capsule)) {
+        if (!entityItem.worldObj.isRemote
+                && entityItem.isCollided
+                && entityItem.ticksExisted > 2 // avoid immediate collision
+                && this.isActivated(capsule)) {
 
             final int size = getSize(capsule);
             final int extendLength = (size - 1) / 2;
@@ -571,7 +567,7 @@ public class CapsuleItem extends Item {
 
                 // DEPLOY
                 // is linked, deploy
-                boolean deployed = deployCapsule(entityItem, capsule, size, extendLength, itemWorld);
+                boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
                 if (deployed && isOneUse(capsule)) {
                     entityItem.setDead();
                 }
@@ -589,7 +585,11 @@ public class CapsuleItem extends Item {
         }
 
         // throwing the capsule toward the right place
-        if (!entityItem.worldObj.isRemote && !entityItem.isCollided && this.isActivated(capsule) && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")) {
+        if (!entityItem.worldObj.isRemote
+                && !entityItem.isCollided
+                && this.isActivated(capsule)
+                && capsule.hasTagCompound()
+                && capsule.getTagCompound().hasKey("deployAt")) {
             moveEntityItemToDeployPos(entityItem, capsule);
 
         }
@@ -599,12 +599,6 @@ public class CapsuleItem extends Item {
 
     /**
      * Capture the content around the capsule entityItem, update capsule state.
-     *
-     * @param entityItem
-     * @param capsule
-     * @param size
-     * @param extendLength
-     * @param playerWorld
      */
     private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 
@@ -625,7 +619,7 @@ public class CapsuleItem extends Item {
 
             // register the link in the capsule
             setState(capsule, STATE_LINKED);
-            capsule.getTagCompound().setString("structureName", capsuleID);
+            CapsuleItem.setStructureName(capsule, capsuleID);
             didCapture = true;
 
         } else {
@@ -646,7 +640,7 @@ public class CapsuleItem extends Item {
     }
 
     private Map<BlockPos, Block> getOccupiedSourcePos(ItemStack capsule) {
-        Map<BlockPos, Block> occupiedSources = new HashMap<BlockPos, Block>();
+        Map<BlockPos, Block> occupiedSources = new HashMap<>();
         if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("occupiedSpawnPositions")) {
             NBTTagList list = capsule.getTagCompound().getTagList("occupiedSpawnPositions", 10);
             for (int i = 0; i < list.tagCount(); i++) {
@@ -658,7 +652,7 @@ public class CapsuleItem extends Item {
     }
 
     private Map<BlockPos, Block> setOccupiedSourcePos(ItemStack capsule, Map<BlockPos, Block> occupiedSpawnPositions) {
-        Map<BlockPos, Block> occupiedSources = new HashMap<BlockPos, Block>();
+        Map<BlockPos, Block> occupiedSources = new HashMap<>();
         NBTTagList entries = new NBTTagList();
         if (occupiedSpawnPositions != null) {
             for (Entry<BlockPos, Block> entry : occupiedSpawnPositions.entrySet()) {
@@ -683,19 +677,15 @@ public class CapsuleItem extends Item {
         } else {
             setState(capsule, STATE_EMPTY);
         }
-        capsule.getTagCompound().removeTag("activetimer");
+        if (capsule.hasTagCompound()) {
+            capsule.getTagCompound().removeTag("activetimer");
+        }
     }
 
     /**
      * Deploy the capsule at the entityItem position. update capsule state
-     *
-     * @param entityItem
-     * @param capsule
-     * @param size
-     * @param extendLength
-     * @param playerWorld
      */
-    private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
+    private boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int extendLength, WorldServer playerWorld) {
         // specify target to capture
 
         boolean didSpawn = false;
@@ -712,8 +702,8 @@ public class CapsuleItem extends Item {
         String structureName = capsule.getTagCompound().getString("structureName");
 
         // do the transportation
-        Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<BlockPos, Block>();
-        List<String> outEntityBlocking = new ArrayList<String>();
+        Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<>();
+        List<String> outEntityBlocking = new ArrayList<>();
 
         boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
 
@@ -742,7 +732,6 @@ public class CapsuleItem extends Item {
 
     private void resentToCapsule(final ItemStack itemStackIn, final EntityPlayer playerIn) {
         // store again
-
         Integer dimensionId = getDimension(itemStackIn);
         MinecraftServer server = playerIn.getServer();
         final WorldServer capsuleWorld = dimensionId != null ? server.worldServerForDimension(dimensionId) : (WorldServer) playerIn.getEntityWorld();
@@ -760,11 +749,8 @@ public class CapsuleItem extends Item {
             itemStackIn.getTagCompound().removeTag("spawnPosition");
             itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
         } else {
-            if (playerIn != null) {
-                playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-            }
+            playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
         }
-
     }
 
     public List<Block> getExcludedBlocs(ItemStack stack) {
@@ -799,11 +785,15 @@ public class CapsuleItem extends Item {
     /**
      * Set the NBT tag "key" to be a BlockPos coordinates.
      *
-     * @param key
-     * @param capsule
-     * @param dest
+     * @param key     nbt tag key name
+     * @param capsule capsule stack
+     * @param dest    position to save as nbt into the capsule stack
+     * @param dimID   dimension where the position is.
      */
     private void savePosition(String key, ItemStack capsule, BlockPos dest, int dimID) {
+        if (!capsule.hasTagCompound()) {
+            capsule.setTagCompound(new NBTTagCompound());
+        }
         NBTTagCompound pos = new NBTTagCompound();
         pos.setInteger("x", dest.getX());
         pos.setInteger("y", dest.getY());
@@ -814,6 +804,7 @@ public class CapsuleItem extends Item {
 
     public void clearCapsule(ItemStack capsule) {
         setState(capsule, STATE_EMPTY);
+        if (!capsule.hasTagCompound()) return;
         capsule.getTagCompound().removeTag("structureName");
     }
 

@@ -66,7 +66,7 @@ public class RecallEnchant extends Enchantment {
 
         WorldServer world = (WorldServer) wte.world;
         @SuppressWarnings("unchecked")
-        List<EntityItem> recallEntities = world.getEntities(EntityItem.class, Enchantments.hasRecallEnchant);
+        List<EntityItem> recallEntities = world.<EntityItem>getEntities(EntityItem.class, Enchantments.hasRecallEnchant::test);
         for (EntityItem entity : recallEntities) {
             if (entity.getThrower() != null && (entity.isCollided || entity.isInLava() || entity.isInWater())) {
                 // give the item a last tick
