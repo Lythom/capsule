@@ -61,7 +61,7 @@ public class CapsuleContentPreviewQueryHandler
 
         // read the content of the template and send it back to the client
         ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-        if (CapsuleItem.getStructureName(heldItem) == null || !(heldItem.getItem() instanceof CapsuleItem)) {
+        if (heldItem == null || CapsuleItem.getStructureName(heldItem) == null || !(heldItem.getItem() instanceof CapsuleItem)) {
             return null;
         }
 
@@ -71,7 +71,7 @@ public class CapsuleContentPreviewQueryHandler
 
         if (template != null) {
             List<Template.BlockInfo> blocksInfos = template.blocks;
-            List<BlockPos> blockspos = new ArrayList<BlockPos>();
+            List<BlockPos> blockspos = new ArrayList<>();
             for (Template.BlockInfo blockInfo : blocksInfos) {
                 if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {
                     blockspos.add(blockInfo.pos);
@@ -80,8 +80,9 @@ public class CapsuleContentPreviewQueryHandler
 
             return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 
-        } else {
-            String structureName = sendingPlayer.getHeldItemMainhand().getTagCompound().getString("structureName");
+        } else if (heldItem.hasTagCompound()){
+            //noinspection ConstantConditions
+            String structureName = heldItem.getTagCompound().getString("structureName");
             sendingPlayer.addChatMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
         }
 

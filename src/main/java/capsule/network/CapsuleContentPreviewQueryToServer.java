@@ -24,7 +24,7 @@ public class CapsuleContentPreviewQueryToServer implements IMessage {
      * Called by the network code once it has received the message bytes over
      * the network. Used to read the ByteBuf contents into your member variables
      *
-     * @param buf
+     * @param buf buffer content to read from
      */
     @Override
     public void fromBytes(ByteBuf buf) {
@@ -46,7 +46,7 @@ public class CapsuleContentPreviewQueryToServer implements IMessage {
      * member variables into the ByteBuf, ready for transmission over the
      * network.
      *
-     * @param buf
+     * @param buf buffer content to write into
      */
     @Override
     public void toBytes(ByteBuf buf) {

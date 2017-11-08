@@ -11,10 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -41,13 +39,11 @@ public class ClientProxy extends CommonProxy {
         Minecraft.getMinecraft().getRenderItem().getItemModelMesher().register(CapsuleItemsRegistrer.capsule, CapsuleItem.STATE_ONE_USE_ACTIVATED,
                 new ModelResourceLocation(modid + ":capsule_one_use_activated", "inventory"));
 
-        Minecraft.getMinecraft().getItemColors().registerItemColorHandler(new IItemColor() {
-            public int getColorFromItemstack(ItemStack stack, int tintIndex) {
-                if (stack.getItem() instanceof CapsuleItem) {
-                    return ((CapsuleItem) stack.getItem()).getColorFromItemstack(stack, tintIndex);
-                }
-                return 0xFFFFFF;
+        Minecraft.getMinecraft().getItemColors().registerItemColorHandler((stack, tintIndex) -> {
+            if (stack.getItem() instanceof CapsuleItem) {
+                return ((CapsuleItem) stack.getItem()).getColorFromItemstack(stack, tintIndex);
             }
+            return 0xFFFFFF;
         }, CapsuleItemsRegistrer.capsule);
     }
 

@@ -3,7 +3,6 @@ package capsule.structure;
 import net.minecraft.block.Block;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
@@ -57,21 +56,6 @@ public class CapsulePlacementSettings extends PlacementSettings {
         return this;
     }
 
-    public CapsulePlacementSettings func_189949_a(@Nullable Long p_189949_1_) {
-        this.field_189953_j = p_189949_1_;
-        return this;
-    }
-
-    public CapsulePlacementSettings func_189950_a(@Nullable Random p_189950_1_) {
-        this.field_189952_i = p_189950_1_;
-        return this;
-    }
-
-    public CapsulePlacementSettings func_189946_a(float p_189946_1_) {
-        this.field_189951_h = p_189946_1_;
-        return this;
-    }
-
     public Mirror getMirror() {
         return this.mirror;
     }
@@ -88,24 +72,6 @@ public class CapsulePlacementSettings extends PlacementSettings {
     public CapsulePlacementSettings setRotation(Rotation rotationIn) {
         this.rotation = rotationIn;
         return this;
-    }
-
-    public Random func_189947_a(@Nullable BlockPos p_189947_1_) {
-        if (this.field_189952_i != null) {
-            return this.field_189952_i;
-        } else if (this.field_189953_j != null) {
-            return this.field_189953_j.longValue() == 0L ? new Random(System.currentTimeMillis()) : new Random(this.field_189953_j.longValue());
-        } else if (p_189947_1_ == null) {
-            return new Random(System.currentTimeMillis());
-        } else {
-            int i = p_189947_1_.getX();
-            int j = p_189947_1_.getZ();
-            return new Random((long) (i * i * 4987142 + i * 5947611) + (long) (j * j) * 4392871L + (long) (j * 389711) ^ 987234911L);
-        }
-    }
-
-    public float func_189948_f() {
-        return this.field_189951_h;
     }
 
     public boolean getIgnoreEntities() {

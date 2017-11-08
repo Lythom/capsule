@@ -33,7 +33,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
      * Called by the network code once it has received the message bytes over
      * the network. Used to read the ByteBuf contents into your member variables
      *
-     * @param buf
+     * @param buf buffer content to read from
      */
     @Override
     public void fromBytes(ByteBuf buf) {
@@ -43,7 +43,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
             // for NBT tags ByteBufUtils.readTag();
             // for Strings: ByteBufUtils.readUTF8String();
             int size = buf.readShort();
-            this.blockPositions = new ArrayList<BlockPos>(size);
+            this.blockPositions = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 this.blockPositions.add(BlockPos.fromLong(buf.readLong()));
             }
@@ -60,7 +60,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
      * member variables into the ByteBuf, ready for transmission over the
      * network.
      *
-     * @param buf
+     * @param buf buffer content to write into
      */
     @Override
     public void toBytes(ByteBuf buf) {

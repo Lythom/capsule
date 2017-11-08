@@ -28,13 +28,11 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 public class CapsulePreviewHandler {
-    public static int ERROR_COLOR = 0xFC1216;
-    public static Map<String, List<BlockPos>> currentPreview = new HashMap<String, List<BlockPos>>();
+    public static final Map<String, List<BlockPos>> currentPreview = new HashMap<>();
     private static AxisAlignedBB boundingBox1 = new AxisAlignedBB(0, 0, 0, 1, 1, 1);
     private static AxisAlignedBB extboundingBox1 = new AxisAlignedBB(0, 0, 0, 1, 1, 1);
     private int lastSize = 0;
@@ -110,7 +108,8 @@ public class CapsulePreviewHandler {
             // it's an empty capsule : show capture zones
             if (heldItemItem instanceof CapsuleItem && (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY || heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
                 CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
-                if (heldItem.getTagCompound().hasKey("size")) {
+                //noinspection ConstantConditions
+                if (heldItem.hasTagCompound() && heldItem.getTagCompound().hasKey("size")) {
                     setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), capsule.getColorFromItemstack(heldItem, 0), player.worldObj);
                     return true;
                 }
@@ -140,72 +139,75 @@ public class CapsulePreviewHandler {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void tryPreviewDeploy(EntityPlayerSP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
-        if (heldItemMainhand != null) {
-            if (heldItemMainhand.getItem() instanceof CapsuleItem
-                    && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)) {
+        if (heldItemMainhand != null
+                && heldItemMainhand.getItem() instanceof CapsuleItem
+                && heldItemMainhand.hasTagCompound()
+                && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)
+                ) {
 
-                RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
-                if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    BlockPos anchorPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec());
+            RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
+            if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
+                BlockPos anchorPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec());
 
-                    String structureName = heldItemMainhand.getTagCompound().getString("structureName");
+                String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 
-                    synchronized (CapsulePreviewHandler.currentPreview) {
-                        if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
+                synchronized (CapsulePreviewHandler.currentPreview) {
+                    if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
 
-                            int extendSize = (getSize(heldItemMainhand) - 1) / 2;
-                            List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-                            if (blockspos.isEmpty()) {
-                                blockspos.add(new BlockPos(extendSize, 0, extendSize));
-                            }
+                        int extendSize = (getSize(heldItemMainhand) - 1) / 2;
+                        List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+                        if (blockspos.isEmpty()) {
+                            blockspos.add(new BlockPos(extendSize, 0, extendSize));
+                        }
+
+                        GlStateManager.pushMatrix();
+
+                        //GlStateManager.enableBlend();
+                        //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                        GlStateManager.disableLighting();
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
+                        for (BlockPos blockpos : blockspos) {
+
+                            BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
 
                             GlStateManager.pushMatrix();
+                            GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX,
+                                    anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY,
+                                    anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
 
-                            //GlStateManager.enableBlend();
-                            //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-                            GlStateManager.disableLighting();
-                            GlStateManager.disableTexture2D();
-                            GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                            GlStateManager.disableTexture2D();
-                            GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-                            for (BlockPos blockpos : blockspos) {
-
-                                BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
-
-                                GlStateManager.pushMatrix();
-                                GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX,
-                                        anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY,
-                                        anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
-
-                                int color = 0xCCCCCC;
-                                if (!Config.overridableBlocks.contains(thePlayer.worldObj.getBlockState(destBlock).getBlock())) {
-                                    color = 0xaa0000;
-                                }
-
-                                drawDeployZone(color);
-
-                                GlStateManager.popMatrix();
+                            int color = 0xCCCCCC;
+                            if (!Config.overridableBlocks.contains(thePlayer.worldObj.getBlockState(destBlock).getBlock())) {
+                                color = 0xaa0000;
                             }
 
-                            GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                            GlStateManager.enableTexture2D();
-                            GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-                            GlStateManager.enableLighting();
-                            GlStateManager.enableTexture2D();
-                            GlStateManager.enableDepth();
-                            GlStateManager.depthMask(true);
-                            GL11.glLineWidth(1.0F);
+                            drawDeployZone(color);
 
                             GlStateManager.popMatrix();
                         }
+
+                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
+                        GlStateManager.enableLighting();
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.enableDepth();
+                        GlStateManager.depthMask(true);
+                        GL11.glLineWidth(1.0F);
+
+                        GlStateManager.popMatrix();
                     }
                 }
             }
         }
+
     }
 
     private void tryPreviewRecall(ItemStack heldItem) {
@@ -213,8 +215,10 @@ public class CapsulePreviewHandler {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
+            //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
                     && heldItem.getItemDamage() == CapsuleItem.STATE_DEPLOYED
+                    && heldItem.hasTagCompound()
                     && heldItem.getTagCompound().hasKey("spawnPosition")) {
                 previewRecall(heldItem);
             }
@@ -223,21 +227,20 @@ public class CapsulePreviewHandler {
 
     private int getSize(ItemStack capsule) {
         int size = 1;
-        if (capsule.getTagCompound().hasKey("size")) {
+        if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("size")) {
             size = capsule.getTagCompound().getInteger("size");
         }
         return size;
     }
 
     private void previewRecall(ItemStack capsule) {
-
+        if (!capsule.hasTagCompound()) return;
         NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
 
         int size = getSize(capsule);
         int extendSize = (size - 1) / 2;
         CapsuleItem capsuleItem = (CapsuleItem) capsule.getItem();
         int color = capsuleItem.getColorFromItemstack(capsule, 0);
-
 
         CaptureTESR.drawCaptureZone(
                 linkPos.getInteger("x") + extendSize - TileEntityRendererDispatcher.staticPlayerX,
@@ -251,10 +254,9 @@ public class CapsulePreviewHandler {
 
         // change NBT of all existing TileEntityCapture in the world to make them display the preview zone
         // remember it's client side only
-        for (Iterator<TileEntityCapture> iterator = TileEntityCapture.instances.iterator(); iterator.hasNext(); ) {
-            TileEntityCapture te = (TileEntityCapture) iterator.next();
+        for (TileEntityCapture te : TileEntityCapture.instances) {
             if (te.getWorld() == worldIn) {
-                TileEntityCapture tec = (TileEntityCapture) te;
+                TileEntityCapture tec = te;
                 tec.getTileData().setInteger("size", size);
                 tec.getTileData().setInteger("color", color);
                 worldIn.markBlockRangeForRenderUpdate(te.getPos(), te.getPos());

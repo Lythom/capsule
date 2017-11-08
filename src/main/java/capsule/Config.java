@@ -3,7 +3,6 @@ package capsule;
 import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
-import net.minecraft.command.NumberInvalidException;
 import net.minecraft.init.Blocks;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
@@ -78,31 +77,17 @@ public class Config {
         Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks", excludedBlocks);
         excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
         Block[] exBlocks = null;
-        try {
-            exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
-        } catch (NumberInvalidException e) {
-            LOGGER.error("Error while decoding excludedBlocksProp property from config/capsule.cfg", e);
-        }
-        if (exBlocks != null) {
-            Config.excludedBlocks = Arrays.asList(exBlocks);
-        } else {
-            Config.excludedBlocks = Arrays.asList(defaultExcludedBlocks);
-        }
+        exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
+        Config.excludedBlocks = Arrays.asList(exBlocks);
 
         // OP Excluded
         Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks", excludedBlocksOP);
         opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
         Block[] opExBlocks = null;
-        try {
-            opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
-        } catch (NumberInvalidException e) {
-            LOGGER.error("Error while decoding opExcludedBlocks property from config/capsule.cfg", e);
-        }
-        if (opExBlocks != null) {
-            Config.opExcludedBlocks = Arrays.asList(opExBlocks);
-        } else {
-            Config.opExcludedBlocks = Arrays.asList(defaultExcludedBlocksOP);
-        }
+
+        opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
+        Config.opExcludedBlocks = Arrays.asList(opExBlocks);
+
 
         // Overridable
         Block[] defaultOverridable = new Block[]{Blocks.AIR, Blocks.WATER, Blocks.LEAVES,
@@ -116,16 +101,9 @@ public class Config {
         overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 
         Block[] ovBlocks = null;
-        try {
-            ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
-        } catch (NumberInvalidException e) {
-            LOGGER.error("Error while decoding overridableBlocks property from config/capsule.cfg", e);
-        }
-        if (ovBlocks != null) {
-            Config.overridableBlocks = Arrays.asList(ovBlocks);
-        } else {
-            Config.overridableBlocks = Arrays.asList(defaultOverridable);
-        }
+        ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
+        Config.overridableBlocks = Arrays.asList(ovBlocks);
+
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{

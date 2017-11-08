@@ -2,7 +2,6 @@ package capsule.enchantments;
 
 import capsule.Config;
 import capsule.Main;
-import com.google.common.base.Predicate;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -11,6 +10,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+
+import java.util.function.Predicate;
 
 public class Enchantments {
 
@@ -22,7 +23,7 @@ public class Enchantments {
                     && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((EntityItem) entityIn).getEntityItem()) > 0;
         }
 
-        public boolean apply(Object obj) {
+        public boolean test(Object obj) {
             return this.apply((Entity) obj);
         }
     };
@@ -39,7 +40,7 @@ public class Enchantments {
         EnumEnchantmentType recallEnchantTypeEnumValue = null;
         try {
             recallEnchantTypeEnumValue = EnumEnchantmentType.valueOf(Config.recallEnchantType);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException ignored) {
         }
 
         Enchantments.recallEnchant = new RecallEnchant(

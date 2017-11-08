@@ -15,7 +15,7 @@ public class CapsuleBlocksRegistrer {
     public static String CAPSULE_MARKER_REGISTERY_NAME = "capsulemarker";
     public static String CAPSULE_MARKER_TE_REGISTERY_NAME = "capsulemarker-te";
 
-    public static void createBlocks(String modid) {
+    public static void createBlocks() {
         blockCapsuleMarker = new BlockCapsuleMarker(CAPSULE_MARKER_REGISTERY_NAME, Material.ROCK);
         blockCapsuleMarker.setCreativeTab(Main.tabCapsule);
         ItemBlock blockCapsuleMarkerItemBlock = new ItemBlock(blockCapsuleMarker);
@@ -23,10 +23,6 @@ public class CapsuleBlocksRegistrer {
         GameRegistry.register(blockCapsuleMarker.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
         GameRegistry.register(blockCapsuleMarkerItemBlock.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
         GameRegistry.registerTileEntity(TileEntityCapture.class, CAPSULE_MARKER_TE_REGISTERY_NAME);
-    }
-
-    public static void registerRenderers(String modid) {
-
     }
 
     public static void registerRecipes() {

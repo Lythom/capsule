@@ -20,7 +20,6 @@ import static net.minecraftforge.oredict.RecipeSorter.Category.SHAPELESS;
 public class CapsuleItemsRegistrer {
 
     public static Item capsule;
-    public static Item recoveryCapsule;
 
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
@@ -29,7 +28,7 @@ public class CapsuleItemsRegistrer {
     public static DyeCapsuleRecipe dyeCapsuleRecipe;
     public static ClearCapsuleRecipe clearCapsuleRecipe;
 
-    public static void createItems(String modid) {
+    public static void createItems() {
         capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
         capsule.setCreativeTab(Main.tabCapsule);
 

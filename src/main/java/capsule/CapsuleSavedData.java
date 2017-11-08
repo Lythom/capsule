@@ -1,6 +1,3 @@
-/**
- *
- */
 package capsule;
 
 import net.minecraft.nbt.NBTTagCompound;

@@ -25,8 +25,8 @@ configFile.withReader {
     project.ext.config = new ConfigSlurper().parse prop
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 version = config.minecraft_version + "-" + config.capsule_version
 group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
