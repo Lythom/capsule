@@ -16,8 +16,6 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class CommonProxy {
 
@@ -29,8 +27,8 @@ public class CommonProxy {
         Config.readConfig(config);
 
         Enchantments.initEnchantments();
-        CapsuleItemsRegistrer.createItems();
-        CapsuleBlocksRegistrer.createBlocks();
+        CapsuleItemsRegistrer.registerItems();
+        CapsuleBlocksRegistrer.registerBlocks();
 
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
