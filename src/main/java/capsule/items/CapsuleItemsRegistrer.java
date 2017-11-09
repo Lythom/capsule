@@ -28,7 +28,7 @@ public class CapsuleItemsRegistrer {
     public static DyeCapsuleRecipe dyeCapsuleRecipe;
     public static ClearCapsuleRecipe clearCapsuleRecipe;
 
-    public static void createItems() {
+    public static void registerItems() {
         capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
         capsule.setCreativeTab(Main.tabCapsule);
 
