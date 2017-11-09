@@ -15,6 +15,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.List;
 public class CapsuleContentPreviewQueryHandler
         implements IMessageHandler<CapsuleContentPreviewQueryToServer, CapsuleContentPreviewAnswerToClient> {
 
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewQueryHandler.class);
+
     /**
      * Called when a message is received of the appropriate type. CALLED BY THE
      * NETWORK THREAD
@@ -40,11 +44,11 @@ public class CapsuleContentPreviewQueryHandler
     public CapsuleContentPreviewAnswerToClient onMessage(final CapsuleContentPreviewQueryToServer message,
                                                          MessageContext ctx) {
         if (ctx.side != Side.SERVER) {
-            System.err.println("AskCapsuleContentPreviewMessageToServer received on wrong side:" + ctx.side);
+            LOGGER.error("AskCapsuleContentPreviewMessageToServer received on wrong side:" + ctx.side);
             return null;
         }
         if (!message.isMessageValid()) {
-            System.err.println("AskCapsuleContentPreviewMessageToServer was invalid" + message.toString());
+            LOGGER.error("AskCapsuleContentPreviewMessageToServer was invalid" + message.toString());
             return null;
         }
 
@@ -55,7 +59,7 @@ public class CapsuleContentPreviewQueryHandler
         // MessageHandlerOnClient
         final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
         if (sendingPlayer == null) {
-            System.err.println("EntityPlayerMP was null when LabelEditedMessageToServer was received");
+            LOGGER.error("EntityPlayerMP was null when LabelEditedMessageToServer was received");
             return null;
         }
 

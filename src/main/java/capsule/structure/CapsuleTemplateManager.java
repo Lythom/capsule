@@ -6,6 +6,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -17,6 +19,8 @@ import java.util.Map;
  */
 public class CapsuleTemplateManager
 {
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleTemplateManager.class);
+
     private final Map<String, CapsuleTemplate> templates = Maps.<String, CapsuleTemplate>newHashMap();
     /** the folder in the assets folder where the structure templates are found. */
     private final String baseFolder;
@@ -112,7 +116,7 @@ public class CapsuleTemplateManager
 
         try
         {
-        	System.out.println("reading from jar at" + "/" + s1 + ".nbt");
+            LOGGER.info("reading from jar at" + "/" + s1 + ".nbt");
             inputstream = MinecraftServer.class.getResourceAsStream("/" + s1 + ".nbt");
             this.readTemplateFromStream(s1, inputstream);
             return true;

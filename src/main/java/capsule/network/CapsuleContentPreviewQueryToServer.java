@@ -3,11 +3,15 @@ package capsule.network;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This Network Message is sent from the client to the server
  */
 public class CapsuleContentPreviewQueryToServer implements IMessage {
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewQueryToServer.class);
 
     private String structureName = null;
 
@@ -36,7 +40,7 @@ public class CapsuleContentPreviewQueryToServer implements IMessage {
             this.setStructureName(ByteBufUtils.readUTF8String(buf));
 
         } catch (IndexOutOfBoundsException ioe) {
-            System.err.println("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
+            LOGGER.error("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
             return;
         }
     }
