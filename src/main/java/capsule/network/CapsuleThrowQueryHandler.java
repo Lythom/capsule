@@ -7,6 +7,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * The MessageHandlerOnServer is used to process the network message once it has
@@ -20,6 +22,8 @@ import net.minecraftforge.fml.relauncher.Side;
 public class CapsuleThrowQueryHandler
         implements IMessageHandler<CapsuleThrowQueryToServer, IMessage> {
 
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleThrowQueryHandler.class);
+
     /**
      * Called when a message is received of the appropriate type. CALLED BY THE
      * NETWORK THREAD
@@ -29,11 +33,11 @@ public class CapsuleThrowQueryHandler
     public IMessage onMessage(final CapsuleThrowQueryToServer message,
                               MessageContext ctx) {
         if (ctx.side != Side.SERVER) {
-            System.err.println("CapsuleThrowQueryToServer received on wrong side:" + ctx.side);
+            LOGGER.error("CapsuleThrowQueryToServer received on wrong side:" + ctx.side);
             return null;
         }
         if (!message.isMessageValid()) {
-            System.err.println("CapsuleThrowQueryToServer was invalid" + message.toString());
+            LOGGER.error("CapsuleThrowQueryToServer was invalid" + message.toString());
             return null;
         }
 
@@ -44,7 +48,7 @@ public class CapsuleThrowQueryHandler
         // MessageHandlerOnClient
         final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
         if (sendingPlayer == null) {
-            System.err.println("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
+            LOGGER.error("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
             return null;
         }
 

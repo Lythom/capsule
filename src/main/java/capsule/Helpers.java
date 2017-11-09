@@ -14,10 +14,14 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 
 public class Helpers {
+
+    protected static final Logger LOGGER = LogManager.getLogger(Helpers.class);
 
     public static BlockPos findBottomBlock(EntityItem entityItem) {
         return findBottomBlock(entityItem.posX, entityItem.posY, entityItem.posZ);
@@ -127,7 +131,7 @@ public class Helpers {
             if (b != null) {
                 states.add(b);
             } else {
-                System.err.println(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockId));
+                LOGGER.info(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockId));
             }
         }
         Block[] output = new Block[states.size()];

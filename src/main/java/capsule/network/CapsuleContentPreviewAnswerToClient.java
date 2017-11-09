@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,8 @@ import java.util.List;
  * This Network Message is sent from the client to the server
  */
 public class CapsuleContentPreviewAnswerToClient implements IMessage {
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewAnswerToClient.class);
 
     private List<BlockPos> blockPositions = null;
 
@@ -50,7 +54,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
             this.structureName = ByteBufUtils.readUTF8String(buf);
 
         } catch (IndexOutOfBoundsException ioe) {
-            System.err.println("Exception while reading CapsuleContentPreviewMessageToClient: " + ioe);
+            LOGGER.error("Exception while reading CapsuleContentPreviewMessageToClient: " + ioe);
             return;
         }
     }

@@ -3,11 +3,15 @@ package capsule.network;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This Network Message is sent from the client to the server
  */
 public class LabelEditedMessageToServer implements IMessage {
+
+    protected static final Logger LOGGER = LogManager.getLogger(LabelEditedMessageToServer.class);
 
     private String label;
     private boolean messageIsValid;
@@ -39,7 +43,7 @@ public class LabelEditedMessageToServer implements IMessage {
             // for Strings: ByteBufUtils.readUTF8String();
 
         } catch (IndexOutOfBoundsException ioe) {
-            System.err.println("Exception while reading CapsuleLabelEditedMessageToClient: " + ioe);
+            LOGGER.error("Exception while reading CapsuleLabelEditedMessageToClient: " + ioe);
             return;
         }
         messageIsValid = true;

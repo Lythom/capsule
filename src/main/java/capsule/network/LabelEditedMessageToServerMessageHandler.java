@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.logging.log4j.LogManager;
 
 /**
  * The MessageHandlerOnServer is used to process the network message once it has arrived on the Server side.
@@ -20,6 +21,8 @@ import net.minecraftforge.fml.relauncher.Side;
  */
 public class LabelEditedMessageToServerMessageHandler implements IMessageHandler<LabelEditedMessageToServer, IMessage> {
 
+    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(LabelEditedMessageToServerMessageHandler.class);
+
     /**
      * Called when a message is received of the appropriate type.
      * CALLED BY THE NETWORK THREAD
@@ -28,11 +31,11 @@ public class LabelEditedMessageToServerMessageHandler implements IMessageHandler
      */
     public IMessage onMessage(final LabelEditedMessageToServer message, MessageContext ctx) {
         if (ctx.side != Side.SERVER) {
-            System.err.println("LabelEditedMessageToServer received on wrong side:" + ctx.side);
+            LOGGER.error("LabelEditedMessageToServer received on wrong side:" + ctx.side);
             return null;
         }
         if (!message.isMessageValid()) {
-            System.err.println("LabelEditedMessageToServer was invalid" + message.toString());
+            LOGGER.error("LabelEditedMessageToServer was invalid" + message.toString());
             return null;
         }
 
@@ -42,7 +45,7 @@ public class LabelEditedMessageToServerMessageHandler implements IMessageHandler
 
         final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
         if (sendingPlayer == null) {
-            System.err.println("EntityPlayerMP was null when LabelEditedMessageToServer was received");
+            LOGGER.error("EntityPlayerMP was null when LabelEditedMessageToServer was received");
             return null;
         }
 

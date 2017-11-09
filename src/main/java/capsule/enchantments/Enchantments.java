@@ -10,10 +10,14 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.function.Predicate;
 
 public class Enchantments {
+
+    protected static final Logger LOGGER = LogManager.getLogger(Enchantments.class);
 
     public static Enchantment recallEnchant = null;
     @SuppressWarnings("rawtypes")
@@ -34,7 +38,7 @@ public class Enchantments {
         try {
             enchantRarity = Rarity.valueOf(Config.enchantRarity);
         } catch (Exception e) {
-            System.err.println("Couldn't find the rarity " + Config.enchantRarity + ". Using RARE instead.");
+            LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity + ". Using RARE instead.");
         }
 
         EnumEnchantmentType recallEnchantTypeEnumValue = null;
