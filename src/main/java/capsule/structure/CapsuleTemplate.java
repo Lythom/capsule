@@ -621,15 +621,12 @@ public class CapsuleTemplate
     // CAPSULE additions
 
     /**
-	 * Rewritten from CapsuleTemplate.takeBlocksFromWorld
 	 * takes blocks from the world and puts the data them into this template
 	 */
 	public List<BlockPos> takeBlocksFromWorldIntoCapsule(World worldIn, BlockPos startPos, BlockPos endPos,
 			Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
 
 		List<BlockPos> transferedBlocks = new ArrayList<BlockPos>();
-
-		// rewritten vanilla code from CapsuleTemplate.takeBlocksFromWorld
 
 		if (endPos.getX() >= 1 && endPos.getY() >= 1 && endPos.getZ() >= 1) {
 			BlockPos blockpos = startPos.add(endPos).add(-1, -1, -1);
@@ -821,6 +818,13 @@ public class CapsuleTemplate
             {
             	this.addEntitiesToWorld( p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, spawnedEntities);
             }
+        }
+    }
+
+
+    public void removeBlocks(List<BlockPos> couldNotBeRemoved, BlockPos startPos) {
+        for (BlockPos blockPos : couldNotBeRemoved) {
+            this.blocks.removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
         }
     }
 

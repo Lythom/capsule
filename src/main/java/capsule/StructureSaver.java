@@ -19,7 +19,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
@@ -168,27 +167,37 @@ public class StructureSaver {
         return RewardManager;
     }
 
-    public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos position, int size, List<Block> excluded,
-                                Map<BlockPos, Block> excludedPositions, boolean keepSource) {
+    public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+                                Map<BlockPos, Block> excludedPositions) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         List<Entity> outCapturedEntities = new ArrayList<>();
 
         CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-        List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, position, new BlockPos(size, size, size), excludedPositions,
+        List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, outCapturedEntities);
         if (playerID != null) {
             template.setAuthor(playerID);
         }
         boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-        if (writingOK && !keepSource) {
-            removeTransferedBlockFromWorld(transferedPositions, worldserver);
+        if (writingOK) {
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver);
             for (Entity e : outCapturedEntities) {
                 e.setDropItemsWhenDead(false);
                 e.setDead();
             }
-            // TODO here : check if some remove failed, exclude those blocks from the template.
+            // check if some remove failed, exclude those blocks from the template.
+            if (couldNotBeRemoved != null) {
+                if (playerID != null) {
+                    EntityPlayer player = worldserver.getPlayerEntityByName(playerID);
+                    if (player != null) {
+                        player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                    }
+                }
+                template.removeBlocks(couldNotBeRemoved, startPos);
+                templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+            }
         }
 
         return writingOK;
@@ -211,8 +220,11 @@ public class StructureSaver {
      *
      * @param transferedPositions
      * @param world
+     * @return list of blocks that could not be removed
      */
-    public static void removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
+    public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
+
+        List<BlockPos> couldNotBeRemoved = null;
 
         // disable tileDrop during the operation so that broken block are not
         // itemized on the ground.
@@ -229,14 +241,20 @@ public class StructureSaver {
                 world.setBlockToAir(pos);
 
             } catch (Exception e) {
-                LOGGER.info("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
-                world.setBlockState(pos, b);
+                LOGGER.error("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
+                try {
+                    world.setBlockState(pos, b);
+                } catch (Exception ignored) {}
+                if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
+                couldNotBeRemoved.add(pos);
             }
         }
 
         // revert rule to previous value even in case of crash
         world.restoringBlockSnapshots = false;
         world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
+
+        return couldNotBeRemoved;
     }
 
 
