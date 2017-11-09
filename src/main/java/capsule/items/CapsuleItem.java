@@ -168,11 +168,11 @@ public class CapsuleItem extends Item {
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
             itemStackIn.getTagCompound().setInteger("size", size);
-            System.err.println("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
+            LOGGER.error("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
             size--;
             itemStackIn.getTagCompound().setInteger("size", size);
-            System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
+            LOGGER.error("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
 
         return size;
@@ -184,10 +184,10 @@ public class CapsuleItem extends Item {
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
-            System.err.println("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
+            LOGGER.warn("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
             size--;
-            System.err.println("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
+            LOGGER.warn("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
         capsule.getTagCompound().setInteger("size", size);
     }
@@ -602,8 +602,6 @@ public class CapsuleItem extends Item {
      */
     private boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 
-        boolean didCapture = false;
-
         // specify target to capture
         BlockPos marker = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
         if (marker != null) {
@@ -615,20 +613,23 @@ public class CapsuleItem extends Item {
                 player = entityItem.getThrower();
             }
             String capsuleID = StructureSaver.getUniqueName(playerWorld, player);
-            StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null, false);
+            boolean storageOK = StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null);
 
-            // register the link in the capsule
-            setState(capsule, STATE_LINKED);
-            CapsuleItem.setStructureName(capsule, capsuleID);
-            didCapture = true;
-
-        } else {
-
-            revertStateFromActivated(capsule);
-            if (entityItem == null || playerWorld == null) {
-                return false;
+            if (storageOK) {
+                // register the link in the capsule
+                setState(capsule, STATE_LINKED);
+                CapsuleItem.setStructureName(capsule, capsuleID);
+                return true;
+            } else {
+                LOGGER.error("Error occured during capture.");
+                // send a chat message to explain failure
+                if (entityItem.getThrower() != null){
+                    EntityPlayer playerEntity = playerWorld.getPlayerEntityByName(entityItem.getThrower());
+                    if (playerEntity != null) playerEntity.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                }
             }
-
+        } else {
+            revertStateFromActivated(capsule);
             // send a chat message to explain failure
             EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
             if (player != null) {
@@ -636,7 +637,7 @@ public class CapsuleItem extends Item {
             }
         }
 
-        return didCapture;
+        return false;
     }
 
     private Map<BlockPos, Block> getOccupiedSourcePos(ItemStack capsule) {
@@ -742,13 +743,14 @@ public class CapsuleItem extends Item {
         int size = getSize(itemStackIn);
 
         // do the transportation
-        boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn), false);
+        boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn));
 
         if (storageOK) {
             setState(itemStackIn, STATE_LINKED);
             itemStackIn.getTagCompound().removeTag("spawnPosition");
             itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
         } else {
+            LOGGER.error("Error occured during undeploy of capsule.");
             playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
         }
     }
