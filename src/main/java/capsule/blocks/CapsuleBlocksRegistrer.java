@@ -18,6 +18,8 @@ public class CapsuleBlocksRegistrer {
     // testing blocks
     public static BlockCaptureCrasher blockCaptureCrasher;
     public static String CAPTURE_CRASHER_REGISTERY_NAME = "capturecrasher";
+    public static BlockDeployCrasher blockDeployCrasher;
+    public static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
     public static void registerBlocks() {
         blockCapsuleMarker = new BlockCapsuleMarker(CAPSULE_MARKER_REGISTERY_NAME, Material.ROCK);
@@ -34,6 +36,12 @@ public class CapsuleBlocksRegistrer {
         ItemBlock blockCaptureCrasherItemBlock = new ItemBlock(blockCaptureCrasher);
         GameRegistry.register(blockCaptureCrasher.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
         GameRegistry.register(blockCaptureCrasherItemBlock.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
+
+        blockDeployCrasher = new BlockDeployCrasher(DEPLOY_CRASHER_REGISTERY_NAME, Material.ROCK);
+        blockDeployCrasher.setCreativeTab(Main.tabCapsule);
+        ItemBlock blockDeployCrasherItemBlock = new ItemBlock(blockDeployCrasher);
+        GameRegistry.register(blockDeployCrasher.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
+        GameRegistry.register(blockDeployCrasherItemBlock.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
     }
 
     public static void registerRecipes() {
