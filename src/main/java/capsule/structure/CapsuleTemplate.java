@@ -723,7 +723,7 @@ public class CapsuleTemplate
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */
-	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
+	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
 
 		ITemplateProcessor p_189960_3_ = new BlockRotationProcessor(p_189960_2_, p_189960_4_);
@@ -826,12 +826,13 @@ public class CapsuleTemplate
     }
 
     /**
-     * Tweaked version of "addBlocksToWorld" for capsule
+     * list positions of futur deployment
      */
-    public boolean isAllowedToPlace(EntityPlayer player, World world, BlockPos blockPos, CapsulePlacementSettings placementSettings) {
+    public List<BlockPos> calculateDeployPositions(World world, BlockPos blockPos, CapsulePlacementSettings placementSettings) {
 
+        ArrayList<BlockPos> out = new ArrayList<>();
         ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, placementSettings);
-        if (blocks == null || size == null || blockRotationProcessor == null) return false;
+        if (blocks == null || size == null || blockRotationProcessor == null) return out;
 
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
             Block block = placementSettings.getReplacedBlock();
@@ -849,15 +850,12 @@ public class CapsuleTemplate
                                     (!placementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
                                     (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))
                             ) {
-                        net.minecraftforge.common.util.BlockSnapshot blocksnapshot = net.minecraftforge.common.util.BlockSnapshot.getBlockSnapshot(world, blockpos);
-                        if (net.minecraftforge.event.ForgeEventFactory.onPlayerBlockPlace(player, blocksnapshot, net.minecraft.util.EnumFacing.UP, null).isCanceled()) {
-                            return false;
-                        }
+                        out.add(blockpos);
                     }
                 }
             }
         }
-        return true;
+        return out;
     }
 
 }
