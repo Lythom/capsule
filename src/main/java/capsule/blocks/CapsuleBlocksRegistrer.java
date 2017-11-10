@@ -9,6 +9,8 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
+import java.util.Map;
+
 public class CapsuleBlocksRegistrer {
 
     public static BlockCapsuleMarker blockCapsuleMarker;
@@ -31,17 +33,20 @@ public class CapsuleBlocksRegistrer {
         GameRegistry.registerTileEntity(TileEntityCapture.class, CAPSULE_MARKER_TE_REGISTERY_NAME);
 
         // testing blocks
-        blockCaptureCrasher = new BlockCaptureCrasher(CAPTURE_CRASHER_REGISTERY_NAME, Material.ROCK);
-        blockCaptureCrasher.setCreativeTab(Main.tabCapsule);
-        ItemBlock blockCaptureCrasherItemBlock = new ItemBlock(blockCaptureCrasher);
-        GameRegistry.register(blockCaptureCrasher.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
-        GameRegistry.register(blockCaptureCrasherItemBlock.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
+        Map<String, String> env = System.getenv();
+        if ("DEV".equals(env.get("__ENV__"))) {
+            blockCaptureCrasher = new BlockCaptureCrasher(CAPTURE_CRASHER_REGISTERY_NAME, Material.ROCK);
+            blockCaptureCrasher.setCreativeTab(Main.tabCapsule);
+            ItemBlock blockCaptureCrasherItemBlock = new ItemBlock(blockCaptureCrasher);
+            GameRegistry.register(blockCaptureCrasher.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
+            GameRegistry.register(blockCaptureCrasherItemBlock.setRegistryName(CAPTURE_CRASHER_REGISTERY_NAME));
 
-        blockDeployCrasher = new BlockDeployCrasher(DEPLOY_CRASHER_REGISTERY_NAME, Material.ROCK);
-        blockDeployCrasher.setCreativeTab(Main.tabCapsule);
-        ItemBlock blockDeployCrasherItemBlock = new ItemBlock(blockDeployCrasher);
-        GameRegistry.register(blockDeployCrasher.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
-        GameRegistry.register(blockDeployCrasherItemBlock.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
+            blockDeployCrasher = new BlockDeployCrasher(DEPLOY_CRASHER_REGISTERY_NAME, Material.ROCK);
+            blockDeployCrasher.setCreativeTab(Main.tabCapsule);
+            ItemBlock blockDeployCrasherItemBlock = new ItemBlock(blockDeployCrasher);
+            GameRegistry.register(blockDeployCrasher.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
+            GameRegistry.register(blockDeployCrasherItemBlock.setRegistryName(DEPLOY_CRASHER_REGISTERY_NAME));
+        }
     }
 
     public static void registerRecipes() {
