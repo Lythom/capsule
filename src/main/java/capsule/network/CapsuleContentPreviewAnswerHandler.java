@@ -31,12 +31,9 @@ public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<Capsu
             return null;
         }
 
-        // This is the player the packet was sent to the server from
-        EntityPlayerMP serverPlayer = ctx.getServerHandler().playerEntity;
-        // Execute the action on the main server thread by adding it as a scheduled task
-        serverPlayer.getServerWorld().addScheduledTask(() -> {
+        synchronized (CapsulePreviewHandler.currentPreview) {
             CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBlockPositions());
-        });
+        }
 
         return null;
     }

@@ -154,54 +154,56 @@ public class CapsulePreviewHandler {
 
                 String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 
-                if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
+                synchronized (CapsulePreviewHandler.currentPreview) {
+                    if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
 
-                    int extendSize = (getSize(heldItemMainhand) - 1) / 2;
-                    List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-                    if (blockspos.isEmpty()) {
-                        blockspos.add(new BlockPos(extendSize, 0, extendSize));
-                    }
-
-                    GlStateManager.pushMatrix();
-
-                    //GlStateManager.enableBlend();
-                    //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-                    GlStateManager.disableLighting();
-                    GlStateManager.disableTexture2D();
-                    GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                    GlStateManager.disableTexture2D();
-                    GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-                    for (BlockPos blockpos : blockspos) {
-
-                        BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
-
-                        GlStateManager.pushMatrix();
-                        GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX,
-                                anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY,
-                                anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
-
-                        int color = 0xCCCCCC;
-                        if (!Config.overridableBlocks.contains(thePlayer.worldObj.getBlockState(destBlock).getBlock())) {
-                            color = 0xaa0000;
+                        int extendSize = (getSize(heldItemMainhand) - 1) / 2;
+                        List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+                        if (blockspos.isEmpty()) {
+                            blockspos.add(new BlockPos(extendSize, 0, extendSize));
                         }
 
-                        drawDeployZone(color);
+                        GlStateManager.pushMatrix();
+
+                        //GlStateManager.enableBlend();
+                        //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                        GlStateManager.disableLighting();
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+                        GlStateManager.disableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
+                        for (BlockPos blockpos : blockspos) {
+
+                            BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
+
+                            GlStateManager.pushMatrix();
+                            GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX,
+                                    anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY,
+                                    anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
+
+                            int color = 0xCCCCCC;
+                            if (!Config.overridableBlocks.contains(thePlayer.worldObj.getBlockState(destBlock).getBlock())) {
+                                color = 0xaa0000;
+                            }
+
+                            drawDeployZone(color);
+
+                            GlStateManager.popMatrix();
+                        }
+
+                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
+                        GlStateManager.enableLighting();
+                        GlStateManager.enableTexture2D();
+                        GlStateManager.enableDepth();
+                        GlStateManager.depthMask(true);
+                        GL11.glLineWidth(1.0F);
 
                         GlStateManager.popMatrix();
                     }
-
-                    GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                    GlStateManager.enableTexture2D();
-                    GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-                    GlStateManager.enableLighting();
-                    GlStateManager.enableTexture2D();
-                    GlStateManager.enableDepth();
-                    GlStateManager.depthMask(true);
-                    GL11.glLineWidth(1.0F);
-
-                    GlStateManager.popMatrix();
                 }
             }
         }
