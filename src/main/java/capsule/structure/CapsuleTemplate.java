@@ -695,11 +695,11 @@ public class CapsuleTemplate
 	public List<Entity> takeNonLivingEntitiesFromWorld(World worldIn, BlockPos startPos, BlockPos endPos) {
 
 		// rewritten vanilla code from CapsuleTemplate.takeEntitiesFromWorld
-		List<Entity> list = worldIn.<Entity> getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(startPos, endPos), new Predicate<Entity>() {
-			public boolean apply(@Nullable Entity p_apply_1_) {
-				return !(p_apply_1_ instanceof EntityItem) && (!(p_apply_1_ instanceof EntityLivingBase) || (p_apply_1_ instanceof EntityArmorStand));
-			}
-		});
+		List<Entity> list = worldIn.getEntitiesWithinAABB(
+		        Entity.class,
+                new AxisAlignedBB(startPos, endPos),
+                entity -> !(entity instanceof EntityItem) && (!(entity instanceof EntityLivingBase) || (entity instanceof EntityArmorStand))
+        );
 		entities.clear();
 
 		for (Entity entity : list) {
@@ -720,6 +720,9 @@ public class CapsuleTemplate
 		return list;
 	}
 
+    /**
+     * Tweaked version of "addBlocksToWorld" for capsule
+     */
 	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
 
@@ -729,14 +732,14 @@ public class CapsuleTemplate
 		if(blocks == null || size == null || p_189960_3_== null) return;
 
 
-        if (!blocks.isEmpty() && size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1)
+        if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
             Block block = p_189960_4_.getReplacedBlock();
             StructureBoundingBox structureboundingbox = p_189960_4_.getBoundingBox();
 
-            for (Template.BlockInfo template$blockinfo : blocks)
+            for (Template.BlockInfo template$blockinfo : this.blocks)
             {
-                BlockPos blockpos = CapsuleTemplate.transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
+                BlockPos blockpos = transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
                 Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.processBlock(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null)
@@ -747,11 +750,11 @@ public class CapsuleTemplate
                     		(block == null || block != block1) &&
                     		(!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
                     		(structureboundingbox == null || structureboundingbox.isVecInside(blockpos)) &&
-                    		// add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
+                    		// CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
                     		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos)))
                     )
                     {
-                    	// capsule addition to allow a rollback in case of error while deploying
+                        // CAPSULE capsule addition to allow a rollback in case of error while deploying
                     	if(spawnedBlocks != null) spawnedBlocks.add(blockpos);
 
                         IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
@@ -782,7 +785,6 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
-
                                 tileentity2.mirror(p_189960_4_.getMirror());
                                 tileentity2.rotate(p_189960_4_.getRotation());
                             }
@@ -791,11 +793,11 @@ public class CapsuleTemplate
                 }
             }
 
-            for (Template.BlockInfo template$blockinfo2 : blocks)
+            for (Template.BlockInfo template$blockinfo2 : this.blocks)
             {
                 if (block == null || block != template$blockinfo2.blockState.getBlock())
                 {
-                    BlockPos blockpos1 = CapsuleTemplate.transformedBlockPos(p_189960_4_, template$blockinfo2.pos).add(p_189960_2_);
+                    BlockPos blockpos1 = transformedBlockPos(p_189960_4_, template$blockinfo2.pos).add(p_189960_2_);
 
                     if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
                     {
@@ -816,7 +818,8 @@ public class CapsuleTemplate
 
             if (!p_189960_4_.getIgnoreEntities())
             {
-            	this.addEntitiesToWorld( p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, spawnedEntities);
+                // CAPSULE add spawnedBlock parameter
+            	this.addEntitiesToWorld(p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, spawnedEntities);
             }
         }
     }
