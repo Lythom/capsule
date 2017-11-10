@@ -14,6 +14,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
@@ -22,6 +23,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.event.world.BlockEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -177,26 +181,26 @@ public class StructureSaver {
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, outCapturedEntities);
+        EntityPlayer player = null;
         if (playerID != null) {
             template.setAuthor(playerID);
+            player = worldserver.getPlayerEntityByName(playerID);
         }
         boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         if (writingOK) {
-            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver);
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             for (Entity e : outCapturedEntities) {
                 e.setDropItemsWhenDead(false);
                 e.setDead();
             }
             // check if some remove failed, exclude those blocks from the template.
             if (couldNotBeRemoved != null) {
-                if (playerID != null) {
-                    EntityPlayer player = worldserver.getPlayerEntityByName(playerID);
-                    if (player != null) {
-                        player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-                    }
-                }
                 template.removeBlocks(couldNotBeRemoved, startPos);
                 templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+            }
+        } else {
+            if (player != null) {
+                player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
             }
         }
 
@@ -222,7 +226,7 @@ public class StructureSaver {
      * @param world
      * @return list of blocks that could not be removed
      */
-    public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world) {
+    public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world, EntityPlayer player) {
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -238,10 +242,17 @@ public class StructureSaver {
             IBlockState b = world.getBlockState(pos);
             try {
                 // uses same mechanic for TileEntity than net.minecraft.world.gen.structure.template.Template
-                world.setBlockToAir(pos);
-
+                if (playerCanRemove(world, pos, player)) {
+                    world.setBlockToAir(pos);
+                } else {
+                    if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
+                    couldNotBeRemoved.add(pos);
+                }
             } catch (Exception e) {
                 LOGGER.error("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
+                if (player != null) {
+                    player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                }
                 try {
                     world.setBlockState(pos, b);
                 } catch (Exception ignored) {}
@@ -297,13 +308,12 @@ public class StructureSaver {
                 List<Entity> spawnedEntities = new ArrayList<>();
                 try {
                     // check if the player can place a block
-                    if (player != null && !template.isAllowedToPlace(player, playerWorld, dest, placementsettings)) {
-                        // send a chat message to explain failure
-                        player.addChatMessage(new TextComponentTranslation("capsule.error.notAllowed", CapsuleItem.getStructureName(capsule)));
+                    if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)){
+                        player.addChatMessage(new TextComponentTranslation("capsule.error.notAllowed"));
                         return false;
                     }
 
-                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, spawnedBlocks, spawnedEntities);
                     return true;
                 } catch (Exception err) {
                     LOGGER.error("Couldn't deploy the capsule", err);
@@ -312,7 +322,7 @@ public class StructureSaver {
                     }
 
                     // rollback
-                    removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);
+                    removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
                     for (Entity e : spawnedEntities) {
                         e.setDropItemsWhenDead(false);
                         e.setDead();
@@ -339,6 +349,41 @@ public class StructureSaver {
 
 
         return false;
+    }
+
+    /**
+     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
+     * @return
+     */
+    private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, CapsulePlacementSettings placementsettings) {
+        if (player != null) {
+            List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
+            for (BlockPos blockPos : expectedOut) {
+                BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
+                BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
+                MinecraftForge.EVENT_BUS.post(event);
+                if (event.isCanceled()) {
+                    return false;
+                }
+            }
+
+        }
+        return true;
+    }
+
+    /**
+     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
+     */
+    private static boolean playerCanRemove(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
+        if (player != null) {
+            BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
+            BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
+            MinecraftForge.EVENT_BUS.post(event);
+            if (event.isCanceled()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, WorldServer playerWorld) {

@@ -621,12 +621,8 @@ public class CapsuleItem extends Item {
                 CapsuleItem.setStructureName(capsule, capsuleID);
                 return true;
             } else {
-                LOGGER.error("Error occured during capture.");
-                // send a chat message to explain failure
-                if (entityItem.getThrower() != null){
-                    EntityPlayer playerEntity = playerWorld.getPlayerEntityByName(entityItem.getThrower());
-                    if (playerEntity != null) playerEntity.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
-                }
+                // could not capture, StructureSaver.store handles the feedback already
+                revertStateFromActivated(capsule);
             }
         } else {
             revertStateFromActivated(capsule);
