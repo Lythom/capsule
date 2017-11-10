@@ -296,6 +296,13 @@ public class StructureSaver {
                 List<BlockPos> spawnedBlocks = new ArrayList<>();
                 List<Entity> spawnedEntities = new ArrayList<>();
                 try {
+                    // check if the player can place a block
+                    if (player != null && !template.isAllowedToPlace(player, playerWorld, dest, placementsettings)) {
+                        // send a chat message to explain failure
+                        player.addChatMessage(new TextComponentTranslation("capsule.error.notAllowed", CapsuleItem.getStructureName(capsule)));
+                        return false;
+                    }
+
                     template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
                     return true;
                 } catch (Exception err) {
@@ -310,7 +317,6 @@ public class StructureSaver {
                         e.setDropItemsWhenDead(false);
                         e.setDead();
                     }
-                    return false;
                 }
             } else {
                 // send a chat message to explain failure

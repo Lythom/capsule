@@ -746,13 +746,7 @@ public class CapsuleTemplate
                 {
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
-                    if (
-                    		(block == null || block != block1) &&
-                    		(!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
-                    		(structureboundingbox == null || structureboundingbox.isVecInside(blockpos)) &&
-                    		// CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
-                    		(!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos)))
-                    )
+                    if ((block == null || block != block1) && (!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos)))
                     {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
                     	if(spawnedBlocks != null) spawnedBlocks.add(blockpos);
@@ -829,6 +823,41 @@ public class CapsuleTemplate
         for (BlockPos blockPos : couldNotBeRemoved) {
             this.blocks.removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
         }
+    }
+
+    /**
+     * Tweaked version of "addBlocksToWorld" for capsule
+     */
+    public boolean isAllowedToPlace(EntityPlayer player, World world, BlockPos blockPos, CapsulePlacementSettings placementSettings) {
+
+        ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, placementSettings);
+        if (blocks == null || size == null || blockRotationProcessor == null) return false;
+
+        if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
+            Block block = placementSettings.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = placementSettings.getBoundingBox();
+
+            for (Template.BlockInfo template$blockinfo : this.blocks) {
+                BlockPos blockpos = transformedBlockPos(placementSettings, template$blockinfo.pos).add(blockPos);
+                Template.BlockInfo template$blockinfo1 = blockRotationProcessor != null ? blockRotationProcessor.processBlock(world, blockpos, template$blockinfo) : template$blockinfo;
+
+                if (template$blockinfo1 != null) {
+                    Block block1 = template$blockinfo1.blockState.getBlock();
+
+                    if (
+                            (block == null || block != block1) &&
+                                    (!placementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
+                                    (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))
+                            ) {
+                        net.minecraftforge.common.util.BlockSnapshot blocksnapshot = net.minecraftforge.common.util.BlockSnapshot.getBlockSnapshot(world, blockpos);
+                        if (net.minecraftforge.event.ForgeEventFactory.onPlayerBlockPlace(player, blocksnapshot, net.minecraft.util.EnumFacing.UP, null).isCanceled()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
 }
