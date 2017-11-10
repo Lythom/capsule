@@ -59,7 +59,7 @@ public class CapsuleContentPreviewQueryHandler
         // MessageHandlerOnClient
         final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
         if (sendingPlayer == null) {
-            LOGGER.error("EntityPlayerMP was null when LabelEditedMessageToServer was received");
+            LOGGER.error("EntityPlayerMP was null when AskCapsuleContentPreviewMessageToServer was received");
             return null;
         }
 

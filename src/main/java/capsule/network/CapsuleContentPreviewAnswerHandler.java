@@ -1,6 +1,7 @@
 package capsule.network;
 
 import capsule.client.CapsulePreviewHandler;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -13,9 +14,7 @@ import org.apache.logging.log4j.Logger;
  * WARNING!  In 1.8 the MessageHandler now runs in its own thread.  This means that if your onMessage code
  * calls any vanilla objects, it may cause crashes or subtle problems that are hard to reproduce.
  * Your onMessage handler should create a task which is later executed by the client or server thread as
- * appropriate - see below.
- * User: The Grey Ghost
- * Date: 15/01/2015
+ * appropriate.
  */
 public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<CapsuleContentPreviewAnswerToClient, IMessage> {
 
@@ -32,9 +31,12 @@ public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<Capsu
             return null;
         }
 
-        synchronized (CapsulePreviewHandler.currentPreview) {
+        // This is the player the packet was sent to the server from
+        EntityPlayerMP serverPlayer = ctx.getServerHandler().playerEntity;
+        // Execute the action on the main server thread by adding it as a scheduled task
+        serverPlayer.getServerWorld().addScheduledTask(() -> {
             CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBlockPositions());
-        }
+        });
 
         return null;
     }

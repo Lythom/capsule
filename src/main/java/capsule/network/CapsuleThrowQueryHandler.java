@@ -1,5 +1,6 @@
 package capsule.network;
 
+import capsule.client.CapsulePreviewHandler;
 import capsule.items.CapsuleItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -52,10 +53,12 @@ public class CapsuleThrowQueryHandler
             return null;
         }
 
-        // read the content of the template and send it back to the client
-        ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-
-        CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.getPos());
+        // Execute the action on the main server thread by adding it as a scheduled task
+        sendingPlayer.getServerWorld().addScheduledTask(() -> {
+            // read the content of the template and send it back to the client
+            ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+            CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.getPos());
+        });
 
         return null;
 
