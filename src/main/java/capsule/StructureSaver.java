@@ -304,11 +304,6 @@ public class StructureSaver {
                         player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
                     }
 
-
-                    /* TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
-                        reverse to initial situation ?
-                        continue and ignore crashing block ?*/
-
                     // rollback
                     removeTransferedBlockFromWorld(spawnedBlocks, playerWorld);
                     for (Entity e : spawnedEntities) {
