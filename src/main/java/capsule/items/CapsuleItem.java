@@ -48,7 +48,10 @@ public class CapsuleItem extends Item {
     public final static int STATE_ONE_USE = 5;
     public final static int STATE_ONE_USE_ACTIVATED = 6;
     public static final int CAPSULE_MAX_CAPTURE_SIZE = 31; // max size of the StructureBlocks Templates
-    protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);// = 180 / PI
+    public static final float TO_RAD = 0.017453292F;
+    public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
+    public static final float GRAVITY_PER_TICK = 0.04f;
 
     /**
      * Capsule Mod main item. Used to store region data to be deployed and undeployed.
@@ -270,14 +273,24 @@ public class CapsuleItem extends Item {
         return dim;
     }
 
-    public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule) {
+    public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule, boolean keepMomentum) {
         if (!capsule.hasTagCompound()) return;
         BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
-        BlockPos centerDest = dest;
-        double diffX = (centerDest.getX() + 0.5 - entityItem.posX);
-        double diffZ = (centerDest.getZ() + 0.5 - entityItem.posZ);
-        entityItem.motionX = diffX / (Math.abs(diffX) > 1 ? 10 : 3);
-        entityItem.motionZ = diffZ / (Math.abs(diffZ) > 1 ? 10 : 3);
+        // +0.5 to aim the center of the block
+        double diffX = (dest.getX() + 0.5 - entityItem.posX);
+        double diffZ = (dest.getZ() + 0.5 - entityItem.posZ);
+
+        double distance = MathHelper.sqrt_double(diffX * diffX + diffZ * diffZ);
+
+        // velocity will slow down when approaching
+        double requiredVelocity = distance / 10;
+        double velocity = Math.min(requiredVelocity, MAX_BLOCKS_PER_TICK_THROW);
+        double normalizedDiffX = (diffX / distance);
+        double normalizedDiffZ = (diffZ / distance);
+
+        // momentum allow to hit side walls
+        entityItem.motionX = keepMomentum ?  0.9 * entityItem.motionX + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity;
+        entityItem.motionZ = keepMomentum ?  0.9 * entityItem.motionZ + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity;
     }
 
     public static void setState(ItemStack stack, int state) {
@@ -290,29 +303,34 @@ public class CapsuleItem extends Item {
      * with stronger throw.
      */
     public static EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
-        double d0 = playerIn.posY - 0.30000001192092896D + (double) playerIn.getEyeHeight();
-        EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, d0, playerIn.posZ, itemStackIn);
-        entityitem.setPickupDelay(20);// cannot be picked up before deployment goes Yay or Nay
+        // startPosition from EntityThrowable
+        double startPosition = playerIn.posY - 0.3D + (double) playerIn.getEyeHeight();
+        EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, startPosition, playerIn.posZ, itemStackIn);
+        entityitem.setPickupDelay(20);// cannot be picked up before deployment
         entityitem.setThrower(playerIn.getName());
+        entityitem.setNoDespawn();
 
         if (destination != null) {
 
             itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
 
-            moveEntityItemToDeployPos(entityitem, itemStackIn);
+            moveEntityItemToDeployPos(entityitem, itemStackIn, false);
+            BlockPos playerPos = playerIn.getPosition();
+            // +0.5 to aim the center of the block
+            double diffX = (destination.getX() + 0.5 - playerPos.getX());
+            double diffZ = (destination.getZ() + 0.5 - playerPos.getZ());
+            double flatDistance = MathHelper.sqrt_double(diffX * diffX + diffZ * diffZ);
 
-            double distance = playerIn.getPosition().distanceSq(new BlockPos(destination.getX(), playerIn.posY, destination.getZ()));
-            double pitch = (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI));
-            if (pitch < 0) pitch = 0.08;
-            entityitem.motionY = pitch * 1.1 + (Math.min(distance / (18 * 18), 0.8)) + 0.1;
+            double diffY = destination.getY() - playerPos.getY() + Math.min(1, flatDistance / 3);
+            double yVelocity = (diffY / 10) - (0.5 * 10 * -1 * GRAVITY_PER_TICK); // move up then down
+            entityitem.motionY = Math.max(0.05, yVelocity);
 
         } else {
             float f = 0.5F;
-            entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-                    * MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-            entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw / 180.0F * (float) Math.PI)
-                    * MathHelper.cos(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f);
-            entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch / 180.0F * (float) Math.PI) * f + 0.1F);
+
+            entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw * TO_RAD) * MathHelper.cos(playerIn.rotationPitch * TO_RAD) * f) + playerIn.motionX;
+            entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw * TO_RAD) * MathHelper.cos(playerIn.rotationPitch * TO_RAD) * f) + playerIn.motionZ;
+            entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch * TO_RAD) * f + 0.1F) + playerIn.motionY;
         }
 
         playerIn.dropItemAndGetStack(entityitem);
@@ -557,6 +575,11 @@ public class CapsuleItem extends Item {
                 && entityItem.ticksExisted > 2 // avoid immediate collision
                 && this.isActivated(capsule)) {
 
+            // stop the capsule where it collided
+            entityItem.motionX = 0;
+            entityItem.motionZ = 0;
+            entityItem.motionY = 0;
+
             final int size = getSize(capsule);
             final int extendLength = (size - 1) / 2;
 
@@ -590,7 +613,7 @@ public class CapsuleItem extends Item {
                 && this.isActivated(capsule)
                 && capsule.hasTagCompound()
                 && capsule.getTagCompound().hasKey("deployAt")) {
-            moveEntityItemToDeployPos(entityItem, capsule);
+            moveEntityItemToDeployPos(entityItem, capsule, true);
 
         }
 
@@ -687,7 +710,7 @@ public class CapsuleItem extends Item {
 
         boolean didSpawn = false;
 
-        BlockPos dest = null;
+        BlockPos dest;
         if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("deployAt")) {
             BlockPos centerDest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
             dest = centerDest.add(-extendLength, 0, -extendLength);
@@ -712,7 +735,7 @@ public class CapsuleItem extends Item {
             if (!isReward(capsule)) {
 
                 setState(capsule, STATE_DEPLOYED);
-                savePosition("spawnPosition", capsule, dest, entityItem.getEntityWorld().provider.getDimension());
+                saveSpawnPosition(capsule, dest, entityItem.getEntityWorld().provider.getDimension());
                 // remove the content from the structure block to prevent dupe using recovery capsules
                 StructureSaver.clearTemplate(playerWorld, structureName);
             }
@@ -782,13 +805,11 @@ public class CapsuleItem extends Item {
 
     /**
      * Set the NBT tag "key" to be a BlockPos coordinates.
-     *
-     * @param key     nbt tag key name
-     * @param capsule capsule stack
+     *  @param capsule capsule stack
      * @param dest    position to save as nbt into the capsule stack
      * @param dimID   dimension where the position is.
      */
-    private void savePosition(String key, ItemStack capsule, BlockPos dest, int dimID) {
+    private void saveSpawnPosition(ItemStack capsule, BlockPos dest, int dimID) {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
@@ -797,7 +818,7 @@ public class CapsuleItem extends Item {
         pos.setInteger("y", dest.getY());
         pos.setInteger("z", dest.getZ());
         pos.setInteger("dim", dimID);
-        capsule.getTagCompound().setTag(key, pos);
+        capsule.getTagCompound().setTag("spawnPosition", pos);
     }
 
     public void clearCapsule(ItemStack capsule) {
