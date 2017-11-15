@@ -4,6 +4,15 @@
 
 ## Changelog ##
 
+**1.10.2-1.3.0 : The multiplayer friendly update**
+
+* Add grieffing protection for bother capturing and deploying (check if the player could place / harvest block manually)
+* Fix activated capsule being thrown by non-player (dispenser and dropper can now deploy an activated capsule)
+* Improve previewed capsule throw trajectory
+* Improve resilience: blocks crashing when manipulated will be ignore during the capture + error log but no crash or interruption of the capture
+* Update forge to 1.10.2-12.18.3.2511
+* Update JEI API to 1.10.2-3.14.7.420
+
 **1.10.2-1.2.0 : The Big 1.10.2 update : the modpack maker update : the Structure blocks update**
 
 * Now uses structure blocks mechanics and file format to store capsule content.
@@ -99,10 +108,5 @@ Blocks :
 
 ## Planned ##
 
-* TODO : fix case where world or thrower is not available (thrown by a dropper ?)
-* TODO : Fix case where capture / resent fails./by Instead of brutally aborting, :
-			reverse to initial situation ?
-		    continue and ignore crashing block ?
-* Grieffing protection : plug-in to the claim chunk system | config force block @corners (so if all 4 blocks can't be placed the content can't be captured) | protective block.
 * Blueprint capsules that can be loaded with material and then spawn several times the same pattern
 * Capsule shirts, Capsules banner logo (idea of AlexisMachina)

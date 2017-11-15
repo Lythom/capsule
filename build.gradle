@@ -29,7 +29,7 @@ sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
 version = config.minecraft_version + "-" + config.capsule_version
-group= "fr.samuel-bouchet.minecraft.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group= "fr.samuelbouchet.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "Capsule"
 
 
@@ -80,16 +80,16 @@ dependencies {
 
 processResources {
 
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
+    inputs.property "mod_version", project.version
+    inputs.property "minecraft_version", project.minecraft.version
 
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
 
         // replaces
         expand ([
-            'version': project.version,
-            'mcversion': project.minecraft.version
+            'mod_version': project.version,
+            'minecraft_version': project.minecraft.version
         ])
     }
 
