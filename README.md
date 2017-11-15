@@ -30,53 +30,53 @@
 
 NOT BACKWARD COMPATIBLE with any previous version of the mod : backup, deploy all your capsule contents, and destroy all your capsules items before updating from a previous version.
 
-**1.9.4-1.1.8 : BugFix fix **
+**1.9.4-1.1.8 : BugFix fix**
  
 * Fix #9 - Enchantment "Recall" not anymore present on every item whatever the config
 * Default config now allow Recall only on capsules (see config file for more options)
 
-**1.9.4-1.1.7 : Compatibility fixes **
+**1.9.4-1.1.7 : Compatibility fixes**
 
 * Fix #5 - Mod crashing when CapsuleItem.getItemStackDisplayName is called server-side
 
-**1.9.4-1.1.6 : Update for 1.9.4 version of forge + JEI integration + new recipe **
+**1.9.4-1.1.6 : Update for 1.9.4 version of forge + JEI integration + new recipe**
 
 * Update for forge 1.9.4 (thank you @Walter Daniel for the help =) )
 * Add JEI integration with descriptions and special recipes (recovery, upgrade, clear)
 * Add a new recipe to clear the content of a capsule (to allow upgrades and new recaptures of existing capsules)
 
-**1.9-1.1.5 : Update for forge 12.16.1.1887 **
+**1.9-1.1.5 : Update for forge 12.16.1.1887**
 
 * Update Capsule mod for forge 1.9 - 12.16.1.1887 (recommanded)
 
-**1.9-1.1.4 : Transfer logic rework **
+**1.9-1.1.4 : Transfer logic rework**
 
 * Rework transfer algorithm to force transfer without block update logic being executed during the move
 * Fixes bug with dependants blocks (torches on top of wall, doors powered by redstone) that would not be kept correctly during the transfer
 
-**1.9-1.1.3 : Fix recovery capsule recipe **
+**1.9-1.1.3 : Fix recovery capsule recipe**
 
 * Fix recovery capsule recipe
 
-**1.9-1.1.2 : Minor fixes **
+**1.9-1.1.2 : Minor fixes**
 
 * Transfert logic fix
 
-**1.9-1.1.1 : Migrate to 1.9 + more configuration options **
+**1.9-1.1.1 : Migrate to 1.9 + more configuration options**
 
 * Update to minecraft forge 1.9
 * Offhand currently not able to throw capsules
 * Fix weird behaviour when teleporting to capsule dimensions with creativePlayer2CapsuleTP
 * Visually lighten capsule dimension
 
-**1.8-1.1.0 : Migrate to 1.8.9 + more configuration options **
+**1.8-1.1.0 : Migrate to 1.8.9 + more configuration options**
 
 * Add item "Capsule : overpowered" crafted with a nether star instead of ender pearl. Overpowered capsule as a different "excluded blocks" config (to allow more blocks to be captured).
 * Add a recipe to upgrades empty capsules capacity (surround with 8 ender pearls). Number of upgrades can be configured, default 5.
 * Add Configuration options for default capsules sizes
 
 
-**1.8-1.0.3 : Bugfixes : capsule content messing up after server restart + network error with large payload **
+**1.8-1.0.3 : Bugfixes : capsule content messing up after server restart + network error with large payload**
 
 * Fix : capsule content messing up after server restart (last available storage space was not retrieved correctly after server restart)
 * Fix : network payload error with big custome capsules
