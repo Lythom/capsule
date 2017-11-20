@@ -1,9 +1,12 @@
 pipeline {
-    agent { dockerfile true }
+    agent {
+        dockerfile true
+        args '--env COMMIT=1.10 -v ~/capsulebuilds:/build/libs -v ~/capsulebuilds/cache:/root/.gradle'
+    }
     stages {
         stage('Build') {
             steps {
-                echo 'Should build on docker startup. Is build ok ?'
+                sh 'build.sh'
             }
         }
     }
