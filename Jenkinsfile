@@ -23,7 +23,8 @@ environment {
         }
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
+                archiveArtifacts artifacts: "build/libs/*-${env.BUILD_ID}.jar", fingerprint: true
+                archiveArtifacts artifacts: "build/libs/*-${env.BUILD_ID}-sources.jar", fingerprint: true
             }
         }
     }
