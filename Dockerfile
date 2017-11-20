@@ -8,4 +8,4 @@ RUN chmod +x build.sh gradlew
 EXPOSE 22
 CMD ["/usr/sbin/sshd", "-D"]
 
-ENV COMMIT=master
+ENV BRANCH=master
