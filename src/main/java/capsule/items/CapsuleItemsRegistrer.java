@@ -51,6 +51,7 @@ public class CapsuleItemsRegistrer {
 
         // capsule upgrade recipe
         RecipeSorter.register(CAPSULE_REGISTERY_NAME + ":upgrade", UpgradeCapsuleRecipe.class, SHAPELESS, "after:minecraft:shapeless");
+        // TODO: make it configurable
         CapsuleItemsRegistrer.upgradeCapsuleRecipe = new UpgradeCapsuleRecipe(Items.CHORUS_FRUIT_POPPED);
         GameRegistry.addRecipe(CapsuleItemsRegistrer.upgradeCapsuleRecipe);
 
@@ -72,7 +73,7 @@ public class CapsuleItemsRegistrer {
     }
 
     /**
-     * Create a Stack or return null if size <= 0
+     * Create a Stack. Size will be 1 if size <= 0.
      *
      * @param color color of the capsule
      * @param size  size of the capsule
