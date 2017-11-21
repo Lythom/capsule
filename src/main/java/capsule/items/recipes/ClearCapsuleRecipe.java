@@ -4,6 +4,7 @@ import capsule.items.CapsuleItem;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
 public class ClearCapsuleRecipe implements IRecipe {
@@ -12,41 +13,41 @@ public class ClearCapsuleRecipe implements IRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return null;
+        return ItemStack.EMPTY;
     }
 
-    public ItemStack[] getRemainingItems(InventoryCrafting p_179532_1_) {
-        ItemStack[] aitemstack = new ItemStack[p_179532_1_.getSizeInventory()];
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-        for (int i = 0; i < aitemstack.length; ++i) {
-            ItemStack itemstack = p_179532_1_.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
-            if (aitemstack[i] == null && itemstack != null && itemstack.getItem() instanceof CapsuleItem) {
+        for (int i = 0; i < nonnulllist.size(); ++i) {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+            if (itemstack.getItem() instanceof CapsuleItem) {
                 // Copy the capsule and give back a recovery capsule of the previous content
                 ItemStack copy = itemstack.copy();
                 CapsuleItem item = (CapsuleItem) copy.getItem();
                 if (item != null) {
                     CapsuleItem.setOneUse(copy);
-                    aitemstack[i] = copy;
+                    nonnulllist.set(i, copy);
                 }
             }
         }
 
-        return aitemstack;
+        return nonnulllist;
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(InventoryCrafting p_77569_1_, World worldIn) {
+    public boolean matches(InventoryCrafting inv, World worldIn) {
         int sourceCapsule = 0;
-        for (int i = 0; i < p_77569_1_.getHeight(); ++i) {
-            for (int j = 0; j < p_77569_1_.getWidth(); ++j) {
-                ItemStack itemstack = p_77569_1_.getStackInRowAndColumn(j, i);
+        for (int i = 0; i < inv.getHeight(); ++i) {
+            for (int j = 0; j < inv.getWidth(); ++j) {
+                ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
                 if (isLinkedCapsule(itemstack)) {
                     sourceCapsule++;
-                } else if (itemstack != null) {
+                } else if (!itemstack.isEmpty()) {
                     return false;
                 }
             }
@@ -58,10 +59,10 @@ public class ClearCapsuleRecipe implements IRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack getCraftingResult(InventoryCrafting invC) {
-        for (int i = 0; i < invC.getHeight(); ++i) {
-            for (int j = 0; j < invC.getWidth(); ++j) {
-                ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
+    public ItemStack getCraftingResult(InventoryCrafting inv) {
+        for (int i = 0; i < inv.getHeight(); ++i) {
+            for (int j = 0; j < inv.getWidth(); ++j) {
+                ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
                 if (isLinkedCapsule(itemstack)) {
                     ItemStack copy = itemstack.copy();
@@ -73,11 +74,11 @@ public class ClearCapsuleRecipe implements IRecipe {
                 }
             }
         }
-        return null;
+        return ItemStack.EMPTY;
     }
 
     private boolean isLinkedCapsule(ItemStack itemstack) {
-        return (itemstack != null && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getMetadata());
+        return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getMetadata());
     }
 
     /**

@@ -47,7 +47,7 @@ public class CapsuleThrowQueryHandler
         // that the ctx handler is a serverhandler, and that WorldServer exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
+        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
             LOGGER.error("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
             return null;

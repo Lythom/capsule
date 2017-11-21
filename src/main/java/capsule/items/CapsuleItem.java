@@ -18,6 +18,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
@@ -26,6 +27,8 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -112,7 +115,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isOneUse(ItemStack stack) {
-        return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
+        return !stack.isEmpty() && stack.hasTagCompound() && stack.getTagCompound().hasKey("oneUse") && stack.getTagCompound().getBoolean("oneUse");
     }
 
     public static void setOneUse(ItemStack capsule) {
@@ -124,7 +127,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isReward(ItemStack stack) {
-        return stack != null && (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && isOneUse(stack));
+        return !stack.isEmpty() && (stack.hasTagCompound() && stack.getTagCompound().hasKey("isReward") && stack.getTagCompound().getBoolean("isReward") && isOneUse(stack));
     }
 
     public static void setIsReward(ItemStack capsule) {
@@ -137,12 +140,12 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isLinked(ItemStack stack) {
-        return stack != null && stack.hasTagCompound() && stack.getTagCompound().hasKey("structureName");
+        return !stack.isEmpty() && stack.hasTagCompound() && stack.getTagCompound().hasKey("structureName");
     }
 
     public static String getLabel(ItemStack stack) {
 
-        if (stack == null)
+        if (stack.isEmpty())
             return "";
 
         if (!isLinked(stack)) {
@@ -165,7 +168,7 @@ public class CapsuleItem extends Item {
      */
     public static int getSize(ItemStack itemStackIn) {
         int size = 1;
-        if (itemStackIn != null && itemStackIn.hasTagCompound() && itemStackIn.getTagCompound().hasKey("size")) {
+        if (!itemStackIn.isEmpty() && itemStackIn.hasTagCompound() && itemStackIn.getTagCompound().hasKey("size")) {
             size = itemStackIn.getTagCompound().getInteger("size");
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
@@ -280,7 +283,7 @@ public class CapsuleItem extends Item {
         double diffX = (dest.getX() + 0.5 - entityItem.posX);
         double diffZ = (dest.getZ() + 0.5 - entityItem.posZ);
 
-        double distance = MathHelper.sqrt_double(diffX * diffX + diffZ * diffZ);
+        double distance = MathHelper.sqrt(diffX * diffX + diffZ * diffZ);
 
         // velocity will slow down when approaching
         double requiredVelocity = distance / 10;
@@ -305,7 +308,7 @@ public class CapsuleItem extends Item {
     public static EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
         // startPosition from EntityThrowable
         double startPosition = playerIn.posY - 0.3D + (double) playerIn.getEyeHeight();
-        EntityItem entityitem = new EntityItem(playerIn.worldObj, playerIn.posX, startPosition, playerIn.posZ, itemStackIn);
+        EntityItem entityitem = new EntityItem(playerIn.getEntityWorld(), playerIn.posX, startPosition, playerIn.posZ, itemStackIn);
         entityitem.setPickupDelay(20);// cannot be picked up before deployment
         entityitem.setThrower(playerIn.getName());
         entityitem.setNoDespawn();
@@ -319,7 +322,7 @@ public class CapsuleItem extends Item {
             // +0.5 to aim the center of the block
             double diffX = (destination.getX() + 0.5 - playerPos.getX());
             double diffZ = (destination.getZ() + 0.5 - playerPos.getZ());
-            double flatDistance = MathHelper.sqrt_double(diffX * diffX + diffZ * diffZ);
+            double flatDistance = MathHelper.sqrt(diffX * diffX + diffZ * diffZ);
 
             double diffY = destination.getY() - playerPos.getY() + Math.min(1, flatDistance / 3);
             double yVelocity = (diffY / 10) - (0.5 * 10 * -1 * GRAVITY_PER_TICK); // move up then down
@@ -334,7 +337,7 @@ public class CapsuleItem extends Item {
         }
 
         playerIn.dropItemAndGetStack(entityitem);
-        playerIn.inventory.mainInventory[playerIn.inventory.currentItem] = null;
+        playerIn.inventory.setInventorySlotContents(playerIn.inventory.currentItem, ItemStack.EMPTY);
 
         return entityitem;
     }
@@ -388,7 +391,7 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public boolean isItemTool(ItemStack stack) {
+    public boolean isEnchantable(ItemStack stack) {
         return true;
     }
 
@@ -432,9 +435,8 @@ public class CapsuleItem extends Item {
     /**
      * Register items in the creative tab
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @Override
-    public void getSubItems(Item itemIn, CreativeTabs tab, List subItems) {
+    @SideOnly(Side.CLIENT)
+    public void getSubItems(Item itemIn, CreativeTabs tab, NonNullList<ItemStack> subItems) {
 
         ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
         ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
@@ -468,22 +470,22 @@ public class CapsuleItem extends Item {
 
         subItems.add(unlabelledCapsule);
         subItems.add(recoveryCapsule);
-
-
     }
 
     /**
      * Activate or power throw on right click.
      */
     @Override
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand) {
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+        ItemStack itemStackIn = playerIn.getHeldItem(handIn);
 
-        if (hand == EnumHand.OFF_HAND) {
+        if (handIn == EnumHand.OFF_HAND) {
             return new ActionResult<>(EnumActionResult.FAIL, itemStackIn);
         }
 
         if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
             Main.proxy.openGuiScreen(playerIn);
+
         } else if (!worldIn.isRemote) {
 
             // an empty or a linked capsule is activated on right click
@@ -499,7 +501,7 @@ public class CapsuleItem extends Item {
                     setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
                 }
 
-                NBTTagCompound timer = itemStackIn.getSubCompound("activetimer", true);
+                NBTTagCompound timer = itemStackIn.getOrCreateSubCompound("activetimer");
                 timer.setInteger("starttime", playerIn.ticksExisted);
             }
 
@@ -551,9 +553,9 @@ public class CapsuleItem extends Item {
         if (!worldIn.isRemote) {
 
             // disable capsule after some time
-            NBTTagCompound timer = stack.getSubCompound("activetimer", false);
+            NBTTagCompound timer = stack.getSubCompound("activetimer");
 
-            if (this.isActivated(stack) && timer != null && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
+            if (timer != null && this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
                 revertStateFromActivated(stack);
             }
         }
@@ -570,7 +572,7 @@ public class CapsuleItem extends Item {
         if (capsule == null) return false;
 
         // Deploying capsule content on collision with a block
-        if (!entityItem.worldObj.isRemote
+        if (!entityItem.getEntityWorld().isRemote
                 && entityItem.isCollided
                 && entityItem.ticksExisted > 2 // avoid immediate collision
                 && this.isActivated(capsule)) {
@@ -584,7 +586,7 @@ public class CapsuleItem extends Item {
             final int extendLength = (size - 1) / 2;
 
             // get destination world available position
-            final WorldServer itemWorld = (WorldServer) entityItem.worldObj;
+            final WorldServer itemWorld = (WorldServer) entityItem.getEntityWorld();
 
             if (isLinked(capsule)) {
 
@@ -608,7 +610,7 @@ public class CapsuleItem extends Item {
         }
 
         // throwing the capsule toward the right place
-        if (!entityItem.worldObj.isRemote
+        if (!entityItem.getEntityWorld().isRemote
                 && !entityItem.isCollided
                 && this.isActivated(capsule)
                 && capsule.hasTagCompound()
@@ -652,7 +654,7 @@ public class CapsuleItem extends Item {
             // send a chat message to explain failure
             EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
             if (player != null) {
-                player.addChatMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
+                player.sendMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
             }
         }
 
@@ -770,7 +772,7 @@ public class CapsuleItem extends Item {
             itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
         } else {
             LOGGER.error("Error occured during undeploy of capsule.");
-            playerIn.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
         }
     }
 

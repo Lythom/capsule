@@ -8,6 +8,7 @@ import mezz.jei.api.BlankModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.ISubtypeRegistry;
 import mezz.jei.api.JEIPlugin;
+import mezz.jei.api.recipe.VanillaRecipeCategoryUid;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
@@ -97,13 +98,13 @@ public class CapsulePlugin extends BlankModPlugin {
         recipes.add(new ShapelessRecipes(recoveryCapsule, Arrays.asList(new ItemStack[]{unlabelledCapsule, new ItemStack(Items.GLASS_BOTTLE)})));
         recipes.add(new ShapelessRecipes(ironCapsule, Arrays.asList(new ItemStack[]{unlabelledCapsule})));
 
-        registry.addRecipes(recipes);
+        registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
 
-        registry.addDescription(ironCapsule, "jei.capsule.desc.capsule");
-        registry.addDescription(unlabelledCapsule, "jei.capsule.desc.linkedCapsule");
-        registry.addDescription(recoveryCapsule, "jei.capsule.desc.recoveryCapsule");
-        registry.addDescription(opCapsule, "jei.capsule.desc.opCapsule");
-        registry.addDescription(new ItemStack(CapsuleBlocksRegistrer.blockCapsuleMarker), "jei.capsule.desc.capsuleMarker");
+        registry.addIngredientInfo(ironCapsule, ItemStack.class, "jei.capsule.desc.capsule");
+        registry.addIngredientInfo(unlabelledCapsule, ItemStack.class, "jei.capsule.desc.linkedCapsule");
+        registry.addIngredientInfo(recoveryCapsule, ItemStack.class, "jei.capsule.desc.recoveryCapsule");
+        registry.addIngredientInfo(opCapsule, ItemStack.class, "jei.capsule.desc.opCapsule");
+        registry.addIngredientInfo(new ItemStack(CapsuleBlocksRegistrer.blockCapsuleMarker), ItemStack.class, "jei.capsule.desc.capsuleMarker");
 
     }
 

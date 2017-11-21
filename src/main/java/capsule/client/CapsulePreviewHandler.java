@@ -103,22 +103,22 @@ public class CapsulePreviewHandler {
 
     private boolean tryPreviewCapture(EntityPlayerSP player, ItemStack heldItem) {
         // an item is in hand
-        if (heldItem != null) {
+        if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
             if (heldItemItem instanceof CapsuleItem && (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY || heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
                 CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
                 //noinspection ConstantConditions
                 if (heldItem.hasTagCompound() && heldItem.getTagCompound().hasKey("size")) {
-                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), capsule.getColorFromItemstack(heldItem, 0), player.worldObj);
+                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), capsule.getColorFromItemstack(heldItem, 0), player.getEntityWorld());
                     return true;
                 }
 
             } else {
-                setCaptureTESizeColor(0, 0, player.worldObj);
+                setCaptureTESizeColor(0, 0, player.getEntityWorld());
             }
         } else {
-            setCaptureTESizeColor(0, 0, player.worldObj);
+            setCaptureTESizeColor(0, 0, player.getEntityWorld());
         }
 
         return false;
@@ -133,17 +133,16 @@ public class CapsulePreviewHandler {
     public void onWorldRenderLast(RenderWorldLastEvent event) {
         Minecraft mc = Minecraft.getMinecraft();
 
-        if (mc.thePlayer != null) {
-            tryPreviewRecall(mc.thePlayer.getHeldItemMainhand());
-            tryPreviewDeploy(mc.thePlayer, event.getPartialTicks(), mc.thePlayer.getHeldItemMainhand());
+        if (mc.player != null) {
+            tryPreviewRecall(mc.player.getHeldItemMainhand());
+            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand());
         }
     }
 
     @SuppressWarnings("ConstantConditions")
     private void tryPreviewDeploy(EntityPlayerSP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
-        if (heldItemMainhand != null
-                && heldItemMainhand.getItem() instanceof CapsuleItem
+        if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTagCompound()
                 && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)
                 ) {
@@ -183,7 +182,7 @@ public class CapsulePreviewHandler {
                                     anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
 
                             int color = 0xCCCCCC;
-                            if (!Config.overridableBlocks.contains(thePlayer.worldObj.getBlockState(destBlock).getBlock())) {
+                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
                                 color = 0xaa0000;
                             }
 

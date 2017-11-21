@@ -57,7 +57,7 @@ public class CapsuleContentPreviewQueryHandler
         // that the ctx handler is a serverhandler, and that WorldServer exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().playerEntity;
+        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
             LOGGER.error("EntityPlayerMP was null when AskCapsuleContentPreviewMessageToServer was received");
             return null;
@@ -65,7 +65,7 @@ public class CapsuleContentPreviewQueryHandler
 
         // read the content of the template and send it back to the client
         ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-        if (heldItem == null || CapsuleItem.getStructureName(heldItem) == null || !(heldItem.getItem() instanceof CapsuleItem)) {
+        if (!(heldItem.getItem() instanceof CapsuleItem) || CapsuleItem.getStructureName(heldItem) == null) {
             return null;
         }
 
@@ -87,7 +87,7 @@ public class CapsuleContentPreviewQueryHandler
         } else if (heldItem.hasTagCompound()){
             //noinspection ConstantConditions
             String structureName = heldItem.getTagCompound().getString("structureName");
-            sendingPlayer.addChatMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
+            sendingPlayer.sendMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
         }
 
         return null;

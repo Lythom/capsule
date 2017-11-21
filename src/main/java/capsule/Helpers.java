@@ -65,7 +65,7 @@ public class Helpers {
             Iterable<MutableBlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
                     new BlockPos(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
-                Block block = entityItem.worldObj.getBlockState(pos).getBlock();
+                Block block = entityItem.getEntityWorld().getBlockState(pos).getBlock();
                 if (block.getClass().equals(searchedBlock)) {
                     return new BlockPos(pos.getX(), pos.getY(), pos.getZ()); // return a copy
                 }

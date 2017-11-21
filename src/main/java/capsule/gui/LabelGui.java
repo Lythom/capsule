@@ -33,7 +33,7 @@ public class LabelGui extends GuiScreen {
         buttonList.clear();
         Keyboard.enableRepeatEvents(true);
 
-        textInput = new GuiTextField(0, this.fontRendererObj, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT);
+        textInput = new GuiTextField(0, this.fontRenderer, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT);
         textInput.setMaxStringLength(32);
         textInput.setFocused(true);
 
@@ -44,7 +44,7 @@ public class LabelGui extends GuiScreen {
 
         String label = "";
         ItemStack itemStack = this.getItemStack();
-        if (itemStack != null && itemStack.hasTagCompound()) {
+        if (!itemStack.isEmpty() && itemStack.hasTagCompound()) {
             //noinspection ConstantConditions
             label = itemStack.getTagCompound().getString("label");
         }

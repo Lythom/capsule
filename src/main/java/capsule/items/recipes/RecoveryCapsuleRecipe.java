@@ -4,6 +4,7 @@ import capsule.items.CapsuleItem;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
 public class RecoveryCapsuleRecipe implements IRecipe {
@@ -21,38 +22,38 @@ public class RecoveryCapsuleRecipe implements IRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return null;
+        return ItemStack.EMPTY;
     }
 
-    public ItemStack[] getRemainingItems(InventoryCrafting p_179532_1_) {
-        ItemStack[] aitemstack = new ItemStack[p_179532_1_.getSizeInventory()];
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-        for (int i = 0; i < aitemstack.length; ++i) {
-            ItemStack itemstack = p_179532_1_.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
-            if (aitemstack[i] == null && itemstack != null && itemstack.getItem() instanceof CapsuleItem) {
-                aitemstack[i] = itemstack.copy();
+        for (int i = 0; i < nonnulllist.size(); ++i) {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+            if (itemstack.getItem() instanceof CapsuleItem){
+                nonnulllist.set(i, itemstack.copy());
             }
         }
 
-        return aitemstack;
+        return nonnulllist;
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(InventoryCrafting p_77569_1_, World worldIn) {
+    public boolean matches(InventoryCrafting inv, World worldIn) {
         int sourceCapsule = 0;
         int material = 0;
-        for (int i = 0; i < p_77569_1_.getHeight(); ++i) {
-            for (int j = 0; j < p_77569_1_.getWidth(); ++j) {
-                ItemStack itemstack = p_77569_1_.getStackInRowAndColumn(j, i);
+        for (int i = 0; i < inv.getHeight(); ++i) {
+            for (int j = 0; j < inv.getWidth(); ++j) {
+                ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && (itemstack.getMetadata() == this.inputCapsule.getMetadata())) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == this.inputCapsule.getItem() && (itemstack.getMetadata() == this.inputCapsule.getMetadata())) {
                     sourceCapsule++;
-                } else if (itemstack != null && itemstack.getItem() == this.inputMaterial.getItem() && (itemstack.getMetadata() == this.inputMaterial.getMetadata())) {
+                } else if (!itemstack.isEmpty() && itemstack.getItem() == this.inputMaterial.getItem() && (itemstack.getMetadata() == this.inputMaterial.getMetadata())) {
                     material++;
-                } else if (itemstack != null) {
+                } else if (!itemstack.isEmpty()) {
                     return false;
                 }
             }
@@ -69,7 +70,7 @@ public class RecoveryCapsuleRecipe implements IRecipe {
             for (int j = 0; j < invC.getWidth(); ++j) {
                 ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null && itemstack.getItem() == this.inputCapsule.getItem() && itemstack.getMetadata() == this.inputCapsule.getMetadata()) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == this.inputCapsule.getItem() && itemstack.getMetadata() == this.inputCapsule.getMetadata()) {
                     ItemStack copy = itemstack.copy();
                     CapsuleItem.setState(copy, this.targetMetadata);
                     CapsuleItem.setOneUse(copy);
@@ -77,7 +78,7 @@ public class RecoveryCapsuleRecipe implements IRecipe {
                 }
             }
         }
-        return null;
+        return ItemStack.EMPTY;
     }
 
     /**

@@ -20,6 +20,10 @@ import net.minecraft.tileentity.TileEntityStructure;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ObjectIntIdentityMap;
 import net.minecraft.util.Rotation;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.IDataFixer;
+import net.minecraft.util.datafix.IDataWalker;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -188,9 +192,9 @@ public class CapsuleTemplate
         return blockpos.subtract(blockpos1);
     }
 
-    public static BlockPos transformedBlockPos(CapsulePlacementSettings placementIn, BlockPos p_186266_1_)
+    public static BlockPos transformedBlockPos(CapsulePlacementSettings placementIn, BlockPos pos)
     {
-        return transformedBlockPos(p_186266_1_, placementIn.getMirror(), placementIn.getRotation());
+        return transformedBlockPos(pos, placementIn.getMirror(), placementIn.getRotation());
     }
 
     public void addBlocksToWorldChunk(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
@@ -209,8 +213,6 @@ public class CapsuleTemplate
 
     /**
      * This takes the data stored in this instance and puts them into the world.
-     *
-     * @param flags The flags to use when placing blocks.
      */
     public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, int flags)
     {
@@ -219,7 +221,7 @@ public class CapsuleTemplate
 
     public void addBlocksToWorld(World p_189960_1_, BlockPos p_189960_2_, @Nullable ITemplateProcessor p_189960_3_, CapsulePlacementSettings p_189960_4_, int p_189960_5_)
     {
-        if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
+        if ((!this.blocks.isEmpty() || !p_189960_4_.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
             Block block = p_189960_4_.getReplacedBlock();
             StructureBoundingBox structureboundingbox = p_189960_4_.getBoundingBox();
@@ -279,7 +281,7 @@ public class CapsuleTemplate
 
                     if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
                     {
-                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock());
+                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
 
                         if (template$blockinfo2.tileentityData != null)
                         {
@@ -334,7 +336,7 @@ public class CapsuleTemplate
                     float f = entity.getMirroredYaw(mirrorIn);
                     f = f + (entity.rotationYaw - entity.getRotatedYaw(rotationIn));
                     entity.setLocationAndAngles(vec3d1.xCoord, vec3d1.yCoord, vec3d1.zCoord, f, entity.rotationPitch);
-                    worldIn.spawnEntityInWorld(entity);
+                    worldIn.spawnEntity(entity);
                     if(spawnedEntities != null) spawnedEntities.add(entity);
                 }
             }
@@ -419,28 +421,74 @@ public class CapsuleTemplate
 
     public BlockPos getZeroPositionWithTransform(BlockPos p_189961_1_, Mirror p_189961_2_, Rotation p_189961_3_)
     {
-        int i = this.getSize().getX() - 1;
-        int j = this.getSize().getZ() - 1;
-        int k = p_189961_2_ == Mirror.FRONT_BACK ? i : 0;
-        int l = p_189961_2_ == Mirror.LEFT_RIGHT ? j : 0;
-        BlockPos blockpos = p_189961_1_;
+        return getZeroPositionWithTransform(p_189961_1_, p_189961_2_, p_189961_3_, this.getSize().getX(), this.getSize().getZ());
+    }
 
-        switch (p_189961_3_)
+    public static BlockPos getZeroPositionWithTransform(BlockPos p_191157_0_, Mirror p_191157_1_, Rotation p_191157_2_, int p_191157_3_, int p_191157_4_)
+    {
+        --p_191157_3_;
+        --p_191157_4_;
+        int i = p_191157_1_ == Mirror.FRONT_BACK ? p_191157_3_ : 0;
+        int j = p_191157_1_ == Mirror.LEFT_RIGHT ? p_191157_4_ : 0;
+        BlockPos blockpos = p_191157_0_;
+
+        switch (p_191157_2_)
         {
             case COUNTERCLOCKWISE_90:
-                blockpos = p_189961_1_.add(l, 0, i - k);
+                blockpos = p_191157_0_.add(j, 0, p_191157_3_ - i);
                 break;
             case CLOCKWISE_90:
-                blockpos = p_189961_1_.add(j - l, 0, k);
+                blockpos = p_191157_0_.add(p_191157_4_ - j, 0, i);
                 break;
             case CLOCKWISE_180:
-                blockpos = p_189961_1_.add(i - k, 0, j - l);
+                blockpos = p_191157_0_.add(p_191157_3_ - i, 0, p_191157_4_ - j);
                 break;
             case NONE:
-                blockpos = p_189961_1_.add(k, 0, l);
+                blockpos = p_191157_0_.add(i, 0, j);
         }
 
         return blockpos;
+    }
+
+    public static void registerFixes(DataFixer fixer)
+    {
+        fixer.registerWalker(FixTypes.STRUCTURE, new IDataWalker()
+        {
+            public NBTTagCompound process(IDataFixer fixer, NBTTagCompound compound, int versionIn)
+            {
+                if (compound.hasKey("entities", 9))
+                {
+                    NBTTagList nbttaglist = compound.getTagList("entities", 10);
+
+                    for (int i = 0; i < nbttaglist.tagCount(); ++i)
+                    {
+                        NBTTagCompound nbttagcompound = (NBTTagCompound)nbttaglist.get(i);
+
+                        if (nbttagcompound.hasKey("nbt", 10))
+                        {
+                            nbttagcompound.setTag("nbt", fixer.process(FixTypes.ENTITY, nbttagcompound.getCompoundTag("nbt"), versionIn));
+                        }
+                    }
+                }
+
+                if (compound.hasKey("blocks", 9))
+                {
+                    NBTTagList nbttaglist1 = compound.getTagList("blocks", 10);
+
+                    for (int j = 0; j < nbttaglist1.tagCount(); ++j)
+                    {
+                        NBTTagCompound nbttagcompound1 = (NBTTagCompound)nbttaglist1.get(j);
+
+                        if (nbttagcompound1.hasKey("nbt", 10))
+                        {
+                            nbttagcompound1.setTag("nbt", fixer.process(FixTypes.BLOCK_ENTITY, nbttagcompound1.getCompoundTag("nbt"), versionIn));
+                        }
+                    }
+                }
+
+                return compound;
+            }
+        });
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt)
@@ -489,8 +537,9 @@ public class CapsuleTemplate
         nbt.setTag("blocks", nbttaglist);
         nbt.setTag("entities", nbttaglist1);
         nbt.setTag("size", this.writeInts(new int[] {this.size.getX(), this.size.getY(), this.size.getZ()}));
-        nbt.setInteger("version", 1);
         nbt.setString("author", this.author);
+        nbt.setInteger("DataVersion", 922);
+        net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt);
         return nbt;
     }
 
@@ -584,23 +633,23 @@ public class CapsuleTemplate
                 this.ids = new ObjectIntIdentityMap(16);
             }
 
-            public int idFor(IBlockState p_189954_1_)
+            public int idFor(IBlockState state)
             {
-                int i = this.ids.get(p_189954_1_);
+                int i = this.ids.get(state);
 
                 if (i == -1)
                 {
                     i = this.lastId++;
-                    this.ids.put(p_189954_1_, i);
+                    this.ids.put(state, i);
                 }
 
                 return i;
             }
 
             @Nullable
-            public IBlockState stateFor(int p_189955_1_)
+            public IBlockState stateFor(int id)
             {
-                IBlockState iblockstate = (IBlockState)this.ids.getByValue(p_189955_1_);
+                IBlockState iblockstate = (IBlockState)this.ids.getByValue(id);
                 return iblockstate == null ? DEFAULT_BLOCK_STATE : iblockstate;
             }
 
@@ -795,7 +844,7 @@ public class CapsuleTemplate
 
                     if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
                     {
-                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock());
+                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
 
                         if (template$blockinfo2.tileentityData != null)
                         {

@@ -7,6 +7,7 @@ import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
 public class UpgradeCapsuleRecipe implements IRecipe {
@@ -20,18 +21,20 @@ public class UpgradeCapsuleRecipe implements IRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return null;
+        return ItemStack.EMPTY;
     }
 
-    public ItemStack[] getRemainingItems(InventoryCrafting inv) {
-        ItemStack[] aitemstack = new ItemStack[inv.getSizeInventory()];
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv)
+    {
+        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-        for (int i = 0; i < aitemstack.length; ++i) {
+        for (int i = 0; i < nonnulllist.size(); ++i)
+        {
             ItemStack itemstack = inv.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
         }
 
-        return aitemstack;
+        return nonnulllist;
     }
 
     /**
@@ -39,17 +42,17 @@ public class UpgradeCapsuleRecipe implements IRecipe {
      */
     public boolean matches(InventoryCrafting craftingGrid, World worldIn) {
 
-        ItemStack sourceCapsule = null;
+        ItemStack sourceCapsule = ItemStack.EMPTY;
         int material = 0;
         for (int i = 0; i < craftingGrid.getHeight(); ++i) {
             for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                 ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                     sourceCapsule = itemstack;
-                } else if (itemstack != null && itemstack.getItem() == upgradeItem) {
+                } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
                     material++;
-                } else if (itemstack != null) {
+                } else if (!itemstack.isEmpty()) {
                     return false;
                 }
             }
@@ -63,23 +66,23 @@ public class UpgradeCapsuleRecipe implements IRecipe {
      */
     public ItemStack getCraftingResult(InventoryCrafting craftingGrid) {
 
-        ItemStack input = null;
+        ItemStack input = ItemStack.EMPTY;
         int material = 0;
         for (int i = 0; i < craftingGrid.getHeight(); ++i) {
             for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                 ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                if (itemstack != null && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                     input = itemstack;
-                } else if (itemstack != null && itemstack.getItem() == upgradeItem) {
+                } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
                     material++;
-                } else if (itemstack != null) {
-                    return null;
+                } else if (!itemstack.isEmpty()) {
+                    return ItemStack.EMPTY;
                 }
             }
         }
 
-        if (input == null) return null;
+        if (input == null) return ItemStack.EMPTY;
 
         ItemStack copy = input.copy();
         int newSize = CapsuleItem.getSize(input) + material * 2;

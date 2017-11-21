@@ -54,24 +54,6 @@ public class TileEntityCapture extends TileEntity {
         readFromNBT(pkt.getNbtCompound());
     }
 
-    // we only update the position and id, the rest is client side only
-    @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound parentNBTTagCompound) {
-        parentNBTTagCompound.setString("id", "capsulemarker_te");
-        parentNBTTagCompound.setInteger("x", this.pos.getX());
-        parentNBTTagCompound.setInteger("y", this.pos.getY());
-        parentNBTTagCompound.setInteger("z", this.pos.getZ());
-        return parentNBTTagCompound;
-    }
-
-    // This is where you load the data that you saved in writeToNBT
-    // we only update the position, the rest is client side only
-    @Override
-    public void readFromNBT(NBTTagCompound parentNBTTagCompound) {
-
-        this.pos = new BlockPos(parentNBTTagCompound.getInteger("x"), parentNBTTagCompound.getInteger("y"), parentNBTTagCompound.getInteger("z"));
-    }
-
     /**
      * @return an appropriately size AABB for the TileEntity
      */

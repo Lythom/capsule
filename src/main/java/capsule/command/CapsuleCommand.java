@@ -55,7 +55,7 @@ public class CapsuleCommand extends CommandBase {
      * @see net.minecraft.command.ICommand#getName()
      */
     @Override
-    public String getCommandName() {
+    public String getName() {
         return "capsule";
     }
 
@@ -68,21 +68,21 @@ public class CapsuleCommand extends CommandBase {
      * (non-Javadoc)
      *
      * @see
-     * net.minecraft.command.ICommand#getCommandUsage(net.minecraft.command.
+     * net.minecraft.command.ICommand#getUsage(net.minecraft.command.
      * ICommandSender)
      */
     @Override
-    public String getCommandUsage(ICommandSender sender) {
+    public String getUsage(ICommandSender sender) {
 
         TextComponentString msg = new TextComponentString(
                 "see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://bitbucket.org/Lythom/mccapsule/wiki/Commands");
         msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://bitbucket.org/Lythom/mccapsule/wiki/Commands"));
-        sender.addChatMessage(msg);
+        sender.sendMessage(msg);
         return "/capsule <" + Joiner.on("|").join(COMMAND_LIST) + ">";
     }
 
     @Override
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
 
         EntityPlayerMP player = null;
         switch (args.length) {
@@ -91,7 +91,7 @@ public class CapsuleCommand extends CommandBase {
             case 2:
                 switch (args[0]) {
                     case "giveRandomLoot":
-                        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
 
                     case "setBaseColor":
                         return getListOfStringsMatchingLastWord(args, CapsuleLootEntry.COLOR_PALETTE);
@@ -135,7 +135,7 @@ public class CapsuleCommand extends CommandBase {
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 
         if (args.length < 1 || "help".equalsIgnoreCase(args[0])) {
-            throw new WrongUsageException(getCommandUsage(sender));
+            throw new WrongUsageException(getUsage(sender));
         }
 
         EntityPlayerMP player = null;
@@ -161,11 +161,11 @@ public class CapsuleCommand extends CommandBase {
         // export give command exportHeldItem
         else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
             if (args.length != 1) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null) {
+                if (!heldItem.isEmpty()) {
 
                     String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getItemDamage();
                     if (heldItem.hasTagCompound()) {
@@ -177,13 +177,13 @@ public class CapsuleCommand extends CommandBase {
                             .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
                     msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                    player.addChatMessage(msg);
+                    player.sendMessage(msg);
 
                 }
             }
         } else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
             if (args.length != 1) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
             if (player != null) {
                 if (!server.isDedicatedServer()) {
@@ -204,11 +204,11 @@ public class CapsuleCommand extends CommandBase {
                                 .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
                         msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                        player.addChatMessage(msg);
+                        player.sendMessage(msg);
 
                     }
                 } else {
-                    player.addChatMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
+                    player.sendMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
                 }
             }
         }
@@ -216,12 +216,12 @@ public class CapsuleCommand extends CommandBase {
         // set author
         else if ("setAuthor".equalsIgnoreCase(args[0])) {
             if (args.length != 1 && args.length != 2) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
 
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
+                if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 
                     if (args.length == 2) {
                         // set a new author
@@ -257,7 +257,7 @@ public class CapsuleCommand extends CommandBase {
         // set color
         else if ("setBaseColor".equalsIgnoreCase(args[0])) {
             if (args.length != 2) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
 
             int color = 0;
@@ -269,13 +269,13 @@ public class CapsuleCommand extends CommandBase {
 
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
+                if (heldItem.getItem() instanceof CapsuleItem) {
                     CapsuleItem.setBaseColor(heldItem, color);
                 }
             }
         } else if ("setMaterialColor".equalsIgnoreCase(args[0])) {
             if (args.length != 2) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
 
             int color = 0;
@@ -287,7 +287,7 @@ public class CapsuleCommand extends CommandBase {
 
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem) {
+                if (heldItem.getItem() instanceof CapsuleItem) {
                     CapsuleItem.setMaterialColor(heldItem, color);
                 }
             }
@@ -295,12 +295,12 @@ public class CapsuleCommand extends CommandBase {
         // set the held item as reward (or not)
         else if ("fromHeldCapsule".equalsIgnoreCase(args[0])) {
             if (args.length != 1 && args.length != 2) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
 
             if (player != null) {
                 ItemStack heldItem = player.getHeldItemMainhand();
-                if (heldItem != null && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
+                if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
 
                     String outputName;
                     if (args.length == 1) {
@@ -341,7 +341,7 @@ public class CapsuleCommand extends CommandBase {
         } else if ("fromStructure".equalsIgnoreCase(args[0])) {
 
             if (args.length == 1) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
             StringBuilder structureNameB = new StringBuilder();
             for (int i = 1; i < args.length; i++) {
@@ -351,7 +351,7 @@ public class CapsuleCommand extends CommandBase {
 
             String structureName = structureNameB.toString().replaceAll(".nbt", "");
 
-            if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
+            if (player != null && structureName != null && player.getEntityWorld() instanceof WorldServer) {
                 // template
                 TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
                 Template template = templatemanager.get(server, new ResourceLocation(structureName));
@@ -389,7 +389,7 @@ public class CapsuleCommand extends CommandBase {
         } else if ("fromExistingReward".equalsIgnoreCase(args[0])) {
 
             if (args.length == 1) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
             StringBuilder structureNameB = new StringBuilder();
             for (int i = 1; i < args.length; i++) {
@@ -399,7 +399,7 @@ public class CapsuleCommand extends CommandBase {
 
             String structureName = structureNameB.toString().replaceAll(".nbt", "");
 
-            if (player != null && structureName != null && player.worldObj instanceof WorldServer) {
+            if (player != null && structureName != null && player.getEntityWorld() instanceof WorldServer) {
 
                 String stucturePath = Config.rewardTemplatesPath + "/" + structureName;
 
@@ -428,7 +428,7 @@ public class CapsuleCommand extends CommandBase {
         // give a random loot capsule
         else if ("giveRandomLoot".equalsIgnoreCase(args[0])) {
             if (args.length != 1 && args.length != 2) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
 
             if (args.length == 2) {
@@ -439,7 +439,7 @@ public class CapsuleCommand extends CommandBase {
                 List<ItemStack> loots = new ArrayList<>();
                 CapsuleLootTableHook.capsulePool.generateLoot(loots, new Random(), lootcontext$builder.build());
                 if (loots.size() <= 0) {
-                    player.addChatMessage(new TextComponentString("No loot this time !"));
+                    player.sendMessage(new TextComponentString("No loot this time !"));
                 } else {
                     for (ItemStack loot : loots) {
                         giveCapsule(loot, player);
@@ -448,16 +448,16 @@ public class CapsuleCommand extends CommandBase {
             }
         } else if ("reloadLootList".equalsIgnoreCase(args[0])) {
             if (args.length != 1) {
-                throw new WrongUsageException(getCommandUsage(sender));
+                throw new WrongUsageException(getUsage(sender));
             }
             StructureSaver.loadLootList(server);
         } else {
-            throw new WrongUsageException(getCommandUsage(sender));
+            throw new WrongUsageException(getUsage(sender));
         }
     }
 
     private void giveCapsule(ItemStack capsule, EntityPlayer player) {
-        EntityItem entity = new EntityItem(player.worldObj, player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
+        EntityItem entity = new EntityItem(player.getEntityWorld(), player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
         entity.setNoPickupDelay();
         entity.onCollideWithPlayer(player);
     }

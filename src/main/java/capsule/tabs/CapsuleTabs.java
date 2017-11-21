@@ -2,9 +2,11 @@ package capsule.tabs;
 
 import capsule.items.CapsuleItemsRegistrer;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+
+import static capsule.items.CapsuleItem.STATE_LINKED;
 
 public class CapsuleTabs extends CreativeTabs {
 
@@ -13,9 +15,8 @@ public class CapsuleTabs extends CreativeTabs {
     }
 
     @SideOnly(Side.CLIENT)
-    public Item getTabIconItem() {
-
-        return CapsuleItemsRegistrer.capsule;
+    public ItemStack getTabIconItem() {
+        return new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_LINKED);
     }
 
 }

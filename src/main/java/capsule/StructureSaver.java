@@ -200,7 +200,7 @@ public class StructureSaver {
             }
         } else {
             if (player != null) {
-                player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
             }
         }
 
@@ -251,7 +251,7 @@ public class StructureSaver {
             } catch (Exception e) {
                 LOGGER.error("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
                 if (player != null) {
-                    player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                    player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
                 }
                 try {
                     world.setBlockState(pos, b);
@@ -309,7 +309,7 @@ public class StructureSaver {
                 try {
                     // check if the player can place a block
                     if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)){
-                        player.addChatMessage(new TextComponentTranslation("capsule.error.notAllowed"));
+                        player.sendMessage(new TextComponentTranslation("capsule.error.notAllowed"));
                         return false;
                     }
 
@@ -318,7 +318,7 @@ public class StructureSaver {
                 } catch (Exception err) {
                     LOGGER.error("Couldn't deploy the capsule", err);
                     if (player != null) {
-                        player.addChatMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                        player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
                     }
 
                     // rollback
@@ -332,18 +332,18 @@ public class StructureSaver {
                 // send a chat message to explain failure
                 if (player != null) {
                     if (outOccupiedSpawnPositions.size() == 0) {
-                        player.addChatMessage(
+                        player.sendMessage(
                                 new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
                                         StringUtils.join(outEntityBlocking, ", ")));
                     } else {
-                        player.addChatMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+                        player.sendMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
                     }
                 }
             }
         } else {
             // send a chat message to explain failure
             if (player != null) {
-                player.addChatMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
+                player.sendMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
             }
         }
 
@@ -517,10 +517,10 @@ public class StructureSaver {
      * @return
      */
     public static CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
-        CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadItemData(CapsuleSavedData.class, "capsuleData");
+        CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadData(CapsuleSavedData.class, "capsuleData");
         if (capsuleSavedData == null) {
             capsuleSavedData = new CapsuleSavedData("capsuleData");
-            capsuleWorld.setItemData("capsuleData", capsuleSavedData);
+            capsuleWorld.setData("capsuleData", capsuleSavedData);
             capsuleSavedData.setDirty(true);
         }
         return capsuleSavedData;
