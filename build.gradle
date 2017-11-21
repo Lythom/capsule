@@ -80,17 +80,14 @@ dependencies {
 
 processResources {
 
-    inputs.property "mod_version", project.version
-    inputs.property "minecraft_version", project.minecraft.version
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
 
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
 
         // replaces
-        expand ([
-            'mod_version': project.version,
-            'minecraft_version': project.minecraft.version
-        ])
+        expand 'version':project.version, 'mcversion':project.minecraft.version
     }
 
     // copy everything else, thats not the mcmod.info
