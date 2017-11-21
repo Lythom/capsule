@@ -10,8 +10,10 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -44,7 +46,8 @@ public class BlockCapsuleMarker extends BlockContainer {
      */
     public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
 
-        return state.withProperty(PROJECTING, this.isProjecting((TileEntityCapture) worldIn.getTileEntity(pos)));
+        TileEntity tileentity = worldIn instanceof ChunkCache ? ((ChunkCache)worldIn).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : worldIn.getTileEntity(pos);
+        return state.withProperty(PROJECTING, this.isProjecting((TileEntityCapture) tileentity));
     }
 
     public Boolean isProjecting(TileEntityCapture tec) {
