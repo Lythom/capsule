@@ -1,11 +1,11 @@
 pipeline {
 environment {
-        BRANCH = 1.10
+        BRANCH = 1.12
         GRADLE_OPTS = '-Dfile.encoding=UTF-8'
     }
     agent {
         dockerfile {
-            args '--env BRANCH=1.10 -v /data/capsulebuilds:/build/libs -v /data/capsulebuilds/cache:/root/.gradle'
+            args '--env BRANCH=${env.BRANCH} -v /data/capsulebuilds:/build/libs -v /data/capsulebuilds/cache:/root/.gradle'
         }
     }
     stages {
