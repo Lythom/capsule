@@ -28,7 +28,7 @@ configFile.withReader {
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-version = config.minecraft_version + "-" + config.capsule_version + "-" + config.build_version
+version = config.minecraft_version + "-" + config.capsule_version + "." + config.build_version
 group= "fr.samuelbouchet.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "Capsule"
 
