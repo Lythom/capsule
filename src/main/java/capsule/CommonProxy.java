@@ -68,7 +68,9 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
     }
 
-    public void init(FMLInitializationEvent event) {}
+    public void init(FMLInitializationEvent event) {
+        MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
+    }
 
     public void postInit(FMLPostInitializationEvent event) {
         Config.config.save();
