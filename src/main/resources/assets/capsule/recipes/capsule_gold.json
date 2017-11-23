@@ -1,0 +1,31 @@
+{
+  "result": {
+    "type": "minecraft:item_nbt",
+    "item": "capsule:capsule",
+    "data": 0,
+    "nbt": {
+      "color": 16766720,
+      "size": 3
+    }
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "#": {
+      "item": "minecraft:gold_ingot"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "item": "minecraft:ender_pearl"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    }
+  }
+}

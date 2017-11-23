@@ -1,0 +1,32 @@
+{
+  "result": {
+    "type": "minecraft:item_nbt",
+    "item": "capsule:capsule",
+    "data": 0,
+    "nbt": {
+      "color": 16777215,
+      "size": 1,
+      "overpowered": 1
+    }
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "#": {
+      "item": "minecraft:iron_ingot"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "item": "minecraft:nether_star"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    }
+  }
+}

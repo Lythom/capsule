@@ -1,7 +1,12 @@
 {
   "result": {
+    "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
-    "data": 0
+    "data": 0,
+    "nbt": {
+      "color": 13421772,
+      "size": 1
+    }
   },
   "pattern": [
     " b ",
