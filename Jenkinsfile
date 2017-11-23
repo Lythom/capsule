@@ -5,7 +5,7 @@ environment {
     }
     agent {
         dockerfile {
-            args '--env BRANCH=1.10 -v /data/capsulebuilds:/build/libs -v /data/capsulebuilds/cache:/root/.gradle'
+            args '--env BRANCH=${env.BRANCH} -v /data/capsulebuilds:/build/libs -v /data/capsulebuilds/cache:/root/.gradle'
         }
     }
     stages {
