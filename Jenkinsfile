@@ -11,6 +11,7 @@ environment {
     stages {
         stage('Build') {
             steps {
+                sh "rm build/libs/*.jar"
                 git branch: "${env.BRANCH}", url: 'https://github.com/Lythom/capsule.git'
                 sh "sed -i 's/BUILD_ID/${env.BUILD_ID}/g' build.properties"
                 sh '/gradlew build --stacktrace'
@@ -23,8 +24,8 @@ environment {
         }
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: "build/libs/*-${env.BUILD_ID}.jar", fingerprint: true
-                archiveArtifacts artifacts: "build/libs/*-${env.BUILD_ID}-sources.jar", fingerprint: true
+                archiveArtifacts artifacts: "build/libs/Capsule-${env.BRANCH}*.${env.BUILD_ID}.jar", fingerprint: true
+                archiveArtifacts artifacts: "build/libs/Capsule-${env.BRANCH}*.${env.BUILD_ID}-sources.jar", fingerprint: true
             }
         }
     }
