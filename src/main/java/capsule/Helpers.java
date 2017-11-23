@@ -47,7 +47,7 @@ public class Helpers {
         int blockReachDistance = 18;
         Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
         Vec3d vec3d1 = thePlayer.getLook(partialTicks);
-        Vec3d vec3d2 = vec3d.addVector(vec3d1.xCoord * blockReachDistance, vec3d1.yCoord * blockReachDistance, vec3d1.zCoord * blockReachDistance);
+        Vec3d vec3d2 = vec3d.addVector(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         RayTraceResult rtc = thePlayer.getEntityWorld().rayTraceBlocks(vec3d, vec3d2, false, true, true);
         return rtc;
     }

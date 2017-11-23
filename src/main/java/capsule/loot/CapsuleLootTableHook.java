@@ -28,6 +28,7 @@ public class CapsuleLootTableHook {
             LootTableList.CHESTS_STRONGHOLD_CROSSING.toString(),
             LootTableList.CHESTS_STRONGHOLD_LIBRARY.toString(),
             LootTableList.CHESTS_VILLAGE_BLACKSMITH.toString(),
+            LootTableList.CHESTS_WOODLAND_MANSION.toString(),
             LootTableList.GAMEPLAY_FISHING_TREASURE.toString()
     );
     public static LootPool capsulePool = null;

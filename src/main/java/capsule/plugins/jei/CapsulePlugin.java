@@ -1,9 +1,9 @@
 package capsule.plugins.jei;
 
 import capsule.Config;
-import capsule.blocks.CapsuleBlocksRegistrer;
+import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
-import capsule.items.CapsuleItemsRegistrer;
+import capsule.items.CapsuleItems;
 import mezz.jei.api.BlankModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.ISubtypeRegistry;
@@ -12,9 +12,11 @@ import mezz.jei.api.recipe.VanillaRecipeCategoryUid;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.util.NonNullList;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -29,7 +31,7 @@ public class CapsulePlugin extends BlankModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistry subtypeRegistry) {
-        subtypeRegistry.registerSubtypeInterpreter(CapsuleItemsRegistrer.capsule, new CapsuleSubtypeInterpreter());
+        subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.capsule, new CapsuleSubtypeInterpreter());
     }
 
     @Override
@@ -40,29 +42,29 @@ public class CapsulePlugin extends BlankModPlugin {
 
         List<IRecipe> recipes = new ArrayList<>();
         // upgrade
-        ItemStack ironCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
-        ItemStack ironCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + UPGRADE_STEP);
+        ItemStack ironCapsule = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
+        ItemStack ironCapsuleUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + UPGRADE_STEP);
         ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        ItemStack ironCapsuleUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2 * UPGRADE_STEP);
+        ItemStack ironCapsuleUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2 * UPGRADE_STEP);
         ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
-        ItemStack ironCapsuleUpUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 3 * UPGRADE_STEP);
+        ItemStack ironCapsuleUpUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 3 * UPGRADE_STEP);
         ironCapsuleUpUpUp.setTagInfo("upgraded", new NBTTagInt(3));
-        ItemStack ironCapsuleUpUpUpUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 4 * UPGRADE_STEP);
+        ItemStack ironCapsuleUpUpUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 4 * UPGRADE_STEP);
         ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
 
-        ItemStack goldCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
-        ItemStack goldCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize + 2);
+        ItemStack goldCapsule = CapsuleItems.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
+        ItemStack goldCapsuleUp = CapsuleItems.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize + 2);
         goldCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
         goldCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(goldCapsuleUp, "JEIExemple");
-        ItemStack diamondCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize);
-        ItemStack diamondCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize + 2);
+        ItemStack diamondCapsule = CapsuleItems.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize);
+        ItemStack diamondCapsuleUp = CapsuleItems.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize + 2);
         diamondCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
         diamondCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(diamondCapsuleUp, "JEIExemple");
-        ItemStack opCapsule = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize);
+        ItemStack opCapsule = CapsuleItems.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize);
         opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
-        ItemStack opCapsuleUp = CapsuleItemsRegistrer.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize + 2);
+        ItemStack opCapsuleUp = CapsuleItems.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize + 2);
         opCapsuleUp.setTagInfo("overpowered", new NBTTagByte((byte) 1));
         opCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(opCapsuleUp, "JEIExemple");
@@ -85,18 +87,20 @@ public class CapsulePlugin extends BlankModPlugin {
         CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
 
 
-        ItemStack chorusFruitIS = new ItemStack(Items.CHORUS_FRUIT_POPPED);
+        Ingredient cfp = Ingredient.fromItem(Items.CHORUS_FRUIT_POPPED);
+        Ingredient ironCapsuleIng = Ingredient.fromStacks(ironCapsule);
         if (Config.upgradeLimit > 0)
-            recipes.add(new ShapelessRecipes(ironCapsuleUp, Arrays.asList(new ItemStack[]{ironCapsule, chorusFruitIS})));
+            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUp, NonNullList.from(ironCapsuleIng, cfp)));
         if (Config.upgradeLimit > 1)
-            recipes.add(new ShapelessRecipes(ironCapsuleUpUp, Arrays.asList(new ItemStack[]{ironCapsule, chorusFruitIS, chorusFruitIS})));
+            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp)));
         if (Config.upgradeLimit > 2)
-            recipes.add(new ShapelessRecipes(ironCapsuleUpUpUp, Arrays.asList(new ItemStack[]{ironCapsule, chorusFruitIS, chorusFruitIS, chorusFruitIS})));
+            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp, cfp)));
         if (Config.upgradeLimit > 3)
-            recipes.add(new ShapelessRecipes(ironCapsuleUpUpUpUp, Arrays.asList(new ItemStack[]{ironCapsule, chorusFruitIS, chorusFruitIS, chorusFruitIS, chorusFruitIS})));
+            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUpUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp, cfp, cfp)));
 
-        recipes.add(new ShapelessRecipes(recoveryCapsule, Arrays.asList(new ItemStack[]{unlabelledCapsule, new ItemStack(Items.GLASS_BOTTLE)})));
-        recipes.add(new ShapelessRecipes(ironCapsule, Arrays.asList(new ItemStack[]{unlabelledCapsule})));
+        Ingredient unlabelCapsuleIng = Ingredient.fromStacks(unlabelledCapsule);
+        recipes.add(new ShapelessRecipes("capsule", recoveryCapsule, NonNullList.from(unlabelCapsuleIng, Ingredient.fromItem(Items.GLASS_BOTTLE))));
+        recipes.add(new ShapelessRecipes("capsule", ironCapsule, NonNullList.from(unlabelCapsuleIng)));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
 
@@ -104,14 +108,14 @@ public class CapsulePlugin extends BlankModPlugin {
         registry.addIngredientInfo(unlabelledCapsule, ItemStack.class, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(recoveryCapsule, ItemStack.class, "jei.capsule.desc.recoveryCapsule");
         registry.addIngredientInfo(opCapsule, ItemStack.class, "jei.capsule.desc.opCapsule");
-        registry.addIngredientInfo(new ItemStack(CapsuleBlocksRegistrer.blockCapsuleMarker), ItemStack.class, "jei.capsule.desc.capsuleMarker");
+        registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), ItemStack.class, "jei.capsule.desc.capsuleMarker");
 
     }
 
     private static class CapsuleSubtypeInterpreter implements ISubtypeRegistry.ISubtypeInterpreter {
 
         @Override
-        public String getSubtypeInfo(@Nonnull ItemStack itemStack) {
+        public String apply(ItemStack itemStack) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
             String isOP = String.valueOf(itemStack.getTagCompound() != null && itemStack.getTagCompound().hasKey("overpowered") && itemStack.getTagCompound().getBoolean("overpowered"));
             String capsuleState = String.valueOf(itemStack.getItemDamage());

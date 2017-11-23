@@ -1,9 +1,9 @@
 package capsule.blocks;
 
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -42,7 +42,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
                 extendSize + 1.01, size + 1.01, extendSize + 1.01);
 
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
+        BufferBuilder vertexbuffer = tessellator.getBuffer();
         vertexbuffer.begin(3, DefaultVertexFormats.POSITION_COLOR);
         vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
         vertexbuffer.pos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
@@ -84,8 +84,8 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
     }
 
     @Override
-    public void renderTileEntityAt(TileEntityCapture tileEntityCapture, double relativeX, double relativeY, double relativeZ,
-                                   float partialTicks, int blockDamageProgress) {
+    public void render(TileEntityCapture tileEntityCapture, double relativeX, double relativeY, double relativeZ,
+                                   float partialTicks, int blockDamageProgress, float alpha) {
 
         if (tileEntityCapture == null)
             return;

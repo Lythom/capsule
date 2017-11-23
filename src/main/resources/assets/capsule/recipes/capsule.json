@@ -1,0 +1,26 @@
+{
+  "result": {
+    "item": "capsule:capsule",
+    "data": 0
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "#": {
+      "item": "minecraft:iron_ingot"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "item": "minecraft:ender_pearl"
+    },
+    "i": {
+      "item": "minecraft:iron_ingot"
+    }
+  }
+}

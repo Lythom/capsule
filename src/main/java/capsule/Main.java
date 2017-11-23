@@ -11,12 +11,12 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
-@Mod(modid = Main.MODID, name = Main.MODNAME, version = Main.VERSION)
+@Mod(modid = Main.MODID, name = Main.MODNAME, version = Main.VERSION, useMetadata = true)
 public class Main {
 
     public static final String MODID = "capsule";
     public static final String MODNAME = "Capsule";
-    public static final String VERSION = "1.10.2-1.2.0";
+    public static final String VERSION = "dev";
 
     public static CreativeTabs tabCapsule = new CapsuleTabs(CreativeTabs.getNextID(), "capsule");
 

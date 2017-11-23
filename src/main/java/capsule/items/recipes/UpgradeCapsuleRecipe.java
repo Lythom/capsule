@@ -2,15 +2,18 @@ package capsule.items.recipes;
 
 import capsule.Config;
 import capsule.items.CapsuleItem;
-import capsule.items.CapsuleItemsRegistrer;
+import capsule.items.CapsuleItems;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
-public class UpgradeCapsuleRecipe implements IRecipe {
+import javax.annotation.Nullable;
+
+public class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
     /**
      * Is the ItemStack that you repair.
      */
@@ -48,7 +51,7 @@ public class UpgradeCapsuleRecipe implements IRecipe {
             for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                 ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                     sourceCapsule = itemstack;
                 } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
                     material++;
@@ -72,7 +75,7 @@ public class UpgradeCapsuleRecipe implements IRecipe {
             for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                 ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItemsRegistrer.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                     input = itemstack;
                 } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
                     material++;
@@ -97,10 +100,8 @@ public class UpgradeCapsuleRecipe implements IRecipe {
         return copy;
     }
 
-    /**
-     * Returns the size of the recipe area
-     */
-    public int getRecipeSize() {
-        return 10;
+    @Override
+    public boolean canFit(int width, int height) {
+        return width * height >= 2;
     }
 }

@@ -7,6 +7,7 @@ import capsule.network.CapsuleThrowQueryToServer;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -87,7 +88,7 @@ public class CapsuleItem extends Item {
     }
 
     public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
-        ItemStack capsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
+        ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
         Helpers.setColor(capsule, baseColor); // standard dye is for baseColor
         capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
         capsule.setTagInfo("size", new NBTTagInt(size));
@@ -402,7 +403,7 @@ public class CapsuleItem extends Item {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List tooltip, boolean advanced) {
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List tooltip, ITooltipFlag flagIn) {
 
         if (isOverpowered(stack)) {
             tooltip.add(TextFormatting.DARK_PURPLE + I18n.translateToLocal("capsule.tooltip.overpowered") + TextFormatting.RESET);
@@ -438,19 +439,19 @@ public class CapsuleItem extends Item {
     @SideOnly(Side.CLIENT)
     public void getSubItems(Item itemIn, CreativeTabs tab, NonNullList<ItemStack> subItems) {
 
-        ItemStack ironCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
+        ItemStack ironCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
         ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
         ironCapsule.setTagInfo("size", new NBTTagInt(Config.ironCapsuleSize));
 
-        ItemStack goldCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
+        ItemStack goldCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
         goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
         goldCapsule.setTagInfo("size", new NBTTagInt(Config.goldCapsuleSize));
 
-        ItemStack diamondCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
+        ItemStack diamondCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
         diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
         diamondCapsule.setTagInfo("size", new NBTTagInt(Config.diamondCapsuleSize));
 
-        ItemStack opCapsule = new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_EMPTY);
+        ItemStack opCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
         opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
         opCapsule.setTagInfo("size", new NBTTagInt(Config.opCapsuleSize));
         opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
@@ -568,12 +569,12 @@ public class CapsuleItem extends Item {
     public boolean onEntityItemUpdate(final EntityItem entityItem) {
         super.onEntityItemUpdate(entityItem);
 
-        final ItemStack capsule = entityItem.getEntityItem();
+        final ItemStack capsule = entityItem.getItem();
         if (capsule == null) return false;
 
         // Deploying capsule content on collision with a block
         if (!entityItem.getEntityWorld().isRemote
-                && entityItem.isCollided
+                && entityItem.collided
                 && entityItem.ticksExisted > 2 // avoid immediate collision
                 && this.isActivated(capsule)) {
 
@@ -611,7 +612,7 @@ public class CapsuleItem extends Item {
 
         // throwing the capsule toward the right place
         if (!entityItem.getEntityWorld().isRemote
-                && !entityItem.isCollided
+                && !entityItem.collided
                 && this.isActivated(capsule)
                 && capsule.hasTagCompound()
                 && capsule.getTagCompound().hasKey("deployAt")) {
@@ -756,7 +757,7 @@ public class CapsuleItem extends Item {
         // store again
         Integer dimensionId = getDimension(itemStackIn);
         MinecraftServer server = playerIn.getServer();
-        final WorldServer capsuleWorld = dimensionId != null ? server.worldServerForDimension(dimensionId) : (WorldServer) playerIn.getEntityWorld();
+        final WorldServer capsuleWorld = dimensionId != null ? server.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
 
         NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
         BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));

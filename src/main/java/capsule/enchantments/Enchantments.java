@@ -9,6 +9,7 @@ import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +25,7 @@ public class Enchantments {
     public static final Predicate hasRecallEnchant = new Predicate() {
         public boolean apply(Entity entityIn) {
             return entityIn instanceof EntityItem
-                    && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((EntityItem) entityIn).getEntityItem()) > 0;
+                    && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((EntityItem) entityIn).getItem()) > 0;
         }
 
         public boolean test(Object obj) {
@@ -32,7 +33,7 @@ public class Enchantments {
         }
     };
 
-    public static void initEnchantments() {
+    public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
 
         Rarity enchantRarity = Rarity.RARE;
         try {
@@ -53,6 +54,6 @@ public class Enchantments {
                 recallEnchantTypeEnumValue // possible targets
         );
 
-        GameRegistry.register(Enchantments.recallEnchant);
+        event.getRegistry().register(Enchantments.recallEnchant);
     }
 }

@@ -197,6 +197,15 @@ public class CapsuleTemplate
         return transformedBlockPos(pos, placementIn.getMirror(), placementIn.getRotation());
     }
 
+    /**
+     * Add blocks and entities from this structure to the given world, restricting placement to within the chunk
+     * bounding box.
+     *
+     * @see CapsulePlacementSettings#setBoundingBoxFromChunk
+     *
+     * @param worldIn The world to use
+     * @param pos The origin position for the structure
+     */
     public void addBlocksToWorldChunk(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
     {
         placementIn.setBoundingBoxFromChunk();
@@ -205,6 +214,10 @@ public class CapsuleTemplate
 
     /**
      * This takes the data stored in this instance and puts them into the world.
+     *
+     * @param worldIn The world to use
+     * @param pos The origin position for the structure
+     * @param placementIn Placement settings to use
      */
     public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
     {
@@ -212,37 +225,51 @@ public class CapsuleTemplate
     }
 
     /**
-     * This takes the data stored in this instance and puts them into the world.
+     * Adds blocks and entities from this structure to the given world.
+     *
+     * @param worldIn The world to use
+     * @param pos The origin position for the structure
+     * @param placementIn Placement settings to use
+     * @param flags Flags to pass to {@link World#setBlockState(BlockPos, IBlockState, int)}
      */
     public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, int flags)
     {
         this.addBlocksToWorld(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, flags);
     }
 
-    public void addBlocksToWorld(World p_189960_1_, BlockPos p_189960_2_, @Nullable ITemplateProcessor p_189960_3_, CapsulePlacementSettings p_189960_4_, int p_189960_5_)
+    /**
+     * Adds blocks and entities from this structure to the given world.
+     *
+     * @param worldIn The world to use
+     * @param pos The origin position for the structure
+     * @param templateProcessor The template processor to use
+     * @param placementIn Placement settings to use
+     * @param flags Flags to pass to {@link World#setBlockState(BlockPos, IBlockState, int)}
+     */
+    public void addBlocksToWorld(World worldIn, BlockPos pos, @Nullable ITemplateProcessor templateProcessor, CapsulePlacementSettings placementIn, int flags)
     {
-        if ((!this.blocks.isEmpty() || !p_189960_4_.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
+        if ((!this.blocks.isEmpty() || !placementIn.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
-            Block block = p_189960_4_.getReplacedBlock();
-            StructureBoundingBox structureboundingbox = p_189960_4_.getBoundingBox();
+            Block block = placementIn.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = placementIn.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : this.blocks)
             {
-                BlockPos blockpos = transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
-                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.processBlock(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
+                BlockPos blockpos = transformedBlockPos(placementIn, template$blockinfo.pos).add(pos);
+                Template.BlockInfo template$blockinfo1 = templateProcessor != null ? templateProcessor.processBlock(worldIn, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null)
                 {
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
-                    if ((block == null || block != block1) && (!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos)))
+                    if ((block == null || block != block1) && (!placementIn.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos)))
                     {
-                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
-                        IBlockState iblockstate1 = iblockstate.withRotation(p_189960_4_.getRotation());
+                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(placementIn.getMirror());
+                        IBlockState iblockstate1 = iblockstate.withRotation(placementIn.getRotation());
 
                         if (template$blockinfo1.tileentityData != null)
                         {
-                            TileEntity tileentity = p_189960_1_.getTileEntity(blockpos);
+                            TileEntity tileentity = worldIn.getTileEntity(blockpos);
 
                             if (tileentity != null)
                             {
@@ -251,13 +278,13 @@ public class CapsuleTemplate
                                     ((IInventory)tileentity).clear();
                                 }
 
-                                p_189960_1_.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 4);
+                                worldIn.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 4);
                             }
                         }
 
-                        if (p_189960_1_.setBlockState(blockpos, iblockstate1, p_189960_5_) && template$blockinfo1.tileentityData != null)
+                        if (worldIn.setBlockState(blockpos, iblockstate1, flags) && template$blockinfo1.tileentityData != null)
                         {
-                            TileEntity tileentity2 = p_189960_1_.getTileEntity(blockpos);
+                            TileEntity tileentity2 = worldIn.getTileEntity(blockpos);
 
                             if (tileentity2 != null)
                             {
@@ -265,8 +292,8 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
-                                tileentity2.mirror(p_189960_4_.getMirror());
-                                tileentity2.rotate(p_189960_4_.getRotation());
+                                tileentity2.mirror(placementIn.getMirror());
+                                tileentity2.rotate(placementIn.getRotation());
                             }
                         }
                     }
@@ -277,15 +304,15 @@ public class CapsuleTemplate
             {
                 if (block == null || block != template$blockinfo2.blockState.getBlock())
                 {
-                    BlockPos blockpos1 = transformedBlockPos(p_189960_4_, template$blockinfo2.pos).add(p_189960_2_);
+                    BlockPos blockpos1 = transformedBlockPos(placementIn, template$blockinfo2.pos).add(pos);
 
                     if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
                     {
-                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
+                        worldIn.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
 
                         if (template$blockinfo2.tileentityData != null)
                         {
-                            TileEntity tileentity1 = p_189960_1_.getTileEntity(blockpos1);
+                            TileEntity tileentity1 = worldIn.getTileEntity(blockpos1);
 
                             if (tileentity1 != null)
                             {
@@ -296,9 +323,9 @@ public class CapsuleTemplate
                 }
             }
 
-            if (!p_189960_4_.getIgnoreEntities())
+            if (!placementIn.getIgnoreEntities())
             {
-                this.addEntitiesToWorld(p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, null);
+                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, null);
             }
         }
     }
@@ -315,16 +342,18 @@ public class CapsuleTemplate
                 Vec3d vec3d = transformedVec3d(template$entityinfo.pos, mirrorIn, rotationIn);
                 Vec3d vec3d1 = vec3d.addVector((double)pos.getX(), (double)pos.getY(), (double)pos.getZ());
                 NBTTagList nbttaglist = new NBTTagList();
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.xCoord));
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.yCoord));
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.zCoord));
+                nbttaglist.appendTag(new NBTTagDouble(vec3d1.x));
+                nbttaglist.appendTag(new NBTTagDouble(vec3d1.y));
+                nbttaglist.appendTag(new NBTTagDouble(vec3d1.z));
                 nbttagcompound.setTag("Pos", nbttaglist);
                 nbttagcompound.setUniqueId("UUID", UUID.randomUUID());
                 Entity entity;
 
                 try
                 {
-                    entity = EntityList.createEntityFromNBT(nbttagcompound, worldIn);
+                    // Capsule fix to accept older nbt tags from the template.
+                    NBTTagCompound fixednbt = net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().process(FixTypes.ENTITY, nbttagcompound);
+                    entity = EntityList.createEntityFromNBT(fixednbt, worldIn);
                 }
                 catch (Exception var15)
                 {
@@ -335,7 +364,7 @@ public class CapsuleTemplate
                 {
                     float f = entity.getMirroredYaw(mirrorIn);
                     f = f + (entity.rotationYaw - entity.getRotatedYaw(rotationIn));
-                    entity.setLocationAndAngles(vec3d1.xCoord, vec3d1.yCoord, vec3d1.zCoord, f, entity.rotationPitch);
+                    entity.setLocationAndAngles(vec3d1.x, vec3d1.y, vec3d1.z, f, entity.rotationPitch);
                     worldIn.spawnEntity(entity);
                     if(spawnedEntities != null) spawnedEntities.add(entity);
                 }
@@ -389,9 +418,9 @@ public class CapsuleTemplate
 
     private static Vec3d transformedVec3d(Vec3d vec, Mirror mirrorIn, Rotation rotationIn)
     {
-        double d0 = vec.xCoord;
-        double d1 = vec.yCoord;
-        double d2 = vec.zCoord;
+        double d0 = vec.x;
+        double d1 = vec.y;
+        double d2 = vec.z;
         boolean flag = true;
 
         switch (mirrorIn)
@@ -499,7 +528,7 @@ public class CapsuleTemplate
         for (Template.BlockInfo template$blockinfo : this.blocks)
         {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
-            nbttagcompound.setTag("pos", this.writeInts(new int[] {template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()}));
+            nbttagcompound.setTag("pos", this.writeInts(template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()));
             nbttagcompound.setInteger("state", template$basicpalette.idFor(template$blockinfo.blockState));
 
             if (template$blockinfo.tileentityData != null)
@@ -515,8 +544,8 @@ public class CapsuleTemplate
         for (Template.EntityInfo template$entityinfo : this.entities)
         {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-            nbttagcompound1.setTag("pos", this.writeDoubles(new double[] {template$entityinfo.pos.xCoord, template$entityinfo.pos.yCoord, template$entityinfo.pos.zCoord}));
-            nbttagcompound1.setTag("blockPos", this.writeInts(new int[] {template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()}));
+            nbttagcompound1.setTag("pos", this.writeDoubles(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
+            nbttagcompound1.setTag("blockPos", this.writeInts(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
 
             if (template$entityinfo.entityData != null)
             {
@@ -533,13 +562,13 @@ public class CapsuleTemplate
             nbttaglist2.appendTag(NBTUtil.writeBlockState(new NBTTagCompound(), iblockstate));
         }
 
+        net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt); //Moved up for MC updating reasons.
         nbt.setTag("palette", nbttaglist2);
         nbt.setTag("blocks", nbttaglist);
         nbt.setTag("entities", nbttaglist1);
-        nbt.setTag("size", this.writeInts(new int[] {this.size.getX(), this.size.getY(), this.size.getZ()}));
+        nbt.setTag("size", this.writeInts(this.size.getX(), this.size.getY(), this.size.getZ()));
         nbt.setString("author", this.author);
-        nbt.setInteger("DataVersion", 922);
-        net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt);
+        nbt.setInteger("DataVersion", 1343);
         return nbt;
     }
 
@@ -630,7 +659,7 @@ public class CapsuleTemplate
 
             private BasicPalette()
             {
-                this.ids = new ObjectIntIdentityMap(16);
+                this.ids = new ObjectIntIdentityMap<IBlockState>(16);
             }
 
             public int idFor(IBlockState state)
@@ -649,7 +678,7 @@ public class CapsuleTemplate
             @Nullable
             public IBlockState stateFor(int id)
             {
-                IBlockState iblockstate = (IBlockState)this.ids.getByValue(id);
+                IBlockState iblockstate = this.ids.getByValue(id);
                 return iblockstate == null ? DEFAULT_BLOCK_STATE : iblockstate;
             }
 
@@ -686,8 +715,6 @@ public class CapsuleTemplate
 					Math.min(startPos.getZ(), blockpos.getZ()));
 			BlockPos blockpos2 = new BlockPos(Math.max(startPos.getX(), blockpos.getX()), Math.max(startPos.getY(), blockpos.getY()),
 					Math.max(startPos.getZ(), blockpos.getZ()));
-
-			// template.size = endPos;
 			this.size = endPos;
 
 			for (BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos1, blockpos2)) {
@@ -772,40 +799,39 @@ public class CapsuleTemplate
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */
-	public void spawnBlocksAndEntities(World p_189960_1_, BlockPos p_189960_2_, CapsulePlacementSettings p_189960_4_, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
+	public void spawnBlocksAndEntities(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
+        int flags = 2;
+		ITemplateProcessor templateProcessor = new BlockRotationProcessor(pos, placementIn);
 
-		ITemplateProcessor p_189960_3_ = new BlockRotationProcessor(p_189960_2_, p_189960_4_);
-		int p_189960_5_ = 2;
-
-		if(blocks == null || size == null || p_189960_3_== null) return;
+		if(blocks == null || size == null || templateProcessor == null) return;
 
 
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
-            Block block = p_189960_4_.getReplacedBlock();
-            StructureBoundingBox structureboundingbox = p_189960_4_.getBoundingBox();
+            Block block = placementIn.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = placementIn.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : this.blocks)
             {
-                BlockPos blockpos = transformedBlockPos(p_189960_4_, template$blockinfo.pos).add(p_189960_2_);
-                Template.BlockInfo template$blockinfo1 = p_189960_3_ != null ? p_189960_3_.processBlock(p_189960_1_, blockpos, template$blockinfo) : template$blockinfo;
+                BlockPos blockpos = transformedBlockPos(placementIn, template$blockinfo.pos).add(pos);
+                Template.BlockInfo template$blockinfo1 = templateProcessor != null ? templateProcessor.processBlock(worldIn, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null)
                 {
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
-                    if ((block == null || block != block1) && (!p_189960_4_.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos)))
+                    if ((block == null || block != block1) && (!placementIn.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos)))
                     {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
                     	if(spawnedBlocks != null) spawnedBlocks.add(blockpos);
 
-                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(p_189960_4_.getMirror());
-                        IBlockState iblockstate1 = iblockstate.withRotation(p_189960_4_.getRotation());
+                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(placementIn.getMirror());
+                        IBlockState iblockstate1 = iblockstate.withRotation(placementIn.getRotation());
 
                         if (template$blockinfo1.tileentityData != null)
                         {
-                            TileEntity tileentity = p_189960_1_.getTileEntity(blockpos);
+                            TileEntity tileentity = worldIn.getTileEntity(blockpos);
 
                             if (tileentity != null)
                             {
@@ -814,13 +840,13 @@ public class CapsuleTemplate
                                     ((IInventory)tileentity).clear();
                                 }
 
-                                p_189960_1_.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 4);
+                                worldIn.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 4);
                             }
                         }
 
-                        if (p_189960_1_.setBlockState(blockpos, iblockstate1, p_189960_5_) && template$blockinfo1.tileentityData != null)
+                        if (worldIn.setBlockState(blockpos, iblockstate1, 2) && template$blockinfo1.tileentityData != null)
                         {
-                            TileEntity tileentity2 = p_189960_1_.getTileEntity(blockpos);
+                            TileEntity tileentity2 = worldIn.getTileEntity(blockpos);
 
                             if (tileentity2 != null)
                             {
@@ -828,8 +854,8 @@ public class CapsuleTemplate
                                 template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
                                 template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
-                                tileentity2.mirror(p_189960_4_.getMirror());
-                                tileentity2.rotate(p_189960_4_.getRotation());
+                                tileentity2.mirror(placementIn.getMirror());
+                                tileentity2.rotate(placementIn.getRotation());
                             }
                         }
                     }
@@ -840,15 +866,15 @@ public class CapsuleTemplate
             {
                 if (block == null || block != template$blockinfo2.blockState.getBlock())
                 {
-                    BlockPos blockpos1 = transformedBlockPos(p_189960_4_, template$blockinfo2.pos).add(p_189960_2_);
+                    BlockPos blockpos1 = transformedBlockPos(placementIn, template$blockinfo2.pos).add(pos);
 
                     if (structureboundingbox == null || structureboundingbox.isVecInside(blockpos1))
                     {
-                        p_189960_1_.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
+                        worldIn.notifyNeighborsRespectDebug(blockpos1, template$blockinfo2.blockState.getBlock(), false);
 
                         if (template$blockinfo2.tileentityData != null)
                         {
-                            TileEntity tileentity1 = p_189960_1_.getTileEntity(blockpos1);
+                            TileEntity tileentity1 = worldIn.getTileEntity(blockpos1);
 
                             if (tileentity1 != null)
                             {
@@ -859,10 +885,9 @@ public class CapsuleTemplate
                 }
             }
 
-            if (!p_189960_4_.getIgnoreEntities())
+            if (!placementIn.getIgnoreEntities())
             {
-                // CAPSULE add spawnedBlock parameter
-            	this.addEntitiesToWorld(p_189960_1_, p_189960_2_, p_189960_4_.getMirror(), p_189960_4_.getRotation(), structureboundingbox, spawnedEntities);
+                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, null);
             }
         }
     }
@@ -877,18 +902,18 @@ public class CapsuleTemplate
     /**
      * list positions of futur deployment
      */
-    public List<BlockPos> calculateDeployPositions(World world, BlockPos blockPos, CapsulePlacementSettings placementSettings) {
+    public List<BlockPos> calculateDeployPositions(World world, BlockPos blockPos, CapsulePlacementSettings CapsulePlacementSettings) {
 
         ArrayList<BlockPos> out = new ArrayList<>();
-        ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, placementSettings);
+        ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, CapsulePlacementSettings);
         if (blocks == null || size == null || blockRotationProcessor == null) return out;
 
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
-            Block block = placementSettings.getReplacedBlock();
-            StructureBoundingBox structureboundingbox = placementSettings.getBoundingBox();
+            Block block = CapsulePlacementSettings.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = CapsulePlacementSettings.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : this.blocks) {
-                BlockPos blockpos = transformedBlockPos(placementSettings, template$blockinfo.pos).add(blockPos);
+                BlockPos blockpos = transformedBlockPos(CapsulePlacementSettings, template$blockinfo.pos).add(blockPos);
                 Template.BlockInfo template$blockinfo1 = blockRotationProcessor != null ? blockRotationProcessor.processBlock(world, blockpos, template$blockinfo) : template$blockinfo;
 
                 if (template$blockinfo1 != null) {
@@ -896,7 +921,7 @@ public class CapsuleTemplate
 
                     if (
                             (block == null || block != block1) &&
-                                    (!placementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
+                                    (!CapsulePlacementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
                                     (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))
                             ) {
                         out.add(blockpos);

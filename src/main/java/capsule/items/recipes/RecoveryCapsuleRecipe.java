@@ -7,7 +7,7 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class RecoveryCapsuleRecipe implements IRecipe {
+public class RecoveryCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
     /**
      * Is the ItemStack that you repair.
      */
@@ -81,10 +81,8 @@ public class RecoveryCapsuleRecipe implements IRecipe {
         return ItemStack.EMPTY;
     }
 
-    /**
-     * Returns the size of the recipe area
-     */
-    public int getRecipeSize() {
-        return 4;
+    @Override
+    public boolean canFit(int width, int height) {
+        return width * height >= 2;
     }
 }

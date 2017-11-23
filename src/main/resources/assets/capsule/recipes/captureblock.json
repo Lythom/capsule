@@ -1,0 +1,25 @@
+{
+  "result": {
+    "item": "capsule:capsulemarker"
+  },
+  "pattern": [
+    "#G#",
+    "#C#",
+    "#T#"
+  ],
+  "type": "forge:ore_shaped",
+  "key": {
+    "#": {
+      "item": "minecraft:cobblestone"
+    },
+    "G": {
+      "item": "minecraft:glass_pane"
+    },
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "T": {
+      "item": "minecraft:torch"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 package capsule.tabs;
 
-import capsule.items.CapsuleItemsRegistrer;
+import capsule.items.CapsuleItems;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
@@ -16,7 +16,7 @@ public class CapsuleTabs extends CreativeTabs {
 
     @SideOnly(Side.CLIENT)
     public ItemStack getTabIconItem() {
-        return new ItemStack(CapsuleItemsRegistrer.capsule, 1, STATE_LINKED);
+        return new ItemStack(CapsuleItems.capsule, 1, STATE_LINKED);
     }
 
 }

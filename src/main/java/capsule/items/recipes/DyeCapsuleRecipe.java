@@ -14,7 +14,7 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 
-public class DyeCapsuleRecipe implements IRecipe {
+public class DyeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
     /**
      * Used to check if a recipe matches current crafting inventory
@@ -109,6 +109,11 @@ public class DyeCapsuleRecipe implements IRecipe {
             Helpers.setColor(itemstack, lvt_12_3_);
             return itemstack;
         }
+    }
+
+    @Override
+    public boolean canFit(int width, int height) {
+        return width * height >= 2;
     }
 
     /**

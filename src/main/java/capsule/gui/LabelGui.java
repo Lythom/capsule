@@ -38,7 +38,7 @@ public class LabelGui extends GuiScreen {
         textInput.setFocused(true);
 
 
-        buttonDone = new GuiButton(1, textInput.xPosition + textInput.width - 98, textInput.yPosition + textInput.height + 10, 98, 20, I18n.format("gui.done", new Object[0]));
+        buttonDone = new GuiButton(1, textInput.x + textInput.width - 98, textInput.y + textInput.height + 10, 98, 20, I18n.format("gui.done", new Object[0]));
         buttonDone.enabled = true;
         buttonList.add(buttonDone);
 

@@ -7,7 +7,7 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class ClearCapsuleRecipe implements IRecipe {
+public class ClearCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
     public ClearCapsuleRecipe() {
     }
@@ -75,6 +75,11 @@ public class ClearCapsuleRecipe implements IRecipe {
             }
         }
         return ItemStack.EMPTY;
+    }
+
+    @Override
+    public boolean canFit(int width, int height) {
+        return width * height >= 1;
     }
 
     private boolean isLinkedCapsule(ItemStack itemstack) {

@@ -1,34 +1,60 @@
 package capsule;
 
-import capsule.blocks.CapsuleBlocksRegistrer;
+import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
-import capsule.items.CapsuleItemsRegistrer;
+import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.network.*;
+import net.minecraft.block.Block;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
+@Mod.EventBusSubscriber
 public class CommonProxy {
 
     public static SimpleNetworkWrapper simpleNetworkWrapper;
     public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
+    @SubscribeEvent
+    public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        CapsuleBlocks.registerBlocks(event);
+    }
+
+    @SubscribeEvent
+    public static void registerItems(RegistryEvent.Register<Item> event) {
+        CapsuleBlocks.registerItemBlocks(event);
+        CapsuleItems.registerItems(event);
+    }
+
+    @SubscribeEvent
+    public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+        CapsuleItems.registerRecipes(event);
+        // + other recipes in assets.capsule.recipes
+    }
+
+    @SubscribeEvent
+    public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
+        Enchantments.registerEnchantments(event);
+    }
+
     public void preInit(FMLPreInitializationEvent event) {
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());
         Config.readConfig(config);
-
-        Enchantments.initEnchantments();
-        CapsuleItemsRegistrer.registerItems();
-        CapsuleBlocksRegistrer.registerBlocks();
 
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
@@ -42,15 +68,9 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
     }
 
-    public void init(FMLInitializationEvent event) {
-
-        MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
-    }
+    public void init(FMLInitializationEvent event) {}
 
     public void postInit(FMLPostInitializationEvent event) {
-        CapsuleItemsRegistrer.registerRecipes();
-        CapsuleBlocksRegistrer.registerRecipes();
-
         Config.config.save();
         if (Config.config.hasChanged()) {
             Config.config.save();
