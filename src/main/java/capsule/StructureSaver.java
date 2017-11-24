@@ -212,7 +212,7 @@ public class StructureSaver {
         if (worldserver == null) return null;
 
         if (!CapsulesManagers.containsKey(worldserver)) {
-            File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
+            File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsule");
             capsuleDir.mkdirs();
             CapsulesManagers.put(worldserver, new CapsuleTemplateManager(capsuleDir.toString()));
         }

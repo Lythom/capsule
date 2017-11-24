@@ -54,7 +54,7 @@ public class Config {
 
         // upgrade limits
         Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
-        upgradesLimit.setComment("Number of upgrades an empty capsules can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
+        upgradesLimit.setComment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
         Config.upgradeLimit = upgradesLimit.getInt();
 
         // Excluded
@@ -107,17 +107,17 @@ public class Config {
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
-                "config/capsules/loot/common",
-                "config/capsules/loot/uncommon",
-                "config/capsules/loot/rare",
-                "assets/capsules/loot/common",
-                "assets/capsules/loot/uncommon",
-                "assets/capsules/loot/rare"
+                "config/capsule/loot/common",
+                "config/capsule/loot/uncommon",
+                "config/capsule/loot/rare",
+                "assets/capsule/loot/common",
+                "assets/capsule/loot/uncommon",
+                "assets/capsule/loot/rare"
         });
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
-        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsules/rewards");
+        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
         rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromStructure <structureName>.");
         Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
 
@@ -128,8 +128,8 @@ public class Config {
             if (!Config.lootTemplatesData.containsKey(path)) {
                 Config.lootTemplatesData.put(path, new LootPathData());
             }
-            Property pathDataWeight = Config.config.get("loots:" + path, "weight", path.endsWith("rare") ? 1 : path.endsWith("uncommon") ? 6 : 12);
-            pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 1 (rare), 6 (uncommon) or 12 (common)");
+            Property pathDataWeight = Config.config.get("loots:" + path, "weight", path.endsWith("rare") ? 2 : path.endsWith("uncommon") ? 6 : 10);
+            pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 2 (rare), 6 (uncommon) or 10 (common)");
             Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
         }
 

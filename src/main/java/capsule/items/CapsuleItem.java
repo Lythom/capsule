@@ -71,7 +71,7 @@ public class CapsuleItem extends Item {
      * * byte overpowered											// If the capsule can capture powerfull blocks
      * * bool isReward												// if the content of the template must be kept when capsule is deployed.
      * * string structureName										// name of the template file name without the .nbt extension.
-     * // Lookup paths are /<worldsave>/structures/capsules for non-rewards, and structureName must contains the full path for rewards and loots
+     * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
      * * tag activetimer : {int starttime} 							// used to time the moment when the capsule must deactivate
      * * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
      * * long deployAt												// when thrown with preview, position to deploy the capsule to match preview
