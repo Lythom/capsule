@@ -4,7 +4,7 @@ import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import mezz.jei.api.BlankModPlugin;
+import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.ISubtypeRegistry;
 import mezz.jei.api.JEIPlugin;
@@ -20,12 +20,11 @@ import net.minecraft.util.NonNullList;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
 @JEIPlugin
-public class CapsulePlugin extends BlankModPlugin {
+public class CapsulePlugin implements IModPlugin {
 
     final private static int UPGRADE_STEP = 2;
 
@@ -39,77 +38,72 @@ public class CapsulePlugin extends BlankModPlugin {
 
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
-
         List<IRecipe> recipes = new ArrayList<>();
         // upgrade
         ItemStack ironCapsule = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
-        ItemStack ironCapsuleUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + UPGRADE_STEP);
-        ironCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        ItemStack ironCapsuleUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 2 * UPGRADE_STEP);
-        ironCapsuleUpUp.setTagInfo("upgraded", new NBTTagInt(2));
-        ItemStack ironCapsuleUpUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 3 * UPGRADE_STEP);
-        ironCapsuleUpUpUp.setTagInfo("upgraded", new NBTTagInt(3));
-        ItemStack ironCapsuleUpUpUpUp = CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize + 4 * UPGRADE_STEP);
-        ironCapsuleUpUpUpUp.setTagInfo("upgraded", new NBTTagInt(4));
-
         ItemStack goldCapsule = CapsuleItems.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize);
-        ItemStack goldCapsuleUp = CapsuleItems.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize + 2);
-        goldCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        goldCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(goldCapsuleUp, "JEIExemple");
         ItemStack diamondCapsule = CapsuleItems.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize);
-        ItemStack diamondCapsuleUp = CapsuleItems.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize + 2);
-        diamondCapsuleUp.setTagInfo("upgraded", new NBTTagInt(1));
-        diamondCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(diamondCapsuleUp, "JEIExemple");
         ItemStack opCapsule = CapsuleItems.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize);
         opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
-        ItemStack opCapsuleUp = CapsuleItems.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize + 2);
-        opCapsuleUp.setTagInfo("overpowered", new NBTTagByte((byte) 1));
-        opCapsuleUp.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(opCapsuleUp, "JEIExemple");
-
-        ItemStack unlabelledCapsule = ironCapsule.copy();
-        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "JEIExemple");
-        ItemStack unlabelledCapsuleGold = goldCapsule.copy();
-        unlabelledCapsuleGold.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsuleGold, "JEIExemple");
-        ItemStack unlabelledCapsuleDiamond = diamondCapsule.copy();
-        unlabelledCapsuleDiamond.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsuleDiamond, "JEIExemple");
-        ItemStack unlabelledCapsuleOP = opCapsule.copy();
-        unlabelledCapsuleOP.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsuleOP, "JEIExemple");
-
-        ItemStack recoveryCapsule = ironCapsule.copy();
-        CapsuleItem.setOneUse(recoveryCapsule);
-        CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
 
 
         Ingredient cfp = Ingredient.fromItem(Items.CHORUS_FRUIT_POPPED);
-        Ingredient ironCapsuleIng = Ingredient.fromStacks(ironCapsule);
-        if (Config.upgradeLimit > 0)
-            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUp, NonNullList.from(ironCapsuleIng, cfp)));
-        if (Config.upgradeLimit > 1)
-            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp)));
-        if (Config.upgradeLimit > 2)
-            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp, cfp)));
-        if (Config.upgradeLimit > 3)
-            recipes.add(new ShapelessRecipes("capsule", ironCapsuleUpUpUpUp, NonNullList.from(ironCapsuleIng, cfp, cfp, cfp, cfp)));
 
-        Ingredient unlabelCapsuleIng = Ingredient.fromStacks(unlabelledCapsule);
-        recipes.add(new ShapelessRecipes("capsule", recoveryCapsule, NonNullList.from(unlabelCapsuleIng, Ingredient.fromItem(Items.GLASS_BOTTLE))));
-        recipes.add(new ShapelessRecipes("capsule", ironCapsule, NonNullList.from(unlabelCapsuleIng)));
+        for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
+            registerUpgrade(recipes, ironCapsule, cfp, upLevel);
+            registerUpgrade(recipes, goldCapsule, cfp, upLevel);
+            registerUpgrade(recipes, diamondCapsule, cfp, upLevel);
+            registerUpgrade(recipes, opCapsule, cfp, upLevel);
+        }
+
+        ItemStack unlabelledCapsule = getUnlabelledCapsule(ironCapsule);
+        ItemStack recoveryCapsule = registerRecovery(recipes, ironCapsule, unlabelledCapsule);
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
-
         registry.addIngredientInfo(ironCapsule, ItemStack.class, "jei.capsule.desc.capsule");
         registry.addIngredientInfo(unlabelledCapsule, ItemStack.class, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(recoveryCapsule, ItemStack.class, "jei.capsule.desc.recoveryCapsule");
         registry.addIngredientInfo(opCapsule, ItemStack.class, "jei.capsule.desc.opCapsule");
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), ItemStack.class, "jei.capsule.desc.capsuleMarker");
 
+    }
+
+    private ItemStack registerRecovery(List<IRecipe> recipes, ItemStack emptyCapsule, ItemStack unlabelledCapsule) {
+        Ingredient unlabelledCapsuleIng = Ingredient.fromStacks(unlabelledCapsule);
+        ItemStack recoveryCapsule = getRecoveryCapsule(emptyCapsule);
+        recipes.add(new ShapelessRecipes("capsule", recoveryCapsule, NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng, Ingredient.fromItem(Items.GLASS_BOTTLE))));
+        recipes.add(new ShapelessRecipes("capsule", emptyCapsule, NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng)));
+        return recoveryCapsule;
+    }
+
+    private void registerUpgrade(List<IRecipe> recipes, ItemStack capsule, Ingredient upgradeIng, int upLevel) {
+        ItemStack capsuleUp = getUpgradedCapsule(capsule, upLevel);
+        Ingredient ironCapsuleIng = Ingredient.fromStacks(capsule);
+        NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIng);
+        ingredients.set(0, ironCapsuleIng);
+        recipes.add(new ShapelessRecipes("capsule", capsuleUp, ingredients));
+    }
+
+    private ItemStack getUnlabelledCapsule(ItemStack capsule) {
+        ItemStack unlabelledCapsule = capsule.copy();
+        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
+        CapsuleItem.setStructureName(unlabelledCapsule, "JEIExemple");
+        return unlabelledCapsule;
+    }
+
+    private ItemStack getRecoveryCapsule(ItemStack capsule) {
+        ItemStack recoveryCapsule = capsule.copy();
+        CapsuleItem.setOneUse(recoveryCapsule);
+        CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
+        return recoveryCapsule;
+    }
+
+    private ItemStack getUpgradedCapsule(ItemStack ironCapsule, int upLevel) {
+        ItemStack capsuleUp = ironCapsule.copy();
+        CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
+        CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
+        capsuleUp.setTagInfo("upgraded", new NBTTagInt(upLevel));
+        return capsuleUp;
     }
 
     private static class CapsuleSubtypeInterpreter implements ISubtypeRegistry.ISubtypeInterpreter {

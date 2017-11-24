@@ -393,7 +393,7 @@ public class CapsuleItem extends Item {
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
-        return true;
+        return stack.getItemDamage() != STATE_ONE_USE;
     }
 
     @Override
@@ -437,40 +437,42 @@ public class CapsuleItem extends Item {
      * Register items in the creative tab
      */
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, NonNullList<ItemStack> subItems) {
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subItems)
+    {
+        if (this.isInCreativeTab(tab)) {
+            ItemStack ironCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
+            ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
+            ironCapsule.setTagInfo("size", new NBTTagInt(Config.ironCapsuleSize));
 
-        ItemStack ironCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
-        ironCapsule.setTagInfo("color", new NBTTagInt(0xCCCCCC));
-        ironCapsule.setTagInfo("size", new NBTTagInt(Config.ironCapsuleSize));
+            ItemStack goldCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
+            goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
+            goldCapsule.setTagInfo("size", new NBTTagInt(Config.goldCapsuleSize));
 
-        ItemStack goldCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
-        goldCapsule.setTagInfo("color", new NBTTagInt(0xFFD700));
-        goldCapsule.setTagInfo("size", new NBTTagInt(Config.goldCapsuleSize));
+            ItemStack diamondCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
+            diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
+            diamondCapsule.setTagInfo("size", new NBTTagInt(Config.diamondCapsuleSize));
 
-        ItemStack diamondCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
-        diamondCapsule.setTagInfo("color", new NBTTagInt(0x00FFF2));
-        diamondCapsule.setTagInfo("size", new NBTTagInt(Config.diamondCapsuleSize));
+            ItemStack opCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
+            opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
+            opCapsule.setTagInfo("size", new NBTTagInt(Config.opCapsuleSize));
+            opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
 
-        ItemStack opCapsule = new ItemStack(CapsuleItems.capsule, 1, STATE_EMPTY);
-        opCapsule.setTagInfo("color", new NBTTagInt(0xFFFFFF));
-        opCapsule.setTagInfo("size", new NBTTagInt(Config.opCapsuleSize));
-        opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
+            ItemStack unlabelledCapsule = ironCapsule.copy();
+            unlabelledCapsule.setItemDamage(STATE_LINKED);
+            unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeLinkedCapsule)");
 
-        ItemStack unlabelledCapsule = ironCapsule.copy();
-        unlabelledCapsule.setItemDamage(STATE_LINKED);
-        unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeLinkedCapsule)");
+            ItemStack recoveryCapsule = ironCapsule.copy();
+            CapsuleItem.setOneUse(recoveryCapsule);
+            unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeOneUseCapsule)");
 
-        ItemStack recoveryCapsule = ironCapsule.copy();
-        CapsuleItem.setOneUse(recoveryCapsule);
-        unlabelledCapsule.getTagCompound().setString("structureName", "(C-CreativeOneUseCapsule)");
+            subItems.add(ironCapsule);
+            subItems.add(goldCapsule);
+            subItems.add(diamondCapsule);
+            subItems.add(opCapsule);
 
-        subItems.add(ironCapsule);
-        subItems.add(goldCapsule);
-        subItems.add(diamondCapsule);
-        subItems.add(opCapsule);
-
-        subItems.add(unlabelledCapsule);
-        subItems.add(recoveryCapsule);
+            subItems.add(unlabelledCapsule);
+            subItems.add(recoveryCapsule);
+        }
     }
 
     /**

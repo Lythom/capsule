@@ -86,6 +86,11 @@ public class ClearCapsuleRecipe extends net.minecraftforge.registries.IForgeRegi
         return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getMetadata());
     }
 
+    public boolean isDynamic()
+    {
+        return true;
+    }
+
     /**
      * Returns the size of the recipe area
      */

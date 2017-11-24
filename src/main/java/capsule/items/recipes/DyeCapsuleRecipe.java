@@ -139,4 +139,9 @@ public class DyeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegist
 
         return nonnulllist;
     }
+
+    public boolean isDynamic()
+    {
+        return true;
+    }
 }

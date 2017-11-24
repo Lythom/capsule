@@ -85,4 +85,9 @@ public class RecoveryCapsuleRecipe extends net.minecraftforge.registries.IForgeR
     public boolean canFit(int width, int height) {
         return width * height >= 2;
     }
+
+    public boolean isDynamic()
+    {
+        return true;
+    }
 }

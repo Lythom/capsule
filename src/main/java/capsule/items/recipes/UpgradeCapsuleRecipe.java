@@ -104,4 +104,9 @@ public class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRe
     public boolean canFit(int width, int height) {
         return width * height >= 2;
     }
+
+    public boolean isDynamic()
+    {
+        return true;
+    }
 }
