@@ -89,18 +89,16 @@ It can as well be applied by default (configurable) on any enchantable item. Can
 
 **Will block X from mod Y work with capsules ?**
 
-If compatible with vanilla structure blocks : yes  
-If not compatible with vanilla structure blocks : no.  
-Before reporting vanilla structure block compatibility issue to the mod author, [Check the Known incompatibilities](https://bitbucket.org/Lythom/mccapsule/wiki/Known%20incompatibilities). Issues have already been open for those.
+If compatible with vanilla structure blocks : yes.
+If not compatible with vanilla structure blocks : no.
+Latest versions of capsule for 1.10.2 and 1.12.2 have been tested a lot with very good results, give it a try ! Don't forget to backup your save anyway it's always good to have one.
 
 **Can I use in my modpack ?**
 Sure ! Please simply give a link to this page and mention Lythom as the mod author.
 
-If any problem with the mod feel free to PM or to submit an issue http://minecraft.curseforge.com/projects/capsule/settings/issues.
+If any problem with the mod feel free to PM or to submit an issue [https://github.com/Lythom/capsule/issues](https://github.com/Lythom/capsule/issues).
 
 **Is this open source ?**
-Yes, there : [https://bitbucket.org/Lythom/mccapsule](https://bitbucket.org/Lythom/mccapsule).
+Yes, there : [https://github.com/Lythom/capsule](https://github.com/Lythom/capsule).
 
 Code, Textures and binaries are licensed under the MIT License.
-
-Pull request are welcome if it fits the capsule feature, but please notify me by PM before coding so that I give you a direct feedback on the PR acceptance chances.
