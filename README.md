@@ -1,8 +1,19 @@
 # Capsule mod by Lythom #
+
+Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
+
 ## Mod page ##
-[http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
+[https://minecraft.curseforge.com/projects/capsule](https://minecraft.curseforge.com/projects/capsule)
+
+## Wiki ##
+[https://github.com/Lythom/capsule/wiki](https://github.com/Lythom/capsule/wiki)
 
 ## Changelog ##
+
+**1.11.2-1.4.0 : 1.11.2 Update**
+
+* Update forge to 1.11.2-13.20.1.2530
+* Update JEI API to 1.11.2-4.5.0.294
 
 **1.10.2-1.3.0 : The multiplayer friendly update**
 
