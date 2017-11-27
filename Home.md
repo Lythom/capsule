@@ -95,8 +95,8 @@ It can as well be applied on any enchantable item by configuration (disabled by 
 
 **Will block X from mod Y work with capsules ?**
 
-If compatible with vanilla structure blocks : yes.
-If not compatible with vanilla structure blocks : no.
+If compatible with vanilla structure blocks : yes.    
+If not compatible with vanilla structure blocks : no.    
 Latest versions of capsule have been tested a lot with very good results, give it a try ! Don't forget to backup your saves anyway it's always good to have one.
 
 **Can I use in my modpack ?**
