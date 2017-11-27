@@ -45,7 +45,7 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 * Once the content is captured, the capsule can be deployed or undeployed at will. 
 
 [Click to see the Initial capture demo    
-![](https://imgur.com/E2wbGIZ.png)](https://i.imgur.com/WLG3AeZ.gifv)
+![](https://imgur.com/J10q1ey.png)](https://i.imgur.com/WLG3AeZ.gifv)
 
 Note that all the capsules can be dyed (affect the base color) and labeled (sneak + right click).
 
