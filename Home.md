@@ -2,43 +2,40 @@
 
 Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
 
-> ![Initial Capture](http://i.imgur.com/shwmqn9.gif)
+![Deploy / Undeploy demo](https://imgur.com/5q1Q8Uf.gif)
 
-If you are a modpack maker or a content creator, you may want to check to [How To's page](https://bitbucket.org/Lythom/mccapsule/wiki/Modpack%20maker%20How%20To's) !
+- [Overview (1.10.2)](#overview--1102-)
+  * [Getting started](#getting-started)
+  * [Upgrading](#upgrading)
+  * [Backup](#backup)
+  * [Recall](#recall)
+- [FAQ](#faq)
 
----
-This page is an overview of the mod, [see all wiki entries](https://bitbucket.org/Lythom/mccapsule/wiki/browse/) for more details.
-
-Page content :
-
-[TOC]
-
----
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 ## Getting started ##
 
 You first need a capsule base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
 
-> ![capture-base-recipe.png](https://bitbucket.org/repo/GMLRrB/images/753172639-capture-base-recipe.png)
+> ![capture-base-recipe.png](https://imgur.com/X7w0NVj.png)
 > 
 > "Capture Base" recipe
 
 Then you need to craft at least one empty capsule (the top item is a stone button) :
 
-> ![capsule-iron-recipe.png](https://bitbucket.org/repo/GMLRrB/images/1624303790-capsule-iron-recipe.png)
+> ![capsule-iron-recipe.png](https://imgur.com/AKGlHQo.png)
 >
 > "Iron Empty Capsule" recipe, default capture size : 1x1x1
 >
-> ![capsule-gold-recipe.png](https://bitbucket.org/repo/GMLRrB/images/4145052491-capsule-gold-recipe.png)
+> ![capsule-gold-recipe.png](https://imgur.com/Eb5tAsu.png)
 >
 > "Gold Empty Capsule" recipe, default capture size : 3x3x3
 >
-> ![capsule-diamond-recipe.png](https://bitbucket.org/repo/GMLRrB/images/3956664424-capsule-diamond-recipe.png)
+> ![capsule-diamond-recipe.png](https://imgur.com/hvNMJcm.png)
 >
 > "DiamondEmpty Capsule" recipe, default capture size : 5x5x5
 
-Capture the zone defined by the capture base, the capture zone will be visualized when holding the Empty Capsule.
-Usage (empty capsule) :
+To capture the zone defined by the capture base, use the Empty Capsule : 
 
 * Right click : activate
 * Right click while activated  : throw the capsule.
@@ -46,7 +43,7 @@ Usage (empty capsule) :
 
 Note that all the capsule can be dyed (affect the base color) and labeled (sneak + right click).
 
-> ![Initial Capture](http://i.imgur.com/shwmqn9.gif)
+> ![Initial capture](https://imgur.com/WLG3AeZ.gif)
 >
 > Demo initial capture
 
@@ -56,21 +53,17 @@ Usage (linked capsule)  :
 * Undeploy : Right click the "Deployed" capsule and the content will be stored again into the capsule, whereever it currently is.
 * Label : Sneak + Right click to open the label editing screen.
 
-> ![Demo deploy / undeploy](http://i.imgur.com/FgEsbkr.gif)
->
-> Demo deploy / undeploy
-
 ## Upgrading ##
 
-You need more space ? Here is the upgrade recipe (only works with empty capsule that have no content yet) :
+You need more space ? Here is the upgrade recipe (only works with empty capsule) :
  
-> ![capsule-upgrade-recipe.png](https://bitbucket.org/repo/GMLRrB/images/2118435896-capsule-upgrade-recipe.png)
+> ![capsule-upgrade-recipe.png](https://imgur.com/9Jg8pUQ.png)
 >
 > "capsule upgrade" recipe, default max upgrades : 10
 
 You can add several Popped Chorus Fruit at a time.
 
-> ![Demo Upgrade](http://i.imgur.com/FBc7t3w.gif)
+> ![Demo Upgrade](https://imgur.com/Oq3wSAZ.gif)
 >
 > Demo Upgrade
 
@@ -78,7 +71,7 @@ You can add several Popped Chorus Fruit at a time.
 
 It's highly recommanded that you create a recovery capsule and place it in a safe place ! If the capsule is lost (thrown in lava, on a cactus (…), at an impossible death location) a recovery capsule will allows you to get back the content.
 
-> ![capsule-recovery-recipe.png](https://bitbucket.org/repo/GMLRrB/images/1578832247-capsule-recovery-recipe.png)
+> ![capsule-recovery-recipe.png](https://imgur.com/pASsF2b.png)
 > 
 > "Recovery capsule" recipe
 
