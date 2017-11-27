@@ -1,4 +1,4 @@
-# Overview (1.10.2)
+# Overview
 
 Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
 
