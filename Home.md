@@ -18,7 +18,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Getting started ##
 
-You first need a capsule base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
+You first need a capture base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
 
 > ![capture-base-recipe.png](https://imgur.com/X7w0NVj.png)
 > 
