@@ -1,6 +1,8 @@
 # Overview (1.10.2)
 
-The Capsule Mod allows you to capture a region containing any blocks or machines, then deploy and undeploy it at will. It is inspired by Dragon Ball capsules.
+Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
+
+> ![Initial Capture](http://i.imgur.com/shwmqn9.gif)
 
 If you are a modpack maker or a content creator, you may want to check to [How To's page](https://bitbucket.org/Lythom/mccapsule/wiki/Modpack%20maker%20How%20To's) !
 
