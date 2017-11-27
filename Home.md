@@ -104,6 +104,9 @@ Sure ! Please simply give a link to this page and mention Lythom as the mod auth
 
 If any problem with the mod feel free to PM or to submit an issue [https://github.com/Lythom/capsule/issues](https://github.com/Lythom/capsule/issues).
 
+**1.7.10 version ?**
+Capsule now rely on structure blocks mechanics, so I'll only maintain 1.10+ versions.
+
 **Is this open source ?**
 Yes, there : [https://github.com/Lythom/capsule](https://github.com/Lythom/capsule).
 
