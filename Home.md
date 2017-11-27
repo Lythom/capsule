@@ -43,7 +43,7 @@ To capture the zone defined by the capture base, use the Empty Capsule :
 
 Note that all the capsule can be dyed (affect the base color) and labeled (sneak + right click).
 
-> ![Initial capture](https://imgur.com/WLG3AeZ.gif)
+> ![Initial capture](https://imgur.com/eboX78o.gif)
 >
 > Demo initial capture
 
