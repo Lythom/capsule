@@ -46,7 +46,7 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 
 [Initial capture demo](https://i.imgur.com/WLG3AeZ.gifv)
 
-Note that all the capsule can be dyed (affect the base color) and labeled (sneak + right click).
+Note that all the capsules can be dyed (affect the base color) and labeled (sneak + right click).
 
 ### Linked Capsule
 
