@@ -4,7 +4,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ![Deploy / Undeploy demo](https://imgur.com/5q1Q8Uf.gif)
 
-- [Overview (1.10.2)](#overview--1102-)
+- [Overview](#overview)
   * [Getting started](#getting-started)
     + [Empty Capsule](#empty-capsule)
     + [Linked Capsule](#linked-capsule)
@@ -97,7 +97,7 @@ It can as well be applied on any enchantable item by configuration (disabled by 
 
 If compatible with vanilla structure blocks : yes.
 If not compatible with vanilla structure blocks : no.
-Latest versions of capsule for 1.10.2 and 1.12.2 have been tested a lot with very good results, give it a try ! Don't forget to backup your save anyway it's always good to have one.
+Latest versions of capsule have been tested a lot with very good results, give it a try ! Don't forget to backup your saves anyway it's always good to have one.
 
 **Can I use in my modpack ?**
 Sure ! Please simply give a link to this page and mention Lythom as the mod author.
