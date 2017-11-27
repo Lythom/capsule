@@ -6,12 +6,15 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 - [Overview (1.10.2)](#overview--1102-)
   * [Getting started](#getting-started)
+    + [Empty Capsule](#empty-capsule)
+    + [Linked Capsule](#linked-capsule)
   * [Upgrading](#upgrading)
   * [Backup](#backup)
   * [Recall](#recall)
 - [FAQ](#faq)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 ## Getting started ##
 
@@ -35,23 +38,25 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 >
 > "DiamondEmpty Capsule" recipe, default capture size : 5x5x5
 
-To capture the zone defined by the capture base, use the Empty Capsule : 
+### Empty Capsule
 
 * Right click : activate
 * Right click while activated  : throw the capsule.
 * Once the content is captured, the capsule can be deployed or undeployed at will. 
 
+![Initial capture](https://imgur.com/eboX78o.gif)
+
 Note that all the capsule can be dyed (affect the base color) and labeled (sneak + right click).
 
-> ![Initial capture](https://imgur.com/eboX78o.gif)
->
-> Demo initial capture
+### Linked Capsule
 
-Usage (linked capsule)  :
+Usage  :
 
 * Deploy : Right click once to activate, right click again to throw at the preview positions (are ahead not aiming a block).
-* Undeploy : Right click the "Deployed" capsule and the content will be stored again into the capsule, whereever it currently is.
+* Undeploy : Right click the "Deployed" capsule and the content will be stored again into the capsule, wherever it currently is.
 * Label : Sneak + Right click to open the label editing screen.
+
+![Deploy / Undeploy demo](https://imgur.com/5q1Q8Uf.gif)
 
 ## Upgrading ##
 
@@ -82,8 +87,8 @@ This mod also adds a unique enchantment : Recall.
 
 Effect : whenever a recall enchanted item is dropped and touches the ground, it comes back into the thrower inventory after a last update. When in contact of water or lava the recall is immediate (prevent burning).
 
-This enchant is of courses intended to be used on capsules. Without this enchantment you have to pick up the thrown capsule manually.
-It can as well be applied by default (configurable) on any enchantable item. Can be usefull to fight against inventory dropping monsters or to prevent unintentional drop.
+This enchant is intended to be used on capsules. Without this enchantment you have to pick up the thrown capsule manually.
+It can as well be applied on any enchantable item by configuration (disabled by default). Can be useful to fight against inventory dropping monsters or to prevent unintentional drop.
 
 # FAQ
 
