@@ -100,14 +100,24 @@ If not compatible with vanilla structure blocks : no.
 Latest versions of capsule have been tested a lot with very good results, give it a try ! Don't forget to backup your saves anyway it's always good to have one.
 
 **Can I use in my modpack ?**
+
 Sure ! Please simply give a link to this page and mention Lythom as the mod author.
 
 If any problem with the mod feel free to PM or to submit an issue [https://github.com/Lythom/capsule/issues](https://github.com/Lythom/capsule/issues).
 
 **1.7.10 version ?**
+
 Capsule now rely on structure blocks mechanics, so I'll only maintain 1.10+ versions.
 
 **Is this open source ?**
+
 Yes, there : [https://github.com/Lythom/capsule](https://github.com/Lythom/capsule).
 
 Code, Textures and binaries are licensed under the MIT License.
+
+**I have another question !**
+
+You can get help either to use capsule mod as a player, or to configure it into your modpack via the following channels : 
+
+* Github issues: https://github.com/Lythom/capsule/issues    
+* Discord server: https://discord.gg/wZpBVdr    
