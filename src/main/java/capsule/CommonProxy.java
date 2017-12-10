@@ -25,6 +25,9 @@ public class CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());
         Config.readConfig(config);
+        Config.initLootConfigs();
+        Config.initReceipeConfigs();
+        Config.initEnchantsConfigs();
 
         Enchantments.initEnchantments();
         CapsuleItemsRegistrer.registerItems();
@@ -51,6 +54,7 @@ public class CommonProxy {
         CapsuleItemsRegistrer.registerRecipes();
         CapsuleBlocksRegistrer.registerRecipes();
 
+        Config.initCaptureConfigs();
         Config.config.save();
         if (Config.config.hasChanged()) {
             Config.config.save();

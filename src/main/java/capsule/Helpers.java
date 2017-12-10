@@ -1,19 +1,14 @@
 package capsule;
 
 import net.minecraft.block.Block;
-import net.minecraft.command.NumberInvalidException;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -126,13 +121,21 @@ public class Helpers {
 
     public static Block[] deserializeBlockArray(String[] blockIds) {
         ArrayList<Block> states = new ArrayList<>();
+        ArrayList<String> notfound = new ArrayList<>();
+
         for (String blockId : blockIds) {
             Block b = Block.getBlockFromName(blockId);
             if (b != null) {
                 states.add(b);
             } else {
-                LOGGER.info(String.format("Block not retrieved found from config name : %s. This block won't be considered in the overridable or excluded blocks list when capturing with capsule.", blockId));
+                notfound.add(blockId);
             }
+        }
+        if (notfound.size() > 0) {
+            LOGGER.warn(String.format(
+                    "Blocks not found from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
+                    String.join(", ", notfound.toArray(new CharSequence[notfound.size()]))
+            ));
         }
         Block[] output = new Block[states.size()];
         return states.toArray(output);

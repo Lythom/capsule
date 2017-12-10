@@ -38,7 +38,7 @@ public class Config {
         try {
             Config.config = config;
             config.load();
-²        } catch (Exception e1) {
+        } catch (Exception e1) {
             LOGGER.error("Problem loading config file !", e1);
         } finally {
             if (config.hasChanged()) {
@@ -47,11 +47,11 @@ public class Config {
         }
     }
 
-    public static void initGeneralConfigs() {
+    public static void initCaptureConfigs() {
 
         // upgrade limits
         Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
-        upgradesLimit.setComment("Number of upgrades an empty capsules can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
+        upgradesLimit.setComment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
         Config.upgradeLimit = upgradesLimit.getInt();
 
         // Excluded
@@ -100,7 +100,9 @@ public class Config {
         Block[] ovBlocks = null;
         ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
         Config.overridableBlocks = Arrays.asList(ovBlocks);
+    }
 
+    public static void initLootConfigs() {
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
@@ -111,7 +113,7 @@ public class Config {
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
-        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsules/rewards");
+        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
         rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromStructure <structureName>.");
         Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
 
@@ -122,14 +124,13 @@ public class Config {
             if (!Config.lootTemplatesData.containsKey(path)) {
                 Config.lootTemplatesData.put(path, new LootPathData());
             }
-            Property pathDataWeight = Config.config.get("loots:" + path, "weight", path.endsWith("rare") ? 1 : path.endsWith("uncommon") ? 6 : 12);
-            pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 1 (rare), 6 (uncommon) or 12 (common)");
+            Property pathDataWeight = Config.config.get("loots:" + path, "weight", path.endsWith("rare") ? 2 : path.endsWith("uncommon") ? 6 : 10);
+            pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 2 (rare), 6 (uncommon) or 10 (common)");
             Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
         }
-
     }
 
-    private static void initReceipeConfigs() {
+    public static void initReceipeConfigs() {
         Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
         ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
         Config.ironCapsuleSize = ironCapsuleSize.getInt();
@@ -147,7 +148,7 @@ public class Config {
         Config.opCapsuleSize = opCapsuleSize.getInt();
     }
 
-    private static void initEnchantsConfigs() {
+    public static void initEnchantsConfigs() {
         Property enchantRarityConfig = Config.config.get("Balancing", "recallEnchantRarity", "RARE");
         enchantRarityConfig.setComment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.");
         Config.enchantRarity = enchantRarityConfig.getString();
