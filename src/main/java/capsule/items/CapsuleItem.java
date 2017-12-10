@@ -11,14 +11,12 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
@@ -292,8 +290,8 @@ public class CapsuleItem extends Item {
         double normalizedDiffZ = (diffZ / distance);
 
         // momentum allow to hit side walls
-        entityItem.motionX = keepMomentum ?  0.9 * entityItem.motionX + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity;
-        entityItem.motionZ = keepMomentum ?  0.9 * entityItem.motionZ + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity;
+        entityItem.motionX = keepMomentum ? 0.9 * entityItem.motionX + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity;
+        entityItem.motionZ = keepMomentum ? 0.9 * entityItem.motionZ + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity;
     }
 
     public static void setState(ItemStack stack, int state) {
@@ -338,6 +336,7 @@ public class CapsuleItem extends Item {
 
         playerIn.dropItemAndGetStack(entityitem);
         playerIn.inventory.setInventorySlotContents(playerIn.inventory.currentItem, ItemStack.EMPTY);
+        playerIn.getEntityWorld().playSound(null, entityitem.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.1f);
 
         return entityitem;
     }
@@ -503,6 +502,7 @@ public class CapsuleItem extends Item {
 
                 NBTTagCompound timer = itemStackIn.getOrCreateSubCompound("activetimer");
                 timer.setInteger("starttime", playerIn.ticksExisted);
+                worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_ON, SoundCategory.BLOCKS, 0.2F, 0.9F);
             }
 
             // an opened capsule revoke deployed content on right click
@@ -510,6 +510,7 @@ public class CapsuleItem extends Item {
 
                 try {
                     resentToCapsule(itemStackIn, playerIn);
+                    worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
                 } catch (Exception e) {
                     LOGGER.error("Couldn't resend the content into the capsule", e);
                 }
@@ -557,6 +558,7 @@ public class CapsuleItem extends Item {
 
             if (timer != null && this.isActivated(stack) && timer.hasKey("starttime") && entityIn.ticksExisted >= timer.getInteger("starttime") + ACTIVE_DURATION_IN_TICKS) {
                 revertStateFromActivated(stack);
+                worldIn.playSound(null, entityIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             }
         }
     }
@@ -593,6 +595,7 @@ public class CapsuleItem extends Item {
                 // DEPLOY
                 // is linked, deploy
                 boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
+                if (deployed) itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
                 if (deployed && isOneUse(capsule)) {
                     entityItem.setDead();
                 }
