@@ -597,7 +597,7 @@ public class CapsuleItem extends Item {
                 // DEPLOY
                 // is linked, deploy
                 boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
-                itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                if (deployed) itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
                 if (deployed && isOneUse(capsule)) {
                     entityItem.setDead();
                 }
