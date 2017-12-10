@@ -38,9 +38,6 @@ public class Config {
         try {
             Config.config = config;
             config.load();
-            initGeneralConfigs();
-            initReceipeConfigs();
-            initEnchantsConfigs();
         } catch (Exception e1) {
             LOGGER.error("Problem loading config file !", e1);
         } finally {
@@ -50,7 +47,7 @@ public class Config {
         }
     }
 
-    private static void initGeneralConfigs() {
+    public static void initCaptureConfigs() {
 
         // upgrade limits
         Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
@@ -65,9 +62,6 @@ public class Config {
                 Helpers.serializeBlockArray(defaultExcludedBlocksOP),
                 new String[]{
                         "ic2:te",
-                        "opencomputers:robot",
-                        "lootbags:loot_opener",
-                        "hatchery:pen"
                 }
         );
         String[] excludedBlocks = ArrayUtils.addAll(
@@ -103,7 +97,9 @@ public class Config {
         Block[] ovBlocks = null;
         ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
         Config.overridableBlocks = Arrays.asList(ovBlocks);
+    }
 
+    public static void initLootConfigs() {
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
@@ -132,10 +128,9 @@ public class Config {
             pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 2 (rare), 6 (uncommon) or 10 (common)");
             Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
         }
-
     }
 
-    private static void initReceipeConfigs() {
+    public static void initReceipeConfigs() {
         Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
         ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
         Config.ironCapsuleSize = ironCapsuleSize.getInt();
@@ -153,7 +148,7 @@ public class Config {
         Config.opCapsuleSize = opCapsuleSize.getInt();
     }
 
-    private static void initEnchantsConfigs() {
+    public static void initEnchantsConfigs() {
         Property enchantRarityConfig = Config.config.get("Balancing", "recallEnchantRarity", "RARE");
         enchantRarityConfig.setComment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.");
         Config.enchantRarity = enchantRarityConfig.getString();

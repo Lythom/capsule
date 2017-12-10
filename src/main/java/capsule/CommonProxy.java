@@ -55,6 +55,9 @@ public class CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());
         Config.readConfig(config);
+        Config.initLootConfigs();
+        Config.initReceipeConfigs();
+        Config.initEnchantsConfigs();
 
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
@@ -73,6 +76,7 @@ public class CommonProxy {
     }
 
     public void postInit(FMLPostInitializationEvent event) {
+        Config.initCaptureConfigs();
         Config.config.save();
         if (Config.config.hasChanged()) {
             Config.config.save();
