@@ -93,6 +93,8 @@ public class StructureSaver {
                         Files.copy(sourceTemplate, assetFile);
                     } catch (Exception e) {
                         LOGGER.error(e);
+                    } finally {
+                        sourceTemplate.close();
                     }
                 }
             }
