@@ -36,6 +36,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -56,6 +58,9 @@ public class StructureSaver {
 
             if (path.startsWith("config/") && !templateFolder.exists()) {
                 templateFolder.mkdirs();
+                // initial with example capsule the first time
+                LOGGER.info("First load: initializing the loots in config/capsule/loot. You can change the content of folder with any nbt structure block or capsule file. You can remove the folders from capsule.config to remove loots.");
+                populateFolder(templateFolder);
             }
 
             if (templateFolder.exists() && templateFolder.isDirectory()) {
@@ -67,30 +72,35 @@ public class StructureSaver {
                             data.files.add(templateFile.getName().replaceAll(".nbt", ""));
                     }
                 }
-            } else {
-
-                // another try reading from jar files
-                try {
-                    LOGGER.debug("Listing files at " + "/" + path);
-
-                    String[] fileNames = getResourceListing(StructureSaver.class, path);
-
-                    data.files = new ArrayList<>();
-                    LOGGER.debug("Found " + fileNames.length + " files.");
-                    for (String file : fileNames) {
-                        LOGGER.debug("Found " + file);
-                        if (file.endsWith(".nbt"))
-                            data.files.add(file.replaceAll(".nbt", ""));
-                    }
-
-                } catch (Exception e) {
-                    LOGGER.error("Error while listing files in the jar", e);
-                }
-
             }
         }
     }
 
+    private static void populateFolder(File templateFolder) {
+        try {
+            // source path
+            String assetPath = "assets/capsule/loot/common";
+            if (templateFolder.getPath().contains("uncommon")) assetPath = "assets/capsule/loot/uncommon";
+            if (templateFolder.getPath().contains("rare")) assetPath = "assets/capsule/loot/rare";
+            String[] resources = getResourceListing(StructureSaver.class, assetPath);
+
+            for (String ressource : resources) {
+                if (!ressource.isEmpty()) {
+                    InputStream sourceTemplate = StructureSaver.class.getClassLoader().getResourceAsStream(assetPath + "/" + ressource);
+                    Path assetFile = templateFolder.toPath().resolve(ressource);
+                    LOGGER.debug("copying template " + assetPath + "/" + ressource + " to " + assetFile.toString());
+                    try {
+                        Files.copy(sourceTemplate, assetFile);
+                    } catch (Exception e) {
+                        LOGGER.error(e);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error while copying initial capsule templates, there will be no loots!", e);
+        }
+    }
 
     /**
      * List directory contents for a resource folder. Not recursive.
@@ -133,7 +143,9 @@ public class StructureSaver {
             while (entries.hasMoreElements()) {
                 String name = entries.nextElement().getName();
                 if (name.startsWith(path)) { //filter according to the path
+                    LOGGER.debug("Found in jar " + name);
                     String entry = name.replace(path + "/", "");
+                    LOGGER.debug("Keeping " + entry);
                     result.add(entry);
                 }
             }
@@ -255,7 +267,8 @@ public class StructureSaver {
                 }
                 try {
                     world.setBlockState(pos, b);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
                 if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                 couldNotBeRemoved.add(pos);
             }
@@ -308,7 +321,7 @@ public class StructureSaver {
                 List<Entity> spawnedEntities = new ArrayList<>();
                 try {
                     // check if the player can place a block
-                    if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)){
+                    if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
                         player.sendMessage(new TextComponentTranslation("capsule.error.notAllowed"));
                         return false;
                     }
@@ -353,6 +366,7 @@ public class StructureSaver {
 
     /**
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
+     *
      * @return
      */
     private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, CapsulePlacementSettings placementsettings) {

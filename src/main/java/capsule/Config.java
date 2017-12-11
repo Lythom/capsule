@@ -105,10 +105,7 @@ public class Config {
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
                 "config/capsule/loot/common",
                 "config/capsule/loot/uncommon",
-                "config/capsule/loot/rare",
-                "assets/capsule/loot/common",
-                "assets/capsule/loot/uncommon",
-                "assets/capsule/loot/rare"
+                "config/capsule/loot/rare"
         });
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
