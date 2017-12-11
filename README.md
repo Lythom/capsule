@@ -10,6 +10,17 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.11.2-2.1.49 : 1.11.2 Update**
+
+Upgrading:
+If you upgrade from an older version, you will not have loot in dungeon chest by default.
+To get them back: remove `config/capsule.cfg` (to generate a new default config) and remove folder `/config/capsule/loot`.
+
+* Add sounds for activation, deactivation, throw, deploy and undeploy actions
+* Looting system change ! All loots from dungeon chests are now taken from /config/capsule/loot (and not more from the jar assets). The default loots or copied there the first time the folder are created.
+* Change versionning number to follow minecraftforge guidelines (without API)
+* Fix excluded blocks (modded) that would not be actually excluded during capture
+
 **1.11.2-1.4.0 : 1.11.2 Update**
 
 * Update forge to 1.11.2-13.20.1.2530
