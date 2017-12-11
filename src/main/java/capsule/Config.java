@@ -113,7 +113,7 @@ public class Config {
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
-        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsules/rewards");
+        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
         rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromStructure <structureName>.");
         Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
 
