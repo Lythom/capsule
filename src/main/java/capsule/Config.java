@@ -38,10 +38,7 @@ public class Config {
         try {
             Config.config = config;
             config.load();
-            initGeneralConfigs();
-            initReceipeConfigs();
-            initEnchantsConfigs();
-        } catch (Exception e1) {
+²        } catch (Exception e1) {
             LOGGER.error("Problem loading config file !", e1);
         } finally {
             if (config.hasChanged()) {
@@ -50,7 +47,7 @@ public class Config {
         }
     }
 
-    private static void initGeneralConfigs() {
+    public static void initGeneralConfigs() {
 
         // upgrade limits
         Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
@@ -107,12 +104,9 @@ public class Config {
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
-                "config/capsules/loot/common",
-                "config/capsules/loot/uncommon",
-                "config/capsules/loot/rare",
-                "assets/capsules/loot/common",
-                "assets/capsules/loot/uncommon",
-                "assets/capsules/loot/rare"
+                "config/capsule/loot/common",
+                "config/capsule/loot/uncommon",
+                "config/capsule/loot/rare"
         });
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
