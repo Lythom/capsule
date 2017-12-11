@@ -10,7 +10,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
-**1.11.2-2.1.49 : 1.11.2 Update**
+**1.11.2-2.1.50 : 1.11.2 Update**
 
 Upgrading:
 If you upgrade from an older version, you will not have loot in dungeon chest by default.
