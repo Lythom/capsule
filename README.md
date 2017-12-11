@@ -10,7 +10,13 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
-**1.12.2-1.5.0 : 1.12.2 Update**
+**1.12.2-3.1.X : sound and Bug fixes**
+
+* Add sounds for activation, deactivation, throw, deploy and undeploy actions
+* Fix excluded blocks that would not be actually excluded during capture
+*
+
+**1.12.2-1.5.39 : 1.12.2 Update**
 
 * Update forge to 1.12.2-14.23.0.2550
 * Update JEI API to 1.12.2-4.8.0.114

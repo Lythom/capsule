@@ -16,7 +16,7 @@ public class Main {
 
     public static final String MODID = "capsule";
     public static final String MODNAME = "Capsule";
-    public static final String VERSION = "dev";
+    public static final String VERSION = "@VERSION@";
 
     public static CreativeTabs tabCapsule = new CapsuleTabs(CreativeTabs.getNextID(), "capsule");
 
