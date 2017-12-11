@@ -131,7 +131,7 @@ public class StructureSaver {
             dirURL = clazz.getClassLoader().getResource(me);
         }
 
-        else if (dirURL.getProtocol().equals("jar")) {
+        if (dirURL.getProtocol().equals("jar")) {
 			/* A JAR path */
             String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
             JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
