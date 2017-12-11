@@ -1,10 +1,27 @@
 # Capsule mod by Lythom #
+
+Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
+
 ## Mod page ##
-[http://minecraft.curseforge.com/mc-mods/235338-capsule](http://minecraft.curseforge.com/mc-mods/235338-capsule)
+[https://minecraft.curseforge.com/projects/capsule](https://minecraft.curseforge.com/projects/capsule)
+
+## Wiki ##
+[https://github.com/Lythom/capsule/wiki](https://github.com/Lythom/capsule/wiki)
 
 ## Changelog ##
 
-**1.10.2-1.3.0 : The multiplayer friendly update**
+**1.10.2-1.3.50 : Sounds and bug fixes**
+
+Upgrading:
+If you upgrade from an older version, you will not have loot in dungeon chest by default.
+To get them back: remove `config/capsule.cfg` (to generate a new default config) and remove folder `/config/capsule/loot`.
+
+* Add sounds for activation, deactivation, throw, deploy and undeploy actions
+* Looting system change ! All loots from dungeon chests are now taken from /config/capsule/loot (and not more from the jar assets). The default loots or copied there the first time the folder are created.
+* Change versionning number to follow minecraftforge guidelines (without API)
+* Fix excluded blocks (modded) that would not be actually excluded during capture
+
+**1.10.2-1.3.35 : The multiplayer friendly update**
 
 * Add grieffing protection for bother capturing and deploying (check if the player could place / harvest block manually)
 * Fix activated capsule being thrown by non-player (dispenser and dropper can now deploy an activated capsule)
