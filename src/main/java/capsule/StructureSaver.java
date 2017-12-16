@@ -176,7 +176,7 @@ public class StructureSaver {
 
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
-            RewardManager = new CapsuleTemplateManager(server.getDataDirectory().getPath());
+            RewardManager = new CapsuleTemplateManager(server.getDataDirectory().getPath(), net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer());
             File rewardDir = new File(Config.rewardTemplatesPath);
             if (!rewardDir.exists()) {
                 rewardDir.mkdirs();
@@ -230,7 +230,7 @@ public class StructureSaver {
         if (!CapsulesManagers.containsKey(directoryPath)) {
             File capsuleDir = new File(directory, "structures/capsule");
             capsuleDir.mkdirs();
-            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString()));
+            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString(), net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer()));
         }
         return CapsulesManagers.get(directoryPath);
     }
