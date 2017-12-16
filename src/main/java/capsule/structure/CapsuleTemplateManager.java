@@ -5,6 +5,8 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,10 +26,12 @@ public class CapsuleTemplateManager
     private final Map<String, CapsuleTemplate> templates = Maps.<String, CapsuleTemplate>newHashMap();
     /** the folder in the assets folder where the structure templates are found. */
     private final String baseFolder;
+    private final DataFixer fixer;
 
-    public CapsuleTemplateManager(String basefolderIn)
+    public CapsuleTemplateManager(String p_i47239_1_, DataFixer p_i47239_2_)
     {
-        this.baseFolder = basefolderIn;
+        this.baseFolder = p_i47239_1_;
+        this.fixer = p_i47239_2_;
     }
 
     public CapsuleTemplate getTemplate(@Nullable MinecraftServer server, ResourceLocation id)
@@ -44,9 +48,9 @@ public class CapsuleTemplateManager
     }
 
     @Nullable
-    public CapsuleTemplate get(@Nullable MinecraftServer p_189942_1_, ResourceLocation p_189942_2_)
+    public CapsuleTemplate get(@Nullable MinecraftServer server, ResourceLocation templatePath)
     {
-        String s = p_189942_2_.getResourcePath();
+        String s = templatePath.getResourcePath();
 
         if (this.templates.containsKey(s))
         {
@@ -54,13 +58,13 @@ public class CapsuleTemplateManager
         }
         else
         {
-            if (p_189942_1_ != null)
+            if (server == null)
             {
-                this.readTemplate(p_189942_1_, p_189942_2_);
+                this.readTemplateFromJar(templatePath);
             }
             else
             {
-                this.readTemplateFromJar(p_189942_2_);
+                this.readTemplate(templatePath);
             }
 
             return this.templates.containsKey(s) ? (CapsuleTemplate)this.templates.get(s) : null;
@@ -72,14 +76,14 @@ public class CapsuleTemplateManager
      * This first attempts get the template from an external folder.
      * If it isn't there then it attempts to take it from the minecraft jar.
      */
-    public boolean readTemplate(MinecraftServer server, ResourceLocation id)
+    public boolean readTemplate(ResourceLocation server)
     {
-        String s = id.getResourcePath();
+        String s = server.getResourcePath();
         File file1 = new File(this.baseFolder, s + ".nbt");
 
         if (!file1.exists())
         {
-            return this.readTemplateFromJar(id);
+            return this.readTemplateFromJar(server);
         }
         else
         {
@@ -92,7 +96,7 @@ public class CapsuleTemplateManager
                 this.readTemplateFromStream(s, inputstream);
                 return true;
             }
-            catch (Throwable var11)
+            catch (Throwable var10)
             {
                 flag = false;
             }
@@ -110,6 +114,7 @@ public class CapsuleTemplateManager
      */
     private boolean readTemplateFromJar(ResourceLocation id)
     {
+        String s = id.getResourceDomain();
         String s1 = id.getResourcePath();
         InputStream inputstream = null;
         boolean flag;
@@ -139,8 +144,14 @@ public class CapsuleTemplateManager
     public void readTemplateFromStream(String id, InputStream stream) throws IOException
     {
         NBTTagCompound nbttagcompound = CompressedStreamTools.readCompressed(stream);
+
+        if (!nbttagcompound.hasKey("DataVersion", 99))
+        {
+            nbttagcompound.setInteger("DataVersion", 500);
+        }
+
         CapsuleTemplate template = new CapsuleTemplate();
-        template.read(nbttagcompound);
+        template.read(this.fixer.process(FixTypes.STRUCTURE, nbttagcompound));
         this.templates.put(id, template);
     }
 
@@ -196,8 +207,8 @@ public class CapsuleTemplateManager
         }
     }
 
-    public void remove(ResourceLocation p_189941_1_)
+    public void remove(ResourceLocation templatePath)
     {
-        this.templates.remove(p_189941_1_.getResourcePath());
+        this.templates.remove(templatePath.getResourcePath());
     }
 }
