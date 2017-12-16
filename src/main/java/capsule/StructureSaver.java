@@ -45,7 +45,7 @@ import java.util.jar.JarFile;
 public class StructureSaver {
 
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
-    public static Map<WorldServer, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
+    public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
 
     public static void loadLootList(MinecraftServer server) {
@@ -224,13 +224,15 @@ public class StructureSaver {
 
     public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
         if (worldserver == null) return null;
+        File directory = worldserver.getSaveHandler().getWorldDirectory();
+        String directoryPath = directory.getPath();
 
-        if (!CapsulesManagers.containsKey(worldserver)) {
-            File capsuleDir = new File(worldserver.getSaveHandler().getWorldDirectory(), "structures/capsules");
+        if (!CapsulesManagers.containsKey(directoryPath)) {
+            File capsuleDir = new File(directory, "structures/capsule");
             capsuleDir.mkdirs();
-            CapsulesManagers.put(worldserver, new CapsuleTemplateManager(capsuleDir.toString()));
+            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString()));
         }
-        return CapsulesManagers.get(worldserver);
+        return CapsulesManagers.get(directoryPath);
     }
 
     /**
