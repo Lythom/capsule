@@ -351,9 +351,7 @@ public class CapsuleTemplate
 
                 try
                 {
-                    // Capsule fix to accept older nbt tags from the template.
-                    NBTTagCompound fixednbt = net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().process(FixTypes.ENTITY, nbttagcompound);
-                    entity = EntityList.createEntityFromNBT(fixednbt, worldIn);
+                    entity = EntityList.createEntityFromNBT(nbttagcompound, worldIn);
                 }
                 catch (Exception var15)
                 {
