@@ -11,7 +11,7 @@ environment {
     stages {
         stage('Build') {
             steps {
-                sh "rm build/libs/*.jar"
+                sh "rm build/libs/*.jar || true"
                 git branch: "${env.BRANCH}", url: 'https://github.com/Lythom/capsule.git'
                 sh "sed -i 's/BUILD_ID/${env.BUILD_ID}/g' build.properties"
                 sh '/gradlew build --stacktrace'
