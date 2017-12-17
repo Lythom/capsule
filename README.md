@@ -10,6 +10,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.10.2-1.4.2 : Chinese and bug fixes**
+
+* Add chinese translation
+* Fix a bug where the content of the capsule would not be saved if modified in another dimension
+
 **1.10.2-1.3.53 : Sounds and bug fixes**
 
 Upgrading:
