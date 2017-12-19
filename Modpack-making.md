@@ -51,7 +51,7 @@ Loot capsules are reward capsule that appears in the loot table of dungeon chest
 
 The Template files located under any of the "lootTemplatesPaths" entry in the config file will be eligible to spawn as loot in dungeon chests. They work the same way as Reward Capsule except they have this additional way to be obtain : the player can find them in a loot chest.
 
-By default, 6 folders are defined in the config file (3 built-in "/assets/capsule/…", 3 folders in "/config/capsule/…" that can be filled as you wish). Built-in folders will lookup into the mods jars to find eligible Templates, config folders will lookup in the corresponding folders. Remove the built-in entries if you want to control all the loot table capsules.
+By default, 3 folders are defined in the config file (in "/config/capsule/loot/…") that can be filled as you wish.
 
 Each folder will get an entry in the capsule config file on server restart, to be able to configure weight (chance for the folder to be picked rather than another when selecting a loot).
 
