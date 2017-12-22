@@ -1,4 +1,9 @@
-* IC2 machines will lose data after being moved. (http://bt.industrial-craft.net/view.php?id=1957)
-* Alchemy table from Bloodmagic will disappear if spawned at a different position than the original one.
-* Digital Miner from Mekanism will be unbreakable and will stop working if deployed in a position different from it's original capture position. To get it back, re-deploy it were is was when first captured and you will be able to pick it up.
-* Wires from immersive engineering will disappear when connectors or relays are moved. You may want to cut all wires before moving the machines so you don't lose the wires.
+Important incompatibilities:
+* IC2 machines will lose data after being moved and become unusable. (http://bt.industrial-craft.net/view.php?id=1957)
+* Alchemy table from Bloodmagic will disappear if deployed at a different position than the original one.    
+_Solution: Pickup the table before moving your bloodmagic room._
+* Wires from immersive engineering will disappear if deployed at a different position than the original one.     
+_Solution: Cut all wires before moving the machines so you don't lose the wires._
+
+Annoying incompatibilities:
+* Digital Miner from Mekanism will be unbreakable and will stop working if deployed at a different position than the original one. To get it back, re-deploy it were is was when first captured and you will be able to pick it up.
