@@ -10,6 +10,14 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.1.63 : Water and loot fine tuning**
+
+* New Water behaviour : Capsules now deploys on surface of water (or liquids), unless the thrower is immerged in the liquid itself.
+* Configurable loot tables. A new entry in the config file (lootTablesList) allows to configure where reward capsule will spawn.
+* Removed gameplay/fishing/treasure from default loot tables (can be re-added trough config).
+* Update forge to 1.12.2-14.23.0.2550
+* Update JEI API to 1.12.2-4.8.0.114
+
 **1.12.2-3.1.57 : Chinese and Bug fixes**
 
 * Add chinese translation (Thanks to 0nepeop1e)
