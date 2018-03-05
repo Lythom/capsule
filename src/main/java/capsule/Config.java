@@ -4,15 +4,13 @@ import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Config {
 
@@ -23,6 +21,7 @@ public class Config {
     public static List<Block> overridableBlocks;
     public static List<Block> opExcludedBlocks;
     public static String[] lootTemplatesPaths;
+    public static List<String> lootTablesList;
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
@@ -101,13 +100,31 @@ public class Config {
 
     public static void initLootConfigs() {
 
+        // Loot tables that can reward a capsule
+        String[] defaultLootTablesList = new String[]{
+                LootTableList.CHESTS_ABANDONED_MINESHAFT.toString(),
+                LootTableList.CHESTS_DESERT_PYRAMID.toString(),
+                LootTableList.CHESTS_END_CITY_TREASURE.toString(),
+                LootTableList.CHESTS_IGLOO_CHEST.toString(),
+                LootTableList.CHESTS_JUNGLE_TEMPLE.toString(),
+                LootTableList.CHESTS_SIMPLE_DUNGEON.toString(),
+                LootTableList.CHESTS_STRONGHOLD_CORRIDOR.toString(),
+                LootTableList.CHESTS_STRONGHOLD_CROSSING.toString(),
+                LootTableList.CHESTS_STRONGHOLD_LIBRARY.toString(),
+                LootTableList.CHESTS_VILLAGE_BLACKSMITH.toString(),
+                LootTableList.CHESTS_WOODLAND_MANSION.toString()
+        };
+        Property lootTablesListProp = Config.config.get("loots", "lootTablesList", defaultLootTablesList);
+        lootTablesListProp.setComment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.");
+        Config.lootTablesList = new ArrayList<String>(Arrays.asList(lootTablesListProp.getStringList()));
+
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
                 "config/capsule/loot/common",
                 "config/capsule/loot/uncommon",
                 "config/capsule/loot/rare"
         });
-        lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.");
+        lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
         Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");

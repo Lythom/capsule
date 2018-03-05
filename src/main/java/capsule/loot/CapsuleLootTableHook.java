@@ -17,20 +17,6 @@ public class CapsuleLootTableHook {
 
     private static final int DEFAULT_WEIGHT = 3;
 
-    public static List<String> allowedTables = Arrays.asList(
-            LootTableList.CHESTS_ABANDONED_MINESHAFT.toString(),
-            LootTableList.CHESTS_DESERT_PYRAMID.toString(),
-            LootTableList.CHESTS_END_CITY_TREASURE.toString(),
-            LootTableList.CHESTS_IGLOO_CHEST.toString(),
-            LootTableList.CHESTS_JUNGLE_TEMPLE.toString(),
-            LootTableList.CHESTS_SIMPLE_DUNGEON.toString(),
-            LootTableList.CHESTS_STRONGHOLD_CORRIDOR.toString(),
-            LootTableList.CHESTS_STRONGHOLD_CROSSING.toString(),
-            LootTableList.CHESTS_STRONGHOLD_LIBRARY.toString(),
-            LootTableList.CHESTS_VILLAGE_BLACKSMITH.toString(),
-            LootTableList.CHESTS_WOODLAND_MANSION.toString(),
-            LootTableList.GAMEPLAY_FISHING_TREASURE.toString()
-    );
     public static LootPool capsulePool = null;
 
     public CapsuleLootTableHook() {
@@ -40,7 +26,7 @@ public class CapsuleLootTableHook {
     @SubscribeEvent
     public void hookCapsulesOnLootTable(LootTableLoadEvent event) {
 
-        if (!allowedTables.contains(event.getName().toString()))
+        if (!Config.lootTablesList.contains(event.getName().toString()))
             return;
 
         // create a capsule loot entry per folder
