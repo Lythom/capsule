@@ -68,7 +68,7 @@ public class RecallEnchant extends Enchantment {
         @SuppressWarnings("unchecked")
         List<EntityItem> recallEntities = world.<EntityItem>getEntities(EntityItem.class, Enchantments.hasRecallEnchant::test);
         for (EntityItem entity : recallEntities) {
-            if (entity.getThrower() != null && (entity.collided || entity.isInLava() || entity.isInWater())) {
+            if (entity.getThrower() != null && (entity.collided || CapsuleItem.entityItemShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.onUpdate();

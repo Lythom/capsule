@@ -1,6 +1,7 @@
 package capsule;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -38,12 +39,18 @@ public class Helpers {
         return closest;
     }
 
+    public static boolean isImmergedInLiquid(Entity entity) {
+        if (entity == null) return false;
+        return !entity.isOffsetPositionInLiquid(0, 1.5, 0);
+    }
+
     public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks) {
         int blockReachDistance = 18;
         Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
         Vec3d vec3d1 = thePlayer.getLook(partialTicks);
         Vec3d vec3d2 = vec3d.addVector(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
-        RayTraceResult rtc = thePlayer.getEntityWorld().rayTraceBlocks(vec3d, vec3d2, false, true, true);
+        boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
+        RayTraceResult rtc = thePlayer.getEntityWorld().rayTraceBlocks(vec3d, vec3d2, stopOnLiquid);
         return rtc;
     }
 

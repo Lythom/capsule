@@ -6,7 +6,6 @@ import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -524,8 +523,9 @@ public class CapsuleItem extends Item {
             // client side, if is going to get activated, ask for server preview
             if (itemStackIn.hasTagCompound()
                     && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
-                BlockPos anchor = Minecraft.getMinecraft().objectMouseOver.getBlockPos();
-                if (anchor != null) {
+                RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+                BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
+                if (dest != null) {
                     CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(itemStackIn.getTagCompound().getString("structureName")));
                 }
             }
@@ -565,6 +565,22 @@ public class CapsuleItem extends Item {
         }
     }
 
+    public static boolean isThrowerUnderLiquid(final EntityItem entityItem) {
+        EntityPlayer player = entityItem.world.getPlayerEntityByName(entityItem.getThrower());
+        boolean underLiquid = Helpers.isImmergedInLiquid(player);
+        return underLiquid;
+    }
+
+    public static boolean isEntityCollidingLiquid(final EntityItem entityItem) {
+        return !entityItem.isOffsetPositionInLiquid(0, -0.1, 0);
+    }
+
+    public static boolean entityItemShouldAndCollideLiquid(final EntityItem entityItem) {
+        boolean throwerInLiquid = isThrowerUnderLiquid(entityItem);
+        boolean entityInLiquid = isEntityCollidingLiquid(entityItem);
+        return !throwerInLiquid && entityInLiquid;
+    }
+
     /**
      * Detect a collision and act accordingly (deploy or capture or break)
      */
@@ -577,9 +593,10 @@ public class CapsuleItem extends Item {
 
         // Deploying capsule content on collision with a block
         if (!entityItem.getEntityWorld().isRemote
-                && entityItem.collided
                 && entityItem.ticksExisted > 2 // avoid immediate collision
-                && this.isActivated(capsule)) {
+                && this.isActivated(capsule)
+                && (entityItem.collided || entityItemShouldAndCollideLiquid(entityItem))
+                ) {
 
             // stop the capsule where it collided
             entityItem.motionX = 0;
@@ -617,12 +634,11 @@ public class CapsuleItem extends Item {
 
         // throwing the capsule toward the right place
         if (!entityItem.getEntityWorld().isRemote
-                && !entityItem.collided
                 && this.isActivated(capsule)
                 && capsule.hasTagCompound()
-                && capsule.getTagCompound().hasKey("deployAt")) {
+                && capsule.getTagCompound().hasKey("deployAt")
+                && !entityItem.collided && !entityItemShouldAndCollideLiquid(entityItem)) {
             moveEntityItemToDeployPos(entityItem, capsule, true);
-
         }
 
         return false;
