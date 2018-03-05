@@ -67,7 +67,7 @@ Manipulating nbt data can be tricky. Capsule mod include some commands and tools
 
 ### Create a Reward Capsule
 
-This procedure will have you create a template file located under config/capsules/reward/. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work on the player game.
+This procedure will have you create a template file located under config/capsule/reward/. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work on the player game.
 
 1. Get an empty capsule, 
 2. capture the content you want to reward on a Capture Base,
