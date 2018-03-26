@@ -87,7 +87,7 @@ public class StructureSaver {
             for (String ressource : resources) {
                 if (!ressource.isEmpty()) {
                     InputStream sourceTemplate = StructureSaver.class.getClassLoader().getResourceAsStream(assetPath + "/" + ressource);
-                    Path assetFile = templateFolder.toPath().resolve(ressource);
+                    Path assetFile = templateFolder.toPath().resolve(ressource.toLowerCase());
                     LOGGER.debug("copying template " + assetPath + "/" + ressource + " to " + assetFile.toString());
                     try {
                         Files.copy(sourceTemplate, assetFile);

@@ -11,6 +11,7 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootEntry;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 import net.minecraft.world.storage.loot.conditions.LootConditionManager;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collection;
@@ -63,7 +64,7 @@ public class CapsuleLootEntry extends LootEntry {
                     return;
 
                 ItemStack capsule = CapsuleItem.createRewardCapsule(
-                        templatePath,
+                        WordUtils.capitalize(templatePath),
                         getRandomColor(),
                         getRandomColor(),
                         size,
