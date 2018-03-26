@@ -10,6 +10,14 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.11.2-2.2.5 : template naming on linux servers**
+
+It is required that template names are lowercase to work in a linux environment, this applies to all version of capsule.
+
+* Change default templates names to be lowercased.
+* Change Reward capsule to use capitalized file name as label. Ex: "small villager house.nbt" will give a "Small Villager House" capsule.
+
+
 **1.11.2-2.2.3 : Chinese and bug fixes**
 
 * Add chinese translation
