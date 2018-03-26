@@ -64,11 +64,11 @@ public class CapsuleLootEntry extends LootEntry {
                     return;
 
                 ItemStack capsule = CapsuleItem.createRewardCapsule(
-                        WordUtils.capitalize(templatePath),
+                        templatePath,
                         getRandomColor(),
                         getRandomColor(),
                         size,
-                        path[path.length - 1],
+                        WordUtils.capitalize(path[path.length - 1]),
                         template.getAuthor());
 
                 stacks.add(capsule);
