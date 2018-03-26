@@ -24,6 +24,13 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 * Fix a bug where the content of the capsule would not be saved if modified in another dimension
 * Fix logic to load content from older version of structure blocks
 
+**1.12.2-3.1.66 : template naming on linux servers**
+
+It is required that template names are lowercase to work in a linux environment, this applies to all version of capsule.
+
+* Change default templates names to be lowercased.
+* Change Reward capsule to use capitalized file name as label. Ex: "small villager house.nbt" will give a "Small Villager House" capsule.
+
 **1.12.2-3.1.48 : sound and Bug fixes**
 
 Upgrading:
