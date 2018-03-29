@@ -91,6 +91,34 @@ Effect : whenever a recall enchanted item is dropped and touches the ground, it 
 This enchant is intended to be used on capsules. Without this enchantment you have to pick up the thrown capsule manually.
 It can as well be applied on any enchantable item by configuration (disabled by default). Can be useful to fight against inventory dropping monsters or to prevent unintentional drop.
 
+## Overpowered Capsules ##
+
+Overpowered capsules can capture blocks that cannot be captures with standard capsules. Blocks that can be captured only by overpowered capsules can be configured in capsule.cfg by adjusting the excludedBlocks for standard and op capsules. By default the config is :
+
+```
+# List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.
+S:excludedBlocks <
+minecraft:bedrock
+minecraft:mob_spawner
+minecraft:end_portal
+minecraft:end_portal_frame
+minecraft:air
+minecraft:structure_void
+ic2:te
+>
+
+ 
+
+# List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.
+S:opExcludedBlocks <
+minecraft:air
+minecraft:structure_void
+ic2:te
+>
+```
+
+That means that by default a standard capsule cannot capture bedrock, mob spawners or end portals whereas overpowered capsules can. OP Capsules can be crafted using a netherstar instead of an ender pearl.
+
 # FAQ
 
 **Will block X from mod Y work with capsules ?**
