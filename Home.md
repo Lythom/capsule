@@ -11,6 +11,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
   * [Upgrading](#upgrading)
   * [Backup](#backup)
   * [Recall](#recall)
+  * [Overpowered Capsules](#overpowered-capsules)
 - [FAQ](#faq)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -132,6 +133,10 @@ Latest versions of capsule have been tested a lot with very good results, give i
 Sure ! Please simply give a link to this page and mention Lythom as the mod author.
 
 If any problem with the mod feel free to PM or to submit an issue [https://github.com/Lythom/capsule/issues](https://github.com/Lythom/capsule/issues).
+
+**How to create capsules with custom structures to put in my pack ?**
+
+All the information is at [https://github.com/Lythom/capsule/wiki/Modpack-making](https://github.com/Lythom/capsule/wiki/Modpack-making).
 
 **1.7.10 version ?**
 
