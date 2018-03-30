@@ -77,8 +77,8 @@ To allow more advanced captures :
 
 1. Setup a structure block in save mode
 2. Configure the way you want (you can even capture entities and blocks a capsule wouldn't capture like mobs or monsters or EntityItems on the ground), 
-3. Save using a unique name, 
-4. Finally use the command [`/capsule fromStructure <structureName>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structureName>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content.
+3. Save using a unique name (lowercase only), 
+4. Finally use the command [`/capsule fromStructure <structureName>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structureName>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content. If the name contains uppercase characters, the capsule won't deploy on linux server (which most of server providers uses).
 
 [Click to see Demo of using `/capsule fromStructure <structureName>`     
 ![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
@@ -88,7 +88,7 @@ To allow more advanced captures :
 * Non-empty capsules can be labeled using sneak + right click to show the GUI.
 * Renaming a capsule on an anvil is possible, but it will completely override the item naming mechanics and the label will be ignored.
 
-Note : A Loot capsule will always be labelled using the name of the file (without .nbt).
+Note : A Loot capsule will always be labelled using the name of the file (without .nbt), The Name Will Be Capitalized.
 
 ### Setting the author of a capsule
 
@@ -103,7 +103,7 @@ You may want to feature any creator content (may it be yourself !), so an author
 
 ### Create a Template to be used as Loot
 
-The template files does NOT include the capsule NBT data, so the options for the Capsule created in the dungeon chest are limited. The Capsule will take the Template file "name" as its label (without .nbt), the Template file value "author" as its author, and the capsule size will be calculated from the structure size. 
+The template files does NOT include the capsule NBT data, so the options for the Capsule created in the dungeon chest are limited. The Capsule will take the Template file "name" capitalized (Each First Letter Is Uppercase) as its label (without .nbt), the Template file value "author" as its author, and the capsule size will be calculated from the structure size. the template file name itself must be lowercase.
 
 Take care of setting the structure name and the author correctly when capturing content using either a structureblock in save mode, or an empty capsule.
 
@@ -154,7 +154,7 @@ If you want to create your own capsules or give them using commandblocks, you'll
 	(string) label,							// User customizable label
 	(byte) overpowered,						// If the capsule can capture powerfull blocks
 	(bool) isReward,						// if the content of the template must be kept when capsule is deployed.
-	(string) structureName,					// name of the template file name without the .nbt extension. Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
+	(string) structureName,					// name of the template file name without the .nbt extension. Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the path from the instance root folder for rewards and loots (ex: <instance>/config/capsule/reward/myfancyhouse)
 	(tag) activetimer : {int starttime}, 	// Time the moment when the capsule must deactivate
 	(tag) occupiedSpawnPositions : […],   	// remember what positions not the recapture if block didn't change
 	(long) deployAt,						// set when capsule is thrown with preview, position to deploy the capsule that match the preview
