@@ -10,6 +10,12 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.1.68 : Important bug fix**
+
+* Fix error when capsule thrown by non player entity (ex: dropper)
+* Update forge to 1.12.2-14.23.3.2655
+* Update 1.12.2-3.1.68 README
+
 **1.12.2-3.1.63 : Water and loot fine tuning**
 
 * New Water behaviour : Capsules now deploys on surface of water (or liquids), unless the thrower is immerged in the liquid itself.
