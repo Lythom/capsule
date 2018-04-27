@@ -566,7 +566,9 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isThrowerUnderLiquid(final EntityItem entityItem) {
-        EntityPlayer player = entityItem.world.getPlayerEntityByName(entityItem.getThrower());
+        String thrower = entityItem.getThrower();
+        if (thrower == null) return false;
+        EntityPlayer player = entityItem.getEntityWorld().getPlayerEntityByName(thrower);
         boolean underLiquid = Helpers.isImmergedInLiquid(player);
         return underLiquid;
     }
@@ -614,7 +616,8 @@ public class CapsuleItem extends Item {
                 // DEPLOY
                 // is linked, deploy
                 boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
-                if (deployed) itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                if (deployed)
+                    itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
                 if (deployed && isOneUse(capsule)) {
                     entityItem.setDead();
                 }
@@ -829,7 +832,8 @@ public class CapsuleItem extends Item {
 
     /**
      * Set the NBT tag "key" to be a BlockPos coordinates.
-     *  @param capsule capsule stack
+     *
+     * @param capsule capsule stack
      * @param dest    position to save as nbt into the capsule stack
      * @param dimID   dimension where the position is.
      */
