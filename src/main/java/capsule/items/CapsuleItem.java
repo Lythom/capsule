@@ -164,18 +164,18 @@ public class CapsuleItem extends Item {
     /**
      * The capsule capture size.
      */
-    public static int getSize(ItemStack itemStackIn) {
+    public static int getSize(ItemStack capsule) {
         int size = 1;
-        if (!itemStackIn.isEmpty() && itemStackIn.hasTagCompound() && itemStackIn.getTagCompound().hasKey("size")) {
-            size = itemStackIn.getTagCompound().getInteger("size");
+        if (!capsule.isEmpty() && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("size")) {
+            size = capsule.getTagCompound().getInteger("size");
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
-            itemStackIn.getTagCompound().setInteger("size", size);
+            capsule.getTagCompound().setInteger("size", size);
             LOGGER.error("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
             size--;
-            itemStackIn.getTagCompound().setInteger("size", size);
+            capsule.getTagCompound().setInteger("size", size);
             LOGGER.error("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
 
@@ -303,19 +303,19 @@ public class CapsuleItem extends Item {
      * Throw an item and return the new EntityItem created. Simulated a drop
      * with stronger throw.
      */
-    public static EntityItem throwCapsule(ItemStack itemStackIn, EntityPlayer playerIn, BlockPos destination) {
+    public static EntityItem throwCapsule(ItemStack capsule, EntityPlayer playerIn, BlockPos destination) {
         // startPosition from EntityThrowable
         double startPosition = playerIn.posY - 0.3D + (double) playerIn.getEyeHeight();
-        EntityItem entityitem = new EntityItem(playerIn.getEntityWorld(), playerIn.posX, startPosition, playerIn.posZ, itemStackIn);
+        EntityItem entityitem = new EntityItem(playerIn.getEntityWorld(), playerIn.posX, startPosition, playerIn.posZ, capsule);
         entityitem.setPickupDelay(20);// cannot be picked up before deployment
         entityitem.setThrower(playerIn.getName());
         entityitem.setNoDespawn();
 
         if (destination != null) {
 
-            itemStackIn.getTagCompound().setLong("deployAt", destination.toLong());
+            capsule.getTagCompound().setLong("deployAt", destination.toLong());
 
-            moveEntityItemToDeployPos(entityitem, itemStackIn, false);
+            moveEntityItemToDeployPos(entityitem, capsule, false);
             BlockPos playerPos = playerIn.getPosition();
             // +0.5 to aim the center of the block
             double diffX = (destination.getX() + 0.5 - playerPos.getX());
@@ -414,7 +414,7 @@ public class CapsuleItem extends Item {
         }
 
         int upgradeLevel = getUpgradeLevel(stack);
-        String sizeTxt = String.valueOf(size) + "×" + String.valueOf(size) + "×" + String.valueOf(size);
+        String sizeTxt = size + "×" + size + "×" + size;
         if (upgradeLevel > 0) {
             sizeTxt += " (" + upgradeLevel + "/" + Config.upgradeLimit + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";
         }
@@ -477,40 +477,40 @@ public class CapsuleItem extends Item {
      */
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-        ItemStack itemStackIn = playerIn.getHeldItem(handIn);
+        ItemStack capsule = playerIn.getHeldItem(handIn);
 
         if (handIn == EnumHand.OFF_HAND) {
-            return new ActionResult<>(EnumActionResult.FAIL, itemStackIn);
+            return new ActionResult<>(EnumActionResult.FAIL, capsule);
         }
 
-        if (playerIn.isSneaking() && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_DEPLOYED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
+        if (playerIn.isSneaking() && (capsule.getItemDamage() == STATE_LINKED || capsule.getItemDamage() == STATE_DEPLOYED || capsule.getItemDamage() == STATE_ONE_USE)) {
             Main.proxy.openGuiScreen(playerIn);
 
         } else if (!worldIn.isRemote) {
 
             // an empty or a linked capsule is activated on right click
-            if (itemStackIn.getItemDamage() == STATE_EMPTY || itemStackIn.getItemDamage() == STATE_LINKED
-                    || itemStackIn.getItemDamage() == STATE_ONE_USE) {
-                if (itemStackIn.getItemDamage() == STATE_EMPTY) {
-                    setState(itemStackIn, STATE_EMPTY_ACTIVATED);
+            if (capsule.getItemDamage() == STATE_EMPTY || capsule.getItemDamage() == STATE_LINKED
+                    || capsule.getItemDamage() == STATE_ONE_USE) {
+                if (capsule.getItemDamage() == STATE_EMPTY) {
+                    setState(capsule, STATE_EMPTY_ACTIVATED);
                 }
-                if (itemStackIn.getItemDamage() == STATE_LINKED) {
-                    setState(itemStackIn, STATE_ACTIVATED);
+                if (capsule.getItemDamage() == STATE_LINKED) {
+                    setState(capsule, STATE_ACTIVATED);
                 }
-                if (itemStackIn.getItemDamage() == STATE_ONE_USE) {
-                    setState(itemStackIn, STATE_ONE_USE_ACTIVATED);
+                if (capsule.getItemDamage() == STATE_ONE_USE) {
+                    setState(capsule, STATE_ONE_USE_ACTIVATED);
                 }
 
-                NBTTagCompound timer = itemStackIn.getOrCreateSubCompound("activetimer");
+                NBTTagCompound timer = capsule.getOrCreateSubCompound("activetimer");
                 timer.setInteger("starttime", playerIn.ticksExisted);
                 worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_ON, SoundCategory.BLOCKS, 0.2F, 0.9F);
             }
 
             // an opened capsule revoke deployed content on right click
-            else if (itemStackIn.getItemDamage() == STATE_DEPLOYED) {
+            else if (capsule.getItemDamage() == STATE_DEPLOYED) {
 
                 try {
-                    resentToCapsule(itemStackIn, playerIn);
+                    resentToCapsule(capsule, playerIn);
                     worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
                 } catch (Exception e) {
                     LOGGER.error("Couldn't resend the content into the capsule", e);
@@ -521,29 +521,29 @@ public class CapsuleItem extends Item {
 
         if (worldIn.isRemote) {
             // client side, if is going to get activated, ask for server preview
-            if (itemStackIn.hasTagCompound()
-                    && (itemStackIn.getItemDamage() == STATE_LINKED || itemStackIn.getItemDamage() == STATE_ONE_USE)) {
-                RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+            if (capsule.hasTagCompound()
+                    && (capsule.getItemDamage() == STATE_LINKED || capsule.getItemDamage() == STATE_ONE_USE)) {
+                RayTraceResult rtr = isLinked(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
                 if (dest != null) {
-                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(itemStackIn.getTagCompound().getString("structureName")));
+                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTagCompound().getString("structureName")));
                 }
             }
 
             // client side, is activated, ask for the server a throw at position
-            if (isActivated(itemStackIn)) {
-                RayTraceResult rtr = isLinked(itemStackIn) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+            if (isActivated(capsule)) {
+                RayTraceResult rtr = isLinked(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
                 CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest));
             }
         }
 
-        return new ActionResult<>(EnumActionResult.SUCCESS, itemStackIn);
+        return new ActionResult<>(EnumActionResult.SUCCESS, capsule);
     }
 
-    private boolean isActivated(ItemStack itemStackIn) {
-        return itemStackIn.getItemDamage() == STATE_ACTIVATED || itemStackIn.getItemDamage() == STATE_EMPTY_ACTIVATED
-                || itemStackIn.getItemDamage() == STATE_ONE_USE_ACTIVATED;
+    private boolean isActivated(ItemStack capsule) {
+        return capsule.getItemDamage() == STATE_ACTIVATED || capsule.getItemDamage() == STATE_EMPTY_ACTIVATED
+                || capsule.getItemDamage() == STATE_ONE_USE_ACTIVATED;
     }
 
     /**
@@ -598,7 +598,7 @@ public class CapsuleItem extends Item {
                 && entityItem.ticksExisted > 2 // avoid immediate collision
                 && this.isActivated(capsule)
                 && (entityItem.collided || entityItemShouldAndCollideLiquid(entityItem))
-                ) {
+        ) {
 
             // stop the capsule where it collided
             entityItem.motionX = 0;
@@ -616,8 +616,10 @@ public class CapsuleItem extends Item {
                 // DEPLOY
                 // is linked, deploy
                 boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
-                if (deployed)
+                if (deployed) {
                     itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                    showDeployParticules(itemWorld, entityItem.getPosition(), size);
+                }
                 if (deployed && isOneUse(capsule)) {
                     entityItem.setDead();
                 }
@@ -627,7 +629,10 @@ public class CapsuleItem extends Item {
                 // CAPTURE
                 // is not linked, capture
                 try {
-                    captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
+                    boolean captured = captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
+                    if (captured) {
+                        showUndeployParticules(itemWorld, entityItem.getPosition(), size);
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Couldn't capture the content into the capsule", e);
                 }
@@ -645,6 +650,21 @@ public class CapsuleItem extends Item {
         }
 
         return false;
+    }
+
+    private void showDeployParticules(WorldServer world, BlockPos blockpos, int size) {
+        double d0 = (double) ((float) blockpos.getX()) + 0.5D;
+        double d1 = (double) ((float) blockpos.getY()) + 0.5D;
+        double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
+        world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 16 * size, 0.5D, 0.25D, 0.5D, 0.1 + 0.01 * size);
+    }
+
+    private void showUndeployParticules(WorldServer world, BlockPos blockpos, int size) {
+        double d0 = (double) ((float) blockpos.getX()) + 0.5D;
+        double d1 = (double) ((float) blockpos.getY()) - size * 0.10;
+        double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
+
+        world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 8 * size, 0.5D, 0.25D, 0.5D, 0.01 * size);
     }
 
     /**
@@ -777,24 +797,26 @@ public class CapsuleItem extends Item {
         return didSpawn;
     }
 
-    private void resentToCapsule(final ItemStack itemStackIn, final EntityPlayer playerIn) {
+    private void resentToCapsule(final ItemStack capsule, final EntityPlayer playerIn) {
         // store again
-        Integer dimensionId = getDimension(itemStackIn);
+        Integer dimensionId = getDimension(capsule);
         MinecraftServer server = playerIn.getServer();
         final WorldServer capsuleWorld = dimensionId != null ? server.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
 
-        NBTTagCompound spawnPos = itemStackIn.getTagCompound().getCompoundTag("spawnPosition");
+        NBTTagCompound spawnPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
         BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
 
-        int size = getSize(itemStackIn);
+        int size = getSize(capsule);
 
         // do the transportation
-        boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), itemStackIn.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(itemStackIn), getOccupiedSourcePos(itemStackIn));
+        boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), capsule.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
 
         if (storageOK) {
-            setState(itemStackIn, STATE_LINKED);
-            itemStackIn.getTagCompound().removeTag("spawnPosition");
-            itemStackIn.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+            setState(capsule, STATE_LINKED);
+            capsule.getTagCompound().removeTag("spawnPosition");
+            capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+
+            showUndeployParticules(capsuleWorld, source.add(size / 2, size / 2, size / 2), size);
         } else {
             LOGGER.error("Error occured during undeploy of capsule.");
             playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
