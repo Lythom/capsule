@@ -125,14 +125,14 @@ public class StructureSaver {
         if (dirURL == null) {
             /*
              * In case of a jar file, we can't actually find a directory. Have
-			 * to assume the same jar as clazz.
-			 */
+             * to assume the same jar as clazz.
+             */
             String me = clazz.getName().replace(".", "/") + ".class";
             dirURL = clazz.getClassLoader().getResource(me);
         }
 
         if (dirURL.getProtocol().equals("jar")) {
-			/* A JAR path */
+            /* A JAR path */
             String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
             JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
 
@@ -329,6 +329,21 @@ public class StructureSaver {
                     }
 
                     template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, spawnedBlocks, spawnedEntities);
+
+                    // Players don't block deployment, instead they are pushed up if they would suffocate
+                    List<EntityLivingBase> players = playerWorld.getEntitiesWithinAABB(
+                            EntityLivingBase.class,
+                            new AxisAlignedBB(dest.getX(), dest.getY(), dest.getZ(), dest.getX() + size, dest.getY() + size, dest.getZ() + size),
+                            entity -> (entity instanceof EntityPlayer)
+                    );
+                    for (EntityLivingBase p : players) {
+                        for (int y = 0; y < size; y++) {
+                            if (playerWorld.collidesWithAnyBlock(p.getEntityBoundingBox())) {
+                                p.setPositionAndUpdate(p.posX, p.posY + 1, p.posZ);
+                            }
+                        }
+                    }
+
                     return true;
                 } catch (Exception err) {
                     LOGGER.error("Couldn't deploy the capsule", err);
@@ -346,7 +361,7 @@ public class StructureSaver {
             } else {
                 // send a chat message to explain failure
                 if (player != null) {
-                    if (outOccupiedSpawnPositions.size() == 0) {
+                    if (outEntityBlocking.size() > 0) {
                         player.sendMessage(
                                 new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
                                         StringUtils.join(outEntityBlocking, ", ")));
@@ -375,7 +390,7 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (!placeEventAllowed(worldserver, blockPos, player)) return false;
+                if (!isPlaceEventAllowed(worldserver, blockPos, player)) return false;
             }
 
         }
@@ -387,12 +402,12 @@ public class StructureSaver {
      */
     private static boolean playerCanRemove(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
         if (player != null) {
-            if (!placeEventAllowed(worldserver, blockPos, player)) return false;
+            if (!isPlaceEventAllowed(worldserver, blockPos, player)) return false;
         }
         return true;
     }
 
-    private static boolean placeEventAllowed(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
+    private static boolean isPlaceEventAllowed(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
         BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
         BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
         MinecraftForge.EVENT_BUS.post(event);
@@ -434,11 +449,6 @@ public class StructureSaver {
     /**
      * Check whether a merge can be done at the destination
      *
-     * @param template
-     * @param destWorld
-     * @param destOriginPos
-     * @param size
-     * @param overridable
      * @param outOccupiedPositions Output param, the positions occupied a destination that will
      *                             have to be ignored on
      * @return List<BlockPos> occupied but not blocking positions
@@ -449,7 +459,6 @@ public class StructureSaver {
         IBlockState air = Blocks.AIR.getDefaultState();
 
         List<Template.BlockInfo> srcblocks = template.blocks;
-        if (srcblocks == null) return false;
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
@@ -478,11 +487,13 @@ public class StructureSaver {
                     }
 
                     boolean srcOccupied = (srcState != air && !overridable.contains(srcState.getBlock()));
-                    @SuppressWarnings("rawtypes")
-                    List entities = destWorld.getEntitiesWithinAABB(
+
+                    List<EntityLivingBase> entities = destWorld.getEntitiesWithinAABB(
                             EntityLivingBase.class,
-                            new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() + 1, destPos.getY() + 1, destPos.getZ() + 1)
+                            new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() + 1, destPos.getY() + 1, destPos.getZ() + 1),
+                            entity -> !(entity instanceof EntityPlayer)
                     );
+
 
                     // if destination is occupied, and source is neither
                     // excluded from transportation, nor can't be overriden by
