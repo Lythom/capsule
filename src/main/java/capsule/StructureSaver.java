@@ -375,12 +375,7 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
-                BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
-                MinecraftForge.EVENT_BUS.post(event);
-                if (event.isCanceled()) {
-                    return false;
-                }
+                if (!placeEventAllowed(worldserver, blockPos, player)) return false;
             }
 
         }
@@ -392,12 +387,17 @@ public class StructureSaver {
      */
     private static boolean playerCanRemove(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
         if (player != null) {
-            BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
-            BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
-            MinecraftForge.EVENT_BUS.post(event);
-            if (event.isCanceled()) {
-                return false;
-            }
+            if (!placeEventAllowed(worldserver, blockPos, player)) return false;
+        }
+        return true;
+    }
+
+    private static boolean placeEventAllowed(WorldServer worldserver, BlockPos blockPos, EntityPlayer player) {
+        BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
+        BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, EnumHand.MAIN_HAND);
+        MinecraftForge.EVENT_BUS.post(event);
+        if (event.isCanceled()) {
+            return false;
         }
         return true;
     }
