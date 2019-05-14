@@ -1,0 +1,11 @@
+{
+  "recipes": {
+    "clear_capsule": "capsule.items.recipes.ClearCapsuleFactory",
+    "dye_capsule": "capsule.items.recipes.DyeCapsuleFactory",
+    "recovery_capsule": "capsule.items.recipes.RecoveryCapsuleFactory",
+    "upgrade_capsule": "capsule.items.recipes.UpgradeCapsuleFactory",
+  },
+  "conditions": {
+    "is_enabled": "capsule.items.recipes.IsEnabledByConfigConditionFactory"
+  }
+}

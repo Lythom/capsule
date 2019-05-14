@@ -9,6 +9,7 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
@@ -35,7 +36,7 @@ public class CapsuleBlocks {
         blockCapsuleMarker.setCreativeTab(Main.tabCapsule);
 
         event.getRegistry().register(blockCapsuleMarker);
-        GameRegistry.registerTileEntity(TileEntityCapture.class, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME);
+        GameRegistry.registerTileEntity(TileEntityCapture.class, new ResourceLocation(CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME));
 
         // testing blocks
         Map<String, String> env = System.getenv();

@@ -11,6 +11,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public class Config {
 
@@ -28,10 +30,12 @@ public class Config {
 
     public static String enchantRarity;
     public static String recallEnchantType;
-    public static int ironCapsuleSize;
-    public static int goldCapsuleSize;
-    public static int diamondCapsuleSize;
-    public static int opCapsuleSize;
+    public static Map<String, Integer> capsuleSizes = new HashMap<>();
+
+    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get("ironCapsuleSize");
+    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get("goldCapsuleSize");
+    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get("diamondCapsuleSize");
+    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get("opCapsuleSize");
 
     public static void readConfig(Configuration config) {
         try {
@@ -147,19 +151,21 @@ public class Config {
     public static void initReceipeConfigs() {
         Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
         ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-        Config.ironCapsuleSize = ironCapsuleSize.getInt();
 
         Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "3");
         goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
-        Config.goldCapsuleSize = goldCapsuleSize.getInt();
 
         Property diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "5");
         diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
-        Config.diamondCapsuleSize = diamondCapsuleSize.getInt();
 
         Property opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
         opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-        Config.opCapsuleSize = opCapsuleSize.getInt();
+
+        Config.config.getCategory("Balancing").values().forEach(property -> {
+            if (property.getName().endsWith("CapsuleSize")) {
+                Config.capsuleSizes.put(property.getName(), property.getInt());
+            }
+        });
     }
 
     public static void initEnchantsConfigs() {
@@ -170,6 +176,10 @@ public class Config {
         Property recallEnchantTypeConfig = Config.config.get("Balancing", "recallEnchantType", "null");
         recallEnchantTypeConfig.setComment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.");
         Config.recallEnchantType = recallEnchantTypeConfig.getString();
+    }
+
+    public static BooleanSupplier isEnabled(String key) {
+        return () -> !Config.capsuleSizes.containsKey(key) || Config.capsuleSizes.get(key) > 0;
     }
 
 

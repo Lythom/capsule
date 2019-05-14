@@ -16,9 +16,13 @@ import net.minecraft.nbt.NBTTagInt;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CapsuleItems {
 
-    public static Item capsule;
+    private static final int UPGRADE_STEP = 2;
+    public static CapsuleItem capsule;
 
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
@@ -27,14 +31,40 @@ public class CapsuleItems {
     public static ClearCapsuleRecipe clearCapsuleRecipe;
     public static DyeCapsuleRecipe dyeCapsuleRecipe;
 
+    public static List<ItemStack> capsules = new ArrayList<>();
+    public static List<ItemStack> opCapsules = new ArrayList<>();
+
     public static void registerItems(RegistryEvent.Register<Item> event) {
         capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
         capsule.setCreativeTab(Main.tabCapsule);
 
         event.getRegistry().register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
+
+        // create reference ItemStacks
+//        capsules.add(CapsuleItems.createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize.get()));
+//        capsules.add(CapsuleItems.createCapsuleItemStack(0xFFD700, Config.goldCapsuleSize.get()));
+//        capsules.add(CapsuleItems.createCapsuleItemStack(0x00FFF2, Config.diamondCapsuleSize.get()));
+//        ItemStack opCapsule = CapsuleItems.createCapsuleItemStack(0xFFFFFF, Config.opCapsuleSize.get());
+//        opCapsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
+//        opCapsules.add(opCapsule);
     }
 
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+
+        // create reference ItemStacks from json recipes
+        // used for creative tab and JEI, should not item if recipes are disabled
+        for (IRecipe recipe : event.getRegistry().getValuesCollection()) {
+            if (recipe.getRegistryName().toString().startsWith("capsule:")) {
+                ItemStack output = recipe.getRecipeOutput();
+                if (output.getItem() instanceof CapsuleItem) {
+                    if (capsule.isOverpowered(output)) {
+                        opCapsules.add(output);
+                    } else {
+                        opCapsules.add(output);
+                    }
+                }
+            }
+        }
 
         // capsule upgrade recipe
         upgradeCapsuleRecipe = new UpgradeCapsuleRecipe(Items.CHORUS_FRUIT_POPPED);
@@ -62,6 +92,9 @@ public class CapsuleItems {
     }
 
     public static void registerRecipes() {
+
+        // 0 should disable recipe
+        // config shoudl overwrite json recipe.
 /*
 
         ItemStack ironCapsule = createCapsuleItemStack(0xCCCCCC, Config.ironCapsuleSize);
@@ -92,6 +125,29 @@ public class CapsuleItems {
         stack.setTagInfo("color", new NBTTagInt(color));
         stack.setTagInfo("size", new NBTTagInt(actualSize));
         return stack;
+    }
+
+
+    public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
+        ItemStack unlabelledCapsule = capsule.copy();
+        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
+        CapsuleItem.setStructureName(unlabelledCapsule, "JEIExemple");
+        return unlabelledCapsule;
+    }
+
+    public static ItemStack getRecoveryCapsule(ItemStack capsule) {
+        ItemStack recoveryCapsule = capsule.copy();
+        CapsuleItem.setOneUse(recoveryCapsule);
+        CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
+        return recoveryCapsule;
+    }
+
+    public static ItemStack getUpgradedCapsule(ItemStack ironCapsule, int upLevel) {
+        ItemStack capsuleUp = ironCapsule.copy();
+        CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
+        CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
+        capsuleUp.setTagInfo("upgraded", new NBTTagInt(upLevel));
+        return capsuleUp;
     }
 
 }

@@ -2,7 +2,7 @@
   "conditions": [
     {
       "type": "capsule:is_enabled",
-      "property": "ironCapsuleSize"
+      "property": "testExempleCapsuleSize"
     }
   ],
   "result": {
@@ -10,8 +10,9 @@
     "item": "capsule:capsule",
     "data": 0,
     "nbt": {
-      "color": 13421772,
-      "size": 1
+      "color": 16711680,
+      "size": 13,
+      "overpowered": 1
     }
   },
   "pattern": [
@@ -22,7 +23,8 @@
   "type": "forge:ore_shaped",
   "key": {
     "#": {
-      "item": "minecraft:iron_ingot"
+      "type": "forge:ore_dict",
+      "ore": "dyeRed"
     },
     "b": {
       "item": "minecraft:stone_button"

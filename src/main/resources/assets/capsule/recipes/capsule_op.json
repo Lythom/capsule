@@ -1,4 +1,10 @@
 {
+  "conditions": [
+    {
+      "type": "capsule:is_enabled",
+      "property": "opCapsuleSize"
+    }
+  ],
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
