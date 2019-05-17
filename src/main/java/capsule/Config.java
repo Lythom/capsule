@@ -149,14 +149,23 @@ public class Config {
     }
 
     public static void initReceipeConfigs() {
-        Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "1");
-        ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
+        Property woodCapsuleSize = Config.config.get("Balancing", "woodCapsuleSize", "1");
+        woodCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 
-        Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "3");
-        goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
+         Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "3");
+        ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
 
-        Property diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "5");
-        diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
+        Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "5");
+        goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
+
+        Property diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "7");
+        diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 7");
+
+        Property obsidianCapsuleSize = Config.config.get("Balancing", "obsidianCapsuleSize", "9");
+        obsidianCapsuleSize.setComment("Size of the capture cube side for an Obsidian Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 9");
+
+        Property emeraldCapsuleSize = Config.config.get("Balancing", "emeraldCapsuleSize", "11");
+        emeraldCapsuleSize.setComment("Size of the capture cube side for an Emerald Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 11");
 
         Property opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
         opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");

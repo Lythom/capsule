@@ -3,7 +3,7 @@
   "conditions": [
     {
       "type": "capsule:is_enabled",
-      "property": "testExempleCapsuleSize"
+      "property": "woodCapsuleSize"
     }
   ],
   "result": {
@@ -11,9 +11,11 @@
     "item": "capsule:capsule",
     "data": 0,
     "nbt": {
-      "color": 16711680,
-      "size": 13,
-      "overpowered": 1
+      "color": 12359778,
+      "size": 1,
+      "display": {
+        "color": 11833434
+      }
     }
   },
   "pattern": [
@@ -23,17 +25,16 @@
   ],
   "key": {
     "#": {
-      "type": "forge:ore_dict",
-      "ore": "dyeRed"
+      "item": "#plankWood"
     },
     "b": {
       "item": "minecraft:stone_button"
     },
     "e": {
-      "item": "minecraft:ender_pearl"
+      "item": "#chest"
     },
     "i": {
-      "item": "minecraft:iron_ingot"
+      "item": "#slabWood"
     }
   }
 }

@@ -3,7 +3,7 @@
   "conditions": [
     {
       "type": "capsule:is_enabled",
-      "property": "diamondCapsuleSize"
+      "property": "obsidianCapsuleSize"
     }
   ],
   "result": {
@@ -11,8 +11,8 @@
     "item": "capsule:capsule",
     "data": 0,
     "nbt": {
-      "color": 65522,
-      "size": 7
+      "color": 1972267,
+      "size": 9
     }
   },
   "pattern": [
@@ -22,7 +22,7 @@
   ],
   "key": {
     "#": {
-      "item": "minecraft:diamond"
+      "item": "minecraft:obsidian"
     },
     "b": {
       "item": "minecraft:stone_button"
