@@ -5,7 +5,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonObject;
 import net.minecraft.inventory.InventoryCrafting;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -18,18 +17,18 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
     @Override
     public IRecipe parse(JsonContext context, JsonObject json) {
-        Ingredient ing = CraftingHelper.getIngredient(json.getAsJsonObject("ingredients"), context);
-        return new UpgradeCapsuleRecipe(ing.getMatchingStacks()[0].getItem());
+        Ingredient ing = CraftingHelper.getIngredient(json.getAsJsonArray("ingredients"), context);
+        return new UpgradeCapsuleRecipe(ing);
     }
 
     class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
         /**
          * Is the ItemStack that you repair.
          */
-        private final Item upgradeItem;
+        private final Ingredient upgradeIngredient;
 
-        public UpgradeCapsuleRecipe(Item upgradeItem) {
-            this.upgradeItem = upgradeItem;
+        public UpgradeCapsuleRecipe(Ingredient upgradeIngredient) {
+            this.upgradeIngredient = upgradeIngredient;
         }
 
         public ItemStack getRecipeOutput() {
@@ -49,7 +48,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
                     if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                         sourceCapsule = itemstack;
-                    } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
+                    } else if (upgradeIngredient.apply(itemstack)) {
                         material++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
@@ -73,7 +72,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
                     if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                         input = itemstack;
-                    } else if (!itemstack.isEmpty() && itemstack.getItem() == upgradeItem) {
+                    } else if (upgradeIngredient.apply(itemstack)) {
                         material++;
                     } else if (!itemstack.isEmpty()) {
                         return ItemStack.EMPTY;
