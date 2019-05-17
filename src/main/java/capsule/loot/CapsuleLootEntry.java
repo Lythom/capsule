@@ -45,7 +45,7 @@ public class CapsuleLootEntry extends LootEntry {
     }
 
     /**
-     * Add all eligible capsules to the list to be picked from.
+     * Add all eligible capsuleList to the list to be picked from.
      */
     @Override
     public void addLoot(Collection<ItemStack> stacks, Random rand, LootContext context) {

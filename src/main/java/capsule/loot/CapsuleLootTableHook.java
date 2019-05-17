@@ -41,7 +41,7 @@ public class CapsuleLootTableHook {
                     entries.toArray(new LootEntry[0]),    // the loot is taken from a Capsule managed entry list
                     new LootCondition[0],                // no particular condition, always loot one capsule
                     new RandomValueRange(1.0F, 1.0F),    // spawn one capsule using that pool
-                    new RandomValueRange(0.0F, 0.0F),    // no extra capsules
+                    new RandomValueRange(0.0F, 0.0F),    // no extra capsuleList
                     "capsulePool");
         }
 

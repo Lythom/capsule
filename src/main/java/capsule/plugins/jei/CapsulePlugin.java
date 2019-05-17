@@ -40,7 +40,7 @@ public class CapsulePlugin implements IModPlugin {
         Ingredient cfp = Ingredient.fromItem(Items.CHORUS_FRUIT_POPPED);
 
         for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
-            for (ItemStack capsule : CapsuleItems.capsules) {
+            for (ItemStack capsule : CapsuleItems.capsuleList) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
                 NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, cfp);
                 ingredients.set(0, Ingredient.fromStacks(capsule));
@@ -48,22 +48,17 @@ public class CapsulePlugin implements IModPlugin {
             }
         }
 
-        ItemStack unlabelledCapsule = CapsuleItems.getUnlabelledCapsule(CapsuleItems.capsules.get(0));
-
+        ItemStack unlabelledCapsule = CapsuleItems.unlabelledCapsule;
         Ingredient unlabelledCapsuleIng = Ingredient.fromStacks(unlabelledCapsule);
-        ItemStack recoveryCapsule = CapsuleItems.getRecoveryCapsule(CapsuleItems.capsules.get(0));
+        ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule;
         recipes.add(new ShapelessRecipes("capsule", recoveryCapsule, NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng, Ingredient.fromItem(Items.GLASS_BOTTLE))));
-        recipes.add(new ShapelessRecipes("capsule", CapsuleItems.capsules.get(0), NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng)));
-
-        BUG ! infos doesnt work anymore
-                BUG! size is not yet taken from the config but from the recipe instead
-                IMPLEMENT! Facctories fror this
+        recipes.add(new ShapelessRecipes("capsule", CapsuleItems.capsuleList.get(0), NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng)));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
-        registry.addIngredientInfo(CapsuleItems.capsules, VanillaTypes.ITEM, "jei.capsule.desc.capsule");
+        registry.addIngredientInfo(CapsuleItems.capsuleList, VanillaTypes.ITEM, "jei.capsule.desc.capsule");
         registry.addIngredientInfo(unlabelledCapsule, VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(recoveryCapsule, VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
-        registry.addIngredientInfo(CapsuleItems.opCapsules, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
+        registry.addIngredientInfo(CapsuleItems.opCapsuleList, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }
 

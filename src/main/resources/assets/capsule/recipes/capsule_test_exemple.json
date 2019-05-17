@@ -1,4 +1,5 @@
 {
+  "type": "capsule:capsule",
   "conditions": [
     {
       "type": "capsule:is_enabled",
@@ -20,7 +21,6 @@
     "#e#",
     " i "
   ],
-  "type": "forge:ore_shaped",
   "key": {
     "#": {
       "type": "forge:ore_dict",

@@ -1,4 +1,4 @@
-package capsule.items.recipes;
+package capsule.recipes;
 
 import capsule.Config;
 import com.google.gson.JsonObject;

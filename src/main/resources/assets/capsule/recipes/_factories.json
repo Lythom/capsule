@@ -1,11 +1,12 @@
 {
   "recipes": {
-    "clear_capsule": "capsule.items.recipes.ClearCapsuleFactory",
-    "dye_capsule": "capsule.items.recipes.DyeCapsuleFactory",
-    "recovery_capsule": "capsule.items.recipes.RecoveryCapsuleFactory",
-    "upgrade_capsule": "capsule.items.recipes.UpgradeCapsuleFactory",
+    "capsule": "capsule.recipes.CapsuleRecipeFactory",
+    "clear_capsule": "capsule.recipes.ClearCapsuleRecipeFactory",
+    "dye_capsule": "capsule.recipes.DyeCapsuleRecipeFactory",
+    "recovery_capsule": "capsule.recipes.RecoveryCapsuleRecipeFactory",
+    "upgrade_capsule": "capsule.recipes.UpgradeCapsuleRecipeFactory"
   },
   "conditions": {
-    "is_enabled": "capsule.items.recipes.IsEnabledByConfigConditionFactory"
+    "is_enabled": "capsule.recipes.IsEnabledByConfigConditionFactory"
   }
 }

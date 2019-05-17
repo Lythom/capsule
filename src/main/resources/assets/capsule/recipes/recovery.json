@@ -1,0 +1,21 @@
+{
+  "type": "capsule:recovery_capsule",
+  "result": {
+    "item": "capsule:capsule",
+    "data": 5
+  },
+  "pattern": [
+    "cb ",
+    "   ",
+    "   "
+  ],
+  "key": {
+    "c": {
+      "item": "capsule:capsule",
+      "data": 2
+    },
+    "b": {
+      "item": "minecraft:glass_bottle"
+    }
+  }
+}

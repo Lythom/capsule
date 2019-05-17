@@ -46,7 +46,7 @@ public class ClientProxy extends CommonProxy {
         // register color variants
         Minecraft.getMinecraft().getItemColors().registerItemColorHandler((stack, tintIndex) -> {
             if (stack.getItem() instanceof CapsuleItem) {
-                return ((CapsuleItem) stack.getItem()).getColorFromItemstack(stack, tintIndex);
+                return CapsuleItem.getColorFromItemstack(stack, tintIndex);
             }
             return 0xFFFFFF;
         }, CapsuleItems.capsule);
