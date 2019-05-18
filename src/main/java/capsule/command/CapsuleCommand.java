@@ -343,15 +343,23 @@ public class CapsuleCommand extends CommandBase {
             if (args.length == 1) {
                 throw new WrongUsageException(getUsage(sender));
             }
+            int finalArgsCount = 0;
+            if (args.length > 2) {
+                EntityPlayerMP p = getPlayer(server, sender, args[args.length - 1]);
+                if (p != player) {
+                    player = p;
+                    finalArgsCount = 1;
+                }
+            }
             StringBuilder structureNameB = new StringBuilder();
-            for (int i = 1; i < args.length; i++) {
+            for (int i = 1; i < args.length - finalArgsCount; i++) {
                 structureNameB.append(args[i]);
-                if (i < args.length - 1) structureNameB.append(" ");
+                if (i < args.length - finalArgsCount - 1) structureNameB.append(" ");
             }
 
             String structureName = structureNameB.toString().replaceAll(".nbt", "");
 
-            if (player != null && structureName != null && player.getEntityWorld() instanceof WorldServer) {
+            if (player != null && !Strings.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
                 // template
                 TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
                 Template template = templatemanager.get(server, new ResourceLocation(structureName));
@@ -391,15 +399,23 @@ public class CapsuleCommand extends CommandBase {
             if (args.length == 1) {
                 throw new WrongUsageException(getUsage(sender));
             }
+            int finalArgsCount = 0;
+            if (args.length > 2) {
+                EntityPlayerMP p = getPlayer(server, sender, args[args.length - 1]);
+                if (p != player) {
+                    player = p;
+                    finalArgsCount = 1;
+                }
+            }
             StringBuilder structureNameB = new StringBuilder();
-            for (int i = 1; i < args.length; i++) {
+            for (int i = 1; i < args.length - finalArgsCount; i++) {
                 structureNameB.append(args[i]);
-                if (i < args.length - 1) structureNameB.append(" ");
+                if (i < args.length - finalArgsCount - 1) structureNameB.append(" ");
             }
 
             String structureName = structureNameB.toString().replaceAll(".nbt", "");
 
-            if (player != null && structureName != null && player.getEntityWorld() instanceof WorldServer) {
+            if (player != null && !Strings.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
 
                 String stucturePath = Config.rewardTemplatesPath + "/" + structureName;
 
