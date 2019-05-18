@@ -383,16 +383,13 @@ public class StructureSaver {
 
     /**
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
-     *
-     * @return
      */
     private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, CapsulePlacementSettings placementsettings) {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (!isPlaceEventAllowed(worldserver, blockPos, player)) return false;
+                if (blockPos.getY() >= worldserver.getHeight() || !isPlaceEventAllowed(worldserver, blockPos, player)) return false;
             }
-
         }
         return true;
     }
