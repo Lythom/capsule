@@ -1,12 +1,13 @@
 package capsule;
 
-import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 
@@ -16,7 +17,7 @@ import java.util.function.Supplier;
 
 public class Config {
 
-    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(CapsuleItem.class);
+    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Config.class);
 
     public static Configuration config = null;
     public static List<Block> excludedBlocks;
@@ -58,15 +59,12 @@ public class Config {
         Config.upgradeLimit = upgradesLimit.getInt();
 
         // Excluded
-        Block[] defaultExcludedBlocksOP = new Block[]{Blocks.AIR, Blocks.STRUCTURE_VOID};
-        Block[] defaultExcludedBlocks = new Block[]{Blocks.BEDROCK, Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME};
+        Block[] defaultExcludedBlocksOP = new Block[]{Blocks.AIR, Blocks.STRUCTURE_VOID, Blocks.BEDROCK};
+        Block[] defaultExcludedBlocks = new Block[]{Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME};
 
         String[] excludedBlocksOP = ArrayUtils.addAll(
                 Helpers.serializeBlockArray(defaultExcludedBlocksOP),
-                new String[]{
-                        "ic2:te",
-                }
-        );
+                "ic2:te");
         String[] excludedBlocks = ArrayUtils.addAll(
                 Helpers.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOP
@@ -90,10 +88,25 @@ public class Config {
         Block[] defaultOverridable = new Block[]{Blocks.AIR, Blocks.WATER, Blocks.LEAVES,
                 Blocks.LEAVES2, Blocks.TALLGRASS, Blocks.RED_FLOWER, Blocks.YELLOW_FLOWER,
                 Blocks.SNOW_LAYER, Blocks.BROWN_MUSHROOM, Blocks.RED_MUSHROOM, Blocks.DOUBLE_PLANT};
+
+        String[] dynamicOverridable = ForgeRegistries.BLOCKS.getValuesCollection().stream()
+                .filter(block -> {
+                    ResourceLocation registryName = block.getRegistryName();
+                    String domain = registryName != null ? registryName.getResourceDomain() : "";
+                    String path = registryName != null ? registryName.getResourcePath().toLowerCase() : "";
+                    return Arrays.stream(new String[]{"capsule", "minecraft"}).noneMatch(d -> d.equalsIgnoreCase(domain))
+                            && Arrays.stream(new String[]{"leave", "flower", "plant", "sapling", "mushroom", "vine"}).anyMatch(path::contains);
+                })
+                .map(block -> block.getRegistryName().toString())
+                .toArray(String[]::new);
+
         Property overridableBlocksProp = Config.config.get(
                 "Balancing",
                 "overridableBlocks",
-                Helpers.serializeBlockArray(defaultOverridable)
+                ArrayUtils.addAll(
+                        Helpers.serializeBlockArray(defaultOverridable),
+                        dynamicOverridable)
+
         );
         overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 
@@ -152,7 +165,7 @@ public class Config {
         Property woodCapsuleSize = Config.config.get("Balancing", "woodCapsuleSize", "1");
         woodCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 
-         Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "3");
+        Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "3");
         ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
 
         Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "5");
