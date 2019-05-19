@@ -48,7 +48,7 @@ public class CapsuleItem extends Item {
     public final static int STATE_DEPLOYED = 3;
     public final static int STATE_ONE_USE = 5;
     public final static int STATE_ONE_USE_ACTIVATED = 6;
-    public static final int CAPSULE_MAX_CAPTURE_SIZE = 1024;
+    public static final int CAPSULE_MAX_CAPTURE_SIZE = 255;
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);// = 180 / PI
     public static final float TO_RAD = 0.017453292F;
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
