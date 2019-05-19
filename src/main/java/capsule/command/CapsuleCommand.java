@@ -508,7 +508,7 @@ public class CapsuleCommand extends CommandBase {
                 if (i < args.length - finalArgsCount - 1) structureNameB.append(" ");
             }
 
-            structureName = structureNameB.toString().replaceAll(".nbt", "");
+            structureName = structureNameB.toString().replaceAll(".nbt", "").replaceAll(".schematic", "");
             return this;
         }
     }

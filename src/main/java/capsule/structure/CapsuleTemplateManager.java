@@ -83,7 +83,8 @@ public class CapsuleTemplateManager
 
         if (!file1.exists())
         {
-            return this.readTemplateFromJar(server);
+            // first try to read from schematic. If not working try from jar
+            return this.readTemplateFromSchematic(server) || this.readTemplateFromJar(server);
         }
         else
         {
@@ -210,5 +211,41 @@ public class CapsuleTemplateManager
     public void remove(ResourceLocation templatePath)
     {
         this.templates.remove(templatePath.getResourcePath());
+    }
+
+    public boolean readTemplateFromSchematic(ResourceLocation server)
+    {
+        String s = server.getResourcePath();
+        File file1 = new File(this.baseFolder, s + ".schematic");
+
+        if (!file1.exists())
+        {
+            return false;
+        }
+        else
+        {
+            InputStream inputstream = null;
+            boolean flag;
+
+            try
+            {
+                inputstream = new FileInputStream(file1);
+                NBTTagCompound schematicNBT = CompressedStreamTools.readCompressed(inputstream);
+                CapsuleTemplate template = new CapsuleTemplate();
+                template.readSchematic(schematicNBT);
+                this.templates.put(s, template);
+                return true;
+            }
+            catch (Throwable var10)
+            {
+                flag = false;
+            }
+            finally
+            {
+                IOUtils.closeQuietly(inputstream);
+            }
+
+            return flag;
+        }
     }
 }
