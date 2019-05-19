@@ -2,7 +2,6 @@ package capsule;
 
 import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
-import capsule.structure.CapsulePlacementSettings;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.common.base.Strings;
@@ -22,6 +21,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
@@ -315,7 +315,7 @@ public class StructureSaver {
         if (template != null) {
             int size = CapsuleItem.getSize(capsule);
             // check if the destination is valid : no unoverwritable block and no entities in the way.
-            CapsulePlacementSettings placementsettings = (new CapsulePlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk(null).setReplacedBlock(null).setIgnoreStructureBlock(false);
+            PlacementSettings placementsettings = (new PlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk(null).setReplacedBlock(null).setIgnoreStructureBlock(false);
             boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
 
             if (destValid) {
@@ -384,7 +384,7 @@ public class StructureSaver {
     /**
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
      */
-    private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, CapsulePlacementSettings placementsettings) {
+    private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, PlacementSettings placementsettings) {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
@@ -450,7 +450,7 @@ public class StructureSaver {
      *                             have to be ignored on
      * @return List<BlockPos> occupied but not blocking positions
      */
-    public static boolean isDestinationValid(CapsuleTemplate template, CapsulePlacementSettings placementIn, WorldServer destWorld, BlockPos destOriginPos, int size,
+    public static boolean isDestinationValid(CapsuleTemplate template, PlacementSettings placementIn, WorldServer destWorld, BlockPos destOriginPos, int size,
                                              List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
 
         IBlockState air = Blocks.AIR.getDefaultState();

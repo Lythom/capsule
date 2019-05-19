@@ -31,9 +31,11 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -157,7 +159,7 @@ public class CapsuleTemplate
         }
     }
 
-    public Map<BlockPos, String> getDataBlocks(BlockPos pos, CapsulePlacementSettings placementIn)
+    public Map<BlockPos, String> getDataBlocks(BlockPos pos, PlacementSettings placementIn)
     {
         Map<BlockPos, String> map = Maps.<BlockPos, String>newHashMap();
         StructureBoundingBox structureboundingbox = placementIn.getBoundingBox();
@@ -185,14 +187,14 @@ public class CapsuleTemplate
         return map;
     }
 
-    public BlockPos calculateConnectedPos(CapsulePlacementSettings placementIn, BlockPos p_186262_2_, CapsulePlacementSettings p_186262_3_, BlockPos p_186262_4_)
+    public BlockPos calculateConnectedPos(PlacementSettings placementIn, BlockPos p_186262_2_, PlacementSettings p_186262_3_, BlockPos p_186262_4_)
     {
         BlockPos blockpos = transformedBlockPos(placementIn, p_186262_2_);
         BlockPos blockpos1 = transformedBlockPos(p_186262_3_, p_186262_4_);
         return blockpos.subtract(blockpos1);
     }
 
-    public static BlockPos transformedBlockPos(CapsulePlacementSettings placementIn, BlockPos pos)
+    public static BlockPos transformedBlockPos(PlacementSettings placementIn, BlockPos pos)
     {
         return transformedBlockPos(pos, placementIn.getMirror(), placementIn.getRotation());
     }
@@ -201,14 +203,21 @@ public class CapsuleTemplate
      * Add blocks and entities from this structure to the given world, restricting placement to within the chunk
      * bounding box.
      *
-     * @see CapsulePlacementSettings#setBoundingBoxFromChunk
-     *
      * @param worldIn The world to use
      * @param pos The origin position for the structure
      */
-    public void addBlocksToWorldChunk(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
+    public void addBlocksToWorldChunk(World worldIn, BlockPos pos, PlacementSettings placementIn)
     {
-        placementIn.setBoundingBoxFromChunk();
+        // use reflection to bypass visibility
+        // execute placementIn.setBoundingBoxFromChunk();
+        try {
+            java.lang.reflect.Method setBoundingBoxFromChunk = placementIn.getClass().getMethod("setBoundingBoxFromChunk");
+            setBoundingBoxFromChunk.setAccessible(true);
+            setBoundingBoxFromChunk.invoke(placementIn);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
         this.addBlocksToWorld(worldIn, pos, placementIn);
     }
 
@@ -219,7 +228,7 @@ public class CapsuleTemplate
      * @param pos The origin position for the structure
      * @param placementIn Placement settings to use
      */
-    public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn)
+    public void addBlocksToWorld(World worldIn, BlockPos pos, PlacementSettings placementIn)
     {
         this.addBlocksToWorld(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, 2);
     }
@@ -232,7 +241,7 @@ public class CapsuleTemplate
      * @param placementIn Placement settings to use
      * @param flags Flags to pass to {@link World#setBlockState(BlockPos, IBlockState, int)}
      */
-    public void addBlocksToWorld(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, int flags)
+    public void addBlocksToWorld(World worldIn, BlockPos pos, PlacementSettings placementIn, int flags)
     {
         this.addBlocksToWorld(worldIn, pos, new BlockRotationProcessor(pos, placementIn), placementIn, flags);
     }
@@ -246,7 +255,7 @@ public class CapsuleTemplate
      * @param placementIn Placement settings to use
      * @param flags Flags to pass to {@link World#setBlockState(BlockPos, IBlockState, int)}
      */
-    public void addBlocksToWorld(World worldIn, BlockPos pos, @Nullable ITemplateProcessor templateProcessor, CapsulePlacementSettings placementIn, int flags)
+    public void addBlocksToWorld(World worldIn, BlockPos pos, @Nullable ITemplateProcessor templateProcessor, PlacementSettings placementIn, int flags)
     {
         if ((!this.blocks.isEmpty() || !placementIn.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
         {
@@ -325,12 +334,12 @@ public class CapsuleTemplate
 
             if (!placementIn.getIgnoreEntities())
             {
-                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, null);
+                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox);
             }
         }
     }
 
-    private void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities)
+    private void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb)
     {
         for (Template.EntityInfo template$entityinfo : this.entities)
         {
@@ -364,7 +373,6 @@ public class CapsuleTemplate
                     f = f + (entity.rotationYaw - entity.getRotatedYaw(rotationIn));
                     entity.setLocationAndAngles(vec3d1.x, vec3d1.y, vec3d1.z, f, entity.rotationPitch);
                     worldIn.spawnEntity(entity);
-                    if(spawnedEntities != null) spawnedEntities.add(entity);
                 }
             }
         }
@@ -797,12 +805,12 @@ public class CapsuleTemplate
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */
-	public void spawnBlocksAndEntities(World worldIn, BlockPos pos, CapsulePlacementSettings placementIn, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
+	public void spawnBlocksAndEntities(World worldIn, BlockPos pos, PlacementSettings placementIn, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities)
     {
         int flags = 2;
 		ITemplateProcessor templateProcessor = new BlockRotationProcessor(pos, placementIn);
 
-		if(blocks == null || size == null || templateProcessor == null) return;
+		if(size == null) return;
 
 
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1)
@@ -813,7 +821,7 @@ public class CapsuleTemplate
             for (Template.BlockInfo template$blockinfo : this.blocks)
             {
                 BlockPos blockpos = transformedBlockPos(placementIn, template$blockinfo.pos).add(pos);
-                Template.BlockInfo template$blockinfo1 = templateProcessor != null ? templateProcessor.processBlock(worldIn, blockpos, template$blockinfo) : template$blockinfo;
+                Template.BlockInfo template$blockinfo1 = templateProcessor.processBlock(worldIn, blockpos, template$blockinfo);
 
                 if (template$blockinfo1 != null)
                 {
@@ -885,7 +893,7 @@ public class CapsuleTemplate
 
             if (!placementIn.getIgnoreEntities())
             {
-                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, null);
+                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox);
             }
         }
     }
@@ -900,26 +908,26 @@ public class CapsuleTemplate
     /**
      * list positions of futur deployment
      */
-    public List<BlockPos> calculateDeployPositions(World world, BlockPos blockPos, CapsulePlacementSettings CapsulePlacementSettings) {
+    public List<BlockPos> calculateDeployPositions(World world, BlockPos blockPos, PlacementSettings PlacementSettings) {
 
         ArrayList<BlockPos> out = new ArrayList<>();
-        ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, CapsulePlacementSettings);
-        if (blocks == null || size == null || blockRotationProcessor == null) return out;
+        ITemplateProcessor blockRotationProcessor = new BlockRotationProcessor(blockPos, PlacementSettings);
+        if (size == null) return out;
 
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
-            Block block = CapsulePlacementSettings.getReplacedBlock();
-            StructureBoundingBox structureboundingbox = CapsulePlacementSettings.getBoundingBox();
+            Block block = PlacementSettings.getReplacedBlock();
+            StructureBoundingBox structureboundingbox = PlacementSettings.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : this.blocks) {
-                BlockPos blockpos = transformedBlockPos(CapsulePlacementSettings, template$blockinfo.pos).add(blockPos);
-                Template.BlockInfo template$blockinfo1 = blockRotationProcessor != null ? blockRotationProcessor.processBlock(world, blockpos, template$blockinfo) : template$blockinfo;
+                BlockPos blockpos = transformedBlockPos(PlacementSettings, template$blockinfo.pos).add(blockPos);
+                Template.BlockInfo template$blockinfo1 = blockRotationProcessor.processBlock(world, blockpos, template$blockinfo);
 
                 if (template$blockinfo1 != null) {
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
                     if (
                             (block == null || block != block1) &&
-                                    (!CapsulePlacementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
+                                    (!PlacementSettings.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) &&
                                     (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))
                             ) {
                         out.add(blockpos);
