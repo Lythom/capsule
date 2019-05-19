@@ -64,7 +64,8 @@ public class Config {
 
         String[] excludedBlocksOP = ArrayUtils.addAll(
                 Helpers.serializeBlockArray(defaultExcludedBlocksOP),
-                "ic2:te");
+                "ic2:te",
+                "bloodmagic:alchemy_table");
         String[] excludedBlocks = ArrayUtils.addAll(
                 Helpers.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOP
