@@ -46,12 +46,12 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
             // for Itemstacks - ByteBufUtils.readItemStack()
             // for NBT tags ByteBufUtils.readTag();
             // for Strings: ByteBufUtils.readUTF8String();
+            this.structureName = ByteBufUtils.readUTF8String(buf);
             int size = buf.readShort();
             this.blockPositions = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 this.blockPositions.add(BlockPos.fromLong(buf.readLong()));
             }
-            this.structureName = ByteBufUtils.readUTF8String(buf);
 
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleContentPreviewMessageToClient: " + ioe);
@@ -73,11 +73,11 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
         // for Itemstacks - ByteBufUtils.writeItemStack()
         // for NBT tags ByteBufUtils.writeTag();
         // for Strings: ByteBufUtils.writeUTF8String();
+        ByteBufUtils.writeUTF8String(buf, this.structureName);
         buf.writeShort(this.blockPositions.size());
         for (BlockPos pos : this.blockPositions) {
             buf.writeLong(pos.toLong());
         }
-        ByteBufUtils.writeUTF8String(buf, this.structureName);
     }
 
     @Override
