@@ -720,6 +720,11 @@ public class CapsuleTemplate
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
+        // V2 Schematica format
+        else if (nbt.hasKey("Version", Constants.NBT.TAG_INT)) {
+            LOGGER.error("Schematic: Newer Schematica format {} detected, not implemented", nbt.getInteger("Version"));
+            return null;
+        }
         // No palette, use the registry IDs directly
         else {
             for (int i = 0; i < numBlocks; i++) {
