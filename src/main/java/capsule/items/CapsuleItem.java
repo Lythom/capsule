@@ -10,6 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -30,6 +31,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.input.Keyboard;
@@ -40,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"deprecation", "ConstantConditions"})
 public class CapsuleItem extends Item {
@@ -421,7 +424,11 @@ public class CapsuleItem extends Item {
                 state = "";
                 break;
             case STATE_DEPLOYED:
-                state = I18n.translateToLocal("item.capsule.state_deployed");
+                if (isBlueprint(stack)) {
+                    state = I18n.translateToLocal("item.capsule.state_uncharged");
+                } else {
+                    state = I18n.translateToLocal("item.capsule.state_deployed");
+                }
                 break;
             case STATE_ONE_USE:
                 if (isReward(stack)) {
@@ -490,7 +497,7 @@ public class CapsuleItem extends Item {
         if (capsule.getItemDamage() == STATE_ONE_USE) {
             tooltip.add(I18n.translateToLocal("capsule.tooltip.one_use").trim());
         }
-        if (capsule.getItemDamage() == STATE_BLUEPRINT) {
+        if (isBlueprint(capsule)) {
             tooltip.add(I18n.translateToLocal("capsule.tooltip.blueprint").trim());
             if ((Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) && CapsulePreviewHandler.currentPreview.containsKey(getStructureName(capsule))) {
                 tooltip.add("Blocks: " + CapsulePreviewHandler.currentPreview.get(getStructureName(capsule).length()));
@@ -514,16 +521,83 @@ public class CapsuleItem extends Item {
     }
 
     @Override
+    public boolean onEntitySwing(EntityLivingBase entity, ItemStack capsule) {
+        if (capsule.getItemDamage() == STATE_DEPLOYED && isBlueprint(capsule)) {
+            if (!entity.getEntityWorld().isRemote) {
+                Map<StructureSaver.ItemStackKey, Integer> missing = reloadBlueprint(capsule, (WorldServer) entity.getEntityWorld(), entity);
+                if (missing.size() > 0 && entity instanceof EntityPlayer) {
+                    String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n"));
+                    entity.sendMessage(new TextComponentTranslation(
+                            "Missing Materials : " + missingListText
+                    ));
+                }
+            }
+        }
+        return true;
+    }
+
+    private Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityLivingBase entity) {
+        // list required materials
+        Map<StructureSaver.ItemStackKey, Integer> missingMaterials = StructureSaver.getMaterialList(blueprint, world);
+        // try to provision the materials from linked inventory or player inventory
+        IItemHandler inv = CapsuleItem.getSourceInventory(blueprint, world);
+        IItemHandler inv2 = entity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        Map<Integer, Integer> inv1SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv);
+        Map<Integer, Integer> inv2SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv2);
+
+        // if there is enough items, remove the provision items from inventories and recharge the capsule
+        if (missingMaterials.size() == 0) {
+            inv1SlotQuantityProvisions.forEach((slot, qty) -> {
+                inv.extractItem(slot, qty, false);
+            });
+            inv2SlotQuantityProvisions.forEach((slot, qty) -> {
+                inv2.extractItem(slot, qty, false);
+            });
+            CapsuleItem.setState(blueprint, STATE_BLUEPRINT);
+            blueprint.getTagCompound().removeTag("spawnPosition");
+            blueprint.getTagCompound().removeTag("occupiedSpawnPositions");
+        }
+
+        return missingMaterials;
+    }
+
+    /**
+     * Tell which quantities should be extracted from which slot to ay the price.
+     */
+    private Map<Integer, Integer> recordSlotQuantityProvisions(Map<StructureSaver.ItemStackKey, Integer> missingMaterials, final IItemHandler inv) {
+        Map<Integer, Integer> invSlotQuantityProvisions = new HashMap<>();
+        if (inv != null) {
+            int size = inv.getSlots();
+            for (int invSlot = 0; invSlot < size; invSlot++) {
+                ItemStack invStack = inv.getStackInSlot(invSlot);
+                StructureSaver.ItemStackKey stackKey = new StructureSaver.ItemStackKey(invStack);
+                Integer missing = missingMaterials.get(stackKey);
+                if (missing != null && missing > 0 && invStack.getCount() > 0) {
+                    if (invStack.getCount() >= missing) {
+                        missingMaterials.remove(stackKey);
+                        invSlotQuantityProvisions.put(invSlot, missing);
+                    } else {
+                        missingMaterials.put(stackKey, missing - invStack.getCount());
+                        invSlotQuantityProvisions.put(invSlot, invStack.getCount());
+                    }
+                }
+            }
+        }
+        return invSlotQuantityProvisions;
+    }
+
+
+    @Override
     public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, EnumHand hand) {
 
         if (hand == EnumHand.OFF_HAND) {
             return EnumActionResult.PASS;
         }
         ItemStack capsule = player.getHeldItem(hand);
-        if (player.isSneaking() && capsule.getItemDamage() == STATE_BLUEPRINT) {
+        if (player.isSneaking() && isBlueprint(capsule)) {
             TileEntity te = world.getTileEntity(pos);
             if (te != null && te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
-                if(hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.provider.getDimension())) {
+                if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.provider.getDimension())) {
                     // remove if it was the same
                     saveSourceInventory(capsule, null, 0);
                 } else {
@@ -535,6 +609,12 @@ public class CapsuleItem extends Item {
         }
 
         return super.onItemUseFirst(player, world, pos, side, hitX, hitY, hitZ, hand);
+    }
+
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
+        LOGGER.debug("Left clicked !");
+        return super.onLeftClickEntity(stack, player, entity);
     }
 
     /**
@@ -845,10 +925,8 @@ public class CapsuleItem extends Item {
             // register the link in the capsule
             if (!isReward(capsule)) {
                 saveSpawnPosition(capsule, dest, entityItem.getEntityWorld().provider.getDimension());
-                if (isBlueprint(capsule)) {
-                    revertStateFromActivated(capsule);
-                } else {
-                    setState(capsule, STATE_DEPLOYED);
+                setState(capsule, STATE_DEPLOYED);
+                if (!isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
                     StructureSaver.clearTemplate(playerWorld, structureName);
                 }
@@ -868,25 +946,35 @@ public class CapsuleItem extends Item {
         // store again
         Integer dimensionId = getDimension(capsule);
         MinecraftServer server = playerIn.getServer();
-        final WorldServer capsuleWorld = dimensionId != null ? server.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
+        final WorldServer world = dimensionId != null ? server.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
 
         NBTTagCompound spawnPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
-        BlockPos source = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+        BlockPos startPos = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
 
         int size = getSize(capsule);
 
         // do the transportation
-        boolean storageOK = StructureSaver.store(capsuleWorld, playerIn.getName(), capsule.getTagCompound().getString("structureName"), source, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
-
-        if (storageOK) {
-            setState(capsule, STATE_LINKED);
-            capsule.getTagCompound().removeTag("spawnPosition");
-            capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
-
-            showUndeployParticules(capsuleWorld, source.add(size / 2, size / 2, size / 2), size);
+        if (isBlueprint(capsule)) {
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
+            if (blueprintMatch) {
+                setState(capsule, STATE_BLUEPRINT);
+                capsule.getTagCompound().removeTag("spawnPosition");
+                capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+                showUndeployParticules(world, startPos.add(size / 2, size / 2, size / 2), size);
+            } else {
+                playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintDontMatch"));
+            }
         } else {
-            LOGGER.error("Error occured during undeploy of capsule.");
-            playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            boolean storageOK = StructureSaver.store(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
+            if (storageOK) {
+                setState(capsule, STATE_LINKED);
+                capsule.getTagCompound().removeTag("spawnPosition");
+                capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
+                showUndeployParticules(world, startPos.add(size / 2, size / 2, size / 2), size);
+            } else {
+                LOGGER.error("Error occured during undeploy of capsule.");
+                playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            }
         }
     }
 
@@ -974,10 +1062,22 @@ public class CapsuleItem extends Item {
         return null;
     }
 
-
     public static Integer getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
             return capsule.getTagCompound().getCompoundTag("sourceInventory").getInteger("dim");
+        }
+        return null;
+    }
+
+    public static IItemHandler getSourceInventory(ItemStack blueprint, WorldServer w) {
+        BlockPos location = CapsuleItem.getSourceInventoryLocation(blueprint);
+        Integer dimension = CapsuleItem.getSourceInventoryDimension(blueprint);
+        if (location == null || dimension == null) return null;
+        WorldServer world = w.getMinecraftServer().getWorld(dimension);
+
+        TileEntity te = world.getTileEntity(location);
+        if (te != null && te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
+            return te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
         }
         return null;
     }

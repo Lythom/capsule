@@ -173,7 +173,7 @@ public class CapsulePreviewHandler {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
-                    && heldItem.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
+                    && CapsuleItem.isBlueprint(heldItem)
                     && CapsuleItem.hasSourceInventory(heldItem)) {
                 BlockPos location = CapsuleItem.getSourceInventoryLocation(heldItem);
                 Integer dimension = CapsuleItem.getSourceInventoryDimension(heldItem);

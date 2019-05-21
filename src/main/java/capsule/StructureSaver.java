@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
@@ -42,6 +43,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class StructureSaver {
 
@@ -189,6 +192,7 @@ public class StructureSaver {
                                 Map<BlockPos, Block> excludedPositions) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        if (minecraftserver == null) return false;
         List<Entity> outCapturedEntities = new ArrayList<>();
 
         CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
@@ -220,6 +224,70 @@ public class StructureSaver {
 
         return writingOK;
 
+    }
+
+    public static boolean undeployBlueprint(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+                                            Map<BlockPos, Block> excludedPositions) {
+
+        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        if (minecraftserver == null) return false;
+        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
+
+        CapsuleTemplate tempTemplate = new CapsuleTemplate();
+        CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(capsuleStructureId));
+        if (blueprintTemplate == null) return false;
+        List<BlockPos> transferedPositions = tempTemplate.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
+                excluded, null);
+
+        EntityPlayer player = null;
+        if (playerID != null) {
+            player = worldserver.getPlayerEntityByName(playerID);
+        }
+        // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
+        if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size() || blueprintTemplate.entities.size() != tempTemplate.entities.size())
+            return false;
+        Comparator<Template.BlockInfo> compBlockInfo = (
+                (o1, o2) -> (o1.pos.equals(o2.pos)
+                        && (o1.tileentityData == null && o2.tileentityData == null || o1.tileentityData.equals(o2.tileentityData))
+                        && o1.blockState.equals(o2.blockState)
+                ) ? 0 : 1);
+        Comparator<Template.EntityInfo> compEntityInfo = (
+                (o1, o2) -> (o1.pos.equals(o2.pos) && o1.entityData.equals(o2.entityData)
+                ) ? 0 : 1);
+        boolean blueprintMatch = IntStream.range(0, blueprintTemplate.blocks.size())
+                .allMatch(i -> compBlockInfo.compare(tempTemplate.blocks.get(i), blueprintTemplate.blocks.get(i)) == 0)
+                && IntStream.range(0, blueprintTemplate.entities.size())
+                .allMatch(i -> compEntityInfo.compare(tempTemplate.entities.get(i), blueprintTemplate.entities.get(i)) == 0);
+        if (blueprintMatch) {
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
+            // check if some remove failed, it should never happen but keep it in case to prevent exploits
+            if (couldNotBeRemoved != null) {
+                return false;
+            }
+        }
+
+        return blueprintMatch;
+    }
+
+
+    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver) {
+        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        if (minecraftserver == null) return null;
+        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
+        if (templatemanager == null) return null;
+        CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(CapsuleItem.getStructureName(blueprint)));
+        if (blueprintTemplate == null) return null;
+        Map<ItemStackKey, Integer> list = new HashMap<>();
+        blueprintTemplate.blocks.forEach(block -> {
+            // Note: tile entities not supported so nbt data is not used here
+            Block b = block.blockState.getBlock();
+            ItemStackKey stack = new ItemStackKey(new ItemStack(Item.getItemFromBlock(b), 1, b.damageDropped(block.blockState)));
+            Integer currValue = list.get(stack);
+            if (currValue == null) currValue = 0;
+            list.put(stack, currValue + 1);
+        });
+        // Note: entities not supportes so no entities check
+        return list;
     }
 
     public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
@@ -561,6 +629,15 @@ public class StructureSaver {
         CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
         // write template from source data
         destTemplate.read(data);
+        // remove all tile entities
+        List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream().filter(b -> {
+            return b.tileentityData == null;
+        }).collect(Collectors.toList());
+        destTemplate.blocks.clear();
+        destTemplate.blocks.addAll(newBlockList);
+        // remove all entities
+        destTemplate.entities.clear();
+        // write the new template
         return destManager.writeTemplate(server, destinationLocation);
     }
 
@@ -577,5 +654,21 @@ public class StructureSaver {
         return capsuleSavedData;
     }
 
+    public static class ItemStackKey {
+        public ItemStack itemStack;
+
+        public ItemStackKey(ItemStack itemStack) {
+            this.itemStack = itemStack;
+        }
+
+        public boolean equals(Object someOther) {
+            if(!(someOther instanceof ItemStackKey)) return false;
+            return ((ItemStackKey)someOther).itemStack.isItemEqual(itemStack);
+        }
+        public int hashCode() {
+            int val = itemStack.getItem().hashCode() * 29 + itemStack.getItemDamage();
+            return val;
+        }
+    }
 
 }
