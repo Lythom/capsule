@@ -6,6 +6,10 @@ import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.network.*;
+import capsule.network.client.CapsuleContentPreviewAnswerHandler;
+import capsule.network.server.CapsuleContentPreviewQueryHandler;
+import capsule.network.server.CapsuleThrowQueryHandler;
+import capsule.network.server.LabelEditedMessageToServerHandler;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.EntityPlayer;
@@ -62,7 +66,7 @@ public class CommonProxy {
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
         // client ask server to edit capsule label
-        simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerMessageHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // client ask server data needed to preview a deploy
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // client ask server to throw item to a specific position

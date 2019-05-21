@@ -1,7 +1,9 @@
-package capsule.network;
+package capsule.network.server;
 
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
+import capsule.network.CapsuleContentPreviewAnswerToClient;
+import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.EntityPlayerMP;

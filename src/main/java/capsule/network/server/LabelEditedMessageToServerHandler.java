@@ -1,6 +1,7 @@
-package capsule.network;
+package capsule.network.server;
 
 import capsule.items.CapsuleItem;
+import capsule.network.LabelEditedMessageToServer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.WorldServer;
@@ -19,9 +20,9 @@ import org.apache.logging.log4j.LogManager;
  * User: The Grey Ghost
  * Date: 15/01/2015
  */
-public class LabelEditedMessageToServerMessageHandler implements IMessageHandler<LabelEditedMessageToServer, IMessage> {
+public class LabelEditedMessageToServerHandler implements IMessageHandler<LabelEditedMessageToServer, IMessage> {
 
-    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(LabelEditedMessageToServerMessageHandler.class);
+    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(LabelEditedMessageToServerHandler.class);
 
     /**
      * Called when a message is received of the appropriate type.

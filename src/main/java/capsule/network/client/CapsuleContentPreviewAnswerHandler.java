@@ -1,7 +1,7 @@
-package capsule.network;
+package capsule.network.client;
 
 import capsule.client.CapsulePreviewHandler;
-import net.minecraft.entity.player.EntityPlayerMP;
+import capsule.network.CapsuleContentPreviewAnswerToClient;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;

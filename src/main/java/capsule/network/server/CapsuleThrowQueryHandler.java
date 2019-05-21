@@ -1,7 +1,7 @@
-package capsule.network;
+package capsule.network.server;
 
-import capsule.client.CapsulePreviewHandler;
 import capsule.items.CapsuleItem;
+import capsule.network.CapsuleThrowQueryToServer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
