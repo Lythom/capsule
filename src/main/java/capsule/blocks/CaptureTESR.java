@@ -11,6 +11,8 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 
+import static capsule.client.RendererUtils.*;
+
 public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 
     public CaptureTESR() {
@@ -18,74 +20,32 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 
     public static void drawCaptureZone(double relativeX, double relativeY, double relativeZ, int size, int extendSize,
                                        int color) {
-        Color c = new Color(color);
-        int red = c.getRed();
-        int green = c.getGreen();
-        int blue = c.getBlue();
-        int alpha = 150;
+        doPositionPrologue();
+        doWirePrologue();
 
-        GlStateManager.pushMatrix();
-
-        GlStateManager.glLineWidth(2.0F);
-
-        //GlStateManager.enableBlend();
-        //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-        GlStateManager.translate(relativeX, relativeY, relativeZ);
-
-        AxisAlignedBB boundingBox = new AxisAlignedBB(-extendSize - 0.01, 1.01, -extendSize - 0.01,
-                extendSize + 1.01, size + 1.01, extendSize + 1.01);
+        AxisAlignedBB boundingBox = new AxisAlignedBB(
+                -extendSize - 0.01 + relativeX,
+                1.01 + relativeY,
+                -extendSize - 0.01 + relativeZ,
+                extendSize + 1.01 + relativeX,
+                size + 1.01 + relativeY,
+                extendSize + 1.01 + relativeZ);
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(3, DefaultVertexFormats.POSITION_COLOR);
-        vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        bufferBuilder.begin(3, DefaultVertexFormats.POSITION);
+        setColor(color, 150);
+        drawCapsuleCube(boundingBox, bufferBuilder);
         tessellator.draw();
-        vertexbuffer.begin(3, DefaultVertexFormats.POSITION_COLOR);
-        vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        tessellator.draw();
-        vertexbuffer.begin(3, DefaultVertexFormats.POSITION_COLOR);
-        vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        vertexbuffer.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        tessellator.draw();
+        setColor(0xFFFFFF, 255);
 
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.enableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-        GlStateManager.enableLighting();
-        GlStateManager.enableTexture2D();
-        GlStateManager.enableDepth();
-        GlStateManager.depthMask(true);
-        GL11.glLineWidth(1.0F);
-
-        GlStateManager.popMatrix();
-
-
+        doWireEpilogue();
+        doPositionEpilogue();
     }
 
     @Override
     public void render(TileEntityCapture tileEntityCapture, double relativeX, double relativeY, double relativeZ,
-                                   float partialTicks, int blockDamageProgress, float alpha) {
+                       float partialTicks, int blockDamageProgress, float alpha) {
 
         if (tileEntityCapture == null)
             return;

@@ -138,6 +138,7 @@ public class CapsuleItem extends Item {
             capsule.setTagCompound(new NBTTagCompound());
         }
         capsule.setItemDamage(STATE_BLUEPRINT);
+        capsule.getTagCompound().setBoolean("charged", false);
         saveSourceInventory(capsule, null, 0);
     }
 
@@ -522,9 +523,12 @@ public class CapsuleItem extends Item {
         if (player.isSneaking() && capsule.getItemDamage() == STATE_BLUEPRINT) {
             TileEntity te = world.getTileEntity(pos);
             if (te != null && te.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) {
-                saveSourceInventory(capsule, pos, world.provider.getDimension());
-                if (!world.isRemote) {
-                    player.sendMessage(new TextComponentTranslation("capsule.feedback.linkedToInventory", te.getBlockType().toString(), pos.getX(), pos.getY(), pos.getZ()));
+                if(hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.provider.getDimension())) {
+                    // remove if it was the same
+                    saveSourceInventory(capsule, null, 0);
+                } else {
+                    // new inventory
+                    saveSourceInventory(capsule, pos, world.provider.getDimension());
                 }
                 return EnumActionResult.SUCCESS;
             }
@@ -825,8 +829,12 @@ public class CapsuleItem extends Item {
         List<String> outEntityBlocking = new ArrayList<>();
 
         if (isBlueprint(capsule)) {
-            // TODO: check materials are available and consume them
+            // TODO: check materials are available and consume them. Work like a normal capsule with deployed state, can be "charged" using left click
             // TODO refund in case the capsule cannot be spawner. Create a transaction ?
+            // TODO: allow blueprint creation from reward
+            // TODO: allow rotation and mirror
+            // TODO: ADD HUD dispay
+            // TODO: Add blueprint specific crafts (chick farm, starting base)
         }
         boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
 
@@ -937,7 +945,7 @@ public class CapsuleItem extends Item {
      * @param dest    position to save as nbt into the capsule stack
      * @param dimID   dimension where the position is.
      */
-    private static void saveSourceInventory(ItemStack capsule, BlockPos dest, int dimID) {
+    public static void saveSourceInventory(ItemStack capsule, BlockPos dest, int dimID) {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
@@ -951,11 +959,27 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("sourceInventory", pos);
     }
 
-    private static boolean hasSourceInventory(ItemStack capsule) {
+    public static boolean hasSourceInventory(ItemStack capsule) {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
         return capsule.getTagCompound().hasKey("sourceInventory") && capsule.getTagCompound().getCompoundTag("sourceInventory").hasKey("x");
+    }
+
+    public static BlockPos getSourceInventoryLocation(ItemStack capsule) {
+        if (hasSourceInventory(capsule)) {
+            NBTTagCompound sourceInventory = capsule.getTagCompound().getCompoundTag("sourceInventory");
+            return new BlockPos(sourceInventory.getInteger("x"), sourceInventory.getInteger("y"), sourceInventory.getInteger("z"));
+        }
+        return null;
+    }
+
+
+    public static Integer getSourceInventoryDimension(ItemStack capsule) {
+        if (hasSourceInventory(capsule)) {
+            return capsule.getTagCompound().getCompoundTag("sourceInventory").getInteger("dim");
+        }
+        return null;
     }
 
     public static void clearCapsule(ItemStack capsule) {

@@ -8,10 +8,7 @@ import capsule.items.CapsuleItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -26,10 +23,11 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static capsule.client.RendererUtils.*;
 
 public class CapsulePreviewHandler {
     public static final Map<String, List<BlockPos>> currentPreview = new HashMap<>();
@@ -41,55 +39,22 @@ public class CapsulePreviewHandler {
     public CapsulePreviewHandler() {
     }
 
-    public static void drawDeployZone(int color) {
-        Color c = new Color(color);
-        int red = c.getRed();
-        int green = c.getGreen();
-        int blue = c.getBlue();
-        int alpha = 150;
+    /**
+     * Render recall preview when deployed capsule in hand
+     */
+    @SubscribeEvent
+    public void onWorldRenderLast(RenderWorldLastEvent event) {
+        Minecraft mc = Minecraft.getMinecraft();
 
-        AxisAlignedBB boundingBox = boundingBox1;
-
-        if (color == 0xaa0000) {
-            GlStateManager.glLineWidth(5);
-            boundingBox = extboundingBox1;
+        if (mc.player != null) {
+            tryPreviewRecall(mc.player.getHeldItemMainhand());
+            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand());
+            tryPreviewLinkedInventory(mc.player, mc.player.getHeldItemMainhand());
         }
-
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
-        bufferBuilder.begin(2, DefaultVertexFormats.POSITION_COLOR);
-        bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        tessellator.draw();
-        bufferBuilder.begin(2, DefaultVertexFormats.POSITION_COLOR);
-        bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        tessellator.draw();
-        bufferBuilder.begin(1, DefaultVertexFormats.POSITION_COLOR);
-        bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).color(red, green, blue, alpha).endVertex();
-        tessellator.draw();
-
-        GlStateManager.glLineWidth(1);
-
     }
 
     /**
      * set captureBlock data (clientside only ) when capsule is in hand.
-     *
-     * @param event
      */
     @SubscribeEvent
     public void onLivingUpdateEvent(PlayerTickEvent event) {
@@ -110,7 +75,7 @@ public class CapsulePreviewHandler {
                 CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
                 //noinspection ConstantConditions
                 if (heldItem.hasTagCompound() && heldItem.getTagCompound().hasKey("size")) {
-                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), capsule.getColorFromItemstack(heldItem, 0), player.getEntityWorld());
+                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), CapsuleItem.getColorFromItemstack(heldItem, 0), player.getEntityWorld());
                     return true;
                 }
 
@@ -124,28 +89,16 @@ public class CapsulePreviewHandler {
         return false;
     }
 
-    /**
-     * Render recall preview when deployed capsule in hand
-     *
-     * @param event
-     */
-    @SubscribeEvent
-    public void onWorldRenderLast(RenderWorldLastEvent event) {
-        Minecraft mc = Minecraft.getMinecraft();
-
-        if (mc.player != null) {
-            tryPreviewRecall(mc.player.getHeldItemMainhand());
-            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand());
-        }
-    }
 
     @SuppressWarnings("ConstantConditions")
     private void tryPreviewDeploy(EntityPlayerSP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTagCompound()
-                && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED)
-                ) {
+                && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED
+                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
+                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT_ACTIVATED)
+        ) {
 
             RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
@@ -156,52 +109,44 @@ public class CapsulePreviewHandler {
                 synchronized (CapsulePreviewHandler.currentPreview) {
                     if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
 
-                        int extendSize = (getSize(heldItemMainhand) - 1) / 2;
+                        int extendSize = (CapsuleItem.getSize(heldItemMainhand) - 1) / 2;
                         List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
                         if (blockspos.isEmpty()) {
                             blockspos.add(new BlockPos(extendSize, 0, extendSize));
                         }
 
-                        GlStateManager.pushMatrix();
+                        doPositionPrologue();
+                        doWirePrologue();
+                        Tessellator tessellator = Tessellator.getInstance();
+                        BufferBuilder bufferBuilder = tessellator.getBuffer();
 
-                        //GlStateManager.enableBlend();
-                        //GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-                        GlStateManager.disableLighting();
-                        GlStateManager.disableTexture2D();
-                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                        GlStateManager.disableTexture2D();
-                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+                        AxisAlignedBB boundingBox = new AxisAlignedBB(
+                                0,
+                                +0.01,
+                                0,
+                                1,
+                                1,
+                                1);
 
                         for (BlockPos blockpos : blockspos) {
-
-                            BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0, -extendSize);
-
-                            GlStateManager.pushMatrix();
-                            GlStateManager.translate(anchorPos.getX() + blockpos.getX() - extendSize - TileEntityRendererDispatcher.staticPlayerX,
-                                    anchorPos.getY() + blockpos.getY() + 0.01 - TileEntityRendererDispatcher.staticPlayerY,
-                                    anchorPos.getZ() + blockpos.getZ() - extendSize - TileEntityRendererDispatcher.staticPlayerZ);
-
-                            int color = 0xCCCCCC;
+                            BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0.01, -extendSize);
+                            int color = 0xDDDDDD;
+                            GL11.glLineWidth(2.0F);
                             if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
                                 color = 0xaa0000;
+                                GL11.glLineWidth(5.0F);
                             }
+                            AxisAlignedBB bb = boundingBox.offset(destBlock);
 
-                            drawDeployZone(color);
-
-                            GlStateManager.popMatrix();
+                            bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
+                            setColor(color, 50);
+                            drawCapsuleCube(bb, bufferBuilder);
+                            tessellator.draw();
                         }
 
-                        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-                        GlStateManager.enableTexture2D();
-                        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-                        GlStateManager.enableLighting();
-                        GlStateManager.enableTexture2D();
-                        GlStateManager.enableDepth();
-                        GlStateManager.depthMask(true);
-                        GL11.glLineWidth(1.0F);
-
-                        GlStateManager.popMatrix();
+                        setColor(0xFFFFFF, 255);
+                        doWireEpilogue();
+                        doPositionEpilogue();
                     }
                 }
             }
@@ -224,27 +169,62 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private int getSize(ItemStack capsule) {
-        int size = 1;
-        if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("size")) {
-            size = capsule.getTagCompound().getInteger("size");
+    private void tryPreviewLinkedInventory(EntityPlayerSP player, ItemStack heldItem) {
+        if (heldItem != null) {
+            Item heldItemItem = heldItem.getItem();
+            if (heldItemItem instanceof CapsuleItem
+                    && heldItem.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
+                    && CapsuleItem.hasSourceInventory(heldItem)) {
+                BlockPos location = CapsuleItem.getSourceInventoryLocation(heldItem);
+                Integer dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
+                if (location != null
+                        && dimension != null
+                        && dimension.equals(player.dimension)
+                        && location.distanceSqToCenter(player.posX, player.posY, player.posZ) < 60 * 60) {
+                    previewLinkedInventory(location, heldItem);
+                }
+            }
         }
-        return size;
+    }
+
+    private void previewLinkedInventory(BlockPos location, ItemStack capsule) {
+
+        float shrink = 0.05f;
+        AxisAlignedBB boundingBox = new AxisAlignedBB(
+                +shrink + location.getX(),
+                +shrink + location.getY(),
+                +shrink + location.getZ(),
+                1 - shrink + location.getX(),
+                1 - shrink + location.getY(),
+                1 - shrink + location.getZ());
+
+        doPositionPrologue();
+        doOverlayPrologue();
+
+        setColor(0x5B9CFF, 80);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        bufferBuilder.begin(7, DefaultVertexFormats.POSITION);
+        drawCube(location, 0, bufferBuilder);
+        tessellator.draw();
+        setColor(0xFFFFFF, 255);
+
+        doOverlayEpilogue();
+        doPositionEpilogue();
     }
 
     private void previewRecall(ItemStack capsule) {
         if (!capsule.hasTagCompound()) return;
         NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
 
-        int size = getSize(capsule);
+        int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
-        CapsuleItem capsuleItem = (CapsuleItem) capsule.getItem();
         int color = CapsuleItem.getColorFromItemstack(capsule, 0);
 
         CaptureTESR.drawCaptureZone(
-                linkPos.getInteger("x") + extendSize - TileEntityRendererDispatcher.staticPlayerX,
-                linkPos.getInteger("y") - 1 - TileEntityRendererDispatcher.staticPlayerY,
-                linkPos.getInteger("z") + extendSize - TileEntityRendererDispatcher.staticPlayerZ, size,
+                linkPos.getInteger("x") + extendSize,
+                linkPos.getInteger("y") - 1,
+                linkPos.getInteger("z") + extendSize, size,
                 extendSize, color);
     }
 
