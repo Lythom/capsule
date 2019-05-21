@@ -10,7 +10,6 @@ import mezz.jei.api.ISubtypeRegistry;
 import mezz.jei.api.JEIPlugin;
 import mezz.jei.api.ingredients.VanillaTypes;
 import mezz.jei.api.recipe.VanillaRecipeCategoryUid;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -37,28 +36,40 @@ public class CapsulePlugin implements IModPlugin {
         // and apply to many vanilla and modded items
         List<IRecipe> recipes = new ArrayList<>();
 
-        Ingredient cfp = Ingredient.fromItem(Items.CHORUS_FRUIT_POPPED);
+        Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
 
-        for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
-            for (ItemStack capsule : CapsuleItems.capsuleList) {
+
+        for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
+            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
-                NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, cfp);
+                NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
                 ingredients.set(0, Ingredient.fromStacks(capsule));
                 recipes.add(new ShapelessRecipes("capsule", capsuleUp, ingredients));
             }
+            // clear
+            recipes.add(new ShapelessRecipes("capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
         }
 
-        ItemStack unlabelledCapsule = CapsuleItems.unlabelledCapsule;
-        Ingredient unlabelledCapsuleIng = Ingredient.fromStacks(unlabelledCapsule);
-        ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule;
-        recipes.add(new ShapelessRecipes("capsule", recoveryCapsule, NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng, Ingredient.fromItem(Items.GLASS_BOTTLE))));
-        recipes.add(new ShapelessRecipes("capsule", CapsuleItems.capsuleList.get(0), NonNullList.from(Ingredient.EMPTY, unlabelledCapsuleIng)));
+        ItemStack unlabelledCapsule = CapsuleItems.unlabelledCapsule.getKey();
+        ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
+        ItemStack blueprintCapsule = CapsuleItems.blueprintCapsule.getKey();
+
+        // recovery
+        recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
+
+        // blueprint
+        recipes.add(CapsuleItems.blueprintCapsule.getValue().recipe);
+        ItemStack withNewTemplate = blueprintCapsule.copy();
+        CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
+        CapsuleItem.setLabel(withNewTemplate, "Changed Template");
+        recipes.add(new ShapelessRecipes("capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(unlabelledCapsule), Ingredient.fromStacks(blueprintCapsule))));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
-        registry.addIngredientInfo(CapsuleItems.capsuleList, VanillaTypes.ITEM, "jei.capsule.desc.capsule");
+        registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
         registry.addIngredientInfo(unlabelledCapsule, VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(recoveryCapsule, VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
-        registry.addIngredientInfo(CapsuleItems.opCapsuleList, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
+        registry.addIngredientInfo(blueprintCapsule, VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+        registry.addIngredientInfo(new ArrayList<>(CapsuleItems.opCapsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }
 

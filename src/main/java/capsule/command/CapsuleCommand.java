@@ -306,21 +306,11 @@ public class CapsuleCommand extends CommandBase {
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
                 }
 
-                // get source template data
-                Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
-                NBTTagCompound data = new NBTTagCompound();
-                sourcetemplatepair.getRight().writeToNBT(data);
-
-                // create a destination template
-                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + outputName);
-                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(server);
-                CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
-                // write template from source data
-                destTemplate.read(data);
-                destManager.writeTemplate(server, destinationLocation);
+                String destinationTemplateLocation = Config.rewardTemplatesPath + "/" + outputName;
+                StructureSaver.copyFromCapsuleTemplate(player.getServerWorld(), heldItem, StructureSaver.getRewardManager(server), destinationTemplateLocation);
 
                 ItemStack capsule = CapsuleItem.createRewardCapsule(
-                        destinationLocation.toString(),
+                        destinationTemplateLocation,
                         CapsuleItem.getBaseColor(heldItem),
                         CapsuleItem.getMaterialColor(heldItem),
                         CapsuleItem.getSize(heldItem),

@@ -11,20 +11,20 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.crafting.IRecipeFactory;
 import net.minecraftforge.common.crafting.JsonContext;
 
-public class ClearCapsuleRecipeFactory implements IRecipeFactory {
+public class BlueprintChangeRecipeFactory implements IRecipeFactory {
 
     @Override
     public IRecipe parse(JsonContext context, JsonObject json) {
-        return new ClearCapsuleRecipe();
+        return new BlueprintChangeRecipe();
     }
 
-    public class ClearCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+    public class BlueprintChangeRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
-        public ClearCapsuleRecipe() {
+        public BlueprintChangeRecipe() {
         }
 
         public ItemStack getRecipeOutput() {
-            return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
+            return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_BLUEPRINT);
         }
 
         public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
@@ -33,10 +33,9 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getStackInSlot(i);
                 nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
-                if (itemstack.getItem() instanceof CapsuleItem) {
-                    // Copy the capsule and give back a recovery capsule of the previous content
+                if (itemstack.getItem() instanceof CapsuleItem && CapsuleItem.isLinkedStateCapsule(itemstack)) {
+                    // give back the capsule where template is taken from
                     ItemStack copy = itemstack.copy();
-                    CapsuleItem.setOneUse(copy);
                     nonnulllist.set(i, copy);
                 }
             }
@@ -49,42 +48,52 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
             int sourceCapsule = 0;
+            int blueprint = 0;
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
                     if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
                         sourceCapsule++;
+                    } else if (CapsuleItem.isBlueprint(itemstack)) {
+                        blueprint++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
                     }
                 }
             }
 
-            return sourceCapsule == 1;
+            return sourceCapsule == 1 && blueprint == 1;
         }
 
         /**
          * Returns an Item that is the result of this recipe
          */
         public ItemStack getCraftingResult(InventoryCrafting inv) {
+            String templateStructure = null;
+            ItemStack blueprintCapsule = null;
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
-
                     if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        ItemStack copy = itemstack.copy();
-                        CapsuleItem.clearCapsule(copy);
-                        return copy;
+                        templateStructure = CapsuleItem.getStructureName(itemstack);
+                    } else if (CapsuleItem.isBlueprint(itemstack)) {
+                        blueprintCapsule = itemstack.copy();
                     }
                 }
+            }
+            if (templateStructure != null && blueprintCapsule != null) {
+                CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
+                blueprintCapsule.getTagCompound().removeTag("occupiedSpawnPositions");
+                blueprintCapsule.getTagCompound().removeTag("spawnPosition");
+                return blueprintCapsule;
             }
             return ItemStack.EMPTY;
         }
 
         @Override
         public boolean canFit(int width, int height) {
-            return width * height >= 1;
+            return width * height >= 2;
         }
 
 

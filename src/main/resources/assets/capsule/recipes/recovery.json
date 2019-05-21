@@ -1,8 +1,12 @@
 {
-  "type": "capsule:recovery_capsule",
+  "type": "capsule:recovery_blueprint_capsule",
   "result": {
     "item": "capsule:capsule",
-    "data": 5
+    "data": 5,
+    "nbt": {
+      "isReward": true,
+      "oneUse": true
+    }
   },
   "pattern": [
     "cb ",

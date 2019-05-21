@@ -21,18 +21,18 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
         return new UpgradeCapsuleRecipe(ing);
     }
 
-    class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+    public class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
         /**
          * Is the ItemStack that you repair.
          */
-        private final Ingredient upgradeIngredient;
+        public final Ingredient upgradeIngredient;
 
         public UpgradeCapsuleRecipe(Ingredient upgradeIngredient) {
             this.upgradeIngredient = upgradeIngredient;
         }
 
         public ItemStack getRecipeOutput() {
-            return ItemStack.EMPTY;
+            return CapsuleItems.getUpgradedCapsule(new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY), 1);
         }
 
         /**

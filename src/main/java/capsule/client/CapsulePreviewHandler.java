@@ -216,7 +216,7 @@ public class CapsulePreviewHandler {
             // it's an empty capsule : show capture zones
             //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
-                    && heldItem.getItemDamage() == CapsuleItem.STATE_DEPLOYED
+                    && (heldItem.getItemDamage() == CapsuleItem.STATE_DEPLOYED || heldItem.getItemDamage() == CapsuleItem.STATE_BLUEPRINT)
                     && heldItem.hasTagCompound()
                     && heldItem.getTagCompound().hasKey("spawnPosition")) {
                 previewRecall(heldItem);
@@ -239,7 +239,7 @@ public class CapsulePreviewHandler {
         int size = getSize(capsule);
         int extendSize = (size - 1) / 2;
         CapsuleItem capsuleItem = (CapsuleItem) capsule.getItem();
-        int color = capsuleItem.getColorFromItemstack(capsule, 0);
+        int color = CapsuleItem.getColorFromItemstack(capsule, 0);
 
         CaptureTESR.drawCaptureZone(
                 linkPos.getInteger("x") + extendSize - TileEntityRendererDispatcher.staticPlayerX,

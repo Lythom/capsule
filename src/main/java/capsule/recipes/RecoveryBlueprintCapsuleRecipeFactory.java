@@ -7,26 +7,28 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.crafting.IRecipeFactory;
 import net.minecraftforge.common.crafting.JsonContext;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 
-public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
+public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
 
     @Override
     public IRecipe parse(JsonContext context, JsonObject json) {
-        return new RecoveryCapsuleRecipe(ShapedOreRecipe.factory(context, json));
+        return new RecoveryBlueprintCapsuleRecipe(ShapedOreRecipe.factory(context, json));
     }
 
-    class RecoveryCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
-        private final ShapedOreRecipe recipe;
+    public class RecoveryBlueprintCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+        public final ShapedOreRecipe recipe;
+        public WorldServer world;
 
-        public RecoveryCapsuleRecipe(ShapedOreRecipe recipe) {
+        public RecoveryBlueprintCapsuleRecipe(ShapedOreRecipe recipe) {
             this.recipe = recipe;
         }
 
         public ItemStack getRecipeOutput() {
-            return ItemStack.EMPTY;
+            return recipe.getRecipeOutput();
         }
 
         /**
@@ -50,11 +52,14 @@ public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
+            if (!worldIn.isRemote) {
+                this.world = (WorldServer) worldIn;
+            }
             return recipe.matches(inv, worldIn);
         }
 
         /**
-         * Returns a one use copy of the original capsule.
+         * Returns a copy built from the original capsule.
          */
         public ItemStack getCraftingResult(InventoryCrafting invC) {
             for (int i = 0; i < invC.getHeight(); ++i) {
@@ -62,9 +67,20 @@ public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
 
                     if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        ItemStack copy = itemstack.copy();
-                        CapsuleItem.setOneUse(copy);
-                        return copy;
+                        if (recipe.getRecipeOutput().getItemDamage() == CapsuleItem.STATE_ONE_USE) {
+                            ItemStack copy = itemstack.copy();
+                            CapsuleItem.setOneUse(copy);
+                            return copy;
+                        } else if (recipe.getRecipeOutput().getItemDamage() == CapsuleItem.STATE_BLUEPRINT) {
+                            // This blueprint will take the source structure name by copying it here
+                            // a new dedicated template is created later.
+                            // @see CapsuleItem.onCreated
+                            ItemStack copy = itemstack.copy();
+                            CapsuleItem.setMaterialColor(copy, 0xFFFFFF);
+                            CapsuleItem.setBaseColor(copy, CapsuleItem.getBaseColor(recipe.getRecipeOutput()));
+                            CapsuleItem.setBlueprint(copy);
+                            return copy;
+                        }
                     }
                 }
             }

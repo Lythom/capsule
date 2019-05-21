@@ -1,14 +1,17 @@
 package capsule.items;
 
 import capsule.Main;
+import capsule.recipes.RecoveryBlueprintCapsuleRecipeFactory.RecoveryBlueprintCapsuleRecipe;
+import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraftforge.event.RegistryEvent;
+import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
+import java.util.TreeMap;
 
 public class CapsuleItems {
 
@@ -17,10 +20,12 @@ public class CapsuleItems {
 
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
-    public static List<ItemStack> capsuleList = new ArrayList<>();
-    public static List<ItemStack> opCapsuleList = new ArrayList<>();
-    public static ItemStack unlabelledCapsule = null;
-    public static ItemStack recoveryCapsule = null;
+    public static TreeMap<ItemStack, IRecipe> capsuleList = new TreeMap<>(Comparator.comparingInt(CapsuleItem::getSize));
+    public static TreeMap<ItemStack, IRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingInt(CapsuleItem::getSize));
+    public static Pair<ItemStack, IRecipe> unlabelledCapsule = null;
+    public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> recoveryCapsule = null;
+    public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> blueprintCapsule = null;
+    public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
         capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
@@ -32,52 +37,55 @@ public class CapsuleItems {
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
 
         // create reference ItemStacks from json recipes
-        // used for creative tab and JEI, should not item if recipes are disabled
+        // used for creative tab and JEI, disabled recipes should not raise here
         for (IRecipe recipe : event.getRegistry().getValuesCollection()) {
             if (recipe.getRegistryName().toString().startsWith("capsule:")) {
-                ItemStack output = recipe.getRecipeOutput();
-                if (output.getItem() instanceof CapsuleItem) {
-                    if (CapsuleItem.isOverpowered(output)) {
-                        CapsuleItems.opCapsuleList.add(output);
-                    } else {
-                        CapsuleItems.capsuleList.add(output);
+
+                if (recipe instanceof RecoveryBlueprintCapsuleRecipe) {
+                    ItemStack out = recipe.getRecipeOutput();
+                    if (CapsuleItem.isBlueprint(out)) {
+                        blueprintCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryBlueprintCapsuleRecipe) recipe);
+                    } else if (CapsuleItem.isOneUse(out)) {
+                        recoveryCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryBlueprintCapsuleRecipe) recipe);
+                    }
+                } else if (recipe instanceof UpgradeCapsuleRecipe) {
+                    upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
+                } else {
+                    ItemStack output = recipe.getRecipeOutput();
+                    if (output.getItem() instanceof CapsuleItem) {
+                        if (CapsuleItem.isOverpowered(output)) {
+                            CapsuleItems.opCapsuleList.put(output, recipe);
+                        } else {
+                            CapsuleItems.capsuleList.put(output, recipe);
+                        }
                     }
                 }
             }
         }
 
-        if (CapsuleItems.capsuleList.size() > 0) recoveryCapsule = getRecoveryCapsule(CapsuleItems.capsuleList.get(0));
-        if (CapsuleItems.capsuleList.size() > 0) unlabelledCapsule = getUnlabelledCapsule(CapsuleItems.capsuleList.get(0));
+        if (CapsuleItems.capsuleList.size() > 0)
+            unlabelledCapsule = Pair.of(getUnlabelledCapsule(CapsuleItems.capsuleList.firstKey()), null);
     }
-
-    /**
-     * Create a Stack. Size will be 1 if size <= 0.
-     *
-     * @param color color of the capsule
-     * @param size  size of the capsule
-     * @return new empty capsule ItemStack
-     */
-    public static ItemStack createCapsuleItemStack(int color, int size) {
-        int actualSize = 1;
-        if (size > 0) actualSize = size;
-        ItemStack stack = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
-        stack.setTagInfo("color", new NBTTagInt(color));
-        stack.setTagInfo("size", new NBTTagInt(actualSize));
-        return stack;
-    }
-
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "JEIExemple");
+        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
+        return unlabelledCapsule;
+    }
+
+    public static ItemStack getBlueprintCapsule(ItemStack capsule) {
+        ItemStack unlabelledCapsule = capsule.copy();
+        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
+        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameBlueprintExample");
+        CapsuleItem.setBlueprint(unlabelledCapsule);
         return unlabelledCapsule;
     }
 
     public static ItemStack getRecoveryCapsule(ItemStack capsule) {
         ItemStack recoveryCapsule = capsule.copy();
         CapsuleItem.setOneUse(recoveryCapsule);
-        CapsuleItem.setStructureName(recoveryCapsule, "JEIExemple");
+        CapsuleItem.setStructureName(recoveryCapsule, "StructureNameRecoveryExample");
         return recoveryCapsule;
     }
 

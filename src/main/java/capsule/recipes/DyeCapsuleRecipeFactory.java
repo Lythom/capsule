@@ -2,6 +2,7 @@ package capsule.recipes;
 
 import capsule.Helpers;
 import capsule.items.CapsuleItem;
+import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import net.minecraft.init.Items;
@@ -22,7 +23,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
         return new DyeCapsuleRecipe();
     }
 
-    class DyeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+    public class DyeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
         /**
          * Used to check if a recipe matches current crafting inventory
@@ -128,7 +129,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
         }
 
         public ItemStack getRecipeOutput() {
-            return ItemStack.EMPTY;
+            return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         }
 
         public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {

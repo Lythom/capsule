@@ -36,7 +36,7 @@ public class CapsuleBlocks {
         blockCapsuleMarker.setCreativeTab(Main.tabCapsule);
 
         event.getRegistry().register(blockCapsuleMarker);
-        GameRegistry.registerTileEntity(TileEntityCapture.class, new ResourceLocation(CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME));
+        GameRegistry.registerTileEntity(TileEntityCapture.class, new ResourceLocation("capsule", CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME));
 
         // testing blocks
         Map<String, String> env = System.getenv();

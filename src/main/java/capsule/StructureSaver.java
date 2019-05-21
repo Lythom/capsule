@@ -12,6 +12,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.Mirror;
@@ -45,6 +46,7 @@ import java.util.jar.JarFile;
 public class StructureSaver {
 
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
+    public static final String BLUEPRINT_PREFIX = "B-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
 
@@ -388,7 +390,8 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (blockPos.getY() >= worldserver.getHeight() || !isPlaceEventAllowed(worldserver, blockPos, player)) return false;
+                if (blockPos.getY() >= worldserver.getHeight() || !isPlaceEventAllowed(worldserver, blockPos, player))
+                    return false;
             }
         }
         return true;
@@ -517,10 +520,6 @@ public class StructureSaver {
 
     /**
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
-     *
-     * @param playerWorld
-     * @param player
-     * @return
      */
     public static String getUniqueName(WorldServer playerWorld, String player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
@@ -535,10 +534,38 @@ public class StructureSaver {
     }
 
     /**
+     * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
+     */
+    public static String getBlueprintUniqueName(WorldServer world) {
+        CapsuleSavedData csd = getCapsuleSavedData(world);
+        String capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
+        CapsuleTemplateManager templatemanager = getTemplateManager(world);
+
+        while (templatemanager.get(world.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+            capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
+        }
+
+        return capsuleID;
+    }
+
+    public static boolean copyFromCapsuleTemplate(WorldServer worldIn, ItemStack capsule, CapsuleTemplateManager destManager, String destinationStructureName) {
+        WorldServer worldServer = worldIn;
+        MinecraftServer server = worldServer.getMinecraftServer();
+        // get source template data
+        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(capsule, worldServer);
+        NBTTagCompound data = new NBTTagCompound();
+        sourcetemplatepair.getRight().writeToNBT(data);
+
+        // create a destination template
+        ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
+        CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
+        // write template from source data
+        destTemplate.read(data);
+        return destManager.writeTemplate(server, destinationLocation);
+    }
+
+    /**
      * Get the Capsule saving tool that remembers last capsule id.
-     *
-     * @param capsuleWorld
-     * @return
      */
     public static CapsuleSavedData getCapsuleSavedData(WorldServer capsuleWorld) {
         CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadData(CapsuleSavedData.class, "capsuleData");
