@@ -3,6 +3,7 @@ package capsule.items;
 import capsule.*;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.client.CapsulePreviewHandler;
+import capsule.network.CapsuleChargeQueryToServer;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
 import joptsimple.internal.Strings;
@@ -28,6 +29,8 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -42,7 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"deprecation", "ConstantConditions"})
 public class CapsuleItem extends Item {
@@ -520,23 +522,16 @@ public class CapsuleItem extends Item {
         }
     }
 
-    @Override
-    public boolean onEntitySwing(EntityLivingBase entity, ItemStack capsule) {
-        if (capsule.getItemDamage() == STATE_DEPLOYED && isBlueprint(capsule)) {
-            if (!entity.getEntityWorld().isRemote) {
-                Map<StructureSaver.ItemStackKey, Integer> missing = reloadBlueprint(capsule, (WorldServer) entity.getEntityWorld(), entity);
-                if (missing.size() > 0 && entity instanceof EntityPlayer) {
-                    String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n"));
-                    entity.sendMessage(new TextComponentTranslation(
-                            "Missing Materials : " + missingListText
-                    ));
-                }
-            }
+
+    @SubscribeEvent
+    public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
+        ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
+        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_DEPLOYED) {
+            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleChargeQueryToServer());
         }
-        return true;
     }
 
-    private Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityLivingBase entity) {
+    public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityLivingBase entity) {
         // list required materials
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = StructureSaver.getMaterialList(blueprint, world);
         // try to provision the materials from linked inventory or player inventory
@@ -564,7 +559,7 @@ public class CapsuleItem extends Item {
     /**
      * Tell which quantities should be extracted from which slot to ay the price.
      */
-    private Map<Integer, Integer> recordSlotQuantityProvisions(Map<StructureSaver.ItemStackKey, Integer> missingMaterials, final IItemHandler inv) {
+    private static Map<Integer, Integer> recordSlotQuantityProvisions(Map<StructureSaver.ItemStackKey, Integer> missingMaterials, final IItemHandler inv) {
         Map<Integer, Integer> invSlotQuantityProvisions = new HashMap<>();
         if (inv != null) {
             int size = inv.getSlots();
@@ -609,12 +604,6 @@ public class CapsuleItem extends Item {
         }
 
         return super.onItemUseFirst(player, world, pos, side, hitX, hitY, hitZ, hand);
-    }
-
-    @Override
-    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
-        LOGGER.debug("Left clicked !");
-        return super.onLeftClickEntity(stack, player, entity);
     }
 
     /**
