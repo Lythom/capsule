@@ -7,7 +7,7 @@ import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.network.*;
 import capsule.network.client.CapsuleContentPreviewAnswerHandler;
-import capsule.network.server.CapsuleChargeQueryHandler;
+import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleContentPreviewQueryHandler;
 import capsule.network.server.CapsuleThrowQueryHandler;
 import capsule.network.server.LabelEditedMessageToServerHandler;
@@ -73,7 +73,7 @@ public class CommonProxy {
         // client ask server to throw item to a specific position
         simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
          // client ask server to reload the held blueprint capsule
-        simpleNetworkWrapper.registerMessage(CapsuleChargeQueryHandler.class, CapsuleChargeQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(CapsuleLeftClickQueryHandler.class, CapsuleLeftClickQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // server sends to client the data needed to preview a deploy
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
     }

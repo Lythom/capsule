@@ -2,8 +2,9 @@ package capsule.items;
 
 import capsule.*;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.network.CapsuleChargeQueryToServer;
+import capsule.client.CapsulePreviewHandler;
 import capsule.network.CapsuleContentPreviewQueryToServer;
+import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
 import capsule.structure.CapsuleTemplateManager;
 import joptsimple.internal.Strings;
@@ -29,6 +30,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -63,6 +65,8 @@ public class CapsuleItem extends Item {
     public static final float TO_RAD = 0.017453292F;
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
     public static final float GRAVITY_PER_TICK = 0.04f;
+    public static final PlacementSettings DEFAULT_PLACEMENT = new PlacementSettings();
+
 
     /**
      * Capsule Mod main item. Used to store region data to be deployed and undeployed.
@@ -500,7 +504,7 @@ public class CapsuleItem extends Item {
 
         if (isBlueprint(capsule)) {
             if (capsule.getItemDamage() == STATE_DEPLOYED) {
-                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.upgraded") );
+                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.upgraded"));
             } else {
                 tooltip.add(TextFormatting.WHITE + "* " + "Right click: to deploy");
             }
@@ -535,8 +539,12 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
-        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_DEPLOYED) {
-            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleChargeQueryToServer());
+        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
+            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+            if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
+                // try to get the preview from server
+                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+            }
         }
     }
 
@@ -915,12 +923,12 @@ public class CapsuleItem extends Item {
         List<String> outEntityBlocking = new ArrayList<>();
 
         if (isBlueprint(capsule)) {
-            // TODO: allow blueprint creation from reward
             // TODO: allow rotation and mirror
             // TODO: ADD HUD dispay
+            // TODO: Add starting capsule base for players
             // TODO: Add blueprint specific crafts (chick farm, starting base)
         }
-        boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking);
+        boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking, getPlacement(capsule));
 
         if (result) {
 
@@ -1084,6 +1092,35 @@ public class CapsuleItem extends Item {
             return te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
         }
         return null;
+    }
+
+    public static void setPlacement(ItemStack blueprint, PlacementSettings placementSettings) {
+        if (!blueprint.hasTagCompound()) {
+            blueprint.setTagCompound(new NBTTagCompound());
+        }
+        blueprint.getTagCompound().setString("rotation", placementSettings == null ? Rotation.NONE.name() : placementSettings.getRotation().name());
+        blueprint.getTagCompound().setString("mirror", placementSettings == null ? Mirror.NONE.name() : placementSettings.getMirror().name());
+    }
+
+    public static PlacementSettings getPlacement(ItemStack capsule) {
+        if (hasPlacement(capsule)) {
+            PlacementSettings placementSettings = new PlacementSettings()
+                    .setMirror(Mirror.valueOf(capsule.getTagCompound().getString("mirror")))
+                    .setRotation(Rotation.valueOf(capsule.getTagCompound().getString("rotation")))
+                    .setIgnoreEntities(false)
+                    .setChunk(null)
+                    .setReplacedBlock(null)
+                    .setIgnoreStructureBlock(false);
+            return placementSettings;
+        }
+        return DEFAULT_PLACEMENT;
+    }
+
+    public static boolean hasPlacement(ItemStack blueprint) {
+        if (!blueprint.hasTagCompound()) {
+            blueprint.setTagCompound(new NBTTagCompound());
+        }
+        return blueprint.getTagCompound().hasKey("mirror") && blueprint.getTagCompound().hasKey("rotation");
     }
 
     public static void clearCapsule(ItemStack capsule) {

@@ -16,9 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -44,7 +42,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class StructureSaver {
 
@@ -246,16 +244,12 @@ public class StructureSaver {
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size())
             return false;
-        Comparator<Template.BlockInfo> compBlockInfo = (
-                (o1, o2) -> (o1.pos.equals(o2.pos)
-                        && ((o1.tileentityData == null && o2.tileentityData == null) || o1.tileentityData.equals(o2.tileentityData))
-                        && o1.blockState.equals(o2.blockState)
-                ) ? 0 : 1);
-        Comparator<Template.EntityInfo> compEntityInfo = (
-                (o1, o2) -> (o1.pos.equals(o2.pos) && o1.entityData.equals(o2.entityData)
-                ) ? 0 : 1);
-        boolean blueprintMatch = IntStream.range(0, blueprintTemplate.blocks.size())
-                .allMatch(i -> compBlockInfo.compare(tempTemplate.blocks.get(i), blueprintTemplate.blocks.get(i)) == 0);
+        Stream<String> tempTemplateSorted = tempTemplate.blocks.stream().map(b -> b.blockState.toString()).sorted();
+        Stream<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.toString()).sorted();
+        boolean blueprintMatch = true;
+        Iterator<String> iter1 = tempTemplateSorted.iterator(), iter2 = blueprintTemplateSorted.iterator();
+        while (iter1.hasNext() && iter2.hasNext())
+            if (!iter1.next().equals(iter2.next())) blueprintMatch = false;
         if (blueprintMatch) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -369,7 +363,7 @@ public class StructureSaver {
     }
 
     public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
-                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking) {
+                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking, PlacementSettings placementsettings) {
 
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
@@ -383,7 +377,6 @@ public class StructureSaver {
         if (template != null) {
             int size = CapsuleItem.getSize(capsule);
             // check if the destination is valid : no unoverwritable block and no entities in the way.
-            PlacementSettings placementsettings = (new PlacementSettings()).setMirror(Mirror.NONE).setRotation(Rotation.NONE).setIgnoreEntities(false).setChunk(null).setReplacedBlock(null).setIgnoreStructureBlock(false);
             boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
 
             if (destValid) {
@@ -528,7 +521,7 @@ public class StructureSaver {
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
-            BlockPos blockpos = CapsuleTemplate.transformedBlockPos(placementIn, template$blockinfo.pos);
+            BlockPos blockpos = CapsuleTemplate.transformedBlockPos(placementIn, template$blockinfo.pos).add(destOriginPos).add(CapsuleTemplate.recenterRotation((size - 1) / 2, placementIn));
             blockInfoByPosition.put(blockpos, template$blockinfo);
         }
 
@@ -537,14 +530,13 @@ public class StructureSaver {
             for (int x = 0; x < size; x++) {
                 for (int z = 0; z < size; z++) {
 
-                    BlockPos srcPos = new BlockPos(x, y, z);
-                    Template.BlockInfo srcInfo = blockInfoByPosition.get(srcPos);
+                    BlockPos destPos = destOriginPos.add(x, y, z);
+                    Template.BlockInfo srcInfo = blockInfoByPosition.get(destPos);
                     IBlockState srcState = air;
                     if (srcInfo != null) {
                         srcState = srcInfo.blockState;
                     }
 
-                    BlockPos destPos = destOriginPos.add(x, y, z);
                     if (!destWorld.isBlockLoaded(destPos)) return false;
                     IBlockState destState = destWorld.getBlockState(destPos);
 

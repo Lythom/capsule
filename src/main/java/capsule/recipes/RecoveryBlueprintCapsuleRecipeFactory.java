@@ -12,6 +12,8 @@ import net.minecraftforge.common.crafting.IRecipeFactory;
 import net.minecraftforge.common.crafting.JsonContext;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 
+import static capsule.items.CapsuleItem.*;
+
 public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
 
     @Override
@@ -52,6 +54,7 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
+            // TODO: copy deloyed capsule = empty template
             if (!worldIn.isRemote) {
                 this.world = (WorldServer) worldIn;
             }
@@ -62,16 +65,17 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
          * Returns a copy built from the original capsule.
          */
         public ItemStack getCraftingResult(InventoryCrafting invC) {
+            ItemStack configuredOutput = recipe.getRecipeOutput();
             for (int i = 0; i < invC.getHeight(); ++i) {
                 for (int j = 0; j < invC.getWidth(); ++j) {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
 
                     if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        if (recipe.getRecipeOutput().getItemDamage() == CapsuleItem.STATE_ONE_USE) {
+                        if (isOneUse(configuredOutput)) {
                             ItemStack copy = itemstack.copy();
                             CapsuleItem.setOneUse(copy);
                             return copy;
-                        } else if (recipe.getRecipeOutput().getItemDamage() == CapsuleItem.STATE_BLUEPRINT) {
+                        } else if (isBlueprint(configuredOutput)) {
                             // This blueprint will take the source structure name by copying it here
                             // a new dedicated template is created later.
                             // @see CapsuleItem.onCreated
@@ -79,6 +83,7 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
                             CapsuleItem.setMaterialColor(copy, 0xFFFFFF);
                             CapsuleItem.setBaseColor(copy, CapsuleItem.getBaseColor(recipe.getRecipeOutput()));
                             CapsuleItem.setBlueprint(copy);
+                            CapsuleItem.setState(copy, STATE_DEPLOYED);
                             return copy;
                         }
                     }

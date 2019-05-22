@@ -8,10 +8,10 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 /**
  * This Network Message is sent from the client to the server
  */
-public class CapsuleChargeQueryToServer implements IMessage {
+public class CapsuleLeftClickQueryToServer implements IMessage {
 
     // for use by the message handler only.
-    public CapsuleChargeQueryToServer() {
+    public CapsuleLeftClickQueryToServer() {
 
     }
 

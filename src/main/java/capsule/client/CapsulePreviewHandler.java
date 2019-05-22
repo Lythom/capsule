@@ -5,6 +5,7 @@ import capsule.Helpers;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
+import capsule.structure.CapsuleTemplate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -17,6 +18,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static capsule.client.RendererUtils.*;
+import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 public class CapsulePreviewHandler {
     public static final Map<String, List<BlockPos>> currentPreview = new HashMap<>();
@@ -97,19 +100,19 @@ public class CapsulePreviewHandler {
                 && heldItemMainhand.hasTagCompound()
                 && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
+                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT_ACTIVATED)
         ) {
 
             RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
-                BlockPos anchorPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec());
-
+                int extendSize = (CapsuleItem.getSize(heldItemMainhand) - 1) / 2;
+                BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 
                 synchronized (CapsulePreviewHandler.currentPreview) {
                     if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
 
-                        int extendSize = (CapsuleItem.getSize(heldItemMainhand) - 1) / 2;
                         List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
                         if (blockspos.isEmpty()) {
                             blockspos.add(new BlockPos(extendSize, 0, extendSize));
@@ -128,8 +131,12 @@ public class CapsulePreviewHandler {
                                 1,
                                 1);
 
+                        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+
                         for (BlockPos blockpos : blockspos) {
-                            BlockPos destBlock = blockpos.add(anchorPos).add(-extendSize, 0.01, -extendSize);
+                            BlockPos destBlock = CapsuleTemplate.transformedBlockPos(placement, blockpos)
+                                    .add(destOriginPos)
+                                    .add(recenterRotation(extendSize, placement));
                             int color = 0xDDDDDD;
                             GL11.glLineWidth(2.0F);
                             if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
