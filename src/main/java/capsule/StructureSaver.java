@@ -244,20 +244,18 @@ public class StructureSaver {
             player = worldserver.getPlayerEntityByName(playerID);
         }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
-        if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size() || blueprintTemplate.entities.size() != tempTemplate.entities.size())
+        if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size())
             return false;
         Comparator<Template.BlockInfo> compBlockInfo = (
                 (o1, o2) -> (o1.pos.equals(o2.pos)
-                        && (o1.tileentityData == null && o2.tileentityData == null || o1.tileentityData.equals(o2.tileentityData))
+                        && ((o1.tileentityData == null && o2.tileentityData == null) || o1.tileentityData.equals(o2.tileentityData))
                         && o1.blockState.equals(o2.blockState)
                 ) ? 0 : 1);
         Comparator<Template.EntityInfo> compEntityInfo = (
                 (o1, o2) -> (o1.pos.equals(o2.pos) && o1.entityData.equals(o2.entityData)
                 ) ? 0 : 1);
         boolean blueprintMatch = IntStream.range(0, blueprintTemplate.blocks.size())
-                .allMatch(i -> compBlockInfo.compare(tempTemplate.blocks.get(i), blueprintTemplate.blocks.get(i)) == 0)
-                && IntStream.range(0, blueprintTemplate.entities.size())
-                .allMatch(i -> compEntityInfo.compare(tempTemplate.entities.get(i), blueprintTemplate.entities.get(i)) == 0);
+                .allMatch(i -> compBlockInfo.compare(tempTemplate.blocks.get(i), blueprintTemplate.blocks.get(i)) == 0);
         if (blueprintMatch) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             // check if some remove failed, it should never happen but keep it in case to prevent exploits

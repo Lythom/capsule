@@ -2,6 +2,7 @@ package capsule.structure;
 
 import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -248,18 +249,17 @@ public class CapsuleTemplate
             NBTTagList nbttaglist2 = nbttagcompound.getTagList("pos", 3);
             BlockPos blockpos = new BlockPos(nbttaglist2.getIntAt(0), nbttaglist2.getIntAt(1), nbttaglist2.getIntAt(2));
             IBlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInteger("state"));
-            NBTTagCompound nbttagcompound1;
+            if(iblockstate != null && iblockstate.getMaterial() != Material.AIR) {
+                NBTTagCompound nbttagcompound1;
 
-            if (nbttagcompound.hasKey("nbt"))
-            {
-                nbttagcompound1 = nbttagcompound.getCompoundTag("nbt");
-            }
-            else
-            {
-                nbttagcompound1 = null;
-            }
+                if (nbttagcompound.hasKey("nbt")) {
+                    nbttagcompound1 = nbttagcompound.getCompoundTag("nbt");
+                } else {
+                    nbttagcompound1 = null;
+                }
 
-            this.blocks.add(new Template.BlockInfo(blockpos, iblockstate, nbttagcompound1));
+                this.blocks.add(new Template.BlockInfo(blockpos, iblockstate, nbttagcompound1));
+            }
         }
 
         NBTTagList nbttaglist4 = compound.getTagList("entities", 10);

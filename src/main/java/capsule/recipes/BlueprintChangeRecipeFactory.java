@@ -8,8 +8,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.crafting.IRecipeFactory;
 import net.minecraftforge.common.crafting.JsonContext;
+
+import static capsule.items.CapsuleItem.STATE_DEPLOYED;
 
 public class BlueprintChangeRecipeFactory implements IRecipeFactory {
 
@@ -20,23 +23,33 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
 
     public class BlueprintChangeRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
+        private WorldServer world;
+
         public BlueprintChangeRecipe() {
         }
 
         public ItemStack getRecipeOutput() {
-            return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_BLUEPRINT);
+            ItemStack bp = new ItemStack(CapsuleItems.capsule, 1, STATE_DEPLOYED);
+            CapsuleItem.setBlueprint(bp);
+            CapsuleItem.setBaseColor(bp, 3949738);
+            CapsuleItem.setStructureName(bp, "blueprintExampleStructureName");
+            return bp;
         }
 
         public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-            for (int i = 0; i < nonnulllist.size(); ++i) {
-                ItemStack itemstack = inv.getStackInSlot(i);
-                nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
-                if (itemstack.getItem() instanceof CapsuleItem && CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                    // give back the capsule where template is taken from
-                    ItemStack copy = itemstack.copy();
-                    nonnulllist.set(i, copy);
+            ItemStack blueprintCapsule = null;
+            ItemStack templateCapsule = null;
+            for (int i = 0; i < inv.getHeight(); ++i) {
+                for (int j = 0; j < inv.getWidth(); ++j) {
+                    ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
+                    if (blueprintCapsule == null && CapsuleItem.isBlueprint(itemstack)) {
+                        blueprintCapsule = itemstack;
+                    } else if (CapsuleItem.hasStructureLink(itemstack)) {
+                        templateCapsule = itemstack;
+                        nonnulllist.set(i, templateCapsule.copy());
+                    }
                 }
             }
 
@@ -47,16 +60,19 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
+            if (!worldIn.isRemote) {
+                this.world = (WorldServer) worldIn;
+            }
             int sourceCapsule = 0;
             int blueprint = 0;
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
-                    if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        sourceCapsule++;
-                    } else if (CapsuleItem.isBlueprint(itemstack)) {
+                    if (blueprint == 0 && CapsuleItem.isBlueprint(itemstack)) {
                         blueprint++;
+                    } else if (CapsuleItem.hasStructureLink(itemstack)) {
+                        sourceCapsule++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
                     }
@@ -75,17 +91,19 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
-                    if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        templateStructure = CapsuleItem.getStructureName(itemstack);
-                    } else if (CapsuleItem.isBlueprint(itemstack)) {
+                    if (blueprintCapsule == null && CapsuleItem.isBlueprint(itemstack)) {
                         blueprintCapsule = itemstack.copy();
+                    } else if (CapsuleItem.hasStructureLink(itemstack)) {
+                        templateStructure = CapsuleItem.getStructureName(itemstack);
                     }
                 }
             }
             if (templateStructure != null && blueprintCapsule != null) {
+                blueprintCapsule.getTagCompound().setString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
                 CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
                 blueprintCapsule.getTagCompound().removeTag("occupiedSpawnPositions");
                 blueprintCapsule.getTagCompound().removeTag("spawnPosition");
+                CapsuleItem.setState(blueprintCapsule, STATE_DEPLOYED);
                 return blueprintCapsule;
             }
             return ItemStack.EMPTY;
