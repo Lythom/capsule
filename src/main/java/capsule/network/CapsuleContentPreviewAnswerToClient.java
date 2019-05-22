@@ -82,7 +82,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
 
     @Override
     public String toString() {
-        return "CapsuleContentPreviewMessageToClient";
+        return getClass().toString();
     }
 
     public List<BlockPos> getBlockPositions() {

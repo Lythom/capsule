@@ -67,7 +67,7 @@ public class CapsuleThrowQueryToServer implements IMessage {
 
     @Override
     public String toString() {
-        return "AskCapsuleThrowToServer";
+        return getClass().toString();
     }
 
     public BlockPos getPos() {

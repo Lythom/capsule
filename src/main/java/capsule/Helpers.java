@@ -67,8 +67,8 @@ public class Helpers {
             Iterable<MutableBlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
                     new BlockPos(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
-                Block block = entityItem.getEntityWorld().getBlockState(pos).getBlock();
-                if (block.getClass().equals(searchedBlock)) {
+                Block block = entityItem.getEntityWorld().isBlockLoaded(pos) ? entityItem.getEntityWorld().getBlockState(pos).getBlock() : null;
+                if (block != null && block.getClass().equals(searchedBlock)) {
                     return new BlockPos(pos.getX(), pos.getY(), pos.getZ()); // return a copy
                 }
             }
@@ -77,9 +77,9 @@ public class Helpers {
         return null;
     }
 
-	/*
+    /*
      * Color stuff
-	 */
+     */
 
     /**
      * Return whether the specified armor has a color.

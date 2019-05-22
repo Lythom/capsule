@@ -60,7 +60,7 @@ public class LabelGui extends GuiScreen {
             closeGui();
         }
         this.textInput.textboxKeyTyped(typedChar, keyCode);
-        setCuurentItemLabel(this.textInput.getText());
+        setCurrentItemLabel(this.textInput.getText());
     }
 
     @Override
@@ -97,7 +97,7 @@ public class LabelGui extends GuiScreen {
         super.updateScreen();
     }
 
-    public void setCuurentItemLabel(String label) {
+    public void setCurrentItemLabel(String label) {
         CommonProxy.simpleNetworkWrapper.sendToServer(new LabelEditedMessageToServer(label));
     }
 

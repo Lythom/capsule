@@ -547,6 +547,7 @@ public class StructureSaver {
                     }
 
                     BlockPos destPos = destOriginPos.add(x, y, z);
+                    if (!destWorld.isBlockLoaded(destPos)) return false;
                     IBlockState destState = destWorld.getBlockState(destPos);
 
                     boolean destOccupied = (destState != air && !overridable.contains(destState.getBlock()));
@@ -662,9 +663,10 @@ public class StructureSaver {
         }
 
         public boolean equals(Object someOther) {
-            if(!(someOther instanceof ItemStackKey)) return false;
-            return ((ItemStackKey)someOther).itemStack.isItemEqual(itemStack);
+            if (!(someOther instanceof ItemStackKey)) return false;
+            return ((ItemStackKey) someOther).itemStack.isItemEqual(itemStack);
         }
+
         public int hashCode() {
             int val = itemStack.getItem().hashCode() * 29 + itemStack.getItemDamage();
             return val;
