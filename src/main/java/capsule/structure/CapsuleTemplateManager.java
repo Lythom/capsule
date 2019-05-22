@@ -248,4 +248,26 @@ public class CapsuleTemplateManager
             return flag;
         }
     }
+
+    public boolean deleteTemplate(@Nullable MinecraftServer server, ResourceLocation id) {
+        String s = id.getResourcePath();
+
+        if (server != null && this.templates.containsKey(s)) {
+            File file1 = new File(this.baseFolder);
+
+            if (!file1.exists()) {
+                return true;
+            } else if (!file1.isDirectory()) {
+                return true;
+            }
+
+            File file2 = new File(file1, s + ".nbt");
+            boolean deleted = file2.delete();
+            if (deleted) {
+                remove(id);
+            }
+            return deleted;
+        }
+        return false;
+    }
 }

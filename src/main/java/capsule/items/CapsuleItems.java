@@ -1,6 +1,7 @@
 package capsule.items;
 
 import capsule.Main;
+import capsule.recipes.BlueprintChangeRecipeFactory.BlueprintChangeRecipe;
 import capsule.recipes.RecoveryBlueprintCapsuleRecipeFactory.RecoveryBlueprintCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
@@ -25,6 +26,7 @@ public class CapsuleItems {
     public static Pair<ItemStack, IRecipe> unlabelledCapsule = null;
     public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> recoveryCapsule = null;
     public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> blueprintCapsule = null;
+    public static Pair<ItemStack, BlueprintChangeRecipe> blueprintChangedCapsule = null;
     public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
@@ -50,6 +52,8 @@ public class CapsuleItems {
                     }
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {
                     upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
+                } else if (recipe instanceof BlueprintChangeRecipe) {
+                    blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
                     if (output.getItem() instanceof CapsuleItem) {

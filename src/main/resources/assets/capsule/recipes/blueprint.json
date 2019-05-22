@@ -2,7 +2,7 @@
   "type": "capsule:recovery_blueprint_capsule",
   "result": {
     "item": "capsule:capsule",
-    "data": 7,
+    "data": 3,
     "nbt": {
       "display": {
         "color": 3949738

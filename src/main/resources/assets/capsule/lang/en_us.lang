@@ -13,6 +13,8 @@ capsule.tooltip.blueprint=Takes items from linked inventory to build structure
 capsule.tooltip.upgraded=Upgrades
 capsule.tooltip.overpowered=Overpowered
 capsule.tooltip.author=Designed by
+capsule.tooltip.blueprint_use_uncharged=* Left click: charge from inventory\n* Right click: undo last deploy\n* Sneak+Right click: link inventory
+capsule.tooltip.blueprint_use_charged=* Right click: undo last deploy\n* Sneak+Right click: link inventory
 capsule.feedback.linkedToInventory=Linked to "%s" at (x=%s, y=%s, z=%s)
 capsule.error.noCaptureBase=There were no Capture Base around.
 capsule.error.cantMergeWithDestination=Can't merge with destination, a block is preventing the deployment.
@@ -31,4 +33,4 @@ jei.capsule.desc.capsule=Capture a region using a Capture Base. Right click to a
 jei.capsule.desc.recoveryCapsule=One Use Capsule.\nIs linked to the same content as the Capsule it was crafted from.\nTip : Craft one and place it in a safe place in case the original capsule is lost.
 jei.capsule.desc.linkedCapsule=Created by capturing a region using an empty capsule on a Capture Base.\nRight click to activate, Then throw and deploy. Right click to undeploy.\n* Can be emptied in a crafting table (a recovery capsule is given back).\n* Can by dyed.
 jei.capsule.desc.opCapsule=Special Capsule which can capture special blocks that a standard capsule would ignore.
-jei.capsule.desc.blueprintCapsule=Can deploy several times the structure by using materials from a linked inventory.\nThe structure is copied from the capsule used in craft.\nCraft with any capsule to update structure.\n* Shift+right click an inventory to link.\n* Player's inventory will be used if material miss from linked inventory.\n*Can be dyied.
+jei.capsule.desc.blueprintCapsule=Can deploy several times the structure by using materials from a linked inventory.\nThe structure is copied from the capsule used in craft.\n* Left click to charge\n* Shift+right click an inventory to link.\n* Craft with any capsule to update structure.\n* Player's inventory will be used if material miss from linked inventory.\n* Can be dyied.

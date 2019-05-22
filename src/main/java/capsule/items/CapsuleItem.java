@@ -2,10 +2,10 @@ package capsule.items;
 
 import capsule.*;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.client.CapsulePreviewHandler;
 import capsule.network.CapsuleChargeQueryToServer;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
+import capsule.structure.CapsuleTemplateManager;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.client.util.ITooltipFlag;
@@ -37,7 +37,6 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -142,8 +141,6 @@ public class CapsuleItem extends Item {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
-        capsule.setItemDamage(STATE_BLUEPRINT);
-        capsule.getTagCompound().setBoolean("charged", false);
         saveSourceInventory(capsule, null, 0);
     }
 
@@ -475,9 +472,13 @@ public class CapsuleItem extends Item {
         return isOverpowered(stack);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+
     @Override
-    public void addInformation(ItemStack capsule, @Nullable World worldIn, List tooltip, ITooltipFlag flagIn) {
+    public void addInformation(ItemStack capsule, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
+
+        if (capsule.getItemDamage() == STATE_ONE_USE) {
+            tooltip.add(I18n.translateToLocal("capsule.tooltip.one_use").trim());
+        }
 
         if (isOverpowered(capsule)) {
             tooltip.add(TextFormatting.DARK_PURPLE + I18n.translateToLocal("capsule.tooltip.overpowered") + TextFormatting.RESET);
@@ -496,14 +497,22 @@ public class CapsuleItem extends Item {
         }
         tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + sizeTxt);
 
-        if (capsule.getItemDamage() == STATE_ONE_USE) {
-            tooltip.add(I18n.translateToLocal("capsule.tooltip.one_use").trim());
-        }
+
         if (isBlueprint(capsule)) {
-            tooltip.add(I18n.translateToLocal("capsule.tooltip.blueprint").trim());
-            if ((Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) && CapsulePreviewHandler.currentPreview.containsKey(getStructureName(capsule))) {
-                tooltip.add("Blocks: " + CapsulePreviewHandler.currentPreview.get(getStructureName(capsule).length()));
+            if (capsule.getItemDamage() == STATE_DEPLOYED) {
+                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.upgraded") );
+            } else {
+                tooltip.add(TextFormatting.WHITE + "* " + "Right click: to deploy");
             }
+        }
+        if (flagIn == ITooltipFlag.TooltipFlags.ADVANCED) {
+            tooltip.add(TextFormatting.GOLD + "structureName: " + getStructureName(capsule));
+            tooltip.add(TextFormatting.GOLD + "oneUse: " + isOneUse(capsule));
+            tooltip.add(TextFormatting.GOLD + "isReward: " + isReward(capsule));
+            if (isBlueprint(capsule)) {
+                tooltip.add(TextFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule));
+            }
+            tooltip.add(TextFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule)));
         }
     }
 
@@ -772,9 +781,10 @@ public class CapsuleItem extends Item {
         String sourceStructureName = CapsuleItem.getStructureName(capsule);
         if (!worldIn.isRemote && !sourceStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
             WorldServer worldServer = (WorldServer) worldIn;
-            String destStructureName = StructureSaver.getBlueprintUniqueName(worldServer) + "-" + sourceStructureName;
+            String destStructureName = StructureSaver.getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
             ItemStack source = new ItemStack(CapsuleItems.capsule, 1, STATE_LINKED);
             CapsuleItem.setStructureName(source, sourceStructureName);
+            if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(source);
             boolean created = StructureSaver.copyFromCapsuleTemplate(
                     worldServer,
                     source,
@@ -784,6 +794,13 @@ public class CapsuleItem extends Item {
             // anyway we write the structure name
             // we dont want to have the same link as the original capsule
             CapsuleItem.setStructureName(capsule, destStructureName);
+
+            // try to cleaup previous template to save disk space on the long run
+            if (capsule.getTagCompound().hasKey("prevStructureName")) {
+                CapsuleTemplateManager tm = StructureSaver.getTemplateManager(worldServer);
+                if (tm != null)
+                    tm.deleteTemplate(worldServer.getMinecraftServer(), new ResourceLocation(capsule.getTagCompound().getString("prevStructureName")));
+            }
 
             if (!created && playerIn != null) {
                 playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintCreationError"));
@@ -898,8 +915,6 @@ public class CapsuleItem extends Item {
         List<String> outEntityBlocking = new ArrayList<>();
 
         if (isBlueprint(capsule)) {
-            // TODO: check materials are available and consume them. Work like a normal capsule with deployed state, can be "charged" using left click
-            // TODO refund in case the capsule cannot be spawner. Create a transaction ?
             // TODO: allow blueprint creation from reward
             // TODO: allow rotation and mirror
             // TODO: ADD HUD dispay
