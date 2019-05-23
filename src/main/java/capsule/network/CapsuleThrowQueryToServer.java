@@ -9,10 +9,12 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
  */
 public class CapsuleThrowQueryToServer implements IMessage {
 
-    private BlockPos pos = null;
+    public BlockPos pos = null;
+    public boolean instant = false;
 
-    public CapsuleThrowQueryToServer(BlockPos pos) {
-        setPos(pos);
+    public CapsuleThrowQueryToServer(BlockPos pos, boolean instant) {
+        this.pos = pos;
+        this.instant = instant;
     }
 
     // for use by the message handler only.
@@ -33,11 +35,13 @@ public class CapsuleThrowQueryToServer implements IMessage {
             // for Itemstacks - ByteBufUtils.readItemStack()
             // for NBT tags ByteBufUtils.readTag();
             // for Strings: ByteBufUtils.readUTF8String();
-            this.setPos(BlockPos.fromLong(buf.readLong()));
+            this.instant = buf.readBoolean();
+            boolean hasPos = buf.readBoolean();
+            if (hasPos) {
+                this.pos = BlockPos.fromLong(buf.readLong());
+            }
 
-        } catch (IndexOutOfBoundsException ioe) {
-            // no block, normal throw
-            return;
+        } catch (IndexOutOfBoundsException ignored) {
         }
     }
 
@@ -55,8 +59,11 @@ public class CapsuleThrowQueryToServer implements IMessage {
         // for Itemstacks - ByteBufUtils.writeItemStack()
         // for NBT tags ByteBufUtils.writeTag();
         // for Strings: ByteBufUtils.writeUTF8String();
-        if (this.getPos() != null) {
-            buf.writeLong(this.getPos().toLong());
+        buf.writeBoolean(this.instant);
+        boolean hasPos = this.pos != null;
+        buf.writeBoolean(hasPos);
+        if (hasPos) {
+            buf.writeLong(this.pos.toLong());
         }
 
     }
@@ -68,14 +75,6 @@ public class CapsuleThrowQueryToServer implements IMessage {
     @Override
     public String toString() {
         return getClass().toString();
-    }
-
-    public BlockPos getPos() {
-        return pos;
-    }
-
-    public void setPos(BlockPos pos) {
-        this.pos = pos;
     }
 
 }

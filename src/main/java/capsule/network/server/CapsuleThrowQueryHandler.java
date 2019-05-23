@@ -3,7 +3,10 @@ package capsule.network.server;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -54,10 +57,36 @@ public class CapsuleThrowQueryHandler
         }
 
         // Execute the action on the main server thread by adding it as a scheduled task
-        sendingPlayer.getServerWorld().addScheduledTask(() -> {
-            // read the content of the template and send it back to the client
+        WorldServer world = sendingPlayer.getServerWorld();
+        world.addScheduledTask(() -> {
             ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-            CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.getPos());
+            if (heldItem.getItem() instanceof CapsuleItem) {
+                if (message.instant && message.pos != null) {
+                    int size = CapsuleItem.getSize(heldItem);
+                    int extendLength = (size - 1) / 2;
+                    // instant capsule initial capture
+                    if (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                        boolean captured = CapsuleItem.captureAtPosition(sendingPlayer.getName(), heldItem, size, world, message.pos);
+                        if (captured) {
+                            CapsuleItem.showUndeployParticules(world, message.pos, size);
+                        }
+                    }
+                    // instant deployment
+                    else {
+                        boolean deployed = CapsuleItem.deployCapsule(message.pos.add(0, -1, 0), sendingPlayer.getName(), heldItem, extendLength, world);
+                        if (deployed) {
+                            world.playSound(null, message.pos, SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                            CapsuleItem.showDeployParticules(world, message.pos, size);
+                        }
+                        if (deployed && CapsuleItem.isOneUse(heldItem)) {
+                            heldItem.shrink(1);
+                        }
+                    }
+                }
+                if (!message.instant) {
+                    CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.pos);
+                }
+            }
         });
 
         return null;

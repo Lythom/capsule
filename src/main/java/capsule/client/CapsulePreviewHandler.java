@@ -25,6 +25,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import org.lwjgl.opengl.GL11;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +35,6 @@ import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 public class CapsulePreviewHandler {
     public static final Map<String, List<BlockPos>> currentPreview = new HashMap<>();
-    private static AxisAlignedBB boundingBox1 = new AxisAlignedBB(0, 0, 0, 1, 1, 1);
-    private static AxisAlignedBB extboundingBox1 = new AxisAlignedBB(0, 0, 0, 1, 1, 1);
     private int lastSize = 0;
     private int lastColor = 0;
 
@@ -96,24 +95,32 @@ public class CapsulePreviewHandler {
     @SuppressWarnings("ConstantConditions")
     private void tryPreviewDeploy(EntityPlayerSP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
+
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTagCompound()
                 && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
-                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT_ACTIVATED)
+                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT_ACTIVATED
+                || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getItemDamage() != CapsuleItem.STATE_DEPLOYED)
         ) {
-
+            int size = CapsuleItem.getSize(heldItemMainhand);
             RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
-                int extendSize = (CapsuleItem.getSize(heldItemMainhand) - 1) / 2;
+                int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 
                 synchronized (CapsulePreviewHandler.currentPreview) {
-                    if (CapsulePreviewHandler.currentPreview.containsKey(structureName)) {
+                    if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
 
-                        List<BlockPos> blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+                        List<BlockPos> blockspos = new ArrayList<>();
+                        if (size > 1) {
+                            blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+                        } else if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                            // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
+                            blockspos.add(rtc.getBlockPos().subtract(destOriginPos));
+                        }
                         if (blockspos.isEmpty()) {
                             blockspos.add(new BlockPos(extendSize, 0, extendSize));
                         }
@@ -139,7 +146,11 @@ public class CapsulePreviewHandler {
                                     .add(recenterRotation(extendSize, placement));
                             int color = 0xDDDDDD;
                             GL11.glLineWidth(2.0F);
-                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
+                            if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                                // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
+                                GL11.glLineWidth(5.0F);
+                                color = CapsuleItem.getBaseColor(heldItemMainhand);
+                            } else if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
                                 color = 0xaa0000;
                                 GL11.glLineWidth(5.0F);
                             }

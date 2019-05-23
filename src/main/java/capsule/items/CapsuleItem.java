@@ -138,7 +138,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isBlueprint(ItemStack stack) {
-        return !stack.isEmpty() && stack.hasTagCompound() && stack.getTagCompound().hasKey("sourceInventory");
+        return !stack.isEmpty() && stack.getItem() instanceof CapsuleItem && stack.hasTagCompound() && stack.getTagCompound().hasKey("sourceInventory");
     }
 
     public static void setBlueprint(ItemStack capsule) {
@@ -159,6 +159,10 @@ public class CapsuleItem extends Item {
 
         capsule.getTagCompound().setBoolean("isReward", true);
         setOneUse(capsule);
+    }
+
+    public static boolean isInstantAndUndeployed(ItemStack capsule) {
+        return capsule.getItemDamage() == STATE_BLUEPRINT || (getSize(capsule) == 1 && capsule.getItemDamage() != STATE_DEPLOYED);
     }
 
     public static boolean hasStructureLink(ItemStack stack) {
@@ -499,6 +503,9 @@ public class CapsuleItem extends Item {
         if (upgradeLevel > 0) {
             sizeTxt += " (" + upgradeLevel + "/" + Config.upgradeLimit + " " + I18n.translateToLocal("capsule.tooltip.upgraded") + ")";
         }
+        if (isInstantAndUndeployed(capsule) || isBlueprint(capsule)) {
+            sizeTxt += " (" + I18n.translateToLocal("capsule.tooltip.instant").trim() + ")";
+        }
         tooltip.add(I18n.translateToLocal("capsule.tooltip.size") + ": " + sizeTxt);
 
 
@@ -657,39 +664,14 @@ public class CapsuleItem extends Item {
             Main.proxy.openGuiScreen(playerIn);
 
         } else if (!worldIn.isRemote) {
-
-            // an empty or a linked capsule is activated on right click
-            if (capsule.getItemDamage() == STATE_EMPTY) {
-                setState(capsule, STATE_EMPTY_ACTIVATED);
-                startTimer(worldIn, playerIn, capsule);
-            } else if (capsule.getItemDamage() == STATE_LINKED) {
-                setState(capsule, STATE_ACTIVATED);
-                startTimer(worldIn, playerIn, capsule);
-            } else if (capsule.getItemDamage() == STATE_ONE_USE) {
-                setState(capsule, STATE_ONE_USE_ACTIVATED);
-                startTimer(worldIn, playerIn, capsule);
-            } else if (capsule.getItemDamage() == STATE_BLUEPRINT) {
-                setState(capsule, STATE_BLUEPRINT_ACTIVATED);
-                startTimer(worldIn, playerIn, capsule);
+            // a capsule is activated on right click, except instant that are deployed immediatly
+            if (!isInstantAndUndeployed(capsule)) {
+                activateCapsule(capsule, worldIn, playerIn);
             }
-
-            // an open capsule undeploy content on right click
-            else if (capsule.getItemDamage() == STATE_DEPLOYED) {
-
-                try {
-                    resentToCapsule(capsule, playerIn);
-                    worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
-                } catch (Exception e) {
-                    LOGGER.error("Couldn't resend the content into the capsule", e);
-                }
-
-            }
-        }
-
-        if (worldIn.isRemote) {
+        } else if (worldIn.isRemote) {
             // client side, if is going to get activated, ask for server preview
-            if (capsule.hasTagCompound()
-                    && (capsule.getItemDamage() == STATE_LINKED || capsule.getItemDamage() == STATE_ONE_USE || capsule.getItemDamage() == STATE_BLUEPRINT)) {
+            if (!isInstantAndUndeployed(capsule)
+                    && (capsule.getItemDamage() == STATE_LINKED || capsule.getItemDamage() == STATE_ONE_USE)) {
                 RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
                 if (dest != null) {
@@ -697,15 +679,53 @@ public class CapsuleItem extends Item {
                 }
             }
 
-            // client side, is activated, ask for the server a throw at position
-            if (isActivated(capsule)) {
+            // client side, is deployable, ask for the server a throw at position
+            if (isInstantAndUndeployed(capsule)) {
+                RayTraceResult rtr = Helpers.clientRayTracePreview(playerIn, 0);
+                BlockPos dest = null;
+                if (rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    if (capsule.getItemDamage() == STATE_EMPTY) {
+                        dest = rtr.getBlockPos();
+                    } else {
+                        dest = rtr.getBlockPos().add(rtr.sideHit.getDirectionVec());
+                    }
+                }
+                if (dest != null) {
+                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
+                }
+            } else if (isActivated(capsule)) {
                 RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
-                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest));
+                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
 
         return new ActionResult<>(EnumActionResult.SUCCESS, capsule);
+    }
+
+    public void activateCapsule(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
+        if (capsule.getItemDamage() == STATE_EMPTY) {
+            setState(capsule, STATE_EMPTY_ACTIVATED);
+            startTimer(worldIn, playerIn, capsule);
+        } else if (capsule.getItemDamage() == STATE_LINKED) {
+            setState(capsule, STATE_ACTIVATED);
+            startTimer(worldIn, playerIn, capsule);
+        } else if (capsule.getItemDamage() == STATE_ONE_USE) {
+            setState(capsule, STATE_ONE_USE_ACTIVATED);
+            startTimer(worldIn, playerIn, capsule);
+        } else if (capsule.getItemDamage() == STATE_BLUEPRINT) {
+            setState(capsule, STATE_BLUEPRINT_ACTIVATED);
+            startTimer(worldIn, playerIn, capsule);
+        }
+        // an open capsule undeploy content on right click
+        else if (capsule.getItemDamage() == STATE_DEPLOYED) {
+            try {
+                resentToCapsule(capsule, playerIn);
+                worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
+            } catch (Exception e) {
+                LOGGER.error("Couldn't resend the content into the capsule", e);
+            }
+        }
     }
 
     private void startTimer(World worldIn, EntityPlayer playerIn, ItemStack capsule) {
@@ -766,7 +786,8 @@ public class CapsuleItem extends Item {
 
                 // DEPLOY
                 // is linked, deploy
-                boolean deployed = deployCapsule(entityItem, capsule, extendLength, itemWorld);
+                BlockPos throwPos = Helpers.findBottomBlock(entityItem);
+                boolean deployed = deployCapsule(throwPos, entityItem.getThrower(), capsule, extendLength, itemWorld);
                 if (deployed) {
                     itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
                     showDeployParticules(itemWorld, entityItem.getPosition(), size);
@@ -788,7 +809,6 @@ public class CapsuleItem extends Item {
                     LOGGER.error("Couldn't capture the content into the capsule", e);
                 }
             }
-
         }
 
         // throwing the capsule toward the right place
@@ -835,14 +855,14 @@ public class CapsuleItem extends Item {
         }
     }
 
-    private void showDeployParticules(WorldServer world, BlockPos blockpos, int size) {
+    public static void showDeployParticules(WorldServer world, BlockPos blockpos, int size) {
         double d0 = (double) ((float) blockpos.getX()) + 0.5D;
         double d1 = (double) ((float) blockpos.getY()) + 0.5D;
         double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
         world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 16 * size, 0.5D, 0.25D, 0.5D, 0.1 + 0.01 * size);
     }
 
-    private void showUndeployParticules(WorldServer world, BlockPos blockpos, int size) {
+    public static void showUndeployParticules(WorldServer world, BlockPos blockpos, int size) {
         double d0 = (double) ((float) blockpos.getX()) + 0.5D;
         double d1 = (double) ((float) blockpos.getY()) - size * 0.10;
         double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
@@ -853,7 +873,7 @@ public class CapsuleItem extends Item {
     /**
      * Capture the content around the capsule entityItem, update capsule state.
      */
-    private static boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
+    public static boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 
         // specify target to capture
         BlockPos marker = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
@@ -861,22 +881,7 @@ public class CapsuleItem extends Item {
             BlockPos source = marker.add(-extendLength, 1, -extendLength);
 
             // Save the region in a structure block file
-            String player = "CapsuleMod";
-            if (entityItem.getThrower() != null) {
-                player = entityItem.getThrower();
-            }
-            String capsuleID = StructureSaver.getUniqueName(playerWorld, player);
-            boolean storageOK = StructureSaver.store(playerWorld, entityItem.getThrower(), capsuleID, source, size, getExcludedBlocs(capsule), null);
-
-            if (storageOK) {
-                // register the link in the capsule
-                setState(capsule, STATE_LINKED);
-                CapsuleItem.setStructureName(capsule, capsuleID);
-                return true;
-            } else {
-                // could not capture, StructureSaver.store handles the feedback already
-                revertStateFromActivated(capsule);
-            }
+            return captureAtPosition(entityItem.getThrower(), capsule, size, playerWorld, source);
         } else {
             revertStateFromActivated(capsule);
             // send a chat message to explain failure
@@ -886,6 +891,26 @@ public class CapsuleItem extends Item {
             }
         }
 
+        return false;
+    }
+
+    public static boolean captureAtPosition(String thrower, ItemStack capsule, int size, WorldServer playerWorld, BlockPos source) {
+        String player = "CapsuleMod";
+        if (thrower != null) {
+            player = thrower;
+        }
+        String capsuleID = StructureSaver.getUniqueName(playerWorld, player);
+        boolean storageOK = StructureSaver.store(playerWorld, player, capsuleID, source, size, getExcludedBlocs(capsule), null);
+
+        if (storageOK) {
+            // register the link in the capsule
+            setState(capsule, STATE_LINKED);
+            CapsuleItem.setStructureName(capsule, capsuleID);
+            return true;
+        } else {
+            // could not capture, StructureSaver.store handles the feedback already
+            revertStateFromActivated(capsule);
+        }
         return false;
     }
 
@@ -917,11 +942,13 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
+    // TODO: Add starting capsule base for players
+    // TODO: Add blueprint specific crafts (chick farm, starting base)
 
     /**
-     * Deploy the capsule at the entityItem position. update capsule state
+     * Deploy the capsule at the anchorBlockPos position. update capsule state
      */
-    private static boolean deployCapsule(EntityItem entityItem, ItemStack capsule, int extendLength, WorldServer playerWorld) {
+    public static boolean deployCapsule(BlockPos anchorBlockPos, String thrower, ItemStack capsule, int extendLength, WorldServer world) {
         // specify target to capture
 
         boolean didSpawn = false;
@@ -932,8 +959,7 @@ public class CapsuleItem extends Item {
             dest = centerDest.add(-extendLength, 0, -extendLength);
             capsule.getTagCompound().removeTag("deployAt");
         } else {
-            BlockPos bottomBlockPos = Helpers.findBottomBlock(entityItem);
-            dest = bottomBlockPos.add(-extendLength, 1, -extendLength);
+            dest = anchorBlockPos.add(-extendLength, 1, -extendLength);
         }
         String structureName = capsule.getTagCompound().getString("structureName");
 
@@ -941,12 +967,7 @@ public class CapsuleItem extends Item {
         Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<>();
         List<String> outEntityBlocking = new ArrayList<>();
 
-        if (isBlueprint(capsule)) {
-            // TODO: Add instant deploy for blueprint and 1 sized capsules
-            // TODO: Add starting capsule base for players
-            // TODO: Add blueprint specific crafts (chick farm, starting base)
-        }
-        boolean result = StructureSaver.deploy(capsule, playerWorld, entityItem.getThrower(), dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking, getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking, getPlacement(capsule));
 
         if (result) {
 
@@ -954,11 +975,11 @@ public class CapsuleItem extends Item {
 
             // register the link in the capsule
             if (!isReward(capsule)) {
-                saveSpawnPosition(capsule, dest, entityItem.getEntityWorld().provider.getDimension());
+                saveSpawnPosition(capsule, dest, world.provider.getDimension());
                 setState(capsule, STATE_DEPLOYED);
                 if (!isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
-                    StructureSaver.clearTemplate(playerWorld, structureName);
+                    StructureSaver.clearTemplate(world, structureName);
                 }
             }
 
@@ -1158,6 +1179,7 @@ public class CapsuleItem extends Item {
         }
         return "[ ]";
     }
+
     static public String getRotationLabel(PlacementSettings placement) {
         switch (placement.getRotation()) {
             case CLOCKWISE_90:
