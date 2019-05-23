@@ -83,6 +83,7 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
                             CapsuleItem.setBaseColor(copy, CapsuleItem.getBaseColor(recipe.getRecipeOutput()));
                             CapsuleItem.setBlueprint(copy);
                             CapsuleItem.setState(copy, STATE_DEPLOYED);
+                            CapsuleItem.setUpgradeLevel(copy,0);
                             return copy;
                         }
                     }
