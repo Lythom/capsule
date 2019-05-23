@@ -942,8 +942,6 @@ public class CapsuleItem extends Item {
         List<String> outEntityBlocking = new ArrayList<>();
 
         if (isBlueprint(capsule)) {
-            // TODO: allow rotation and mirror
-            // TODO: ADD HUD dispay
             // TODO: Add starting capsule base for players
             // TODO: Add blueprint specific crafts (chick farm, starting base)
         }

@@ -54,7 +54,6 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
-            // TODO: copy deloyed capsule = empty template
             if (!worldIn.isRemote) {
                 this.world = (WorldServer) worldIn;
             }
