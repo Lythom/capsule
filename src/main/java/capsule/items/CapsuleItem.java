@@ -6,9 +6,11 @@ import capsule.client.CapsulePreviewHandler;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
+import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplateManager;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -16,6 +18,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
@@ -25,14 +28,17 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -567,6 +573,13 @@ public class CapsuleItem extends Item {
         }
     }
 
+    @SubscribeEvent
+    public void heldItemChange(LivingEquipmentChangeEvent event) {
+        if (event.getEntity() instanceof EntityPlayer && event.getSlot().equals(EntityEquipmentSlot.MAINHAND) && isBlueprint(event.getTo())) {
+            askPreviewIfNeeded(event.getTo());
+        }
+    }
+
     public void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             // try to get the preview from server
@@ -592,8 +605,7 @@ public class CapsuleItem extends Item {
                 inv2.extractItem(slot, qty, false);
             });
             CapsuleItem.setState(blueprint, STATE_BLUEPRINT);
-            blueprint.getTagCompound().removeTag("spawnPosition");
-            blueprint.getTagCompound().removeTag("occupiedSpawnPositions");
+            cleanDeploymentTags(blueprint);
         }
 
         return missingMaterials;
@@ -801,9 +813,14 @@ public class CapsuleItem extends Item {
                 // CAPTURE
                 // is not linked, capture
                 try {
-                    boolean captured = captureContentIntoCapsule(entityItem, capsule, size, extendLength, itemWorld);
+                    BlockPos anchor = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
+                    boolean captured = captureContentIntoCapsule(anchor, entityItem.getThrower(), capsule, size, extendLength, itemWorld);
                     if (captured) {
-                        showUndeployParticules(itemWorld, entityItem.getPosition(), size);
+                        BlockPos center = anchor.add(0, size / 2, 0);
+                        CommonProxy.simpleNetworkWrapper.sendToAllAround(
+                                new CapsuleUndeployNotifToClient(center, entityItem.getPosition(), size),
+                                new NetworkRegistry.TargetPoint(entityItem.dimension, center.getX(), center.getY(), center.getZ(), 200 + size)
+                        );
                     }
                 } catch (Exception e) {
                     LOGGER.error("Couldn't capture the content into the capsule", e);
@@ -859,33 +876,55 @@ public class CapsuleItem extends Item {
         double d0 = (double) ((float) blockpos.getX()) + 0.5D;
         double d1 = (double) ((float) blockpos.getY()) + 0.5D;
         double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
-        world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 16 * size, 0.5D, 0.25D, 0.5D, 0.1 + 0.01 * size);
+        world.spawnParticle(EnumParticleTypes.CLOUD, d0, d1, d2, 8 * (size), 0.5D, 0.25D, 0.5D, 0.01 + 0.05 * size);
     }
 
-    public static void showUndeployParticules(WorldServer world, BlockPos blockpos, int size) {
-        double d0 = (double) ((float) blockpos.getX()) + 0.5D;
-        double d1 = (double) ((float) blockpos.getY()) - size * 0.10;
-        double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
+    public static void showUndeployParticules(WorldClient world, BlockPos posFrom, BlockPos posTo, int size) {
+//        double d0 = (double) ((float) blockpos.getX()) + 0.5D;
+//        double d1 = (double) ((float) blockpos.getY()) - size * 0.10;
+//        double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
+//
+//        world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 8 * size, 0.5D, 0.25D, 0.5D, 0.01 * size);
+        for (int i = 0; i < 8 * size; i++) {
+            double x = (double) posFrom.getX() + 0.5D + Math.random() * size - size * 0.5;
+            double y = (double) posFrom.getY() + Math.random() * size - size * 0.5;
+            double z = (double) posFrom.getZ() + 0.5D + Math.random() * size - size * 0.5;
 
-        world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, d0, d1, d2, 8 * size, 0.5D, 0.25D, 0.5D, 0.01 * size);
+            Vec3d speed = new Vec3d(
+                    posTo.getX() - x,
+                    posTo.getY() - y,
+                    posTo.getZ() - z
+            );
+            double speedFactor = 0.1f + speed.lengthVector() * 0.04f;
+            speed = speed.normalize();
+            world.spawnParticle(
+                    EnumParticleTypes.CLOUD,
+                    x,
+                    y,
+                    z,
+                    speed.x * speedFactor,
+                    speed.y * speedFactor,
+                    speed.z * speedFactor
+            );
+
+        }
     }
 
     /**
      * Capture the content around the capsule entityItem, update capsule state.
      */
-    public static boolean captureContentIntoCapsule(EntityItem entityItem, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
+    public static boolean captureContentIntoCapsule(BlockPos anchor, String thrower, ItemStack capsule, int size, int extendLength, WorldServer playerWorld) {
 
-        // specify target to capture
-        BlockPos marker = Helpers.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
-        if (marker != null) {
-            BlockPos source = marker.add(-extendLength, 1, -extendLength);
+        // if there is an anchor, it's an initial capture, else an undeploy
+        if (anchor != null) {
+            BlockPos source = anchor.add(-extendLength, 1, -extendLength);
 
             // Save the region in a structure block file
-            return captureAtPosition(entityItem.getThrower(), capsule, size, playerWorld, source);
+            return captureAtPosition(thrower, capsule, size, playerWorld, source);
         } else {
             revertStateFromActivated(capsule);
             // send a chat message to explain failure
-            EntityPlayer player = playerWorld.getPlayerEntityByName(entityItem.getThrower());
+            EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
             if (player != null) {
                 player.sendMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
             }
@@ -942,6 +981,9 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
+    // TODO: Add creating a normal capsule from reward (command)
+    // TODO: Add creating a blueprint from reward  (command)
+    // TODO: Add crafting a blueprint from reward  (recipe)
     // TODO: Add starting capsule base for players
     // TODO: Add blueprint specific crafts (chick farm, starting base)
 
@@ -1009,9 +1051,8 @@ public class CapsuleItem extends Item {
             boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
             if (blueprintMatch) {
                 setState(capsule, STATE_BLUEPRINT);
-                capsule.getTagCompound().removeTag("spawnPosition");
-                capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
-                showUndeployParticules(world, startPos.add(size / 2, size / 2, size / 2), size);
+                cleanDeploymentTags(capsule);
+                notifyUndeploy(playerIn, startPos, size);
             } else {
                 playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintDontMatch"));
             }
@@ -1019,14 +1060,26 @@ public class CapsuleItem extends Item {
             boolean storageOK = StructureSaver.store(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, getExcludedBlocs(capsule), getOccupiedSourcePos(capsule));
             if (storageOK) {
                 setState(capsule, STATE_LINKED);
-                capsule.getTagCompound().removeTag("spawnPosition");
-                capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
-                showUndeployParticules(world, startPos.add(size / 2, size / 2, size / 2), size);
+                cleanDeploymentTags(capsule);
+                notifyUndeploy(playerIn, startPos, size);
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
                 playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
             }
         }
+    }
+
+    private static void notifyUndeploy(EntityPlayer playerIn, BlockPos startPos, int size) {
+        BlockPos center = startPos.add(size / 2, size / 2, size / 2);
+        CommonProxy.simpleNetworkWrapper.sendToAllAround(
+                new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size),
+                new NetworkRegistry.TargetPoint(playerIn.dimension, center.getX(), center.getY(), center.getZ(), 200 + size)
+        );
+    }
+
+    private static void cleanDeploymentTags(ItemStack capsule) {
+        capsule.getTagCompound().removeTag("spawnPosition");
+        capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {

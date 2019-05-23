@@ -7,6 +7,7 @@ import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.network.*;
 import capsule.network.client.CapsuleContentPreviewAnswerHandler;
+import capsule.network.client.CapsuleUndeployNotifHandler;
 import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleContentPreviewQueryHandler;
 import capsule.network.server.CapsuleThrowQueryHandler;
@@ -76,6 +77,8 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleLeftClickQueryHandler.class, CapsuleLeftClickQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // server sends to client the data needed to preview a deploy
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
+        // server sends to client the data needed to render undeploy
+        simpleNetworkWrapper.registerMessage(CapsuleUndeployNotifHandler.class, CapsuleUndeployNotifToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
     }
 
     public void init(FMLInitializationEvent event) {

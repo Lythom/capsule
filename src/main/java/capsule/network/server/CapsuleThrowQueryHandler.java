@@ -1,12 +1,16 @@
 package capsule.network.server;
 
+import capsule.CommonProxy;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
+import capsule.network.CapsuleUndeployNotifToClient;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -68,7 +72,11 @@ public class CapsuleThrowQueryHandler
                     if (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
                         boolean captured = CapsuleItem.captureAtPosition(sendingPlayer.getName(), heldItem, size, world, message.pos);
                         if (captured) {
-                            CapsuleItem.showUndeployParticules(world, message.pos, size);
+                            BlockPos center = message.pos.add(0, size / 2, 0);
+                            CommonProxy.simpleNetworkWrapper.sendToAllAround(
+                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size),
+                                    new NetworkRegistry.TargetPoint(sendingPlayer.dimension, center.getX(), center.getY(), center.getZ(), 200 + size)
+                            );
                         }
                     }
                     // instant deployment
