@@ -74,9 +74,10 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
         // for NBT tags ByteBufUtils.writeTag();
         // for Strings: ByteBufUtils.writeUTF8String();
         ByteBufUtils.writeUTF8String(buf, this.structureName);
-        buf.writeShort(this.blockPositions.size());
-        for (BlockPos pos : this.blockPositions) {
-            buf.writeLong(pos.toLong());
+        int size = Math.min(this.blockPositions.size(), Short.MAX_VALUE);
+        buf.writeShort(size);
+        for (int i = 0; i < size; i++) {
+            buf.writeLong(blockPositions.get(i).toLong());
         }
     }
 
