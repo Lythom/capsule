@@ -2,9 +2,11 @@ package capsule.client;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import org.lwjgl.opengl.GL11;
 
 public class RendererUtils {
     public static void doPositionPrologue() {
@@ -144,4 +146,19 @@ public class RendererUtils {
         GlStateManager.color(rf, gf, bf, af);
     }
 
+    public static void resetLightmap(boolean prevStateEnabled) {
+        if (prevStateEnabled) {
+            GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            GlStateManager.enableTexture2D();
+            GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        }
+    }
+
+    public static boolean disableLightmap() {
+        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        boolean lightmapState = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+        if (lightmapState) GlStateManager.disableTexture2D();
+        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        return lightmapState;
+    }
 }

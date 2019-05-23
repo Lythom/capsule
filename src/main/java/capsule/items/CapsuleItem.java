@@ -806,7 +806,7 @@ public class CapsuleItem extends Item {
     @Override
     public void onCreated(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
         String sourceStructureName = CapsuleItem.getStructureName(capsule);
-        if (!worldIn.isRemote && !sourceStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
+        if (sourceStructureName != null && !worldIn.isRemote && !sourceStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
             WorldServer worldServer = (WorldServer) worldIn;
             String destStructureName = StructureSaver.getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
             ItemStack source = new ItemStack(CapsuleItems.capsule, 1, STATE_LINKED);
@@ -942,6 +942,7 @@ public class CapsuleItem extends Item {
         List<String> outEntityBlocking = new ArrayList<>();
 
         if (isBlueprint(capsule)) {
+            // TODO: Add instant deploy for blueprint and 1 sized capsules
             // TODO: Add starting capsule base for players
             // TODO: Add blueprint specific crafts (chick farm, starting base)
         }

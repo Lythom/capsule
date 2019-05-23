@@ -78,7 +78,7 @@ public class CapsulePreviewHandler {
                 CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
                 //noinspection ConstantConditions
                 if (heldItem.hasTagCompound() && heldItem.getTagCompound().hasKey("size")) {
-                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), CapsuleItem.getColorFromItemstack(heldItem, 0), player.getEntityWorld());
+                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
                     return true;
                 }
 
@@ -226,7 +226,7 @@ public class CapsulePreviewHandler {
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
-        int color = CapsuleItem.getColorFromItemstack(capsule, 0);
+        int color = CapsuleItem.getBaseColor(capsule);
 
         CaptureTESR.drawCaptureZone(
                 linkPos.getInteger("x") + extendSize,
@@ -245,7 +245,10 @@ public class CapsulePreviewHandler {
                 TileEntityCapture tec = te;
                 tec.getTileData().setInteger("size", size);
                 tec.getTileData().setInteger("color", color);
-                worldIn.markBlockRangeForRenderUpdate(te.getPos(), te.getPos());
+                worldIn.markBlockRangeForRenderUpdate(
+                        te.getPos().add(-size / 2, -size / 2, -size / 2),
+                        te.getPos().add(size / 2, size / 2, size / 2)
+                );
             }
         }
         lastSize = size;

@@ -1,15 +1,9 @@
 package capsule.blocks;
 
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.AxisAlignedBB;
-import org.lwjgl.opengl.GL11;
-
-import java.awt.*;
 
 import static capsule.client.RendererUtils.*;
 
@@ -22,6 +16,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
                                        int color) {
         doPositionPrologue();
         doWirePrologue();
+        boolean prevStateEnabled = disableLightmap();
 
         AxisAlignedBB boundingBox = new AxisAlignedBB(
                 -extendSize - 0.01 + relativeX,
@@ -33,12 +28,14 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
+
+        setColor(color, 50);
         bufferBuilder.begin(3, DefaultVertexFormats.POSITION);
-        setColor(color, 150);
         drawCapsuleCube(boundingBox, bufferBuilder);
         tessellator.draw();
         setColor(0xFFFFFF, 255);
 
+        resetLightmap(prevStateEnabled);
         doWireEpilogue();
         doPositionEpilogue();
     }
@@ -56,7 +53,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
         int extendSize = (size - 1) / 2;
 
         int color = tileEntityCapture.getColor();
-        CaptureTESR.drawCaptureZone(relativeX, relativeY, relativeZ, size, extendSize, color);
+        CaptureTESR.drawCaptureZone(tileEntityCapture.getPos().getX(), tileEntityCapture.getPos().getY(), tileEntityCapture.getPos().getZ(), size, extendSize, color);
 
     }
 
