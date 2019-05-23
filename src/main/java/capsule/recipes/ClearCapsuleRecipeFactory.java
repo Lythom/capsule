@@ -33,7 +33,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getStackInSlot(i);
                 nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
-                if (itemstack.getItem() instanceof CapsuleItem) {
+                if (itemstack.getItem() instanceof CapsuleItem && itemstack.getItemDamage() != CapsuleItem.STATE_DEPLOYED) {
                     // Copy the capsule and give back a recovery capsule of the previous content
                     ItemStack copy = itemstack.copy();
                     CapsuleItem.setOneUse(copy);
@@ -53,7 +53,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
-                    if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
+                    if (canBeEmptyCapsule(itemstack)) {
                         sourceCapsule++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
@@ -64,6 +64,10 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
             return sourceCapsule == 1;
         }
 
+        public boolean canBeEmptyCapsule(ItemStack itemstack) {
+            return CapsuleItem.isLinkedStateCapsule(itemstack) || (itemstack.getItemDamage() == CapsuleItem.STATE_DEPLOYED && !CapsuleItem.isBlueprint(itemstack));
+        }
+
         /**
          * Returns an Item that is the result of this recipe
          */
@@ -72,7 +76,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);
 
-                    if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
+                    if (canBeEmptyCapsule(itemstack)) {
                         ItemStack copy = itemstack.copy();
                         CapsuleItem.clearCapsule(copy);
                         return copy;
