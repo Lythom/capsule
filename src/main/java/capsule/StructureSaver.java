@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -42,7 +43,7 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 public class StructureSaver {
 
@@ -244,12 +245,12 @@ public class StructureSaver {
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size())
             return false;
-        Stream<String> tempTemplateSorted = tempTemplate.blocks.stream().map(b -> b.blockState.toString()).sorted();
-        Stream<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.toString()).sorted();
-        boolean blueprintMatch = true;
-        Iterator<String> iter1 = tempTemplateSorted.iterator(), iter2 = blueprintTemplateSorted.iterator();
-        while (iter1.hasNext() && iter2.hasNext())
-            if (!iter1.next().equals(iter2.next())) blueprintMatch = false;
+
+        List<String> tempTemplateSorted = tempTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
+        List<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName()+ "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
+        boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
+                .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
+
         if (blueprintMatch) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -273,10 +274,13 @@ public class StructureSaver {
         blueprintTemplate.blocks.forEach(block -> {
             // Note: tile entities not supported so nbt data is not used here
             Block b = block.blockState.getBlock();
+
             ItemStackKey stack = new ItemStackKey(new ItemStack(Item.getItemFromBlock(b), 1, b.damageDropped(block.blockState)));
-            Integer currValue = list.get(stack);
-            if (currValue == null) currValue = 0;
-            list.put(stack, currValue + 1);
+            if (stack.itemStack.getItem() != Items.AIR) {
+                Integer currValue = list.get(stack);
+                if (currValue == null) currValue = 0;
+                list.put(stack, currValue + 1);
+            }
         });
         // Note: entities not supportes so no entities check
         return list;

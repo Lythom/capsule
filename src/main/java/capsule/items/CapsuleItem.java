@@ -504,9 +504,9 @@ public class CapsuleItem extends Item {
 
         if (isBlueprint(capsule)) {
             if (capsule.getItemDamage() == STATE_DEPLOYED) {
-                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.upgraded"));
+                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.blueprint_use_uncharged").replace("\\n", "\n"));
             } else {
-                tooltip.add(TextFormatting.WHITE + "* " + "Right click: to deploy");
+                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.blueprint_use_charged").replace("\\n", "\n"));
             }
         }
         if (flagIn == ITooltipFlag.TooltipFlags.ADVANCED) {
@@ -517,6 +517,9 @@ public class CapsuleItem extends Item {
                 tooltip.add(TextFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule));
             }
             tooltip.add(TextFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule)));
+            PlacementSettings p = getPlacement(capsule);
+            tooltip.add(TextFormatting.GOLD + "⌯ Symmetry: " + getMirrorLabel(p));
+            tooltip.add(TextFormatting.GOLD + "⟳ Rotation: " + getRotationLabel(p));
         }
     }
 
@@ -541,10 +544,26 @@ public class CapsuleItem extends Item {
         ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
         if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
             CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
-            if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
-                // try to get the preview from server
-                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+            askPreviewIfNeeded(stack);
+        }
+    }
+
+    @SubscribeEvent
+    public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
+        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_BLUEPRINT) {
+            if (!event.getWorld().isRemote) { // prevent action to be triggered on server + on client
+                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                askPreviewIfNeeded(stack);
             }
+            event.setCanceled(true);
+        }
+    }
+
+    public void askPreviewIfNeeded(ItemStack stack) {
+        if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
+            // try to get the preview from server
+            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
         }
     }
 
@@ -1130,5 +1149,26 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().removeTag("sourceInventory");
     }
 
+
+    static public String getMirrorLabel(PlacementSettings placement) {
+        switch (placement.getMirror()) {
+            case FRONT_BACK:
+                return TextFormatting.STRIKETHROUGH + "[ ]";
+            case LEFT_RIGHT:
+                return "[I]";
+        }
+        return "[ ]";
+    }
+    static public String getRotationLabel(PlacementSettings placement) {
+        switch (placement.getRotation()) {
+            case CLOCKWISE_90:
+                return "90";
+            case CLOCKWISE_180:
+                return "180";
+            case COUNTERCLOCKWISE_90:
+                return "270";
+        }
+        return "0";
+    }
 
 }

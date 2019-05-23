@@ -87,6 +87,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
          */
         public ItemStack getCraftingResult(InventoryCrafting inv) {
             String templateStructure = null;
+            Integer templateSize = null;
             ItemStack blueprintCapsule = null;
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
@@ -95,6 +96,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                         blueprintCapsule = itemstack.copy();
                     } else if (CapsuleItem.hasStructureLink(itemstack)) {
                         templateStructure = CapsuleItem.getStructureName(itemstack);
+                        templateSize = CapsuleItem.getSize(itemstack);
                     }
                 }
             }
@@ -104,6 +106,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                 blueprintCapsule.getTagCompound().removeTag("occupiedSpawnPositions");
                 blueprintCapsule.getTagCompound().removeTag("spawnPosition");
                 CapsuleItem.setState(blueprintCapsule, STATE_DEPLOYED);
+                CapsuleItem.setSize(blueprintCapsule, templateSize);
                 return blueprintCapsule;
             }
             return ItemStack.EMPTY;
