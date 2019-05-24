@@ -221,10 +221,6 @@ public class CapsuleItem extends Item {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
-        String prevName = CapsuleItem.getStructureName(capsule);
-        if (prevName != null) {
-            capsule.getTagCompound().setString("prevStructureName", CapsuleItem.getStructureName(capsule));
-        }
         capsule.getTagCompound().setString("structureName", structureName);
     }
 

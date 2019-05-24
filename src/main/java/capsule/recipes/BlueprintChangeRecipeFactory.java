@@ -95,6 +95,9 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                 }
             }
             if (templateStructure != null && blueprintCapsule != null) {
+                if (blueprintCapsule.getTagCompound() != null) {
+                    blueprintCapsule.getTagCompound().setString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
+                }
                 CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
                 CapsuleItem.setState(blueprintCapsule, CapsuleItem.STATE_DEPLOYED);
                 CapsuleItem.setSize(blueprintCapsule, templateSize);
