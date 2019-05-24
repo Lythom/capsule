@@ -18,6 +18,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -34,7 +35,7 @@ import static capsule.client.RendererUtils.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 public class CapsulePreviewHandler {
-    public static final Map<String, List<BlockPos>> currentPreview = new HashMap<>();
+    public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
     private int lastSize = 0;
     private int lastColor = 0;
 
@@ -105,24 +106,34 @@ public class CapsulePreviewHandler {
                 || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getItemDamage() != CapsuleItem.STATE_DEPLOYED)
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
-            RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks);
+            RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTagCompound().getString("structureName");
 
+                AxisAlignedBB errorBoundingBox = new AxisAlignedBB(
+                        0,
+                        +0.01,
+                        0,
+                        1.01,
+                        1.01,
+                        1.01);
+
                 synchronized (CapsulePreviewHandler.currentPreview) {
                     if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
 
-                        List<BlockPos> blockspos = new ArrayList<>();
+                        List<AxisAlignedBB> blockspos = new ArrayList<>();
                         if (size > 1) {
                             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
                         } else if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
                             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                            blockspos.add(rtc.getBlockPos().subtract(destOriginPos));
+                            BlockPos pos = rtc.getBlockPos().subtract(destOriginPos);
+                            blockspos.add(new AxisAlignedBB(pos, pos));
                         }
                         if (blockspos.isEmpty()) {
-                            blockspos.add(new BlockPos(extendSize, 0, extendSize));
+                            BlockPos pos = new BlockPos(extendSize, 0, extendSize);
+                            blockspos.add(new AxisAlignedBB(pos, pos));
                         }
 
                         doPositionPrologue();
@@ -130,35 +141,41 @@ public class CapsulePreviewHandler {
                         Tessellator tessellator = Tessellator.getInstance();
                         BufferBuilder bufferBuilder = tessellator.getBuffer();
 
-                        AxisAlignedBB boundingBox = new AxisAlignedBB(
-                                0,
-                                +0.01,
-                                0,
-                                1,
-                                1,
-                                1);
-
                         PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
 
-                        for (BlockPos blockpos : blockspos) {
-                            BlockPos destBlock = CapsuleTemplate.transformedBlockPos(placement, blockpos)
-                                    .add(destOriginPos)
-                                    .add(recenterRotation(extendSize, placement));
+                        for (AxisAlignedBB bb : blockspos) {
+                            BlockPos recenter = recenterRotation(extendSize, placement);
+                            AxisAlignedBB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
+                                    .offset(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
+                                    .offset(recenter.getX(), recenter.getY(), recenter.getZ())
+                                    .expand(1, 1, 1);
+
                             int color = 0xDDDDDD;
-                            GL11.glLineWidth(2.0F);
                             if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
                                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
                                 GL11.glLineWidth(5.0F);
                                 color = CapsuleItem.getBaseColor(heldItemMainhand);
-                            } else if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(destBlock).getBlock())) {
-                                color = 0xaa0000;
-                                GL11.glLineWidth(5.0F);
+                            } else {
+                                for (double j = dest.minZ; j <= dest.maxZ; ++j) {
+                                    for (double k = dest.minY; k <= dest.maxY; ++k) {
+                                        for (double l = dest.minX; l <= dest.maxX; ++l) {
+                                            BlockPos pos = new BlockPos(l, k, j);
+                                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
+                                                GL11.glLineWidth(5.0F);
+                                                bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
+                                                setColor(0xaa0000, 50);
+                                                drawCapsuleCube(errorBoundingBox.offset(pos), bufferBuilder);
+                                                tessellator.draw();
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            AxisAlignedBB bb = boundingBox.offset(destBlock);
 
+                            GL11.glLineWidth(1.0F);
                             bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
                             setColor(color, 50);
-                            drawCapsuleCube(bb, bufferBuilder);
+                            drawCapsuleCube(dest, bufferBuilder);
                             tessellator.draw();
                         }
 

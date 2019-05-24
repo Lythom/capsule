@@ -407,7 +407,7 @@ public class CapsuleCommand extends CommandBase {
         }
         if (player != null) {
             if (!server.isDedicatedServer()) {
-                RayTraceResult rtc = Helpers.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks());
+                RayTraceResult rtc = Helpers.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
 
                 if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
 

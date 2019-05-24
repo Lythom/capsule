@@ -6,14 +6,21 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.template.Template;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Helpers {
 
@@ -44,8 +51,8 @@ public class Helpers {
         return !entity.isOffsetPositionInLiquid(0, 1.5, 0);
     }
 
-    public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks) {
-        int blockReachDistance = 18;
+    public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks, int size) {
+        int blockReachDistance = 18 + size;
         Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
         Vec3d vec3d1 = thePlayer.getLook(partialTicks);
         Vec3d vec3d2 = vec3d.addVector(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
@@ -156,6 +163,76 @@ public class Helpers {
         }
         return blocksNames;
 
+    }
+
+    public static List<AxisAlignedBB> mergeVoxels(List<Template.BlockInfo> blocks) {
+
+        Map<BlockPos, Template.BlockInfo> blocksByPos = new HashMap<>();
+        Map<BlockPos, StructureBoundingBox> bbByPos = new HashMap<>();
+        blocks.forEach(b -> blocksByPos.put(b.pos, b));
+
+        blocks.forEach(block -> {
+            BlockPos destPos = block.pos;
+            BlockPos below = block.pos.add(0, -1, 0);
+            if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).blockState.getBlock() == block.blockState.getBlock()) {
+                // extend the below BB to current
+                StructureBoundingBox bb = bbByPos.get(below);
+                bb.maxY++;
+                bbByPos.put(destPos, bb);
+            } else {
+                // start a new column
+                StructureBoundingBox column = new StructureBoundingBox(block.pos, block.pos);
+                bbByPos.put(destPos, column);
+            }
+        });
+        final List<StructureBoundingBox> allBB = bbByPos.values().stream().distinct().collect(Collectors.toList());
+
+        // Merge X
+        List<StructureBoundingBox> toRemove = new ArrayList<>();
+        allBB.forEach(bb -> {
+            if (!toRemove.contains(bb)) {
+                StructureBoundingBox matchingBB = findMatchingExpandingX(bb, allBB);
+                while (matchingBB != null) {
+                    toRemove.add(matchingBB);
+                    bb.expandTo(matchingBB);
+                    matchingBB = findMatchingExpandingX(bb, allBB);
+                }
+            }
+        });
+        allBB.removeAll(toRemove);
+        toRemove.clear();
+
+        // Merge Z
+        allBB.forEach(bb -> {
+            if (!toRemove.contains(bb)) {
+                StructureBoundingBox matchingBB = findMatchingExpandingZ(bb, allBB);
+                while (matchingBB != null) {
+                    toRemove.add(matchingBB);
+                    bb.expandTo(matchingBB);
+                    matchingBB = findMatchingExpandingZ(bb, allBB);
+                }
+            }
+        });
+        allBB.removeAll(toRemove);
+
+        return allBB.stream().map(bb -> new AxisAlignedBB(
+                new BlockPos(bb.minX, bb.minY, bb.minZ),
+                new BlockPos(bb.maxX, bb.maxY, bb.maxZ)
+        )).collect(Collectors.toList());
+    }
+
+    private static StructureBoundingBox findMatchingExpandingX(final StructureBoundingBox bb, final List<StructureBoundingBox> allBB) {
+        return allBB.stream()
+                .filter(candidate -> candidate != bb && candidate.minY == bb.minY && candidate.maxY == bb.maxY && candidate.minZ == bb.minZ && candidate.maxZ == bb.maxZ && candidate.minX == bb.maxX + 1)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static StructureBoundingBox findMatchingExpandingZ(final StructureBoundingBox bb, final List<StructureBoundingBox> allBB) {
+        return allBB.stream()
+                .filter(candidate -> candidate != bb && candidate.minY == bb.minY && candidate.maxY == bb.maxY && candidate.minX == bb.minX && candidate.maxX == bb.maxX && candidate.minZ == bb.maxZ + 1)
+                .findFirst()
+                .orElse(null);
     }
 
 }

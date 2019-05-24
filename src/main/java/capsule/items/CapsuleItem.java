@@ -684,7 +684,7 @@ public class CapsuleItem extends Item {
             // client side, if is going to get activated, ask for server preview
             if (!isInstantAndUndeployed(capsule)
                     && (capsule.getItemDamage() == STATE_LINKED || capsule.getItemDamage() == STATE_ONE_USE)) {
-                RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+                RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
                 if (dest != null) {
                     CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTagCompound().getString("structureName")));
@@ -693,7 +693,7 @@ public class CapsuleItem extends Item {
 
             // client side, is deployable, ask for the server a throw at position
             if (isInstantAndUndeployed(capsule)) {
-                RayTraceResult rtr = Helpers.clientRayTracePreview(playerIn, 0);
+                RayTraceResult rtr = Helpers.clientRayTracePreview(playerIn, 0, getSize(capsule));
                 BlockPos dest = null;
                 if (rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK) {
                     if (capsule.getItemDamage() == STATE_EMPTY) {
@@ -706,7 +706,7 @@ public class CapsuleItem extends Item {
                     CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
                 }
             } else if (isActivated(capsule)) {
-                RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0) : null;
+                RayTraceResult rtr = hasStructureLink(capsule) ? Helpers.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.typeOfHit == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().add(rtr.sideHit.getDirectionVec()) : null;
                 CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }

@@ -1,5 +1,6 @@
 package capsule.network.server;
 
+import capsule.Helpers;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleContentPreviewAnswerToClient;
@@ -7,12 +8,11 @@ import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
@@ -20,7 +20,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -76,17 +75,20 @@ public class CapsuleContentPreviewQueryHandler
         CapsuleTemplate template = templatepair.getRight();
 
         if (template != null) {
-            List<Template.BlockInfo> blocksInfos = template.blocks;
-            List<BlockPos> blockspos = new ArrayList<>();
-            for (Template.BlockInfo blockInfo : blocksInfos) {
-                if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {
-                    blockspos.add(blockInfo.pos);
-                }
-            }
+            List<AxisAlignedBB> blockspos = Helpers.mergeVoxels(template.blocks);
+//            List<BlockPos> blockspos = new ArrayList<>();
+//            for (Template.BlockInfo blockInfo : blocksInfos) {
+//                if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {
+//                    blockspos.add(blockInfo.pos);
+//                }
+
+
+            // optimize blockpos to reduce workload
+
 
             return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 
-        } else if (heldItem.hasTagCompound()){
+        } else if (heldItem.hasTagCompound()) {
             //noinspection ConstantConditions
             String structureName = heldItem.getTagCompound().getString("structureName");
             sendingPlayer.sendMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));

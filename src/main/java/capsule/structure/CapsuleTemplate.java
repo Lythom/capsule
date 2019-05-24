@@ -70,6 +70,13 @@ public class CapsuleTemplate {
         return transformedBlockPos(pos, placementIn.getMirror(), placementIn.getRotation());
     }
 
+    public static AxisAlignedBB transformedAxisAlignedBB(PlacementSettings placementIn, AxisAlignedBB bb) {
+        return new AxisAlignedBB(
+                transformedBlockPos(new BlockPos(bb.minX,bb.minY, bb.minZ), placementIn.getMirror(), placementIn.getRotation()),
+                transformedBlockPos(new BlockPos(bb.maxX,bb.maxY, bb.maxZ), placementIn.getMirror(), placementIn.getRotation())
+        );
+    }
+
     private void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities) {
         for (Template.EntityInfo template$entityinfo : this.entities) {
             BlockPos blockpos = transformedBlockPos(template$entityinfo.blockPos, mirrorIn, rotationIn).add(pos).add(recenterRotation((size.getX() - 1) / 2, mirrorIn, rotationIn));

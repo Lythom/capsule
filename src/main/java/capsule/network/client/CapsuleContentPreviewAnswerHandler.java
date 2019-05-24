@@ -32,7 +32,7 @@ public class CapsuleContentPreviewAnswerHandler implements IMessageHandler<Capsu
         }
 
         synchronized (CapsulePreviewHandler.currentPreview) {
-            CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBlockPositions());
+            CapsulePreviewHandler.currentPreview.put(message.getStructureName(), message.getBoundingBoxes());
         }
 
         return null;
