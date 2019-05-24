@@ -231,6 +231,7 @@ public class StructureSaver {
                 templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
             }
         } else {
+            LOGGER.error("Couldn't write template " + capsuleStructureId);
             if (player != null) {
                 player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
             }
@@ -284,9 +285,11 @@ public class StructureSaver {
     @Nullable
     public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver) {
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-        if (minecraftserver == null) return null;
         CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-        if (templatemanager == null) return null;
+        if (templatemanager == null) {
+            LOGGER.error("getTemplateManager returned null");
+            return null;
+        }
         CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(CapsuleItem.getStructureName(blueprint)));
         if (blueprintTemplate == null) return null;
         Map<ItemStackKey, Integer> list = new HashMap<>();

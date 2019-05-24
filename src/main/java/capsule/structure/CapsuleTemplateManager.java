@@ -193,6 +193,7 @@ public class CapsuleTemplateManager
             }
             catch (Throwable var13)
             {
+                LOGGER.error(var13);
                 flag = false;
             }
             finally
