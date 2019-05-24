@@ -43,7 +43,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
         try {
             // these methods may also be of use for your code:
             // for Itemstacks - ByteBufUtils.readItemStack()
-            // for NBT tags ByteBufUtils.readTag();
+            // for MinecraftNBT tags ByteBufUtils.readTag();
             // for Strings: ByteBufUtils.readUTF8String();
             this.structureName = ByteBufUtils.readUTF8String(buf);
             int size = buf.readShort();
@@ -76,7 +76,7 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
 
         // these methods may also be of use for your code:
         // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for NBT tags ByteBufUtils.writeTag();
+        // for MinecraftNBT tags ByteBufUtils.writeTag();
         // for Strings: ByteBufUtils.writeUTF8String();
         ByteBufUtils.writeUTF8String(buf, this.structureName);
         int size = Math.min(this.boundingBoxes.size(), Short.MAX_VALUE);

@@ -82,15 +82,13 @@ public class ClientProxy extends CommonProxy {
                 new ModelResourceLocation(modid + ":capsule_one_use_activated", "inventory"));
         ModelLoader.setCustomModelResourceLocation(CapsuleItems.capsule, CapsuleItem.STATE_BLUEPRINT,
                 new ModelResourceLocation(modid + ":capsule_blueprint", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(CapsuleItems.capsule, CapsuleItem.STATE_BLUEPRINT_ACTIVATED,
-                new ModelResourceLocation(modid + ":capsule_blueprint_activated", "inventory"));
 
         // Item renderer
         ModelBakery.registerItemVariants(CapsuleItems.capsule, new ResourceLocation(modid + ":capsule_empty"),
                 new ResourceLocation(modid + ":capsule_activated"), new ResourceLocation(modid + ":capsule_linked"),
                 new ResourceLocation(modid + ":capsule_deployed"), new ResourceLocation(modid + ":capsule_empty_activated"),
                 new ResourceLocation(modid + ":capsule_one_use"), new ResourceLocation(modid + ":capsule_one_use_activated"),
-                new ResourceLocation(modid + ":capsule_blueprint"), new ResourceLocation(modid + ":capsule_blueprint_activated"));
+                new ResourceLocation(modid + ":capsule_blueprint"));
     }
 
     public void openGuiScreen(EntityPlayer playerIn) {

@@ -1,6 +1,7 @@
 package capsule;
 
 import capsule.items.CapsuleItem;
+import capsule.items.CapsuleItems;
 import capsule.loot.LootPathData;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
@@ -647,6 +648,32 @@ public class StructureSaver {
             capsuleSavedData.setDirty(true);
         }
         return capsuleSavedData;
+    }
+
+    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldIn, EntityPlayer playerIn, String sourceStructureName) {
+        WorldServer worldServer = worldIn;
+        String destStructureName = getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
+        ItemStack source = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_LINKED);
+        CapsuleItem.setStructureName(source, sourceStructureName);
+        if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(source);
+        boolean created = copyFromCapsuleTemplate(
+                worldServer,
+                source,
+                getTemplateManager(worldServer),
+                destStructureName
+        );
+
+        // try to cleanup previous template to save disk space on the long run
+        if (capsule.getTagCompound().hasKey("prevStructureName")) {
+            CapsuleTemplateManager tm = getTemplateManager(worldServer);
+            if (tm != null)
+                tm.deleteTemplate(worldServer.getMinecraftServer(), new ResourceLocation(capsule.getTagCompound().getString("prevStructureName")));
+        }
+
+        if (!created && playerIn != null) {
+            playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintCreationError"));
+        }
+        return destStructureName;
     }
 
     public static class ItemStackKey {

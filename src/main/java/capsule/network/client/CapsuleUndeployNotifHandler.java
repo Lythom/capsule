@@ -1,7 +1,6 @@
 package capsule.network.client;
 
-import capsule.client.CapsulePreviewHandler;
-import capsule.items.CapsuleItem;
+import capsule.helpers.Capsule;
 import capsule.network.CapsuleUndeployNotifToClient;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -33,7 +32,7 @@ public class CapsuleUndeployNotifHandler implements IMessageHandler<CapsuleUndep
             return null;
         }
 
-        CapsuleItem.showUndeployParticules(Minecraft.getMinecraft().world, message.posFrom, message.posTo, message.size);
+        Capsule.showUndeployParticules(Minecraft.getMinecraft().world, message.posFrom, message.posTo, message.size);
 
         return null;
     }

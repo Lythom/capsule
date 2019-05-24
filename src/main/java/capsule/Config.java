@@ -1,5 +1,6 @@
 package capsule;
 
+import capsule.helpers.Serialization;
 import capsule.loot.LootPathData;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
@@ -63,17 +64,17 @@ public class Config {
         Block[] defaultExcludedBlocks = new Block[]{Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME};
 
         String[] excludedBlocksOP = ArrayUtils.addAll(
-                Helpers.serializeBlockArray(defaultExcludedBlocksOP),
+                Serialization.serializeBlockArray(defaultExcludedBlocksOP),
                 "ic2:te",
                 "bloodmagic:alchemy_table");
         String[] excludedBlocks = ArrayUtils.addAll(
-                Helpers.serializeBlockArray(defaultExcludedBlocks),
+                Serialization.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOP
         );
         Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks", excludedBlocks);
         excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
         Block[] exBlocks = null;
-        exBlocks = Helpers.deserializeBlockArray(excludedBlocksProp.getStringList());
+        exBlocks = Serialization.deserializeBlockArray(excludedBlocksProp.getStringList());
         Config.excludedBlocks = Arrays.asList(exBlocks);
 
         // OP Excluded
@@ -81,7 +82,7 @@ public class Config {
         opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
         Block[] opExBlocks = null;
 
-        opExBlocks = Helpers.deserializeBlockArray(opExcludedBlocksProp.getStringList());
+        opExBlocks = Serialization.deserializeBlockArray(opExcludedBlocksProp.getStringList());
         Config.opExcludedBlocks = Arrays.asList(opExBlocks);
 
 
@@ -105,14 +106,14 @@ public class Config {
                 "Balancing",
                 "overridableBlocks",
                 ArrayUtils.addAll(
-                        Helpers.serializeBlockArray(defaultOverridable),
+                        Serialization.serializeBlockArray(defaultOverridable),
                         dynamicOverridable)
 
         );
         overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
 
         Block[] ovBlocks = null;
-        ovBlocks = Helpers.deserializeBlockArray(overridableBlocksProp.getStringList());
+        ovBlocks = Serialization.deserializeBlockArray(overridableBlocksProp.getStringList());
         Config.overridableBlocks = Arrays.asList(ovBlocks);
     }
 

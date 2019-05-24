@@ -1,6 +1,6 @@
 package capsule.recipes;
 
-import capsule.Helpers;
+import capsule.helpers.MinecraftNBT;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
@@ -69,8 +69,8 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
                         item = (CapsuleItem) itemstack1.getItem();
                         itemstack = itemstack1.copy();
 
-                        if (Helpers.hasColor(itemstack1)) {
-                            int l = Helpers.getColor(itemstack);
+                        if (MinecraftNBT.hasColor(itemstack1)) {
+                            int l = MinecraftNBT.getColor(itemstack);
                             float f = (float) (l >> 16 & 255) / 255.0F;
                             float f1 = (float) (l >> 8 & 255) / 255.0F;
                             float f2 = (float) (l & 255) / 255.0F;
@@ -111,7 +111,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
                 k1 = (int) ((float) k1 * f3 / f4);
                 int lvt_12_3_ = (i1 << 8) + j1;
                 lvt_12_3_ = (lvt_12_3_ << 8) + k1;
-                Helpers.setColor(itemstack, lvt_12_3_);
+                MinecraftNBT.setColor(itemstack, lvt_12_3_);
                 return itemstack;
             }
         }

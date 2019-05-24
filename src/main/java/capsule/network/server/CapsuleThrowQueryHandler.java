@@ -1,6 +1,7 @@
 package capsule.network.server;
 
 import capsule.CommonProxy;
+import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
 import capsule.network.CapsuleUndeployNotifToClient;
@@ -70,7 +71,7 @@ public class CapsuleThrowQueryHandler
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
                     if (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
-                        boolean captured = CapsuleItem.captureAtPosition(sendingPlayer.getName(), heldItem, size, world, message.pos);
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getName(), size, world, message.pos);
                         if (captured) {
                             BlockPos center = message.pos.add(0, size / 2, 0);
                             CommonProxy.simpleNetworkWrapper.sendToAllAround(
@@ -81,10 +82,10 @@ public class CapsuleThrowQueryHandler
                     }
                     // instant deployment
                     else {
-                        boolean deployed = CapsuleItem.deployCapsule(message.pos.add(0, -1, 0), sendingPlayer.getName(), heldItem, extendLength, world);
+                        boolean deployed = Capsule.deployCapsule(heldItem, message.pos.add(0, -1, 0), sendingPlayer.getName(), extendLength, world);
                         if (deployed) {
                             world.playSound(null, message.pos, SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
-                            CapsuleItem.showDeployParticules(world, message.pos, size);
+                            Capsule.showDeployParticules(world, message.pos, size);
                         }
                         if (deployed && CapsuleItem.isOneUse(heldItem)) {
                             heldItem.shrink(1);
@@ -92,7 +93,7 @@ public class CapsuleThrowQueryHandler
                     }
                 }
                 if (!message.instant) {
-                    CapsuleItem.throwCapsule(heldItem, sendingPlayer, message.pos);
+                    Capsule.throwCapsule(heldItem, sendingPlayer, message.pos);
                 }
             }
         });

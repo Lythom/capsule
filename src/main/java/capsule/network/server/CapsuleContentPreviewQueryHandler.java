@@ -1,7 +1,7 @@
 package capsule.network.server;
 
-import capsule.Helpers;
 import capsule.StructureSaver;
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.CapsuleContentPreviewQueryToServer;
@@ -12,7 +12,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
@@ -75,7 +74,7 @@ public class CapsuleContentPreviewQueryHandler
         CapsuleTemplate template = templatepair.getRight();
 
         if (template != null) {
-            List<AxisAlignedBB> blockspos = Helpers.mergeVoxels(template.blocks);
+            List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.blocks);
 //            List<BlockPos> blockspos = new ArrayList<>();
 //            for (Template.BlockInfo blockInfo : blocksInfos) {
 //                if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {

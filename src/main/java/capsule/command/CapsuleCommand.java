@@ -1,8 +1,9 @@
 package capsule.command;
 
 import capsule.Config;
-import capsule.Helpers;
 import capsule.StructureSaver;
+import capsule.helpers.Capsule;
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
@@ -180,7 +181,7 @@ public class CapsuleCommand extends CommandBase {
 
     private void executeGiveEmpty(String[] args, EntityPlayerMP player) {
         if (player != null) {
-            ItemStack capsule = CapsuleItem.createEmptyCapsule(
+            ItemStack capsule = Capsule.createEmptyCapsule(
                     0xFFFFFF,
                     0xFFFFFF,
                     (args.length >= 2 ? Integer.decode(args[1]) : 3),
@@ -229,7 +230,7 @@ public class CapsuleCommand extends CommandBase {
                 if (size % 2 == 1)
                     size++;
 
-                ItemStack capsule = CapsuleItem.createRewardCapsule(
+                ItemStack capsule = Capsule.createRewardCapsule(
                         stucturePath,
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
@@ -270,7 +271,7 @@ public class CapsuleCommand extends CommandBase {
                 destTemplate.read(data);
                 destManager.writeTemplate(server, destinationLocation);
 
-                ItemStack capsule = CapsuleItem.createRewardCapsule(
+                ItemStack capsule = Capsule.createRewardCapsule(
                         destinationLocation.toString(),
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
@@ -309,7 +310,7 @@ public class CapsuleCommand extends CommandBase {
                 String destinationTemplateLocation = Config.rewardTemplatesPath + "/" + outputName;
                 StructureSaver.copyFromCapsuleTemplate(player.getServerWorld(), heldItem, StructureSaver.getRewardManager(server), destinationTemplateLocation);
 
-                ItemStack capsule = CapsuleItem.createRewardCapsule(
+                ItemStack capsule = Capsule.createRewardCapsule(
                         destinationTemplateLocation,
                         CapsuleItem.getBaseColor(heldItem),
                         CapsuleItem.getMaterialColor(heldItem),
@@ -407,7 +408,7 @@ public class CapsuleCommand extends CommandBase {
         }
         if (player != null) {
             if (!server.isDedicatedServer()) {
-                RayTraceResult rtc = Helpers.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
+                RayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
 
                 if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
 

@@ -1,6 +1,7 @@
 package capsule.network.server;
 
 import capsule.StructureSaver;
+import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -70,7 +71,7 @@ public class CapsuleLeftClickQueryHandler
             if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
                 if (stack.getItemDamage() == STATE_DEPLOYED) {
                     // Reload if no missing materials
-                    Map<StructureSaver.ItemStackKey, Integer> missing = CapsuleItem.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
+                    Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
                     if (missing.size() > 0) {
                         String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n* "));
                         sendingPlayer.sendMessage(new TextComponentTranslation(
@@ -91,10 +92,10 @@ public class CapsuleLeftClickQueryHandler
                                 placement.setMirror(Mirror.FRONT_BACK);
                                 break;
                         }
-                        sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + CapsuleItem.getMirrorLabel(placement)));
+                        sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
                     } else {
                         placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                        sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + CapsuleItem.getRotationLabel(placement)));
+                        sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
                     }
                     setPlacement(stack, placement);
                 }

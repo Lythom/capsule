@@ -33,7 +33,7 @@ public class CapsuleThrowQueryToServer implements IMessage {
         try {
             // these methods may also be of use for your code:
             // for Itemstacks - ByteBufUtils.readItemStack()
-            // for NBT tags ByteBufUtils.readTag();
+            // for MinecraftNBT tags ByteBufUtils.readTag();
             // for Strings: ByteBufUtils.readUTF8String();
             this.instant = buf.readBoolean();
             boolean hasPos = buf.readBoolean();
@@ -57,7 +57,7 @@ public class CapsuleThrowQueryToServer implements IMessage {
 
         // these methods may also be of use for your code:
         // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for NBT tags ByteBufUtils.writeTag();
+        // for MinecraftNBT tags ByteBufUtils.writeTag();
         // for Strings: ByteBufUtils.writeUTF8String();
         buf.writeBoolean(this.instant);
         boolean hasPos = this.pos != null;

@@ -1,9 +1,9 @@
 package capsule.client;
 
 import capsule.Config;
-import capsule.Helpers;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.client.Minecraft;
@@ -18,7 +18,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -102,11 +101,10 @@ public class CapsulePreviewHandler {
                 && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
                 || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
-                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT_ACTIVATED
                 || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getItemDamage() != CapsuleItem.STATE_DEPLOYED)
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
-            RayTraceResult rtc = Helpers.clientRayTracePreview(thePlayer, partialTicks, size);
+            RayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
@@ -266,7 +264,7 @@ public class CapsulePreviewHandler {
     private void setCaptureTESizeColor(int size, int color, World worldIn) {
         if (size == lastSize && color == lastColor) return;
 
-        // change NBT of all existing TileEntityCapture in the world to make them display the preview zone
+        // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone
         // remember it's client side only
         for (TileEntityCapture te : TileEntityCapture.instances) {
             if (te.getWorld() == worldIn) {

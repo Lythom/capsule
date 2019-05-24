@@ -1,5 +1,6 @@
 package capsule.enchantments;
 
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
@@ -68,7 +69,7 @@ public class RecallEnchant extends Enchantment {
         @SuppressWarnings("unchecked")
         List<EntityItem> recallEntities = world.<EntityItem>getEntities(EntityItem.class, Enchantments.hasRecallEnchant::test);
         for (EntityItem entity : recallEntities) {
-            if (entity.getThrower() != null && (entity.collided || CapsuleItem.entityItemShouldAndCollideLiquid(entity))) {
+            if (entity.getThrower() != null && (entity.collided || Spacial.entityItemShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.onUpdate();

@@ -12,8 +12,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.crafting.IRecipeFactory;
 import net.minecraftforge.common.crafting.JsonContext;
 
-import static capsule.items.CapsuleItem.STATE_DEPLOYED;
-
 public class BlueprintChangeRecipeFactory implements IRecipeFactory {
 
     @Override
@@ -29,7 +27,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
         }
 
         public ItemStack getRecipeOutput() {
-            ItemStack bp = new ItemStack(CapsuleItems.capsule, 1, STATE_DEPLOYED);
+            ItemStack bp = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_DEPLOYED);
             CapsuleItem.setBlueprint(bp);
             CapsuleItem.setBaseColor(bp, 3949738);
             CapsuleItem.setStructureName(bp, "blueprintExampleStructureName");
@@ -73,7 +71,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                         blueprint++;
 
                         // Any capsule having a template is valid except Deployed capsules (empty template) unless it is a blueprint (template never empty)
-                    } else if (CapsuleItem.hasStructureLink(itemstack) && (STATE_DEPLOYED != itemstack.getMetadata() || CapsuleItem.isBlueprint(itemstack))) {
+                    } else if (CapsuleItem.hasStructureLink(itemstack) && (CapsuleItem.STATE_DEPLOYED != itemstack.getMetadata() || CapsuleItem.isBlueprint(itemstack))) {
                         sourceCapsule++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
@@ -103,12 +101,10 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                 }
             }
             if (templateStructure != null && blueprintCapsule != null) {
-                blueprintCapsule.getTagCompound().setString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
                 CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
-                blueprintCapsule.getTagCompound().removeTag("occupiedSpawnPositions");
-                blueprintCapsule.getTagCompound().removeTag("spawnPosition");
-                CapsuleItem.setState(blueprintCapsule, STATE_DEPLOYED);
+                CapsuleItem.setState(blueprintCapsule, CapsuleItem.STATE_DEPLOYED);
                 CapsuleItem.setSize(blueprintCapsule, templateSize);
+                CapsuleItem.cleanDeploymentTags(blueprintCapsule);
                 return blueprintCapsule;
             }
             return ItemStack.EMPTY;

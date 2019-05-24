@@ -2,7 +2,7 @@ package capsule.loot;
 
 import capsule.Config;
 import capsule.StructureSaver;
-import capsule.items.CapsuleItem;
+import capsule.helpers.Capsule;
 import capsule.structure.CapsuleTemplate;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
@@ -63,7 +63,7 @@ public class CapsuleLootEntry extends LootEntry {
                 if (path.length == 0)
                     return;
 
-                ItemStack capsule = CapsuleItem.createRewardCapsule(
+                ItemStack capsule = Capsule.createRewardCapsule(
                         templatePath,
                         getRandomColor(),
                         getRandomColor(),
