@@ -308,7 +308,7 @@ public class CapsuleCommand extends CommandBase {
                 }
 
                 String destinationTemplateLocation = Config.rewardTemplatesPath + "/" + outputName;
-                StructureSaver.copyFromCapsuleTemplate(player.getServerWorld(), heldItem, StructureSaver.getRewardManager(server), destinationTemplateLocation);
+                StructureSaver.copyFromCapsuleTemplate(player.getServerWorld(), heldItem, StructureSaver.getRewardManager(server), destinationTemplateLocation, null);
 
                 ItemStack capsule = Capsule.createRewardCapsule(
                         destinationTemplateLocation,

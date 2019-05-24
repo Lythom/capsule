@@ -7,6 +7,9 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.common.base.Strings;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockDoublePlant;
+import net.minecraft.block.BlockPistonExtension;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -248,7 +251,7 @@ public class StructureSaver {
             return false;
 
         List<String> tempTemplateSorted = tempTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
-        List<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName()+ "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
+        List<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
@@ -272,17 +275,36 @@ public class StructureSaver {
         CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(CapsuleItem.getStructureName(blueprint)));
         if (blueprintTemplate == null) return null;
         Map<ItemStackKey, Integer> list = new HashMap<>();
-        blueprintTemplate.blocks.forEach(block -> {
-            // Note: tile entities not supported so nbt data is not used here
-            Block b = block.blockState.getBlock();
 
-            ItemStackKey stack = new ItemStackKey(new ItemStack(Item.getItemFromBlock(b), 1, b.damageDropped(block.blockState)));
-            if (stack.itemStack.getItem() != Items.AIR) {
-                Integer currValue = list.get(stack);
-                if (currValue == null) currValue = 0;
-                list.put(stack, currValue + 1);
+        boolean doorCountedOnce = false;
+        for (Template.BlockInfo block : blueprintTemplate.blocks) {// Note: tile entities not supported so nbt data is not used here
+            Block b = block.blockState.getBlock();
+            ItemStack itemStack = ItemStack.EMPTY;
+            try {
+                // prevent door to beeing counted twice
+                if (b instanceof BlockDoor) {
+                    if (doorCountedOnce) {
+                        itemStack = ItemStack.EMPTY;
+                    } else {
+                        itemStack = b.getItem(null, null, block.blockState);
+                    }
+                    doorCountedOnce = !doorCountedOnce;
+                } else if (b instanceof BlockDoublePlant || b instanceof BlockPistonExtension) {
+                    itemStack = ItemStack.EMPTY; // free… too complicated for what it worth
+                } else {
+                    itemStack = b.getItem(null, null, block.blockState);
+                }
+            } catch (Exception e) {
+                // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
+                itemStack = new ItemStack(Item.getItemFromBlock(b), 1, b.getMetaFromState(block.blockState));
             }
-        });
+            ItemStackKey stackKey = new ItemStackKey(itemStack);
+            if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
+                Integer currValue = list.get(stackKey);
+                if (currValue == null) currValue = 0;
+                list.put(stackKey, currValue + 1);
+            }
+        }
         // Note: entities not supportes so no entities check
         return list;
     }
@@ -307,7 +329,8 @@ public class StructureSaver {
      * @param world
      * @return list of blocks that could not be removed
      */
-    public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer world, EntityPlayer player) {
+    public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, WorldServer
+            world, EntityPlayer player) {
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -367,8 +390,10 @@ public class StructureSaver {
 
     }
 
-    public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos dest, List<Block> overridableBlocks,
-                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking, PlacementSettings placementsettings) {
+    public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos
+            dest, List<Block> overridableBlocks,
+                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking, PlacementSettings
+                                         placementsettings) {
 
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
@@ -450,7 +475,8 @@ public class StructureSaver {
     /**
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
      */
-    private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate template, EntityPlayer player, PlacementSettings placementsettings) {
+    private static boolean playerCanPlace(WorldServer worldserver, BlockPos dest, CapsuleTemplate
+            template, EntityPlayer player, PlacementSettings placementsettings) {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
@@ -481,7 +507,8 @@ public class StructureSaver {
         return true;
     }
 
-    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, WorldServer playerWorld) {
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, WorldServer
+            playerWorld) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> template = null;
 
         boolean isReward = CapsuleItem.isReward(capsule);
@@ -494,7 +521,8 @@ public class StructureSaver {
         return template;
     }
 
-    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForCapsule(WorldServer playerWorld, String structureName) {
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForCapsule(WorldServer
+                                                                                              playerWorld, String structureName) {
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
         if (templatemanager == null || Strings.isNullOrEmpty(structureName)) return Pair.of(null, null);
 
@@ -502,7 +530,8 @@ public class StructureSaver {
         return Pair.of(templatemanager, template);
     }
 
-    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForReward(MinecraftServer server, String structurePath) {
+    public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForReward(MinecraftServer server, String
+            structurePath) {
         CapsuleTemplateManager templatemanager = getRewardManager(server);
         if (templatemanager == null || Strings.isNullOrEmpty(structurePath)) return Pair.of(null, null);
 
@@ -517,7 +546,8 @@ public class StructureSaver {
      *                             have to be ignored on
      * @return List<BlockPos> occupied but not blocking positions
      */
-    public static boolean isDestinationValid(CapsuleTemplate template, PlacementSettings placementIn, WorldServer destWorld, BlockPos destOriginPos, int size,
+    public static boolean isDestinationValid(CapsuleTemplate template, PlacementSettings placementIn, WorldServer
+            destWorld, BlockPos destOriginPos, int size,
                                              List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
 
         IBlockState air = Blocks.AIR.getDefaultState();
@@ -612,7 +642,8 @@ public class StructureSaver {
         return capsuleID;
     }
 
-    public static boolean copyFromCapsuleTemplate(WorldServer worldIn, ItemStack capsule, CapsuleTemplateManager destManager, String destinationStructureName) {
+    public static boolean copyFromCapsuleTemplate(WorldServer worldIn, ItemStack capsule, CapsuleTemplateManager
+            destManager, String destinationStructureName, List<String> outExcluded) {
         WorldServer worldServer = worldIn;
         MinecraftServer server = worldServer.getMinecraftServer();
         // get source template data
@@ -627,7 +658,9 @@ public class StructureSaver {
         destTemplate.read(data);
         // remove all tile entities
         List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream().filter(b -> {
-            return b.tileentityData == null;
+            boolean included = b.tileentityData == null;
+            if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
+            return included;
         }).collect(Collectors.toList());
         destTemplate.blocks.clear();
         destTemplate.blocks.addAll(newBlockList);
@@ -650,17 +683,20 @@ public class StructureSaver {
         return capsuleSavedData;
     }
 
-    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldIn, EntityPlayer playerIn, String sourceStructureName) {
+    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldIn, EntityPlayer
+            playerIn, String sourceStructureName) {
         WorldServer worldServer = worldIn;
         String destStructureName = getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
         ItemStack source = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(source, sourceStructureName);
         if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(source);
+        List<String> outExcluded = new ArrayList<>();
         boolean created = copyFromCapsuleTemplate(
                 worldServer,
                 source,
                 getTemplateManager(worldServer),
-                destStructureName
+                destStructureName,
+                outExcluded
         );
 
         // try to cleanup previous template to save disk space on the long run
@@ -672,6 +708,9 @@ public class StructureSaver {
 
         if (!created && playerIn != null) {
             playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintCreationError"));
+        }
+        if (outExcluded != null && outExcluded.size() > 0 && playerIn != null) {
+            playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)));
         }
         return destStructureName;
     }

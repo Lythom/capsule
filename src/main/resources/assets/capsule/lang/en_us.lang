@@ -25,6 +25,7 @@ capsule.error.technicalError=A technical error occured while using the Capsule M
 capsule.error.templateNotFound=Error: the capsule template file %s was not found.
 capsule.error.notAllowed=Capsules can't be used here, it might be a protected area.
 capsule.error.blueprintCreationError=An error occured during blueprint template creation. This blueprint might not work.
+capsule.error.blueprintExcluded=Some blocks are not supported in blueprints. Ignored in blueprint: %s
 capsule.error.blueprintDontMatch=Can't undeploy: you may charge the blueprint capsule, or ensure the area you want to undeploy matches the blueprint structure.
 capsule.tooltip.size=Size
 enchantment.recall=Recall

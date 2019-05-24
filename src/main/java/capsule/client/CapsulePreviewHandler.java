@@ -154,9 +154,9 @@ public class CapsulePreviewHandler {
                                 GL11.glLineWidth(5.0F);
                                 color = CapsuleItem.getBaseColor(heldItemMainhand);
                             } else {
-                                for (double j = dest.minZ; j <= dest.maxZ; ++j) {
-                                    for (double k = dest.minY; k <= dest.maxY; ++k) {
-                                        for (double l = dest.minX; l <= dest.maxX; ++l) {
+                                for (double j = dest.minZ; j < dest.maxZ; ++j) {
+                                    for (double k = dest.minY; k < dest.maxY; ++k) {
+                                        for (double l = dest.minX; l < dest.maxX; ++l) {
                                             BlockPos pos = new BlockPos(l, k, j);
                                             if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
                                                 GL11.glLineWidth(5.0F);
