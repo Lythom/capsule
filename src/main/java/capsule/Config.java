@@ -135,7 +135,7 @@ public class Config {
         };
         Property lootTablesListProp = Config.config.get("loots", "lootTablesList", defaultLootTablesList);
         lootTablesListProp.setComment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.");
-        Config.lootTablesList = new ArrayList<String>(Arrays.asList(lootTablesListProp.getStringList()));
+        Config.lootTablesList = new ArrayList<>(Arrays.asList(lootTablesListProp.getStringList()));
 
         // CapsuleTemplate Paths
         Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{

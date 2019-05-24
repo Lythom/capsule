@@ -95,7 +95,7 @@ public class CapsuleTemplateManager
             {
                 inputstream = new FileInputStream(file1);
                 this.readTemplateFromStream(s, inputstream);
-                return true;
+                flag = true;
             }
             catch (Throwable var10)
             {
@@ -125,7 +125,7 @@ public class CapsuleTemplateManager
             LOGGER.info("reading from jar at" + "/" + s1 + ".nbt");
             inputstream = MinecraftServer.class.getResourceAsStream("/" + s1 + ".nbt");
             this.readTemplateFromStream(s1, inputstream);
-            return true;
+            flag = true;
         }
         catch (Throwable var10)
         {
@@ -189,7 +189,7 @@ public class CapsuleTemplateManager
                 NBTTagCompound nbttagcompound = template.writeToNBT(new NBTTagCompound());
                 outputstream = new FileOutputStream(file2);
                 CompressedStreamTools.writeCompressed(nbttagcompound, outputstream);
-                return true;
+                flag = true;
             }
             catch (Throwable var13)
             {
@@ -234,7 +234,7 @@ public class CapsuleTemplateManager
                 CapsuleTemplate template = new CapsuleTemplate();
                 template.readSchematic(schematicNBT);
                 this.templates.put(s, template);
-                return true;
+                flag = true;
             }
             catch (Throwable var10)
             {

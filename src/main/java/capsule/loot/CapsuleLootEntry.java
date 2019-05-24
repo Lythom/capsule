@@ -14,6 +14,7 @@ import net.minecraft.world.storage.loot.conditions.LootConditionManager;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Random;
 
@@ -78,6 +79,7 @@ public class CapsuleLootEntry extends LootEntry {
 
     }
 
+    @Nullable
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {

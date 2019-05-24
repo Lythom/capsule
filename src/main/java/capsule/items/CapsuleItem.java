@@ -1,6 +1,9 @@
 package capsule.items;
 
-import capsule.*;
+import capsule.CommonProxy;
+import capsule.Config;
+import capsule.Main;
+import capsule.StructureSaver;
 import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
@@ -8,7 +11,6 @@ import capsule.helpers.Spacial;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
-import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
@@ -19,7 +21,8 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
@@ -237,7 +240,7 @@ public class CapsuleItem extends Item {
         if (!capsule.hasTagCompound()) {
             capsule.setTagCompound(new NBTTagCompound());
         }
-        if (!Strings.isNullOrEmpty(author)) capsule.getTagCompound().setString("author", author);
+        if (!StringUtils.isNullOrEmpty(author)) capsule.getTagCompound().setString("author", author);
     }
 
 
@@ -767,6 +770,7 @@ public class CapsuleItem extends Item {
         return capsule.getTagCompound().hasKey("sourceInventory") && capsule.getTagCompound().getCompoundTag("sourceInventory").hasKey("x");
     }
 
+    @Nullable
     public static BlockPos getSourceInventoryLocation(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
             NBTTagCompound sourceInventory = capsule.getTagCompound().getCompoundTag("sourceInventory");
@@ -775,6 +779,7 @@ public class CapsuleItem extends Item {
         return null;
     }
 
+    @Nullable
     public static Integer getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
             return capsule.getTagCompound().getCompoundTag("sourceInventory").getInteger("dim");
@@ -782,6 +787,7 @@ public class CapsuleItem extends Item {
         return null;
     }
 
+    @Nullable
     public static IItemHandler getSourceInventory(ItemStack blueprint, WorldServer w) {
         BlockPos location = CapsuleItem.getSourceInventoryLocation(blueprint);
         Integer dimension = CapsuleItem.getSourceInventoryDimension(blueprint);

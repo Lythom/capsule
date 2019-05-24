@@ -9,7 +9,6 @@ import capsule.items.CapsuleItems;
 import capsule.network.CapsuleUndeployNotifToClient;
 import net.minecraft.block.Block;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -233,23 +232,26 @@ public class Capsule {
         world.spawnParticle(EnumParticleTypes.CLOUD, d0, d1, d2, 8 * (size), 0.5D, 0.25D, 0.5D, 0.01 + 0.05 * size);
     }
 
-    public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityLivingBase entity) {
+    @Nullable
+    public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityPlayer player) {
         // list required materials
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = StructureSaver.getMaterialList(blueprint, world);
+        if (missingMaterials == null) {
+            if (player != null) {
+                player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            }
+            return null;
+        }
         // try to provision the materials from linked inventory or player inventory
         IItemHandler inv = CapsuleItem.getSourceInventory(blueprint, world);
-        IItemHandler inv2 = entity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        IItemHandler inv2 = player == null ? null : player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
         Map<Integer, Integer> inv1SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv);
         Map<Integer, Integer> inv2SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv2);
 
         // if there is enough items, remove the provision items from inventories and recharge the capsule
         if (missingMaterials.size() == 0) {
-            inv1SlotQuantityProvisions.forEach((slot, qty) -> {
-                inv.extractItem(slot, qty, false);
-            });
-            inv2SlotQuantityProvisions.forEach((slot, qty) -> {
-                inv2.extractItem(slot, qty, false);
-            });
+            if (inv != null) inv1SlotQuantityProvisions.forEach((slot, qty) -> inv.extractItem(slot, qty, false));
+            if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> inv2.extractItem(slot, qty, false));
             CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
         }

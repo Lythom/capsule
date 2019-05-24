@@ -1,14 +1,10 @@
 package capsule.blocks;
 
 import capsule.Main;
-import capsule.items.CapsuleItem;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -53,6 +49,7 @@ public class CapsuleBlocks {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
         event.getRegistry().register(new ItemBlock(blockCapsuleMarker).setRegistryName(blockCapsuleMarker.getRegistryName()));
 

@@ -70,7 +70,7 @@ public class LabelEditedMessageToServer implements IMessage {
 
     @Override
     public String toString() {
-        return getClass().toString() + "[label=" + String.valueOf(getLabel()) + "]";
+        return getClass().toString() + "[label=" + getLabel() + "]";
     }
 
     public boolean isMessageValid() {

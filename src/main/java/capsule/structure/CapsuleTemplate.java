@@ -324,6 +324,7 @@ public class CapsuleTemplate {
     /**
      * takes blocks from the world and puts the data them into this template
      */
+    @Nullable
     public List<BlockPos> takeBlocksFromWorldIntoCapsule(World worldIn, BlockPos startPos, BlockPos endPos,
                                                          Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
 
@@ -385,7 +386,7 @@ public class CapsuleTemplate {
             return transferedBlocks;
         }
 
-        return null;
+        return transferedBlocks;
     }
 
     /**
@@ -631,6 +632,7 @@ public class CapsuleTemplate {
         return tiles;
     }
 
+    @Nullable
     private IBlockState[] getSchematicBlocks(NBTTagCompound nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
         IBlockState[] blocksById = new IBlockState[numBlocks];
         if (nbt.hasKey("AddBlocks", Constants.NBT.TAG_BYTE_ARRAY)) {
@@ -697,6 +699,7 @@ public class CapsuleTemplate {
         return blocksById;
     }
 
+    @Nullable
     private Block[] readSchematicPalette(NBTTagCompound nbt) {
         final Block air = Blocks.AIR;
         Block[] palette = new Block[4096];

@@ -10,7 +10,6 @@ import capsule.loot.CapsuleLootTableHook;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.*;
@@ -22,6 +21,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentString;
@@ -46,7 +46,7 @@ import java.util.Random;
  */
 public class CapsuleCommand extends CommandBase {
 
-    public static String[] COMMAND_LIST = new String[]{
+    public static final String[] COMMAND_LIST = new String[]{
             "giveEmpty", "exportHeldItem", "exportSeenBlock", "fromExistingReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor", "setMaterialColor"
     };
 
@@ -220,7 +220,7 @@ public class CapsuleCommand extends CommandBase {
         EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
         String structureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !Strings.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
 
             String stucturePath = Config.rewardTemplatesPath + "/" + structureName;
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(server);
@@ -250,7 +250,7 @@ public class CapsuleCommand extends CommandBase {
         EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
         String structureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !Strings.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
             // template
             TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
             Template template = templatemanager.get(server, new ResourceLocation(structureName));
@@ -302,7 +302,7 @@ public class CapsuleCommand extends CommandBase {
                 } else {
                     outputName = args[1];
                 }
-                if (Strings.isNullOrEmpty(outputName)) {
+                if (StringUtils.isNullOrEmpty(outputName)) {
                     throw new WrongUsageException(
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
                 }

@@ -5,10 +5,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.*;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.Template;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +55,7 @@ public class Spacial {
         return rtc;
     }
 
-    @SuppressWarnings("rawtypes")
+    @Nullable
     public static BlockPos findSpecificBlock(EntityItem entityItem, int maxRange, Class searchedBlock) {
         if (searchedBlock == null)
             return null;
@@ -148,7 +150,7 @@ public class Spacial {
 
     public static boolean isThrowerUnderLiquid(final EntityItem entityItem) {
         String thrower = entityItem.getThrower();
-        if (thrower == null) return false;
+        if (!StringUtils.isNullOrEmpty(thrower)) return false;
         EntityPlayer player = entityItem.getEntityWorld().getPlayerEntityByName(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
@@ -165,7 +167,7 @@ public class Spacial {
     }
 
     public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule, boolean keepMomentum) {
-        if (!capsule.hasTagCompound()) return;
+        if (capsule.getTagCompound() == null) return;
         BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
         // +0.5 to aim the center of the block
         double diffX = (dest.getX() + 0.5 - entityItem.posX);

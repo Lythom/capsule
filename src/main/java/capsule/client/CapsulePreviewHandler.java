@@ -247,7 +247,7 @@ public class CapsulePreviewHandler {
     }
 
     private void previewRecall(ItemStack capsule) {
-        if (!capsule.hasTagCompound()) return;
+        if (capsule.getTagCompound() == null) return;
         NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);

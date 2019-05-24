@@ -2,6 +2,7 @@ package capsule.enchantments;
 
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
+import com.google.common.base.Strings;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.item.EntityItem;
@@ -69,7 +70,7 @@ public class RecallEnchant extends Enchantment {
         @SuppressWarnings("unchecked")
         List<EntityItem> recallEntities = world.<EntityItem>getEntities(EntityItem.class, Enchantments.hasRecallEnchant::test);
         for (EntityItem entity : recallEntities) {
-            if (entity.getThrower() != null && (entity.collided || Spacial.entityItemShouldAndCollideLiquid(entity))) {
+            if (!Strings.isNullOrEmpty(entity.getThrower()) && (entity.collided || Spacial.entityItemShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.onUpdate();

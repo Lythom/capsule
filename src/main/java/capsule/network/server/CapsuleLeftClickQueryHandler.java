@@ -72,7 +72,7 @@ public class CapsuleLeftClickQueryHandler
                 if (stack.getItemDamage() == STATE_DEPLOYED) {
                     // Reload if no missing materials
                     Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
-                    if (missing.size() > 0) {
+                    if (missing != null && missing.size() > 0) {
                         String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n* "));
                         sendingPlayer.sendMessage(new TextComponentTranslation(
                                 "Missing : \n* " + missingListText
