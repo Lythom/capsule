@@ -21,8 +21,6 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
 
     public class BlueprintChangeRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
 
-        private WorldServer world;
-
         public BlueprintChangeRecipe() {
         }
 
@@ -58,9 +56,6 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
-            if (!worldIn.isRemote) {
-                this.world = (WorldServer) worldIn;
-            }
             int sourceCapsule = 0;
             int blueprint = 0;
             for (int i = 0; i < inv.getHeight(); ++i) {
