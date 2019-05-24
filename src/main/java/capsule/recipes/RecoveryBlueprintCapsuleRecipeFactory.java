@@ -23,7 +23,6 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
 
     public class RecoveryBlueprintCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
         public final ShapedOreRecipe recipe;
-        public WorldServer world;
 
         public RecoveryBlueprintCapsuleRecipe(ShapedOreRecipe recipe) {
             this.recipe = recipe;
@@ -54,9 +53,6 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
          * Used to check if a recipe matches current crafting inventory
          */
         public boolean matches(InventoryCrafting inv, World worldIn) {
-            if (!worldIn.isRemote) {
-                this.world = (WorldServer) worldIn;
-            }
             return recipe.matches(inv, worldIn);
         }
 
