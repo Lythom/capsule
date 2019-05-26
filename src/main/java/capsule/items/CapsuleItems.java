@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.oredict.ShapedOreRecipe;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Comparator;
@@ -21,13 +22,17 @@ public class CapsuleItems {
 
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
-    public static TreeMap<ItemStack, IRecipe> capsuleList = new TreeMap<>(Comparator.comparingInt(CapsuleItem::getSize));
-    public static TreeMap<ItemStack, IRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingInt(CapsuleItem::getSize));
+    public static TreeMap<ItemStack, IRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
+    public static TreeMap<ItemStack, IRecipe> opCapsuleList = new TreeMap<>(Comparator.comparing(CapsuleItems::compare));
     public static Pair<ItemStack, IRecipe> unlabelledCapsule = null;
     public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> recoveryCapsule = null;
     public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> blueprintCapsule = null;
     public static Pair<ItemStack, BlueprintChangeRecipe> blueprintChangedCapsule = null;
     public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
+
+    private static double compare(ItemStack capsule) {
+        return CapsuleItem.getSize(capsule) + CapsuleItem.getMaterialColor(capsule) * 0.000000000001D;
+    }
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
         capsule = new CapsuleItem(CAPSULE_REGISTERY_NAME);
@@ -56,7 +61,7 @@ public class CapsuleItems {
                     blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
-                    if (output.getItem() instanceof CapsuleItem) {
+                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedOreRecipe) {
                         if (CapsuleItem.isOverpowered(output)) {
                             CapsuleItems.opCapsuleList.put(output, recipe);
                         } else {
