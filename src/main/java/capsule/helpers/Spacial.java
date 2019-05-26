@@ -150,7 +150,7 @@ public class Spacial {
 
     public static boolean isThrowerUnderLiquid(final EntityItem entityItem) {
         String thrower = entityItem.getThrower();
-        if (!StringUtils.isNullOrEmpty(thrower)) return false;
+        if (StringUtils.isNullOrEmpty(thrower)) return false;
         EntityPlayer player = entityItem.getEntityWorld().getPlayerEntityByName(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
