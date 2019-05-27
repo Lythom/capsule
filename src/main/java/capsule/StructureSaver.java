@@ -440,7 +440,7 @@ public class StructureSaver {
                         return false;
                     }
 
-                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, spawnedBlocks, spawnedEntities);
+                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
 
                     // Players don't block deployment, instead they are pushed up if they would suffocate
                     List<EntityLivingBase> players = playerWorld.getEntitiesWithinAABB(
@@ -587,20 +587,20 @@ public class StructureSaver {
 
                     BlockPos destPos = destOriginPos.add(x, y, z);
                     Template.BlockInfo srcInfo = blockInfoByPosition.get(destPos);
-                    IBlockState srcState = air;
+                    IBlockState templateBlockState = air;
                     if (srcInfo != null) {
-                        srcState = srcInfo.blockState;
+                        templateBlockState = srcInfo.blockState;
                     }
 
                     if (!destWorld.isBlockLoaded(destPos)) return false;
-                    IBlockState destState = destWorld.getBlockState(destPos);
+                    IBlockState worldDestState = destWorld.getBlockState(destPos);
 
-                    boolean destOccupied = (destState != air && !overridable.contains(destState.getBlock()));
-                    if (destState != air && outOccupiedPositions != null) {
-                        outOccupiedPositions.put(destPos, destState.getBlock());
+                    boolean worldDestOccupied = (worldDestState != air && !overridable.contains(worldDestState.getBlock()));
+                    if (worldDestState != air && outOccupiedPositions != null) {
+                        outOccupiedPositions.put(destPos, worldDestState.getBlock());
                     }
 
-                    boolean srcOccupied = (srcState != air && !overridable.contains(srcState.getBlock()));
+                    boolean srcOccupied = (templateBlockState != air && !overridable.contains(templateBlockState.getBlock()));
 
                     List<EntityLivingBase> entities = destWorld.getEntitiesWithinAABB(
                             EntityLivingBase.class,
@@ -612,7 +612,7 @@ public class StructureSaver {
                     // if destination is occupied, and source is neither
                     // excluded from transportation, nor can't be overriden by
                     // destination, then the merge can't be done.
-                    if ((entities.size() > 0 && srcOccupied) || (destOccupied && !overridable.contains(srcState.getBlock()))) {
+                    if ((entities.size() > 0 && srcOccupied) || (worldDestOccupied && !overridable.contains(templateBlockState.getBlock()))) {
                         if (entities.size() > 0 && outEntityBlocking != null) {
                             for (Object e : entities) {
                                 Entity entity = (Entity) e;

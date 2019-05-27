@@ -72,8 +72,8 @@ public class CapsuleTemplate {
 
     public static AxisAlignedBB transformedAxisAlignedBB(PlacementSettings placementIn, AxisAlignedBB bb) {
         return new AxisAlignedBB(
-                transformedBlockPos(new BlockPos(bb.minX,bb.minY, bb.minZ), placementIn.getMirror(), placementIn.getRotation()),
-                transformedBlockPos(new BlockPos(bb.maxX,bb.maxY, bb.maxZ), placementIn.getMirror(), placementIn.getRotation())
+                transformedBlockPos(new BlockPos(bb.minX, bb.minY, bb.minZ), placementIn.getMirror(), placementIn.getRotation()),
+                transformedBlockPos(new BlockPos(bb.maxX, bb.maxY, bb.maxZ), placementIn.getMirror(), placementIn.getRotation())
         );
     }
 
@@ -423,7 +423,7 @@ public class CapsuleTemplate {
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */
-    public void spawnBlocksAndEntities(World worldIn, BlockPos pos, PlacementSettings placementIn, List<BlockPos> spawnedBlocks, List<Entity> spawnedEntities) {
+    public void spawnBlocksAndEntities(World worldIn, BlockPos pos, PlacementSettings placementIn, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> outSpawnedBlocks, List<Entity> outSpawnedEntities) {
         ITemplateProcessor templateProcessor = new BlockRotationProcessor(pos, placementIn);
 
         if (size == null) return;
@@ -440,9 +440,14 @@ public class CapsuleTemplate {
                 if (template$blockinfo1 != null) {
                     Block block1 = template$blockinfo1.blockState.getBlock();
 
-                    if ((block == null || block != block1) && (!placementIn.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK) && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))) {
+                    if ((block == null || block != block1)
+                            && (!placementIn.getIgnoreStructureBlock() || block1 != Blocks.STRUCTURE_BLOCK)
+                            && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))
+                            // CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
+                            && (!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos)))
+                    ) {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
-                        if (spawnedBlocks != null) spawnedBlocks.add(blockpos);
+                        if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
                         IBlockState iblockstate = template$blockinfo1.blockState.withMirror(placementIn.getMirror());
                         IBlockState iblockstate1 = iblockstate.withRotation(placementIn.getRotation());
@@ -494,7 +499,7 @@ public class CapsuleTemplate {
             }
 
             if (!placementIn.getIgnoreEntities()) {
-                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, spawnedEntities);
+                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, outSpawnedEntities);
             }
         }
     }
@@ -542,6 +547,7 @@ public class CapsuleTemplate {
     public static BlockPos recenterRotation(int extendSize, PlacementSettings placement) {
         return CapsuleTemplate.transformedBlockPos(placement, new BlockPos(-extendSize, 0, -extendSize)).add(new BlockPos(extendSize, 0, extendSize));
     }
+
     public static BlockPos recenterRotation(int extendSize, Mirror m, Rotation r) {
         return CapsuleTemplate.transformedBlockPos(new BlockPos(-extendSize, 0, -extendSize), m, r).add(new BlockPos(extendSize, 0, extendSize));
     }
