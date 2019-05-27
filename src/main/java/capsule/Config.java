@@ -97,7 +97,7 @@ public class Config {
                     String domain = registryName != null ? registryName.getResourceDomain() : "";
                     String path = registryName != null ? registryName.getResourcePath().toLowerCase() : "";
                     return Arrays.stream(new String[]{"capsule", "minecraft"}).noneMatch(d -> d.equalsIgnoreCase(domain))
-                            && Arrays.stream(new String[]{"leave", "flower", "plant", "sapling", "mushroom", "vine"}).anyMatch(path::contains);
+                            && Arrays.stream(new String[]{"leaves", "sapling", "mushroom", "vine"}).anyMatch(path::contains);
                 })
                 .map(block -> block.getRegistryName().toString())
                 .toArray(String[]::new);
