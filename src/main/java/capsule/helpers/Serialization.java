@@ -1,10 +1,14 @@
 package capsule.helpers;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Serialization {
     protected static final Logger LOGGER = LogManager.getLogger(Serialization.class);
@@ -18,11 +22,21 @@ public class Serialization {
             if (b != null) {
                 states.add(b);
             } else {
-                notfound.add(blockId);
+                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValuesCollection().stream()
+                        .filter(block -> {
+                            ResourceLocation registryName = block.getRegistryName();
+                            if (registryName == null) return false;
+                            return registryName.toString().toLowerCase().contains(blockId.toLowerCase());
+                        }).collect(Collectors.toList());
+                if (blockIdsList.size() > 0) {
+                    states.addAll(blockIdsList);
+                } else {
+                    notfound.add(blockId);
+                }
             }
         }
         if (notfound.size() > 0) {
-            LOGGER.warn(String.format(
+            LOGGER.debug(String.format(
                     "Blocks not found from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
                     String.join(", ", notfound.toArray(new CharSequence[0]))
             ));

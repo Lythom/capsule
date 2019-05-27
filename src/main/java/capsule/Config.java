@@ -65,7 +65,8 @@ public class Config {
 
         String[] excludedBlocksOP = ArrayUtils.addAll(
                 Serialization.serializeBlockArray(defaultExcludedBlocksOP),
-                "ic2:te",
+                "ic2:",
+                "refinedstorage:",
                 "bloodmagic:alchemy_table");
         String[] excludedBlocks = ArrayUtils.addAll(
                 Serialization.serializeBlockArray(defaultExcludedBlocks),
