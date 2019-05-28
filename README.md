@@ -20,7 +20,6 @@ New options for builders ! Blueprints makes it fast to build patterned construct
     * Blueprint are recharged using left click in the air.
     * Last blueprint deployment can be undeployed as long as the blueprint is not recharged and the deployed blocks has not been modified.
     * Unlike standard capsules, blueprints are limited to non-entities blocks. Ie. torches, doors and redstone wires are allowed but chests, furnaces or paintings will be ignored in the blueprint template.
-* Improve preview of capsule deployment: deployment can be previewed from further away and similar blocks are displayed together.
 * [Community suggestion] Add particles on deploy and undeploy. https://github.com/Lythom/capsule/issues/9.
 * [Community suggestion] Add optional "player" argument to fromExistingReward and fromStructure commands. It makes it possible to configure vending machines or structure blocks to give a specific template to a secific player. https://github.com/Lythom/capsule/issues/11.
 * [Community suggestion] Players don't prevent deployment anymore, instead the player is teleported to the deployed structure nearest floor.
@@ -28,12 +27,13 @@ New options for builders ! Blueprints makes it fast to build patterned construct
 * Add new capsules sizes: 3 (iron), 5 (gold), 7 (diamond), 9 (obsidian) and 11 (emerald).
 * Add instant mode for blueprints and capsules of size 1 : they continuously display content preview and deploy instantly on right click.
 * Add recipe to clear a deployed capsule: deployed content stays in the world and the capsule become empty again.
+* Improve preview of capsule deployment: deployment can be previewed from further away and similar blocks are displayed together.
 * Fix capsule size configuration ignored. 0 or negative value will not correctly disable the capsule, and any positive integer will be used by the recipe.
-* [Experimental] Add schematic support for reward capsules.
-* [Experimental] Automatically infer configuration for overridable blocks of other mods. Blocks whose name include "leave", "flower", "plant", "sapling", "mushroom", or "vine" will be automatically added to overrideable list.
-* Change recipe system to 1.12 json recipes. It allows via resource pack to override or add recipes for empty capsules, upgrade ingrendients, recovery capsule, blueprint capsule. 
+* Migrate recipe system to 1.12 json recipes. It allows via resource pack to override or add recipes for empty capsules, upgrade ingrendients, recovery capsule, blueprint capsule. 
+* [Experimental] Add schematic support for reward capsules. You can creat reward from .schematic files in the reward folder.
+* [Experimental] Automatically infer configuration for overridable blocks of other mods. Blocks whose name include "leave", "sapling", "mushroom", or "vine" will be automatically added to overrideable list.
 * Raised the max capsule size hard limit to 255 (from 31). Default configuration allows capsules to be upgraded up to 31. It is not advised to go bigger since the performance hit for the server can be important, but it can be used to offer the player bigger structures as reward for example.
-* Fix trying to undeploy near max height limit will prevent deploy.
+* Fix trying to undeploy near max height limit will correctly prevent deploy.
 * Fix loot files name (lowercase only).
 * Update JEI recipes and "information" tab for each kind of capsule.
 * Update forge to 1.12.2-14.23.5.2781
