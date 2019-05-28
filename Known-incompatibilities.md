@@ -1,5 +1,6 @@
 Important incompatibilities:
 * IC2 machines will lose data after being moved and become unusable. (http://bt.industrial-craft.net/view.php?id=1957)
+* Refined Storage machines will lose all data when moved. Be sure to keep "refinedstorage:" in the default opExcludedBlocks in the config.
 * Alchemy table from Bloodmagic will disappear if deployed at a different position than the original one.    
 _Solution: Pickup the table before moving your bloodmagic room._
 * Wires from immersive engineering will disappear if deployed at a different position than the original one.     
