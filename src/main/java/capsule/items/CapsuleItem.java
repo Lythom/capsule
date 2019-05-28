@@ -12,6 +12,7 @@ import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -65,6 +66,8 @@ public class CapsuleItem extends Item {
     public static final float TO_RAD = 0.017453292F;
     public static final float GRAVITY_PER_TICK = 0.04f;
     public static final PlacementSettings DEFAULT_PLACEMENT = new PlacementSettings();
+
+    public static long lastRotationTime = 0;
 
 
     /**
@@ -455,13 +458,17 @@ public class CapsuleItem extends Item {
 
     @SubscribeEvent
     public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
-        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_BLUEPRINT) {
-            if (!event.getWorld().isRemote) { // prevent action to be triggered on server + on client
-                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
-                askPreviewIfNeeded(stack);
+        if (!event.isCanceled() && lastRotationTime + 60 < Minecraft.getSystemTime()) {
+            ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_BLUEPRINT) {
+                lastRotationTime = Minecraft.getSystemTime();
+                event.setCanceled(true);
+
+                if (event.getWorld().isRemote) { // prevent action to be triggered on server + on client
+                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                    askPreviewIfNeeded(stack);
+                }
             }
-            event.setCanceled(true);
         }
     }
 
