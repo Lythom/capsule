@@ -254,6 +254,10 @@ public class Capsule {
             if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> inv2.extractItem(slot, qty, false));
             CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
+        } else if(player != null && player.isCreative()) {
+            CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
+            CapsuleItem.cleanDeploymentTags(blueprint);
+            missingMaterials.clear();
         }
 
         return missingMaterials;
