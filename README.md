@@ -10,7 +10,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
-**1.12.2-3.2.86 : Builder's revery update**
+**1.12.2-3.2.91 : Builder's daydream update**
 
 New options for builders ! Blueprints makes it fast to build patterned constructions like bridges, walls, or dungeons with the ability to deploy a template using materials from chest or player inventory. The template can be rotated and mirrored to fit any situation !
 
