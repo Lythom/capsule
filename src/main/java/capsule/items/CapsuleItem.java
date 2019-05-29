@@ -381,8 +381,8 @@ public class CapsuleItem extends Item {
         return isOverpowered(stack);
     }
 
-
     @Override
+    @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack capsule, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
 
         if (capsule.getItemDamage() == STATE_ONE_USE) {
@@ -448,9 +448,10 @@ public class CapsuleItem extends Item {
 
 
     @SubscribeEvent
+    @SideOnly(Side.CLIENT)
     public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
-        if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
+        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
             CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -458,27 +459,31 @@ public class CapsuleItem extends Item {
 
     @SubscribeEvent
     public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        if (!event.isCanceled() && lastRotationTime + 60 < Minecraft.getSystemTime()) {
+        if (!event.isCanceled()) {
             ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
             if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_BLUEPRINT) {
-                lastRotationTime = Minecraft.getSystemTime();
                 event.setCanceled(true);
-
-                if (event.getWorld().isRemote) { // prevent action to be triggered on server + on client
-                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
-                    askPreviewIfNeeded(stack);
+                if (event.getWorld().isRemote) {
+                    if (lastRotationTime + 60 < Minecraft.getSystemTime()) {
+                        lastRotationTime = Minecraft.getSystemTime();
+                        // prevent action to be triggered on server + on client
+                        CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                        askPreviewIfNeeded(stack);
+                    }
                 }
             }
         }
     }
 
     @SubscribeEvent
+    @SideOnly(Side.CLIENT)
     public void heldItemChange(LivingEquipmentChangeEvent event) {
         if (event.getEntity() instanceof EntityPlayer && event.getSlot().equals(EntityEquipmentSlot.MAINHAND) && isBlueprint(event.getTo())) {
             askPreviewIfNeeded(event.getTo());
         }
     }
 
+    @SideOnly(Side.CLIENT)
     public void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             // try to get the preview from server
@@ -649,7 +654,7 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCreated(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
-        if(capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
+        if (capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
             String sourceStructureName = CapsuleItem.getStructureName(capsule);
             if (sourceStructureName != null && !worldIn.isRemote && !sourceStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
                 String templateName = StructureSaver.createBlueprintTemplate(capsule, (WorldServer) worldIn, playerIn, sourceStructureName);
