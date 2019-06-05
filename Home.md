@@ -105,9 +105,7 @@ When loaded :
 - Left click to rotate
 - Sneak + Left click to mirror
 
-> ![Blueprint demo](https://i.imgur.com/7ZWi8aj.gif)
-> 
-> Blueprints at work
+See https://imgur.com/gallery/vN1sJrf for a showcase.
 
 ## Overpowered Capsules ##
 
