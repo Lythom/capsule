@@ -92,6 +92,23 @@ Effect : whenever a recall enchanted item is dropped and touches the ground, it 
 This enchant is intended to be used on capsules. Without this enchantment you have to pick up the thrown capsule manually.
 It can as well be applied on any enchantable item by configuration (disabled by default). Can be useful to fight against inventory dropping monsters or to prevent unintentional drop.
 
+
+## Blueprints ##
+
+Blueprints capsule can be reloaded in order to deploy several times the same structure. You can link an inventory with sneak + right click to use it a source of building materials.
+
+When unloaded, left click in the air to load from linked inventory and player inventory. If all materials are available they will be consumed to charge the capsule. Else, missing materials will be displayed.
+You can also Right click to undo the last deployment.
+
+When loaded :
+- Right click to deploy
+- Left click to rotate
+- Sneak + Left click to mirror
+
+> ![Blueprint demo](https://i.imgur.com/7ZWi8aj.gif)
+> 
+> Blueprints at work
+
 ## Overpowered Capsules ##
 
 Overpowered capsules can capture blocks that cannot be captures with standard capsules. Blocks that can be captured only by overpowered capsules can be configured in capsule.cfg by adjusting the excludedBlocks for standard and op capsules. By default the config is :
