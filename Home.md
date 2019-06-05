@@ -11,6 +11,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
   * [Upgrading](#upgrading)
   * [Backup](#backup)
   * [Recall](#recall)
+  * [Blueprints](#clueprints)
   * [Overpowered Capsules](#overpowered-capsules)
 - [FAQ](#faq)
 
