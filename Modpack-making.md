@@ -5,6 +5,7 @@
     + [Standard](#standard)
     + [Rewards](#rewards)
     + [Loots](#loots)
+    + [Blueprints](#blueprints)
   * [How to](#how-to)
     + [Create an Empty Capsule](#create-an-empty-capsule)
     + [Create a Reward Capsule](#create-a-reward-capsule)
@@ -31,6 +32,8 @@ Standard capsules are live created by players while playing. They are stored in 
 
 When the player capture some new content with an Empty Capsule, a new Template file is created there. Through the game, only this crafted Capsule and the Recovery Capsules linked to it can modify the Template file. In-game commands for modpackmakers are non-destructive on live created capsules, so you can't mess with players contents if using commands on a "live" server. The Template file is empty if the capsule is deployed, and contains the captured region data if the capsule is undeployed, so you want to create rewards from undeployed capsules.
 
+[WIP] Allow a standard capsule with preloaded content to be given to the player, aka. "The starting traveller"s base".
+
 ### Rewards
 
 Reward capsules are what you would be doing most. They are prepared by modpack maker, and stored in the config/capsule/rewards folder by default.
@@ -54,6 +57,14 @@ The Template files located under any of the "lootTemplatesPaths" entry in the co
 By default, 3 folders are defined in the config file (in "/config/capsule/loot/…") that can be filled as you wish.
 
 Each folder will get an entry in the capsule config file on server restart, to be able to configure weight (chance for the folder to be picked rather than another when selecting a loot).
+
+### Blueprints
+
+Blueprints capsules allow player to duplicate structures by taking materials from any linked inventory.    
+Blueprints are crafted by players from an undeployed capsule or reward.
+Blueprints have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
+
+[WIP] Allow custom blueprints recipes from reward template. Would allow the player to craft a blueprint as a "structure deployer", but the player would still need to gather the materials. See [Create a Reward Capsule](#create-a-reward-capsule) to create a reward template that can be included in a pack.
 
 ## How to
 
