@@ -77,26 +77,26 @@ public class CapsuleItem extends Item {
      * see STATE_<state> constants.
      * <p>
      * NBTData reference:
-     * * int color 													// material color
-     * * tag display : {int color} 									// base color
-     * * int size													// odd number, size of the square side the capsule can hold
-     * * string label												// User customizable label
-     * * byte overpowered											// If the capsule can capture powerfull blocks
-     * * bool onUse												    // if the content of the template must be kept when capsule is deployed.
-     * * bool isReward												// if the template is located in the configured reward folder
-     * * string author      										// Name of the player who created the structure. Set using commands.
-     * * string structureName										// name of the template file name without the .nbt extension.
-     * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
-     * * string prevStructureName									// Used to remove older unused blueprint templates
-     * * tag activetimer : {int starttime} 							// used to time the moment when the capsule must deactivate
-     * * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
-     * * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
-     * * long deployAt												// when thrown with preview, position to deploy the capsule to match preview
-     * * int upgraded                                               // How many upgrades the capsule has
-     * * tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
-     * * string mirror                                              // [Blueprints] current mirror mode
-     * * string rotation                                            // [Blueprints] current rotation mode
-     * * arr ench:[0:{lvl:1s,id:101s}]
+* int color                                                  // material color
+* tag display : {int color}                                  // base color
+* int size                                                   // odd number, size of the square side the capsule can hold
+* string label                                               // User customizable label
+* byte overpowered                                           // If the capsule can capture powerfull blocks
+* bool onUse                                                 // if the content of the template must be kept when capsule is deployed.
+* bool isReward                                              // if the template is located in the configured reward folder
+* string author                                              // Name of the player who created the structure. Set using commands.
+* string structureName                                       // name of the template file name without the .nbt extension.
+// Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
+* string prevStructureName                                   // Used to remove older unused blueprint templates
+* tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
+* tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
+* tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
+* long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
+* int upgraded                                               // How many upgrades the capsule has
+* tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
+* string mirror                                              // [Blueprints] current mirror mode
+* string rotation                                            // [Blueprints] current rotation mode
+* arr ench:[0:{lvl:1s,id:101s}]
      *
      * @param unlocalizedName registry name
      */

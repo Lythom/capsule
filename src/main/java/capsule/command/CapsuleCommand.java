@@ -50,11 +50,6 @@ public class CapsuleCommand extends CommandBase {
             "giveEmpty", "exportHeldItem", "exportSeenBlock", "fromExistingReward", "fromHeldCapsule", "fromStructure", "giveRandomLoot", "reloadLootList", "setAuthor", "setBaseColor", "setMaterialColor"
     };
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see net.minecraft.command.ICommand#getName()
-     */
     @Override
     public String getName() {
         return "capsule";
@@ -65,13 +60,6 @@ public class CapsuleCommand extends CommandBase {
         return 2;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * net.minecraft.command.ICommand#getUsage(net.minecraft.command.
-     * ICommandSender)
-     */
     @Override
     public String getUsage(ICommandSender sender) {
 
@@ -126,12 +114,6 @@ public class CapsuleCommand extends CommandBase {
         return Collections.emptyList();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see net.minecraft.command.ICommand#execute(net.minecraft.command.
-     * ICommandSender, java.lang.String[])
-     */
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 
@@ -464,6 +446,10 @@ public class CapsuleCommand extends CommandBase {
         entity.onCollideWithPlayer(player);
     }
 
+    /**
+     * Extract a target player from command args or command executor.
+     * Target player must be the last argument.
+     */
     private class StructureAndPlayerArgs {
         private EntityPlayerMP targetedPlayer;
         private String structureName;
