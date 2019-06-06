@@ -158,17 +158,25 @@ Mostly usefull for modders. The command [`/capsule exportSeenBlock`](https://git
 If you want to create your own capsules or give them using commandblocks, you'll need to properly fill their nbt data. The easiest choice is to get the capsule in-game ("Create a Reward Capsule"), then to use the [`/capsule exportHeldItem`](https://github.com/Lythom/capsule/wiki/Commands#exporthelditem) command while holding the capsule. You can eventually modify the nbt data :
 
 ```
-{
-	(int) color, 							// material color
-	(tag) display : {int color} 			// base color (vanilla dying nbt)
-	(int) size,								// odd number, size of the square side the capsule can hold
-	(string) label,							// User customizable label
-	(byte) overpowered,						// If the capsule can capture powerfull blocks
-	(bool) isReward,						// if the content of the template must be kept when capsule is deployed.
-	(string) structureName,					// name of the template file name without the .nbt extension. Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the path from the instance root folder for rewards and loots (ex: <instance>/config/capsule/reward/myfancyhouse)
-	(tag) activetimer : {int starttime}, 	// Time the moment when the capsule must deactivate
-	(tag) occupiedSpawnPositions : […],   	// remember what positions not the recapture if block didn't change
-	(long) deployAt,						// set when capsule is thrown with preview, position to deploy the capsule that match the preview
-	ench:[0:{lvl:1s,id:101s}]               // Vanilla way of storing enchantments. id:101s is the recall id in my case but it might be different depending on your pack.
-}
+* int color                                                  // material color
+* tag display : {int color}                                  // base color
+* int size                                                   // odd number, size of the square side the capsule can hold
+* string label                                               // User customizable label
+* byte overpowered                                           // If the capsule can capture powerfull blocks
+* bool onUse                                                 // if the content of the template must be kept when capsule is deployed.
+* bool isReward                                              // if the template is located in the configured reward folder
+* string author                                              // Name of the player who created the structure. Set using commands.
+* string structureName                                       // name of the template file name without the .nbt extension.
+// Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
+* string prevStructureName                                   // Used to remove older unused blueprint templates
+* tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
+* tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
+* tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
+* long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
+* int upgraded                                               // How many upgrades the capsule has
+* tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
+* string mirror                                              // [Blueprints] current mirror mode
+* string rotation                                            // [Blueprints] current rotation mode
+* arr ench:[0:{lvl:1s,id:101s}]
 ```
+NBTData reference is also up to date at https://github.com/Lythom/capsule/blob/master/src/main/java/capsule/items/CapsuleItem.java#L79.
