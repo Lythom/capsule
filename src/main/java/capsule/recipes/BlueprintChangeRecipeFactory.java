@@ -65,7 +65,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
                         blueprint++;
 
                         // Any capsule having a template is valid except Deployed capsules (empty template) unless it is a blueprint (template never empty)
-                    } else if (CapsuleItem.hasStructureLink(itemstack) && (CapsuleItem.STATE_DEPLOYED != itemstack.getMetadata() || CapsuleItem.isBlueprint(itemstack))) {
+                    } else if (CapsuleItem.hasStructureLink(itemstack) && (CapsuleItem.STATE_DEPLOYED != itemstack.getItemDamage() || CapsuleItem.isBlueprint(itemstack))) {
                         sourceCapsule++;
                     } else if (!itemstack.isEmpty()) {
                         return false;

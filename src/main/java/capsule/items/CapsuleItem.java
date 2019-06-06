@@ -153,7 +153,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isLinkedStateCapsule(ItemStack itemstack) {
-        return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getMetadata());
+        return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getItemDamage());
     }
 
     public static String getLabel(ItemStack stack) {
