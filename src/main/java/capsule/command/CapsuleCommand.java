@@ -52,6 +52,7 @@ public class CapsuleCommand extends CommandBase {
     public static final String[] COMMAND_LIST = new String[]{
             "giveEmpty",
             "giveLinked",
+            "giveBlueprint",
             "exportHeldItem",
             "exportSeenBlock",
             "fromExistingReward",
@@ -67,6 +68,7 @@ public class CapsuleCommand extends CommandBase {
     public static final String[] COMMAND_HELP = new String[]{
             "giveEmpty [size] [overpowered]",
             "giveLinked <rewardName> [playerName]",
+            "giveBlueprint <rewardName> [playerName]",
             "exportHeldItem",
             "exportSeenBlock",
             "fromExistingReward <rewardName> [playerName]",
@@ -130,6 +132,7 @@ public class CapsuleCommand extends CommandBase {
 
                     case "fromExistingReward":
                     case "giveLinked":
+                    case "giveBlueprint":
                         String[] rewardsList = (new File(Config.rewardTemplatesPath)).list();
                         if (rewardsList == null) return new ArrayList<>();
                         return getListOfStringsMatchingLastWord(args, rewardsList);
@@ -139,6 +142,7 @@ public class CapsuleCommand extends CommandBase {
                     case "fromStructure":
                     case "fromExistingReward":
                     case "giveLinked":
+                    case "giveBlueprint":
                         return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                 }
         }
@@ -161,6 +165,8 @@ public class CapsuleCommand extends CommandBase {
             executeGiveEmpty(args, player);
         } else if ("giveLinked".equalsIgnoreCase(args[0])) {
             executeGiveLinked(server, sender, args, player);
+        } else if ("giveBlueprint".equalsIgnoreCase(args[0])) {
+            executeGiveBlueprint(server, sender, args, player);
         } else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
             executeExportHeldItem(sender, args, player);
         } else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
@@ -218,7 +224,7 @@ public class CapsuleCommand extends CommandBase {
             CapsuleTemplate srcTemplate = getRewardTemplate(srcStructureName, server);
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
-                if (size % 2 == 1)
+                if (size % 2 == 0)
                     size++;
 
                 String destStructureName = StructureSaver.getUniqueName(player.getServerWorld(), player.getName() + "-" + srcStructureName.replace("/", "_"));
@@ -247,10 +253,52 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
+    private void executeGiveBlueprint(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP p) throws CommandException {
+        StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
+        EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
+        String srcStructureName = structureAndPlayerArgs.getStructureName();
+
+        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
+
+            CapsuleTemplate srcTemplate = getRewardTemplate(srcStructureName, server);
+            if (srcTemplate != null) {
+                int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
+                if (size % 2 == 0)
+                    size++;
+
+                ItemStack capsule = Capsule.createEmptyCapsule(
+                        3949738,
+                        0xFFFFFF,
+                        size,
+                        false,
+                        WordUtils.capitalize(srcStructureName.replace("_", " ")),
+                        0
+                );
+                CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
+                CapsuleItem.setBlueprint(capsule);
+
+                String destTemplate = StructureSaver.createBlueprintTemplate(
+                        getRewardPathFromName(srcStructureName), capsule,
+                        player.getServerWorld(),
+                        player
+                );
+                CapsuleItem.setStructureName(capsule, destTemplate);
+                giveCapsule(capsule, player);
+
+            } else {
+                throw new CommandException("Reward Capsule \"%s\" not found ", srcStructureName);
+            }
+        }
+    }
+
     private CapsuleTemplate getRewardTemplate(String structureName, MinecraftServer server) {
-        String srcStucturePath = Config.rewardTemplatesPath + "/" + structureName;
+        String srcStucturePath = getRewardPathFromName(structureName);
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
         return srcTemplatemanager.get(server, new ResourceLocation(srcStucturePath));
+    }
+
+    private String getRewardPathFromName(String structureName) {
+        return Config.rewardTemplatesPath + "/" + structureName;
     }
 
     private void executeGiveRandomLoot(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws CommandException {
@@ -282,12 +330,12 @@ public class CapsuleCommand extends CommandBase {
 
         if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
 
-            String structurePath = Config.rewardTemplatesPath + "/" + structureName;
+            String structurePath = getRewardPathFromName(structureName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(server);
             CapsuleTemplate template = templatemanager.get(server, new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
-                if (size % 2 == 1)
+                if (size % 2 == 0)
                     size++;
 
                 ItemStack capsule = Capsule.createRewardCapsule(
@@ -316,7 +364,7 @@ public class CapsuleCommand extends CommandBase {
             Template template = templatemanager.get(server, new ResourceLocation(srcStructureName));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
-                if (size % 2 == 1)
+                if (size % 2 == 0)
                     size++;
 
                 // get source template data
@@ -367,8 +415,8 @@ public class CapsuleCommand extends CommandBase {
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
                 }
 
-                String destinationTemplateLocation = Config.rewardTemplatesPath + "/" + outputName.toLowerCase().replace(" ", "_");
-                StructureSaver.copyFromCapsuleTemplate(
+                String destinationTemplateLocation = getRewardPathFromName(outputName.toLowerCase().replace(" ", "_"));
+                boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
                         StructureSaver.getRewardManager(server),
@@ -376,6 +424,11 @@ public class CapsuleCommand extends CommandBase {
                         false,
                         null
                 );
+
+                if (!created) {
+                    player.sendMessage(new TextComponentString("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
+                    return;
+                }
 
                 ItemStack capsule = Capsule.createRewardCapsule(
                         destinationTemplateLocation,

@@ -77,26 +77,26 @@ public class CapsuleItem extends Item {
      * see STATE_<state> constants.
      * <p>
      * NBTData reference:
-* int color                                                  // material color
-* tag display : {int color}                                  // base color
-* int size                                                   // odd number, size of the square side the capsule can hold
-* string label                                               // User customizable label
-* byte overpowered                                           // If the capsule can capture powerfull blocks
-* bool onUse                                                 // if the content of the template must be kept when capsule is deployed.
-* bool isReward                                              // if the template is located in the configured reward folder
-* string author                                              // Name of the player who created the structure. Set using commands.
-* string structureName                                       // name of the template file name without the .nbt extension.
-// Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
-* string prevStructureName                                   // Used to remove older unused blueprint templates
-* tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
-* tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
-* tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
-* long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
-* int upgraded                                               // How many upgrades the capsule has
-* tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
-* string mirror                                              // [Blueprints] current mirror mode
-* string rotation                                            // [Blueprints] current rotation mode
-* arr ench:[0:{lvl:1s,id:101s}]
+     * int color                                                  // material color
+     * tag display : {int color}                                  // base color
+     * int size                                                   // odd number, size of the square side the capsule can hold
+     * string label                                               // User customizable label
+     * byte overpowered                                           // If the capsule can capture powerfull blocks
+     * bool onUse                                                 // if the content of the template must be kept when capsule is deployed.
+     * bool isReward                                              // if the template is located in the configured reward folder
+     * string author                                              // Name of the player who created the structure. Set using commands.
+     * string structureName                                       // name of the template file name without the .nbt extension.
+     * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
+     * string prevStructureName                                   // Used to remove older unused blueprint templates
+     * tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
+     * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
+     * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
+     * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
+     * int upgraded                                               // How many upgrades the capsule has
+     * tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
+     * string mirror                                              // [Blueprints] current mirror mode
+     * string rotation                                            // [Blueprints] current rotation mode
+     * arr ench:[0:{lvl:1s,id:101s}]
      *
      * @param unlocalizedName registry name
      */
@@ -189,7 +189,7 @@ public class CapsuleItem extends Item {
             capsule.getTagCompound().setInteger("size", size);
             LOGGER.error("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
-            size--;
+            size++;
             capsule.getTagCompound().setInteger("size", size);
             LOGGER.error("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
@@ -205,7 +205,7 @@ public class CapsuleItem extends Item {
             size = CAPSULE_MAX_CAPTURE_SIZE;
             LOGGER.warn("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
-            size--;
+            size++;
             LOGGER.warn("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
         capsule.getTagCompound().setInteger("size", size);
@@ -655,9 +655,9 @@ public class CapsuleItem extends Item {
     @Override
     public void onCreated(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
         if (capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
-            String sourceStructureName = CapsuleItem.getStructureName(capsule);
-            if (sourceStructureName != null && !worldIn.isRemote && !sourceStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
-                String templateName = StructureSaver.createBlueprintTemplate(capsule, (WorldServer) worldIn, playerIn, sourceStructureName);
+            String srcStructureName = CapsuleItem.getStructureName(capsule);
+            if (srcStructureName != null && !worldIn.isRemote && !srcStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
+                String templateName = StructureSaver.createBlueprintTemplate(srcStructureName, capsule, (WorldServer) worldIn, playerIn);
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
                 CapsuleItem.setStructureName(capsule, templateName);
@@ -693,8 +693,6 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
-    // TODO: Add creating a normal capsule from reward (command)
-    // TODO: Add creating a blueprint from reward  (command)
     // TODO: Add crafting a blueprint from reward  (recipe)
     // TODO: Add starting capsule base for players
     // TODO: Add blueprint specific crafts (chick farm, starting base)

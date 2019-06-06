@@ -1,7 +1,6 @@
 package capsule;
 
 import capsule.items.CapsuleItem;
-import capsule.items.CapsuleItems;
 import capsule.loot.LootPathData;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
@@ -55,6 +54,7 @@ public class StructureSaver {
     public static final String BLUEPRINT_PREFIX = "B-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
+    private static List<String> outExcluded = new ArrayList<>();
 
     public static void loadLootList(MinecraftServer server) {
         // Init the manager for reward Lists
@@ -706,10 +706,22 @@ public class StructureSaver {
      * Extract the template NBTData from a capsule
      */
     public static NBTTagCompound getTemplateNBTData(ItemStack capsule, WorldServer worldServer) {
-        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(capsule, worldServer);
-        NBTTagCompound data = new NBTTagCompound();
-        CapsuleTemplate template = sourcetemplatepair.getRight();
+        return getTemplateNBTData(StructureSaver.getTemplate(capsule, worldServer).getRight());
+    }
+
+    public static NBTTagCompound getTemplateNBTData(String path, WorldServer worldServer) {
+        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
+        if (path.startsWith(Config.rewardTemplatesPath)) {
+            sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getMinecraftServer(), path);
+        } else {
+            sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);
+        }
+        return getTemplateNBTData(sourcetemplatepair.getRight());
+    }
+
+    public static NBTTagCompound getTemplateNBTData(CapsuleTemplate template) {
         if (template == null) return null;
+        NBTTagCompound data = new NBTTagCompound();
         template.writeToNBT(data);
         return data;
     }
@@ -728,32 +740,30 @@ public class StructureSaver {
     }
 
     @Nullable
-    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldServer, EntityPlayer
-            playerIn, String sourceStructureName) {
+    public static String createBlueprintTemplate(String srcStructurePath, ItemStack destCapsule, WorldServer worldServer, EntityPlayer
+            playerIn) {
         if (worldServer == null) {
             LOGGER.error("worldServer is null");
             return null;
         }
 
-        String destStructureName = getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
-        ItemStack srcCapsule = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(srcCapsule, sourceStructureName);
-        if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(srcCapsule);
-        List<String> outExcluded = new ArrayList<>();
-        boolean created = copyFromCapsuleTemplate(
-                srcCapsule,
+        String destStructureName = getBlueprintUniqueName(worldServer) + "-" + srcStructurePath.replace("/", "_");
+
+        CapsuleTemplateManager templateManager = getTemplateManager(worldServer);
+        outExcluded.clear();
+        boolean created = templateManager != null && duplicateTemplate(
+                getTemplateNBTData(srcStructurePath, worldServer),
                 destStructureName,
-                getTemplateManager(worldServer),
-                worldServer,
+                templateManager,
+                worldServer.getMinecraftServer(),
                 true,
                 outExcluded
         );
 
         // try to cleanup previous template to save disk space on the long run
-        if (capsule.getTagCompound() != null && capsule.getTagCompound().hasKey("prevStructureName")) {
-            CapsuleTemplateManager tm = getTemplateManager(worldServer);
-            if (tm != null)
-                tm.deleteTemplate(worldServer.getMinecraftServer(), new ResourceLocation(capsule.getTagCompound().getString("prevStructureName")));
+        if (destCapsule.getTagCompound() != null && destCapsule.getTagCompound().hasKey("prevStructureName")) {
+            if (templateManager != null)
+                templateManager.deleteTemplate(worldServer.getMinecraftServer(), new ResourceLocation(destCapsule.getTagCompound().getString("prevStructureName")));
         }
 
         if (!created && playerIn != null) {
