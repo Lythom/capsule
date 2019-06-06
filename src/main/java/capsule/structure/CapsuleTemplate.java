@@ -423,7 +423,7 @@ public class CapsuleTemplate {
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */
-    public void spawnBlocksAndEntities(World worldIn, BlockPos pos, PlacementSettings placementIn, Map<BlockPos,Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> outSpawnedBlocks, List<Entity> outSpawnedEntities) {
+    public void spawnBlocksAndEntities(World worldIn, BlockPos pos, PlacementSettings placementIn, Map<BlockPos, Block> occupiedPositions, List<Block> overridableBlocks, List<BlockPos> outSpawnedBlocks, List<Entity> outSpawnedEntities) {
         ITemplateProcessor templateProcessor = new BlockRotationProcessor(pos, placementIn);
 
         if (size == null) return;
@@ -571,9 +571,6 @@ public class CapsuleTemplate {
         byte[] blockIdsByte = nbt.getByteArray("Blocks");
         byte[] metaArr = nbt.getByteArray("Data");
         final int numBlocks = blockIdsByte.length;
-        int size = Math.max(width, Math.max(height, length));
-
-        this.size = new BlockPos(size, size, size);
         this.author = "?";
 
         if (numBlocks != (width * height * length)) {
@@ -611,6 +608,9 @@ public class CapsuleTemplate {
 
         // calculate block template informations
         int index = 0;
+        int sizeX = 1;
+        int sizeY = 1;
+        int sizeZ = 1;
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < length; ++z) {
                 for (int x = 0; x < width; ++x, index++) {
@@ -619,10 +619,16 @@ public class CapsuleTemplate {
                         BlockPos pos = new BlockPos(x, y, z);
                         NBTTagCompound teNBT = tiles.get(pos);
                         this.blocks.add(new Template.BlockInfo(pos, state, teNBT));
+                        if (pos.getX() > sizeX) sizeX = pos.getX();
+                        if (pos.getY() > sizeY) sizeY = pos.getY();
+                        if (pos.getZ() > sizeZ) sizeZ = pos.getZ();
                     }
                 }
             }
         }
+        int size = Math.max(sizeX, Math.max(sizeY, sizeZ));
+        if (size % 2 == 0) size++;
+        this.size = new BlockPos(size, size, size);
 
         return true;
     }

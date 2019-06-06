@@ -338,6 +338,13 @@ public class Capsule {
         return capsule;
     }
 
+    public static ItemStack createLinkedCapsule(String structureName, int baseColor, int materialColor, int size, @Nullable String label) {
+        ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, false, label, null);
+        CapsuleItem.setStructureName(capsule, structureName);
+        CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
+        return capsule;
+    }
+
     public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
         ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         MinecraftNBT.setColor(capsule, baseColor); // standard dye is for baseColor

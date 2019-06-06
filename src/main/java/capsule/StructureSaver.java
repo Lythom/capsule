@@ -668,32 +668,50 @@ public class StructureSaver {
         return capsuleID;
     }
 
-    public static boolean copyFromCapsuleTemplate(WorldServer worldIn, ItemStack capsule, CapsuleTemplateManager
-            destManager, String destinationStructureName, List<String> outExcluded) {
-        WorldServer worldServer = worldIn;
-        MinecraftServer server = worldServer.getMinecraftServer();
-        // get source template data
-        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(capsule, worldServer);
-        NBTTagCompound data = new NBTTagCompound();
-        sourcetemplatepair.getRight().writeToNBT(data);
+    public static boolean copyFromCapsuleTemplate(ItemStack capsule, String destinationStructureName, CapsuleTemplateManager
+            destManager, WorldServer worldServer, boolean onlyBlocks, List<String> outExcluded) {
+        NBTTagCompound srcTemplateData = getTemplateNBTData(capsule, worldServer);
+        if (srcTemplateData == null) return false; // capsule template not found
+        return duplicateTemplate(srcTemplateData, destinationStructureName, destManager, worldServer.getMinecraftServer(), onlyBlocks, outExcluded);
 
+    }
+
+    public static boolean duplicateTemplate(NBTTagCompound templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server) {
+        return duplicateTemplate(templateData, destinationStructureName, destManager, server, false, null);
+    }
+
+    public static boolean duplicateTemplate(NBTTagCompound templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server, boolean onlyBlocks, List<String> outExcluded) {
         // create a destination template
         ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
         CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
-        // write template from source data
-        destTemplate.read(data);
+        // populate template from source data
+        destTemplate.read(templateData);
         // remove all tile entities
-        List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream().filter(b -> {
-            boolean included = b.tileentityData == null;
-            if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
-            return included;
-        }).collect(Collectors.toList());
-        destTemplate.blocks.clear();
-        destTemplate.blocks.addAll(newBlockList);
-        // remove all entities
-        destTemplate.entities.clear();
+        if (onlyBlocks) {
+            List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream().filter(b -> {
+                boolean included = b.tileentityData == null;
+                if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
+                return included;
+            }).collect(Collectors.toList());
+            destTemplate.blocks.clear();
+            destTemplate.blocks.addAll(newBlockList);
+            // remove all entities
+            destTemplate.entities.clear();
+        }
         // write the new template
         return destManager.writeTemplate(server, destinationLocation);
+    }
+
+    /**
+     * Extract the template NBTData from a capsule
+     */
+    public static NBTTagCompound getTemplateNBTData(ItemStack capsule, WorldServer worldServer) {
+        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair = StructureSaver.getTemplate(capsule, worldServer);
+        NBTTagCompound data = new NBTTagCompound();
+        CapsuleTemplate template = sourcetemplatepair.getRight();
+        if (template == null) return null;
+        template.writeToNBT(data);
+        return data;
     }
 
     /**
@@ -710,25 +728,24 @@ public class StructureSaver {
     }
 
     @Nullable
-    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldIn, EntityPlayer
+    public static String createBlueprintTemplate(ItemStack capsule, WorldServer worldServer, EntityPlayer
             playerIn, String sourceStructureName) {
-        WorldServer worldServer = worldIn;
-        CapsuleTemplateManager templatemanager = getTemplateManager(worldServer);
-        if (templatemanager == null) {
-            LOGGER.error("getTemplateManager returned null");
+        if (worldServer == null) {
+            LOGGER.error("worldServer is null");
             return null;
         }
 
         String destStructureName = getBlueprintUniqueName(worldServer) + "-" + sourceStructureName.replace("/", "_");
-        ItemStack source = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(source, sourceStructureName);
-        if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(source);
+        ItemStack srcCapsule = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_LINKED);
+        CapsuleItem.setStructureName(srcCapsule, sourceStructureName);
+        if (sourceStructureName.startsWith(Config.rewardTemplatesPath)) CapsuleItem.setIsReward(srcCapsule);
         List<String> outExcluded = new ArrayList<>();
         boolean created = copyFromCapsuleTemplate(
-                worldServer,
-                source,
-                templatemanager,
+                srcCapsule,
                 destStructureName,
+                getTemplateManager(worldServer),
+                worldServer,
+                true,
                 outExcluded
         );
 
