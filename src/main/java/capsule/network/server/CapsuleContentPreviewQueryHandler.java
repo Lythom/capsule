@@ -75,16 +75,6 @@ public class CapsuleContentPreviewQueryHandler
 
         if (template != null) {
             List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.blocks);
-//            List<BlockPos> blockspos = new ArrayList<>();
-//            for (Template.BlockInfo blockInfo : blocksInfos) {
-//                if (blockInfo.blockState != Blocks.AIR.getDefaultState()) {
-//                    blockspos.add(blockInfo.pos);
-//                }
-
-
-            // optimize blockpos to reduce workload
-
-
             return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 
         } else if (heldItem.hasTagCompound()) {
