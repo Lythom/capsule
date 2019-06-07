@@ -27,6 +27,8 @@ public class Config {
     public static String[] lootTemplatesPaths;
     public static List<String> lootTablesList;
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
+    public static String starterTemplatesPath;
+    public static List<String> starterTemplatesList = new ArrayList<>();
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
 
@@ -147,11 +149,15 @@ public class Config {
                 "config/capsule/loot/uncommon",
                 "config/capsule/loot/rare"
         });
-        lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save will have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
+        lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save structure have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
+        Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath","config/capsule/starters");
+        starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
+        Config.starterTemplatesPath = starterTemplatesPathProp.getString();
+
         Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
-        rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromStructure <structureName>.");
+        rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].");
         Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
 
         // init paths properties from config
@@ -211,4 +217,7 @@ public class Config {
     }
 
 
+    public static String getRewardPathFromName(String structureName) {
+        return rewardTemplatesPath + "/" + structureName;
+    }
 }

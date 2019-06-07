@@ -69,7 +69,7 @@ public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
                         // This blueprint will take the source structure name by copying it here
                         // a new dedicated template is created later.
                         // @see CapsuleItem.onCreated
-                        ItemStack blueprintItem = Capsule.createLinkedCapsule(
+                        ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
                                 CapsuleItem.getStructureName(itemstack),
                                 CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
                                 0xFFFFFF,

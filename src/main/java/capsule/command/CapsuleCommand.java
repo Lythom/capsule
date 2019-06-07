@@ -190,11 +190,6 @@ public class CapsuleCommand extends CommandBase {
                 throw new WrongUsageException(getUsage(sender));
             }
             StructureSaver.loadLootList(server);
-        } else if ("exportPlayersCapsules".equalsIgnoreCase(args[0])) {
-            if (args.length != 1) {
-                throw new WrongUsageException(getUsage(sender));
-            }
-            StructureSaver.loadLootList(server);
         } else {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -202,7 +197,7 @@ public class CapsuleCommand extends CommandBase {
 
     private void executeGiveEmpty(String[] args, EntityPlayerMP player) {
         if (player != null) {
-            ItemStack capsule = Capsule.createEmptyCapsule(
+            ItemStack capsule = Capsule.newEmptyCapsuleItemStack(
                     0xFFFFFF,
                     0xFFFFFF,
                     (args.length >= 2 ? Integer.decode(args[1]) : 3),
@@ -220,35 +215,9 @@ public class CapsuleCommand extends CommandBase {
         String srcStructureName = structureAndPlayerArgs.getStructureName();
 
         if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
-
-            CapsuleTemplate srcTemplate = getRewardTemplate(srcStructureName, server);
-            if (srcTemplate != null) {
-                int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
-                if (size % 2 == 0)
-                    size++;
-
-                String destStructureName = StructureSaver.getUniqueName(player.getServerWorld(), player.getName() + "-" + srcStructureName.replace("/", "_"));
-                ItemStack capsule = Capsule.createLinkedCapsule(
-                        destStructureName,
-                        CapsuleLootEntry.getRandomColor(),
-                        CapsuleLootEntry.getRandomColor(),
-                        size,
-                        false,
-                        WordUtils.capitalize(srcStructureName.replace("_", " ")),
-                        0
-                );
-
-                NBTTagCompound srcData = new NBTTagCompound();
-                srcTemplate.writeToNBT(srcData);
-                StructureSaver.duplicateTemplate(
-                        srcData,
-                        destStructureName,
-                        StructureSaver.getTemplateManager(player.getServerWorld()),
-                        server
-                );
-
+            ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(srcStructureName), player);
+            if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
-
             } else {
                 throw new CommandException("Reward Capsule \"%s\" not found ", srcStructureName);
             }
@@ -262,13 +231,13 @@ public class CapsuleCommand extends CommandBase {
 
         if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
 
-            CapsuleTemplate srcTemplate = getRewardTemplate(srcStructureName, server);
+            CapsuleTemplate srcTemplate = Capsule.getRewardTemplate(srcStructureName, server);
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
                 if (size % 2 == 0)
                     size++;
 
-                ItemStack capsule = Capsule.createEmptyCapsule(
+                ItemStack capsule = Capsule.newEmptyCapsuleItemStack(
                         3949738,
                         0xFFFFFF,
                         size,
@@ -280,7 +249,7 @@ public class CapsuleCommand extends CommandBase {
                 CapsuleItem.setBlueprint(capsule);
 
                 String destTemplate = StructureSaver.createBlueprintTemplate(
-                        getRewardPathFromName(srcStructureName), capsule,
+                        Config.getRewardPathFromName(srcStructureName), capsule,
                         player.getServerWorld(),
                         player
                 );
@@ -291,16 +260,6 @@ public class CapsuleCommand extends CommandBase {
                 throw new CommandException("Reward Capsule \"%s\" not found ", srcStructureName);
             }
         }
-    }
-
-    private CapsuleTemplate getRewardTemplate(String structureName, MinecraftServer server) {
-        String srcStucturePath = getRewardPathFromName(structureName);
-        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
-        return srcTemplatemanager.get(server, new ResourceLocation(srcStucturePath));
-    }
-
-    private String getRewardPathFromName(String structureName) {
-        return Config.rewardTemplatesPath + "/" + structureName;
     }
 
     private void executeGiveRandomLoot(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws CommandException {
@@ -332,7 +291,7 @@ public class CapsuleCommand extends CommandBase {
 
         if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
 
-            String structurePath = getRewardPathFromName(structureName);
+            String structurePath = Config.getRewardPathFromName(structureName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(server);
             CapsuleTemplate template = templatemanager.get(server, new ResourceLocation(structurePath));
             if (template != null) {
@@ -340,7 +299,7 @@ public class CapsuleCommand extends CommandBase {
                 if (size % 2 == 0)
                     size++;
 
-                ItemStack capsule = Capsule.createRewardCapsule(
+                ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         structurePath,
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
@@ -381,7 +340,7 @@ public class CapsuleCommand extends CommandBase {
                 destTemplate.read(data);
                 destManager.writeTemplate(server, destinationLocation);
 
-                ItemStack capsule = Capsule.createRewardCapsule(
+                ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         destinationLocation.toString(),
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
@@ -417,7 +376,7 @@ public class CapsuleCommand extends CommandBase {
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
                 }
 
-                String destinationTemplateLocation = getRewardPathFromName(outputName.toLowerCase().replace(" ", "_"));
+                String destinationTemplateLocation = Config.getRewardPathFromName(outputName.toLowerCase().replace(" ", "_"));
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
@@ -432,7 +391,7 @@ public class CapsuleCommand extends CommandBase {
                     return;
                 }
 
-                ItemStack capsule = Capsule.createRewardCapsule(
+                ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         destinationTemplateLocation,
                         CapsuleItem.getBaseColor(heldItem),
                         CapsuleItem.getMaterialColor(heldItem),

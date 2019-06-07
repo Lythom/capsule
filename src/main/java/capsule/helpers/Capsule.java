@@ -6,11 +6,15 @@ import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleUndeployNotifToClient;
+import capsule.structure.CapsuleTemplate;
+import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagByte;
@@ -19,6 +23,7 @@ import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -30,6 +35,7 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -254,7 +260,7 @@ public class Capsule {
             if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> inv2.extractItem(slot, qty, false));
             CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
-        } else if(player != null && player.isCreative()) {
+        } else if (player != null && player.isCreative()) {
             CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
             missingMaterials.clear();
@@ -329,8 +335,8 @@ public class Capsule {
         return entityitem;
     }
 
-    public static ItemStack createRewardCapsule(String structureName, int baseColor, int materialColor, int size, @Nullable String label, @Nullable String author) {
-        ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, false, label, null);
+    public static ItemStack newRewardCapsuleItemStack(String structureName, int baseColor, int materialColor, int size, @Nullable String label, @Nullable String author) {
+        ItemStack capsule = newEmptyCapsuleItemStack(baseColor, materialColor, size, false, label, null);
         CapsuleItem.setIsReward(capsule);
         CapsuleItem.setStructureName(capsule, structureName);
         CapsuleItem.setAuthor(capsule, author);
@@ -338,14 +344,14 @@ public class Capsule {
         return capsule;
     }
 
-    public static ItemStack createLinkedCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
-        ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
+    public static ItemStack newLinkedCapsuleItemStack(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
+        ItemStack capsule = newEmptyCapsuleItemStack(baseColor, materialColor, size, overpowered, label, upgraded);
         CapsuleItem.setStructureName(capsule, structureName);
         CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
         return capsule;
     }
 
-    public static ItemStack createEmptyCapsule(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
+    public static ItemStack newEmptyCapsuleItemStack(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
         ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         MinecraftNBT.setColor(capsule, baseColor); // standard dye is for baseColor
         capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
@@ -407,5 +413,50 @@ public class Capsule {
                 LOGGER.error("Couldn't capture the content into the capsule", e);
             }
         }
+    }
+
+    public static String labelFromPath(String path) {
+        if (path.contains("/")) {
+            return WordUtils.capitalize(path.substring(path.lastIndexOf("/") + 1).replace("_", " "));
+        } else {
+            return WordUtils.capitalize(path.replace("_", " "));
+        }
+    }
+
+    public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, EntityPlayerMP player) {
+        if (player == null) return ItemStack.EMPTY;
+
+        CapsuleTemplate srcTemplate = getRewardTemplate(srcStructurePath, player.getServer());
+        if (srcTemplate == null) return ItemStack.EMPTY;
+
+        int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
+        if (size % 2 == 0)
+            size++;
+
+        String destStructureName = StructureSaver.getUniqueName(player.getServerWorld(), player.getName() + "-" + srcStructurePath.replace("/", "_"));
+        ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
+                destStructureName,
+                CapsuleLootEntry.getRandomColor(),
+                CapsuleLootEntry.getRandomColor(),
+                size,
+                false,
+                labelFromPath(srcStructurePath),
+                0
+        );
+
+        NBTTagCompound srcData = new NBTTagCompound();
+        srcTemplate.writeToNBT(srcData);
+        StructureSaver.duplicateTemplate(
+                srcData,
+                destStructureName,
+                StructureSaver.getTemplateManager(player.getServerWorld()),
+                player.getServer()
+        );
+        return capsule;
+    }
+
+    public static CapsuleTemplate getRewardTemplate(String structurePath, MinecraftServer server) {
+        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
+        return srcTemplatemanager.get(server, new ResourceLocation(structurePath));
     }
 }

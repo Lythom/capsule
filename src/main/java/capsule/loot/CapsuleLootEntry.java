@@ -64,7 +64,7 @@ public class CapsuleLootEntry extends LootEntry {
                 if (path.length == 0)
                     return;
 
-                ItemStack capsule = Capsule.createRewardCapsule(
+                ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         templatePath,
                         getRandomColor(),
                         getRandomColor(),

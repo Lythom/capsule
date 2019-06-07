@@ -428,10 +428,9 @@ public class CapsuleTemplate {
 
         if (size == null) return;
 
-
+        StructureBoundingBox structureboundingbox = placementIn.getBoundingBox();
         if (!this.blocks.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
             Block block = placementIn.getReplacedBlock();
-            StructureBoundingBox structureboundingbox = placementIn.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : this.blocks) {
                 BlockPos blockpos = transformedBlockPos(placementIn, template$blockinfo.pos).add(pos).add(recenterRotation((size.getX() - 1) / 2, placementIn));
@@ -497,10 +496,9 @@ public class CapsuleTemplate {
                     }
                 }
             }
-
-            if (!placementIn.getIgnoreEntities()) {
-                this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, outSpawnedEntities);
-            }
+        }
+        if (!placementIn.getIgnoreEntities()) {
+            this.addEntitiesToWorld(worldIn, pos, placementIn.getMirror(), placementIn.getRotation(), structureboundingbox, outSpawnedEntities);
         }
     }
 

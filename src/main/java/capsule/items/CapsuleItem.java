@@ -697,7 +697,6 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
-    // TODO: Add crafting a blueprint from reward  (recipe)
     // TODO: Add starting capsule base for players
     // TODO: Add blueprint specific crafts (chick farm, starting base)
 

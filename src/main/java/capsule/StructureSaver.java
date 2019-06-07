@@ -67,18 +67,44 @@ public class StructureSaver {
             if (path.startsWith("config/") && !templateFolder.exists()) {
                 templateFolder.mkdirs();
                 // initial with example capsule the first time
-                LOGGER.info("First load: initializing the loots in config/capsule/loot. You can change the content of folder with any nbt structure block or capsule file. You can remove the folders from capsule.config to remove loots.");
+                LOGGER.info("First load: initializing the loots in " + path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
                 populateFolder(templateFolder);
             }
 
             if (templateFolder.exists() && templateFolder.isDirectory()) {
-                File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt"));
+                File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt") || p_accept_2_.endsWith(".schematic"));
                 data.files = new ArrayList<>();
                 if (fileList != null) {
                     for (File templateFile : fileList) {
                         if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
                             data.files.add(templateFile.getName().replaceAll(".nbt", ""));
+                        if (templateFile.isFile() && templateFile.getName().endsWith(".schematic"))
+                            data.files.add(templateFile.getName().replaceAll(".schematic", ""));
                     }
+                }
+            }
+        }
+    }
+
+    public static void populateStarterFolder(MinecraftServer server) {
+        String path = Config.starterTemplatesPath;
+        File templateFolder = new File(server.getDataDirectory(), path);
+
+        if (path.startsWith("config/") && !templateFolder.exists()) {
+            templateFolder.mkdirs();
+            // initial with example capsule the first time
+            LOGGER.info("First load: initializing the starters in "+path+". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
+            populateFolder(templateFolder);
+        }
+        if (templateFolder.exists() && templateFolder.isDirectory()) {
+            File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt") || p_accept_2_.endsWith(".schematic"));
+            Config.starterTemplatesList = new ArrayList<>();
+            if (fileList != null) {
+                for (File templateFile : fileList) {
+                    if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
+                        Config.starterTemplatesList.add(Config.starterTemplatesPath + "/" + templateFile.getName().replaceAll(".nbt", ""));
+                    if (templateFile.isFile() && templateFile.getName().endsWith(".schematic"))
+                        Config.starterTemplatesList.add(Config.starterTemplatesPath + "/" + templateFile.getName().replaceAll(".schematic", ""));
                 }
             }
         }
@@ -90,6 +116,7 @@ public class StructureSaver {
             String assetPath = "assets/capsule/loot/common";
             if (templateFolder.getPath().contains("uncommon")) assetPath = "assets/capsule/loot/uncommon";
             if (templateFolder.getPath().contains("rare")) assetPath = "assets/capsule/loot/rare";
+            if (templateFolder.getPath().contains("starters")) assetPath = "assets/capsule/starters";
             String[] resources = getResourceListing(StructureSaver.class, assetPath);
 
             for (String ressource : resources) {

@@ -5,11 +5,12 @@ import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
+import capsule.loot.StarterLoot;
 import capsule.network.*;
 import capsule.network.client.CapsuleContentPreviewAnswerHandler;
 import capsule.network.client.CapsuleUndeployNotifHandler;
-import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleContentPreviewQueryHandler;
+import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleThrowQueryHandler;
 import capsule.network.server.LabelEditedMessageToServerHandler;
 import net.minecraft.block.Block;
@@ -73,7 +74,7 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // client ask server to throw item to a specific position
         simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
-         // client ask server to reload the held blueprint capsule
+        // client ask server to reload the held blueprint capsule
         simpleNetworkWrapper.registerMessage(CapsuleLeftClickQueryHandler.class, CapsuleLeftClickQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
         // server sends to client the data needed to preview a deploy
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
@@ -84,6 +85,7 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
         MinecraftForge.EVENT_BUS.register(CapsuleItems.capsule);
+        MinecraftForge.EVENT_BUS.register(StarterLoot.instance);
     }
 
     public void postInit(FMLPostInitializationEvent event) {
@@ -101,6 +103,7 @@ public class CommonProxy {
     public void serverStarting(FMLServerStartingEvent e) {
         e.registerServerCommand(new CapsuleCommand());
         StructureSaver.loadLootList(e.getServer());
+        StructureSaver.populateStarterFolder(e.getServer());
     }
 
     public void openGuiScreen(EntityPlayer playerIn) {
