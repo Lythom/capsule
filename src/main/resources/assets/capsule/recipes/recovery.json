@@ -1,5 +1,5 @@
 {
-  "type": "capsule:recovery_blueprint_capsule",
+  "type": "capsule:recovery_capsule",
   "result": {
     "item": "capsule:capsule",
     "data": 5,
@@ -8,18 +8,13 @@
       "oneUse": true
     }
   },
-  "pattern": [
-    "cb ",
-    "   ",
-    "   "
-  ],
-  "key": {
-    "c": {
+  "ingredients": [
+    {
       "item": "capsule:capsule",
       "data": 2
     },
-    "b": {
+    {
       "item": "minecraft:glass_bottle"
     }
-  }
+  ]
 }

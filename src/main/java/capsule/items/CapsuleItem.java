@@ -11,6 +11,7 @@ import capsule.helpers.Spacial;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
+import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
@@ -40,6 +41,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -440,9 +442,11 @@ public class CapsuleItem extends Item {
             // Add capsuleList items, loaded from json files
             subItems.addAll(CapsuleItems.capsuleList.keySet());
             subItems.addAll(CapsuleItems.opCapsuleList.keySet());
+            for (Pair<ItemStack, BlueprintCapsuleRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+                subItems.add(blueprintCapsule.getKey());
+            }
             if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());
             if (CapsuleItems.recoveryCapsule != null) subItems.add(CapsuleItems.recoveryCapsule.getKey());
-            if (CapsuleItems.blueprintCapsule != null) subItems.add(CapsuleItems.blueprintCapsule.getKey());
         }
     }
 
@@ -655,9 +659,9 @@ public class CapsuleItem extends Item {
     @Override
     public void onCreated(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
         if (capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
-            String srcStructureName = CapsuleItem.getStructureName(capsule);
-            if (srcStructureName != null && !worldIn.isRemote && !srcStructureName.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
-                String templateName = StructureSaver.createBlueprintTemplate(srcStructureName, capsule, (WorldServer) worldIn, playerIn);
+            String srcStructurePath = CapsuleItem.getStructureName(capsule);
+            if (srcStructurePath != null && !worldIn.isRemote && !srcStructurePath.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
+                String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (WorldServer) worldIn, playerIn);
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
                 CapsuleItem.setStructureName(capsule, templateName);

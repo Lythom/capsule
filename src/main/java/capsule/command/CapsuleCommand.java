@@ -233,7 +233,9 @@ public class CapsuleCommand extends CommandBase {
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
                         size,
-                        WordUtils.capitalize(srcStructureName.replace("_", " "))
+                        false,
+                        WordUtils.capitalize(srcStructureName.replace("_", " ")),
+                        0
                 );
 
                 NBTTagCompound srcData = new NBTTagCompound();

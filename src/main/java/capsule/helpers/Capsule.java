@@ -338,8 +338,8 @@ public class Capsule {
         return capsule;
     }
 
-    public static ItemStack createLinkedCapsule(String structureName, int baseColor, int materialColor, int size, @Nullable String label) {
-        ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, false, label, null);
+    public static ItemStack createLinkedCapsule(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
+        ItemStack capsule = createEmptyCapsule(baseColor, materialColor, size, overpowered, label, upgraded);
         CapsuleItem.setStructureName(capsule, structureName);
         CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
         return capsule;

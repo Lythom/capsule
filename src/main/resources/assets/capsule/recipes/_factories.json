@@ -3,8 +3,9 @@
     "capsule": "capsule.recipes.CapsuleRecipeFactory",
     "clear_capsule": "capsule.recipes.ClearCapsuleRecipeFactory",
     "dye_capsule": "capsule.recipes.DyeCapsuleRecipeFactory",
-    "recovery_blueprint_capsule": "capsule.recipes.RecoveryBlueprintCapsuleRecipeFactory",
+    "blueprint_capsule": "capsule.recipes.BlueprintCapsuleRecipeFactory",
     "blueprint_change": "capsule.recipes.BlueprintChangeRecipeFactory",
+    "recovery_capsule": "capsule.recipes.RecoveryCapsuleRecipeFactory",
     "upgrade_capsule": "capsule.recipes.UpgradeCapsuleRecipeFactory"
   },
   "conditions": {

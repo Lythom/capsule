@@ -1,5 +1,6 @@
 package capsule.recipes;
 
+import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
 import net.minecraft.inventory.InventoryCrafting;
@@ -13,17 +14,17 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
 
 import static capsule.items.CapsuleItem.*;
 
-public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
+public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
 
     @Override
     public IRecipe parse(JsonContext context, JsonObject json) {
-        return new RecoveryBlueprintCapsuleRecipe(ShapedOreRecipe.factory(context, json));
+        return new BlueprintCapsuleRecipe(ShapedOreRecipe.factory(context, json));
     }
 
-    public class RecoveryBlueprintCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+    public class BlueprintCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
         public final ShapedOreRecipe recipe;
 
-        public RecoveryBlueprintCapsuleRecipe(ShapedOreRecipe recipe) {
+        public BlueprintCapsuleRecipe(ShapedOreRecipe recipe) {
             this.recipe = recipe;
         }
 
@@ -64,23 +65,22 @@ public class RecoveryBlueprintCapsuleRecipeFactory implements IRecipeFactory {
                 for (int j = 0; j < invC.getWidth(); ++j) {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
 
-                    if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
-                        if (isOneUse(configuredOutput)) {
-                            ItemStack copy = itemstack.copy();
-                            CapsuleItem.setOneUse(copy);
-                            return copy;
-                        } else if (isBlueprint(configuredOutput)) {
-                            // This blueprint will take the source structure name by copying it here
-                            // a new dedicated template is created later.
-                            // @see CapsuleItem.onCreated
-                            ItemStack copy = itemstack.copy();
-                            CapsuleItem.setMaterialColor(copy, 0xFFFFFF);
-                            CapsuleItem.setBaseColor(copy, CapsuleItem.getBaseColor(recipe.getRecipeOutput()));
-                            CapsuleItem.setBlueprint(copy);
-                            CapsuleItem.setState(copy, STATE_DEPLOYED);
-                            CapsuleItem.setUpgradeLevel(copy,0);
-                            return copy;
-                        }
+                    if (CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.isReward(itemstack)) {
+                        // This blueprint will take the source structure name by copying it here
+                        // a new dedicated template is created later.
+                        // @see CapsuleItem.onCreated
+                        ItemStack blueprintItem = Capsule.createLinkedCapsule(
+                                CapsuleItem.getStructureName(itemstack),
+                                CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
+                                0xFFFFFF,
+                                CapsuleItem.getSize(itemstack),
+                                CapsuleItem.isOverpowered(itemstack),
+                                itemstack.getTagCompound() != null ? itemstack.getTagCompound().getString("label") : null,
+                                0
+                        );
+                        CapsuleItem.setBlueprint(blueprintItem);
+                        CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
+                        return blueprintItem;
                     }
                 }
             }

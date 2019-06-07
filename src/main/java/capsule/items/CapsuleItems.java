@@ -1,8 +1,9 @@
 package capsule.items;
 
 import capsule.Main;
+import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
 import capsule.recipes.BlueprintChangeRecipeFactory.BlueprintChangeRecipe;
-import capsule.recipes.RecoveryBlueprintCapsuleRecipeFactory.RecoveryBlueprintCapsuleRecipe;
+import capsule.recipes.RecoveryCapsuleRecipeFactory.RecoveryCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -12,7 +13,9 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeMap;
 
 public class CapsuleItems {
@@ -23,10 +26,10 @@ public class CapsuleItems {
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
     public static TreeMap<ItemStack, IRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
-    public static TreeMap<ItemStack, IRecipe> opCapsuleList = new TreeMap<>(Comparator.comparing(CapsuleItems::compare));
+    public static TreeMap<ItemStack, IRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
+    public static List<Pair<ItemStack, BlueprintCapsuleRecipe>> blueprintCapsules = new ArrayList<>();
     public static Pair<ItemStack, IRecipe> unlabelledCapsule = null;
-    public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> recoveryCapsule = null;
-    public static Pair<ItemStack, RecoveryBlueprintCapsuleRecipe> blueprintCapsule = null;
+    public static Pair<ItemStack, RecoveryCapsuleRecipe> recoveryCapsule = null;
     public static Pair<ItemStack, BlueprintChangeRecipe> blueprintChangedCapsule = null;
     public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
 
@@ -48,13 +51,10 @@ public class CapsuleItems {
         for (IRecipe recipe : event.getRegistry().getValuesCollection()) {
             if (recipe.getRegistryName().toString().startsWith("capsule:")) {
 
-                if (recipe instanceof RecoveryBlueprintCapsuleRecipe) {
-                    ItemStack out = recipe.getRecipeOutput();
-                    if (CapsuleItem.isBlueprint(out)) {
-                        blueprintCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryBlueprintCapsuleRecipe) recipe);
-                    } else if (CapsuleItem.isOneUse(out)) {
-                        recoveryCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryBlueprintCapsuleRecipe) recipe);
-                    }
+                if (recipe instanceof BlueprintCapsuleRecipe) {
+                    blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), (BlueprintCapsuleRecipe) recipe));
+                } else if (recipe instanceof RecoveryCapsuleRecipe) {
+                    recoveryCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {
                     upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
                 } else if (recipe instanceof BlueprintChangeRecipe) {
@@ -81,21 +81,6 @@ public class CapsuleItems {
         unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
         return unlabelledCapsule;
-    }
-
-    public static ItemStack getBlueprintCapsule(ItemStack capsule) {
-        ItemStack unlabelledCapsule = capsule.copy();
-        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameBlueprintExample");
-        CapsuleItem.setBlueprint(unlabelledCapsule);
-        return unlabelledCapsule;
-    }
-
-    public static ItemStack getRecoveryCapsule(ItemStack capsule) {
-        ItemStack recoveryCapsule = capsule.copy();
-        CapsuleItem.setOneUse(recoveryCapsule);
-        CapsuleItem.setStructureName(recoveryCapsule, "StructureNameRecoveryExample");
-        return recoveryCapsule;
     }
 
     public static ItemStack getUpgradedCapsule(ItemStack ironCapsule, int upLevel) {
