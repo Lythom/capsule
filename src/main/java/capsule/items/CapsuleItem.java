@@ -67,7 +67,6 @@ public class CapsuleItem extends Item {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);// = 180 / PI
     public static final float TO_RAD = 0.017453292F;
     public static final float GRAVITY_PER_TICK = 0.04f;
-    public static final PlacementSettings DEFAULT_PLACEMENT = new PlacementSettings();
 
     public static long lastRotationTime = 0;
 
@@ -697,7 +696,6 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
-    // TODO: Add starting capsule base for players
     // TODO: Add blueprint specific crafts (chick farm, starting base)
 
     public static void cleanDeploymentTags(ItemStack capsule) {
@@ -831,7 +829,7 @@ public class CapsuleItem extends Item {
                     .setIgnoreStructureBlock(false);
             return placementSettings;
         }
-        return DEFAULT_PLACEMENT;
+        return new PlacementSettings();
     }
 
     public static boolean hasPlacement(ItemStack blueprint) {
