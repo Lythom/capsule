@@ -13,8 +13,10 @@ capsule.tooltip.blueprint=Takes items from linked inventory to build structure
 capsule.tooltip.upgraded=Upgrades
 capsule.tooltip.overpowered=Overpowered
 capsule.tooltip.author=Designed by
-capsule.tooltip.blueprint_use_uncharged=* Left click: charge from inventory\n* Right click: undo last deploy\n* Sneak+Right click: link inventory
-capsule.tooltip.blueprint_use_charged=* Left click: rotate\n* Sneak+Left click: mirror\n* Right click: instant deploy\n* Sneak+Right click: link inventory
+capsule.tooltip.blueprintUseUncharged=* Left click: charge from inventory\n* Right click: undo last deploy\n* Sneak+Right click: link inventory
+capsule.tooltip.blueprintUseCharged=* Right click: instant deploy\n* Sneak+Right click: link inventory
+capsule.tooltip.canRotate=* Left click: rotate\n* Sneak+Left click: mirror
+capsule.tooltip.cannotRotate=Some complex blocks can't rotate
 capsule.tooltip.instant=Instantaneous
 capsule.feedback.linkedToInventory=Linked to "%s" at (x=%s, y=%s, z=%s)
 capsule.error.noCaptureBase=There were no Capture Base around.

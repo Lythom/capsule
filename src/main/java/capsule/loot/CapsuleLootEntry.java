@@ -3,6 +3,7 @@ package capsule.loot;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
+import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
@@ -71,7 +72,7 @@ public class CapsuleLootEntry extends LootEntry {
                         size,
                         WordUtils.capitalize(path[path.length - 1]),
                         template.getAuthor());
-
+                CapsuleItem.setCanRotate(capsule, template.canRotate());
                 stacks.add(capsule);
             }
 

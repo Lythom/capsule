@@ -222,20 +222,20 @@ public class StructureSaver {
         return RewardManager;
     }
 
-    public static boolean store(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
-                                Map<BlockPos, Block> excludedPositions) {
+    public static CapsuleTemplate undeploy(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+                                   Map<BlockPos, Block> excludedPositions) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         if (minecraftserver == null) {
             LOGGER.error("worldserver.getMinecraftServer() returned null");
-            return false;
+            return null;
         }
         List<Entity> outCapturedEntities = new ArrayList<>();
 
         CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
-            return false;
+            return null;
         }
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
@@ -264,7 +264,7 @@ public class StructureSaver {
             }
         }
 
-        return writingOK;
+        return template;
 
     }
 

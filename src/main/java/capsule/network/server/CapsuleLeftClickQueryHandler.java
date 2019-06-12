@@ -20,8 +20,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static capsule.items.CapsuleItem.*;
-
 /**
  * The MessageHandlerOnServer is used to process the network message once it has
  * arrived on the Server side. WARNING! In 1.8 the MessageHandler now runs in
@@ -68,39 +66,37 @@ public class CapsuleLeftClickQueryHandler
         sendingPlayer.getServerWorld().addScheduledTask(() -> {
             // read the content of the template and send it back to the client
             ItemStack stack = sendingPlayer.getHeldItemMainhand();
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
-                if (stack.getItemDamage() == STATE_DEPLOYED) {
-                    // Reload if no missing materials
-                    Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
-                    if (missing != null && missing.size() > 0) {
-                        String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n* "));
-                        sendingPlayer.sendMessage(new TextComponentTranslation(
-                                "Missing : \n* " + missingListText
-                        ));
-                    }
-                } else if (stack.getItemDamage() == STATE_BLUEPRINT) {
-                    PlacementSettings placement = getPlacement(stack);
-                    if (sendingPlayer.isSneaking()) {
-                        switch (placement.getMirror()) {
-                            case FRONT_BACK:
-                                placement.setMirror(Mirror.LEFT_RIGHT);
-                                break;
-                            case LEFT_RIGHT:
-                                placement.setMirror(Mirror.NONE);
-                                break;
-                            case NONE:
-                                placement.setMirror(Mirror.FRONT_BACK);
-                                break;
-                        }
-                        sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
-                    } else {
-                        placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                        sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
-                    }
-                    setPlacement(stack, placement);
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == CapsuleItem.STATE_DEPLOYED) {
+                // Reload if no missing materials
+                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
+                if (missing != null && missing.size() > 0) {
+                    String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n* "));
+                    sendingPlayer.sendMessage(new TextComponentTranslation(
+                            "Missing : \n* " + missingListText
+                    ));
                 }
             }
-
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
+                PlacementSettings placement = CapsuleItem.getPlacement(stack);
+                if (sendingPlayer.isSneaking()) {
+                    switch (placement.getMirror()) {
+                        case FRONT_BACK:
+                            placement.setMirror(Mirror.LEFT_RIGHT);
+                            break;
+                        case LEFT_RIGHT:
+                            placement.setMirror(Mirror.NONE);
+                            break;
+                        case NONE:
+                            placement.setMirror(Mirror.FRONT_BACK);
+                            break;
+                    }
+                    sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
+                } else {
+                    placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
+                    sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
+                }
+                CapsuleItem.setPlacement(stack, placement);
+            }
         });
 
         return null;

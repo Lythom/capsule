@@ -303,6 +303,17 @@ public class CapsuleItem extends Item {
                 || capsule.getItemDamage() == STATE_ONE_USE_ACTIVATED;
     }
 
+    public static void setCanRotate(ItemStack capsule, boolean canRotate) {
+        if (!capsule.hasTagCompound()) {
+            capsule.setTagCompound(new NBTTagCompound());
+        }
+        capsule.getTagCompound().setBoolean("canRotate", canRotate);
+    }
+
+    public static boolean canRotate(ItemStack capsule) {
+        return isBlueprint(capsule) || capsule.getItemDamage() != STATE_DEPLOYED && capsule.hasTagCompound() && capsule.getTagCompound().hasKey("canRotate") && capsule.getTagCompound().getBoolean("canRotate");
+    }
+
     public static void revertStateFromActivated(ItemStack capsule) {
         if (isBlueprint(capsule)) {
             setState(capsule, STATE_BLUEPRINT);
@@ -386,6 +397,11 @@ public class CapsuleItem extends Item {
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack capsule, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
 
+        String author = getAuthor(capsule);
+        if (author != null) {
+            tooltip.add(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.translateToLocal("capsule.tooltip.author") + " " + author + TextFormatting.RESET);
+        }
+
         if (capsule.getItemDamage() == STATE_ONE_USE) {
             tooltip.add(I18n.translateToLocal("capsule.tooltip.one_use").trim());
         }
@@ -395,11 +411,6 @@ public class CapsuleItem extends Item {
         }
 
         int size = getSize(capsule);
-        String author = getAuthor(capsule);
-        if (author != null) {
-            tooltip.add(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.translateToLocal("capsule.tooltip.author") + " " + author + TextFormatting.RESET);
-        }
-
         int upgradeLevel = getUpgradeLevel(capsule);
         String sizeTxt = size + "×" + size + "×" + size;
         if (upgradeLevel > 0) {
@@ -413,9 +424,17 @@ public class CapsuleItem extends Item {
 
         if (isBlueprint(capsule)) {
             if (capsule.getItemDamage() == STATE_DEPLOYED) {
-                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.blueprint_use_uncharged").replace("\\n", "\n"));
+                tooltipAddMultiline(tooltip, "capsule.tooltip.blueprintUseUncharged", TextFormatting.WHITE);
             } else {
-                tooltip.add(TextFormatting.WHITE + I18n.translateToLocal("capsule.tooltip.blueprint_use_charged").replace("\\n", "\n"));
+                tooltipAddMultiline(tooltip, "capsule.tooltip.canRotate", TextFormatting.WHITE);
+                tooltipAddMultiline(tooltip, "capsule.tooltip.blueprintUseCharged", TextFormatting.WHITE);
+
+            }
+        } else {
+            if (canRotate(capsule)) {
+                tooltipAddMultiline(tooltip, "capsule.tooltip.canRotate", TextFormatting.WHITE);
+            } else if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("canRotate")) {
+                tooltipAddMultiline(tooltip, "capsule.tooltip.cannotRotate", TextFormatting.DARK_GRAY);
             }
         }
         if (flagIn == ITooltipFlag.TooltipFlags.ADVANCED) {
@@ -429,6 +448,16 @@ public class CapsuleItem extends Item {
             PlacementSettings p = getPlacement(capsule);
             tooltip.add(TextFormatting.GOLD + "⌯ Symmetry: " + Capsule.getMirrorLabel(p));
             tooltip.add(TextFormatting.GOLD + "⟳ Rotation: " + Capsule.getRotationLabel(p));
+        }
+    }
+
+    public void tooltipAddMultiline(List<String> tooltip, String key) {
+        tooltipAddMultiline(tooltip, key, null);
+    }
+
+    public void tooltipAddMultiline(List<String> tooltip, String key, TextFormatting formatting) {
+        for (String s : I18n.translateToLocal(key).trim().split("\\\\n")) {
+            tooltip.add(formatting == null ? s : formatting + s);
         }
     }
 
@@ -454,7 +483,7 @@ public class CapsuleItem extends Item {
     @SideOnly(Side.CLIENT)
     public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
-        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack)) {
+        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack))) {
             CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -464,7 +493,7 @@ public class CapsuleItem extends Item {
     public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!event.isCanceled()) {
             ItemStack stack = event.getEntityPlayer().getHeldItemMainhand();
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == STATE_BLUEPRINT) {
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 event.setCanceled(true);
                 if (event.getWorld().isRemote) {
                     if (lastRotationTime + 60 < Minecraft.getSystemTime()) {
@@ -696,6 +725,7 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
+    // TODO: whitelist some blocks for blueprints
     // TODO: Add blueprint specific crafts (chick farm, starting base)
 
     public static void cleanDeploymentTags(ItemStack capsule) {

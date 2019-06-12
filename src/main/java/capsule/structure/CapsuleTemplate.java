@@ -324,7 +324,6 @@ public class CapsuleTemplate {
     /**
      * takes blocks from the world and puts the data them into this template
      */
-    @Nullable
     public List<BlockPos> takeBlocksFromWorldIntoCapsule(World worldIn, BlockPos startPos, BlockPos endPos,
                                                          Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
 
@@ -549,6 +548,21 @@ public class CapsuleTemplate {
     public static BlockPos recenterRotation(int extendSize, Mirror m, Rotation r) {
         return CapsuleTemplate.transformedBlockPos(new BlockPos(-extendSize, 0, -extendSize), m, r).add(new BlockPos(extendSize, 0, extendSize));
     }
+
+    public boolean canRotate() {
+        try {
+            for (Template.BlockInfo block : blocks) {
+                if (block.tileentityData != null && !block.blockState.getBlock().getRegistryName().getResourceDomain().equalsIgnoreCase("minecraft")) {
+                    return false;
+                }
+            }
+        } catch (NullPointerException e) {
+            return false;
+        }
+        return true;
+    }
+
+    // SCHEMATIC STUFF BELOW
 
     // inspired by https://github.com/maruohon/worldprimer/blob/master/src/main/java/fi/dy/masa/worldprimer/util/Schematic.java
     // Also for schematic V2 See https://github.com/EngineHub/WorldEdit/blob/master/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java for version 2

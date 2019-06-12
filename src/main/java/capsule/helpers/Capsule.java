@@ -95,10 +95,12 @@ public class Capsule {
                 playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintDontMatch"));
             }
         } else {
-            boolean storageOK = StructureSaver.store(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            boolean storageOK = template != null;
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
+                CapsuleItem.setCanRotate(capsule, template.canRotate());
                 notifyUndeploy(playerIn, startPos, size);
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
@@ -192,15 +194,16 @@ public class Capsule {
             player = thrower;
         }
         String capsuleID = StructureSaver.getUniqueName(playerWorld, player);
-        boolean storageOK = StructureSaver.store(playerWorld, player, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
-
+        CapsuleTemplate template = StructureSaver.undeploy(playerWorld, player, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
+        boolean storageOK = template != null;
         if (storageOK) {
             // register the link in the capsule
             CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
             CapsuleItem.setStructureName(capsule, capsuleID);
+            CapsuleItem.setCanRotate(capsule, template.canRotate());
             return true;
         } else {
-            // could not capture, StructureSaver.store handles the feedback already
+            // could not capture, StructureSaver.undeploy handles the feedback already
             CapsuleItem.revertStateFromActivated(capsule);
         }
         return false;

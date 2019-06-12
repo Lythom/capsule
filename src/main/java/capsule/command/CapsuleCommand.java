@@ -306,6 +306,7 @@ public class CapsuleCommand extends CommandBase {
                         size,
                         WordUtils.capitalize(structureName.replace("_", " ")),
                         template.getAuthor());
+                CapsuleItem.setCanRotate(capsule, template.canRotate());
                 giveCapsule(capsule, player);
 
             } else {
@@ -347,6 +348,7 @@ public class CapsuleCommand extends CommandBase {
                         size,
                         srcStructureName,
                         template.getAuthor());
+                CapsuleItem.setCanRotate(capsule, destTemplate.canRotate());
                 giveCapsule(capsule, player);
 
             } else {
@@ -398,6 +400,7 @@ public class CapsuleCommand extends CommandBase {
                         CapsuleItem.getSize(heldItem),
                         outputName,
                         CapsuleItem.getAuthor(heldItem));
+                CapsuleItem.setCanRotate(capsule, CapsuleItem.canRotate(heldItem));
                 giveCapsule(capsule, player);
 
             }
