@@ -231,7 +231,7 @@ public class CapsuleCommand extends CommandBase {
 
         if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
 
-            CapsuleTemplate srcTemplate = Capsule.getRewardTemplate(srcStructureName, server);
+            CapsuleTemplate srcTemplate = Capsule.getRewardTemplate(Config.getRewardPathFromName(srcStructureName), server);
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
                 if (size % 2 == 0)
