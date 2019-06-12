@@ -1,0 +1,44 @@
+{
+  "type": "capsule:blueprint_capsule",
+  "result": {
+    "item": "capsule:capsule",
+    "data": 3,
+    "nbt": {
+      "display": {
+        "color": 3949738
+      },
+      "sourceInventory": {},
+      "structureName": "assets/capsule/starters/traveller's_base",
+      "label": "Traveller's Base",
+      "size": 7
+    }
+  },
+  "pattern": [
+    "tbf",
+    "lcl",
+    "fpt"
+  ],
+  "key": {
+    "c": {
+      "item": "#chest"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "p": {
+      "item": "minecraft:paper",
+      "data": 0
+    },
+    "l": {
+      "type": "forge:ore_dict",
+      "ore": "dyeBlue"
+    },
+    "t": {
+      "type": "forge:ore_dict",
+      "ore": "workbench"
+    },
+    "f": {
+      "item": "minecraft:furnace"
+    }
+  }
+}

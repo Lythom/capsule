@@ -91,7 +91,8 @@ public class CapsulePlugin implements IModPlugin {
             String capsuleState = String.valueOf(itemStack.getItemDamage());
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));
-            return capsuleState + capsuleColor + isOP + capsuleBlueprint;
+            String label = CapsuleItem.getLabel(itemStack);
+            return capsuleState + capsuleColor + isOP + capsuleBlueprint + label;
         }
     }
 }

@@ -61,6 +61,7 @@ public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
          */
         public ItemStack getCraftingResult(InventoryCrafting invC) {
             ItemStack configuredOutput = recipe.getRecipeOutput();
+            ItemStack referenceCapsule = configuredOutput;
             for (int i = 0; i < invC.getHeight(); ++i) {
                 for (int j = 0; j < invC.getWidth(); ++j) {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
@@ -69,22 +70,22 @@ public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
                         // This blueprint will take the source structure name by copying it here
                         // a new dedicated template is created later.
                         // @see CapsuleItem.onCreated
-                        ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
-                                CapsuleItem.getStructureName(itemstack),
-                                CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
-                                0xFFFFFF,
-                                CapsuleItem.getSize(itemstack),
-                                CapsuleItem.isOverpowered(itemstack),
-                                itemstack.getTagCompound() != null ? itemstack.getTagCompound().getString("label") : null,
-                                0
-                        );
-                        CapsuleItem.setBlueprint(blueprintItem);
-                        CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
-                        return blueprintItem;
+                        referenceCapsule = itemstack;
                     }
                 }
             }
-            return ItemStack.EMPTY;
+            ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
+                    CapsuleItem.getStructureName(referenceCapsule),
+                    CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
+                    0xFFFFFF,
+                    CapsuleItem.getSize(referenceCapsule),
+                    CapsuleItem.isOverpowered(referenceCapsule),
+                    referenceCapsule.getTagCompound() != null ? referenceCapsule.getTagCompound().getString("label") : null,
+                    0
+            );
+            CapsuleItem.setBlueprint(blueprintItem);
+            CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
+            return blueprintItem;
         }
 
         @Override
