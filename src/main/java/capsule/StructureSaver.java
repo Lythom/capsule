@@ -5,6 +5,7 @@ import capsule.loot.LootPathData;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -279,21 +280,29 @@ public class StructureSaver {
         if (blueprintTemplate == null) return false;
         List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, null);
+        List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
         EntityPlayer player = null;
         if (playerID != null) {
             player = worldserver.getPlayerEntityByName(playerID);
         }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
-        if (blueprintTemplate.blocks.size() != tempTemplate.blocks.size())
+        if (blueprintBLocks.size() != worldBlocks.size())
             return false;
 
-        List<String> tempTemplateSorted = tempTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
-        List<String> blueprintTemplateSorted = blueprintTemplate.blocks.stream().map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState)).sorted().collect(Collectors.toList());
+        List<String> tempTemplateSorted = worldBlocks.stream()
+                .map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState))
+                .sorted()
+                .collect(Collectors.toList());
+        List<String> blueprintTemplateSorted = blueprintBLocks.stream()
+                .map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState))
+                .sorted()
+                .collect(Collectors.toList());
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        blueprintMatch = blueprintMatch && tempTemplate.blocks.stream().allMatch(b -> b.tileentityData == null || !b.tileentityData.hasKey("Items") || b.tileentityData.getTagList("Items", Constants.NBT.TAG_COMPOUND).hasNoTags());
+        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.tileentityData == null || !b.tileentityData.hasKey("Items") || b.tileentityData.getTagList("Items", Constants.NBT.TAG_COMPOUND).hasNoTags());
 
         if (blueprintMatch) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
@@ -304,6 +313,10 @@ public class StructureSaver {
         }
 
         return blueprintMatch;
+    }
+
+    public static boolean isFlowingLiquid(Template.BlockInfo b) {
+        return b.blockState.getBlock() instanceof BlockLiquid && b.blockState.getValue(BlockLiquid.LEVEL) != 0;
     }
 
 

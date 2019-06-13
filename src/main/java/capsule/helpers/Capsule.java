@@ -244,7 +244,7 @@ public class Capsule {
     @Nullable
     public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityPlayer player) {
         // list required materials
-        Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world);
+        Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world, player);
         if (missingMaterials == null) {
             if (player != null) {
                 player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
@@ -259,8 +259,8 @@ public class Capsule {
 
         // if there is enough items, remove the provision items from inventories and recharge the capsule
         if (missingMaterials.size() == 0) {
-            if (inv != null) inv1SlotQuantityProvisions.forEach((slot, qty) -> inv.extractItem(slot, qty, false));
-            if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> inv2.extractItem(slot, qty, false));
+            if (inv != null) inv1SlotQuantityProvisions.forEach((slot, qty) -> extractItemOrFluid(inv, slot, qty));
+            if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> extractItemOrFluid(inv2, slot, qty));
             CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
         } else if (player != null && player.isCreative()) {
@@ -270,6 +270,12 @@ public class Capsule {
         }
 
         return missingMaterials;
+    }
+
+    public static void extractItemOrFluid(IItemHandler inv, Integer slot, Integer qty) {
+        ItemStack item = inv.extractItem(slot, qty, false);
+        ItemStack container = net.minecraftforge.common.ForgeHooks.getContainerItem(item);
+        inv.insertItem(slot, container, false);
     }
 
     /**

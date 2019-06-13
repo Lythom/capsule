@@ -7,14 +7,17 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.*;
 import net.minecraft.block.BlockDoublePlant.EnumPlantType;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
+import net.minecraftforge.fluids.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,6 +59,12 @@ public class Blueprint {
                 stack.setCount(2);
                 return stack;
 
+            } else if (block instanceof BlockLiquid) {
+                if (isLiquidSource(state, block)) {
+                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(FluidRegistry.lookupFluidForBlock(block), Fluid.BUCKET_VOLUME));
+                    return item.isEmpty() ? null : item; // return null to indicate error
+                }
+                return ItemStack.EMPTY;
             } else if (block instanceof BlockPistonExtension
                     || block instanceof BlockPistonMoving) {
                 return ItemStack.EMPTY;
@@ -67,8 +76,12 @@ public class Blueprint {
         }
     }
 
+    public static boolean isLiquidSource(IBlockState state, Block block) {
+        return block instanceof BlockLiquid && state.getValue(BlockLiquid.LEVEL) == 0;
+    }
+
     @Nullable
-    public static Map<StructureSaver.ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver) {
+    public static Map<StructureSaver.ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver, EntityPlayer player) {
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);
         if (templatemanager == null) {
@@ -82,13 +95,17 @@ public class Blueprint {
         for (Template.BlockInfo block : blueprintTemplate.blocks) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);
             StructureSaver.ItemStackKey stackKey = new StructureSaver.ItemStackKey(itemStack);
-            if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
+            if (itemStack == null) {
+                player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                LOGGER.error("Unknown item during blueprint undo for block " + block.blockState.getBlock().getRegistryName());
+                return null;
+            } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
                 Integer currValue = list.get(stackKey);
                 if (currValue == null) currValue = 0;
                 list.put(stackKey, currValue + itemStack.getCount());
             }
         }
-        // Note: entities not supportes so no entities check
+        // Note: entities not supported so no entities check
         return list;
     }
 }
