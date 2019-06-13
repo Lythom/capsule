@@ -5,16 +5,11 @@ import capsule.loot.LootPathData;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockDoor;
-import net.minecraft.block.BlockDoublePlant;
-import net.minecraft.block.BlockPistonExtension;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
@@ -28,6 +23,7 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.world.BlockEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -93,7 +89,7 @@ public class StructureSaver {
         if (path.startsWith("config/") && !templateFolder.exists()) {
             templateFolder.mkdirs();
             // initial with example capsule the first time
-            LOGGER.info("First load: initializing the starters in "+path+". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
+            LOGGER.info("First load: initializing the starters in " + path + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
             populateFolder(templateFolder);
         }
         if (templateFolder.exists() && templateFolder.isDirectory()) {
@@ -223,7 +219,7 @@ public class StructureSaver {
     }
 
     public static CapsuleTemplate undeploy(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
-                                   Map<BlockPos, Block> excludedPositions) {
+                                           Map<BlockPos, Block> excludedPositions) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         if (minecraftserver == null) {
@@ -238,7 +234,7 @@ public class StructureSaver {
             return null;
         }
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-        List<BlockPos> transferedPositions = template.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
+        List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, outCapturedEntities);
         EntityPlayer player = null;
         if (playerID != null) {
@@ -281,7 +277,7 @@ public class StructureSaver {
         CapsuleTemplate tempTemplate = new CapsuleTemplate();
         CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(capsuleStructureId));
         if (blueprintTemplate == null) return false;
-        List<BlockPos> transferedPositions = tempTemplate.takeBlocksFromWorldIntoCapsule(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
+        List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, null);
 
         EntityPlayer player = null;
@@ -297,6 +293,8 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
+        blueprintMatch = blueprintMatch && tempTemplate.blocks.stream().allMatch(b -> b.tileentityData == null || !b.tileentityData.hasKey("Items") || b.tileentityData.getTagList("Items", Constants.NBT.TAG_COMPOUND).hasNoTags());
+
         if (blueprintMatch) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -308,51 +306,6 @@ public class StructureSaver {
         return blueprintMatch;
     }
 
-
-    @Nullable
-    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver) {
-        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-        if (templatemanager == null) {
-            LOGGER.error("getTemplateManager returned null");
-            return null;
-        }
-        CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(CapsuleItem.getStructureName(blueprint)));
-        if (blueprintTemplate == null) return null;
-        Map<ItemStackKey, Integer> list = new HashMap<>();
-
-        boolean doorCountedOnce = false;
-        for (Template.BlockInfo block : blueprintTemplate.blocks) {// Note: tile entities not supported so nbt data is not used here
-            Block b = block.blockState.getBlock();
-            ItemStack itemStack = ItemStack.EMPTY;
-            try {
-                // prevent door to beeing counted twice
-                if (b instanceof BlockDoor) {
-                    if (doorCountedOnce) {
-                        itemStack = ItemStack.EMPTY;
-                    } else {
-                        itemStack = b.getItem(null, null, block.blockState);
-                    }
-                    doorCountedOnce = !doorCountedOnce;
-                } else if (b instanceof BlockDoublePlant || b instanceof BlockPistonExtension) {
-                    itemStack = ItemStack.EMPTY; // free… too complicated for what it worth
-                } else {
-                    itemStack = b.getItem(null, null, block.blockState);
-                }
-            } catch (Exception e) {
-                // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
-                itemStack = new ItemStack(Item.getItemFromBlock(b), 1, b.getMetaFromState(block.blockState));
-            }
-            ItemStackKey stackKey = new ItemStackKey(itemStack);
-            if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
-                Integer currValue = list.get(stackKey);
-                if (currValue == null) currValue = 0;
-                list.put(stackKey, currValue + 1);
-            }
-        }
-        // Note: entities not supportes so no entities check
-        return list;
-    }
 
     @Nullable
     public static CapsuleTemplateManager getTemplateManager(WorldServer worldserver) {
@@ -707,19 +660,32 @@ public class StructureSaver {
         return duplicateTemplate(templateData, destinationStructureName, destManager, server, false, null);
     }
 
-    public static boolean duplicateTemplate(NBTTagCompound templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server, boolean onlyBlocks, List<String> outExcluded) {
+    public static boolean duplicateTemplate(NBTTagCompound templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
         CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
         // populate template from source data
         destTemplate.read(templateData);
         // remove all tile entities
-        if (onlyBlocks) {
-            List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream().filter(b -> {
-                boolean included = b.tileentityData == null;
-                if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
-                return included;
-            }).collect(Collectors.toList());
+        if (onlyWhitelisted) {
+            List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream()
+                    .filter(b -> {
+                        boolean included = b.tileentityData == null
+                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:furnace")
+                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:chest")
+                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:bed");
+                        if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
+                        return included;
+                    })
+                    .map(b -> {
+                        if (b.tileentityData == null) return b;
+                        // remove all nbt data to prevent dupe or cheating
+                        return new Template.BlockInfo(
+                                b.pos,
+                                b.blockState,
+                                new NBTTagCompound()
+                        );
+                    }).collect(Collectors.toList());
             destTemplate.blocks.clear();
             destTemplate.blocks.addAll(newBlockList);
             // remove all entities

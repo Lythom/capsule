@@ -324,8 +324,8 @@ public class CapsuleTemplate {
     /**
      * takes blocks from the world and puts the data them into this template
      */
-    public List<BlockPos> takeBlocksFromWorldIntoCapsule(World worldIn, BlockPos startPos, BlockPos endPos,
-                                                         Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
+    public List<BlockPos> snapshotBlocksFromWorld(World worldIn, BlockPos startPos, BlockPos endPos,
+                                                  Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
 
         List<BlockPos> transferedBlocks = new ArrayList<>();
 
@@ -377,7 +377,7 @@ public class CapsuleTemplate {
             blocks.addAll(list1);
             blocks.addAll(list2);
 
-            List<Entity> capturedEntities = this.takeNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.add(1, 1, 1));
+            List<Entity> capturedEntities = this.snapshotNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.add(1, 1, 1));
             if (outCapturedEntities != null && capturedEntities != null) {
                 outCapturedEntities.addAll(capturedEntities);
             }
@@ -391,7 +391,7 @@ public class CapsuleTemplate {
     /**
      * takes blocks from the world and puts the data them into this template
      */
-    public List<Entity> takeNonLivingEntitiesFromWorld(World worldIn, BlockPos startPos, BlockPos endPos) {
+    public List<Entity> snapshotNonLivingEntitiesFromWorld(World worldIn, BlockPos startPos, BlockPos endPos) {
 
         // rewritten vanilla code from CapsuleTemplate.takeEntitiesFromWorld
         List<Entity> list = worldIn.getEntitiesWithinAABB(

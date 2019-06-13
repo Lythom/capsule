@@ -76,7 +76,7 @@ public class CapsuleLeftClickQueryHandler
                     ));
                 }
             }
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
+            else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);
                 if (sendingPlayer.isSneaking()) {
                     switch (placement.getMirror()) {

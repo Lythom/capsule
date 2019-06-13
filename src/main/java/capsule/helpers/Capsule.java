@@ -244,7 +244,7 @@ public class Capsule {
     @Nullable
     public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityPlayer player) {
         // list required materials
-        Map<StructureSaver.ItemStackKey, Integer> missingMaterials = StructureSaver.getMaterialList(blueprint, world);
+        Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world);
         if (missingMaterials == null) {
             if (player != null) {
                 player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
