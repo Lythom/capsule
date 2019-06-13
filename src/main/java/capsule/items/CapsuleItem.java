@@ -345,7 +345,7 @@ public class CapsuleItem extends Item {
                 break;
             case STATE_DEPLOYED:
                 if (isBlueprint(stack)) {
-                    state = I18n.translateToLocal("item.capsule.state_uncharged");
+                    name = I18n.translateToLocal("item.capsule.state_blueprint");
                 } else {
                     state = I18n.translateToLocal("item.capsule.state_deployed");
                 }
@@ -358,7 +358,7 @@ public class CapsuleItem extends Item {
                 }
                 break;
             case STATE_BLUEPRINT:
-                state = I18n.translateToLocal("item.capsule.state_blueprint");
+                name = I18n.translateToLocal("item.capsule.state_blueprint");
                 break;
         }
 
@@ -726,6 +726,7 @@ public class CapsuleItem extends Item {
     }
 
     // TODO: whitelist some blocks for blueprints
+    // TODO: ignore flowing liquids
     // TODO: Add blueprint specific crafts (chick farm, starting base)
 
     public static void cleanDeploymentTags(ItemStack capsule) {
@@ -752,12 +753,19 @@ public class CapsuleItem extends Item {
             color = MinecraftNBT.getColor(stack);
 
         } else if (renderPass == 1) {
-            if (stack.hasTagCompound() && stack.getTagCompound().hasKey("color")) {
-                color = stack.getTagCompound().getInteger("color");
+            if (isBlueprint(stack) && stack.getItemDamage() == STATE_DEPLOYED) {
+                color = 0x7CC4EA; // trick for blueprint to reuse the "deployed" item model and get okish label color
+            } else {
+                if (stack.hasTagCompound() && stack.getTagCompound().hasKey("color")) {
+                    color = stack.getTagCompound().getInteger("color");
+                }
             }
-
         } else if (renderPass == 2) {
-            color = 0xFFFFFF;
+            if (isBlueprint(stack)) {
+                color = 0x3BB3FC;
+            } else {
+                color = 0xFFFFFF;
+            }
         }
         return color;
     }
