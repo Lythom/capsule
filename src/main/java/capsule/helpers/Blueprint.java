@@ -17,7 +17,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.fluids.*;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,12 +40,14 @@ public class Blueprint {
                 if (state.getValue(BlockDoor.HALF) == BlockDoor.EnumDoorHalf.LOWER) {
                     return block.getItem(null, null, state);
                 }
-                return ItemStack.EMPTY;
+                return ItemStack.EMPTY; // door upper is free, only lower counts.
+
             } else if (block instanceof BlockBed) {
                 if (state.getValue(BlockBed.PART) == BlockBed.EnumPartType.HEAD) {
                     return new ItemStack(Items.BED, 1, blockInfo.tileentityData.getInteger("color"));
                 }
-                return ItemStack.EMPTY;
+                return ItemStack.EMPTY; // Bed foot is free, only head counts.
+
             } else if (block instanceof BlockDoublePlant) {
                 final EnumPlantType type = state.getValue(BlockDoublePlant.VARIANT);
                 if (type == EnumPlantType.FERN) {
@@ -52,6 +57,7 @@ public class Blueprint {
                     return new ItemStack(Blocks.TALLGRASS, 2, BlockTallGrass.EnumType.GRASS.getMeta());
                 }
                 return ItemStack.EMPTY;
+
             } else if (block instanceof BlockDoubleStoneSlab
                     || block instanceof BlockDoubleStoneSlabNew
                     || block instanceof BlockDoubleWoodSlab) {
@@ -59,15 +65,19 @@ public class Blueprint {
                 stack.setCount(2);
                 return stack;
 
+            } else if (block instanceof BlockFarmland) {
+                return new ItemStack(Blocks.DIRT);
+
             } else if (block instanceof BlockLiquid) {
                 if (isLiquidSource(state, block)) {
                     ItemStack item = FluidUtil.getFilledBucket(new FluidStack(FluidRegistry.lookupFluidForBlock(block), Fluid.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
                 }
-                return ItemStack.EMPTY;
+                return ItemStack.EMPTY; //flowing liquid is free
+
             } else if (block instanceof BlockPistonExtension
                     || block instanceof BlockPistonMoving) {
-                return ItemStack.EMPTY;
+                return ItemStack.EMPTY; // Piston extension is free
             }
             return block.getItem(null, null, state);
         } catch (Exception e) {
