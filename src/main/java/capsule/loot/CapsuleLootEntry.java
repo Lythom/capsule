@@ -3,6 +3,7 @@ package capsule.loot;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
+import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import com.google.gson.JsonObject;
@@ -84,7 +85,7 @@ public class CapsuleLootEntry extends LootEntry {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            StructureSaver.loadLootList(context.getWorld().getMinecraftServer());
+            Files.populateAndLodloadLootList(context.getWorld().getMinecraftServer());
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;

@@ -3,6 +3,7 @@ package capsule.command;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
+import capsule.helpers.Files;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.loot.CapsuleLootEntry;
@@ -189,7 +190,7 @@ public class CapsuleCommand extends CommandBase {
             if (args.length != 1) {
                 throw new WrongUsageException(getUsage(sender));
             }
-            StructureSaver.loadLootList(server);
+            Files.populateAndLodloadLootList(server);
         } else {
             throw new WrongUsageException(getUsage(sender));
         }

@@ -1,9 +1,9 @@
 package capsule;
 
 import capsule.items.CapsuleItem;
-import capsule.loot.LootPathData;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
@@ -32,16 +32,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -52,161 +47,6 @@ public class StructureSaver {
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
     private static List<String> outExcluded = new ArrayList<>();
-
-    public static void loadLootList(MinecraftServer server) {
-        // Init the manager for reward Lists
-        for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
-            String path = Config.lootTemplatesPaths[i];
-            LootPathData data = Config.lootTemplatesData.get(path);
-
-            File templateFolder = new File(server.getDataDirectory(), path);
-
-            if (path.startsWith("config/") && !templateFolder.exists()) {
-                templateFolder.mkdirs();
-                // initial with example capsule the first time
-                LOGGER.info("First load: initializing the loots in " + path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
-                populateFolder(templateFolder);
-            }
-
-            if (templateFolder.exists() && templateFolder.isDirectory()) {
-                File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt") || p_accept_2_.endsWith(".schematic"));
-                data.files = new ArrayList<>();
-                if (fileList != null) {
-                    for (File templateFile : fileList) {
-                        if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
-                            data.files.add(templateFile.getName().replaceAll(".nbt", ""));
-                        if (templateFile.isFile() && templateFile.getName().endsWith(".schematic"))
-                            data.files.add(templateFile.getName().replaceAll(".schematic", ""));
-                    }
-                }
-            }
-        }
-    }
-
-    public static void populateStarterFolder(MinecraftServer server) {
-        String path = Config.starterTemplatesPath;
-        File templateFolder = new File(server.getDataDirectory(), path);
-
-        if (path.startsWith("config/") && !templateFolder.exists()) {
-            templateFolder.mkdirs();
-            // initial with example capsule the first time
-            LOGGER.info("First load: initializing the starters in " + path + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
-            populateFolder(templateFolder);
-        }
-        if (templateFolder.exists() && templateFolder.isDirectory()) {
-            File[] fileList = templateFolder.listFiles((p_accept_1_, p_accept_2_) -> p_accept_2_.endsWith(".nbt") || p_accept_2_.endsWith(".schematic"));
-            Config.starterTemplatesList = new ArrayList<>();
-            if (fileList != null) {
-                for (File templateFile : fileList) {
-                    if (templateFile.isFile() && templateFile.getName().endsWith(".nbt"))
-                        Config.starterTemplatesList.add(Config.starterTemplatesPath + "/" + templateFile.getName().replaceAll(".nbt", ""));
-                    if (templateFile.isFile() && templateFile.getName().endsWith(".schematic"))
-                        Config.starterTemplatesList.add(Config.starterTemplatesPath + "/" + templateFile.getName().replaceAll(".schematic", ""));
-                }
-            }
-        }
-    }
-
-    private static void populateFolder(File templateFolder) {
-        try {
-            // source path
-            String assetPath = "assets/capsule/loot/common";
-            if (templateFolder.getPath().contains("uncommon")) assetPath = "assets/capsule/loot/uncommon";
-            if (templateFolder.getPath().contains("rare")) assetPath = "assets/capsule/loot/rare";
-            if (templateFolder.getPath().contains("starters")) assetPath = "assets/capsule/starters";
-            String[] resources = getResourceListing(StructureSaver.class, assetPath);
-
-            for (String ressource : resources) {
-                if (!ressource.isEmpty()) {
-                    InputStream sourceTemplate = StructureSaver.class.getClassLoader().getResourceAsStream(assetPath + "/" + ressource);
-                    if (sourceTemplate == null) {
-                        LOGGER.error("SourceTemplate " + assetPath + "/" + ressource + "couldn't be loaded");
-                        break;
-                    }
-                    Path assetFile = templateFolder.toPath().resolve(ressource.toLowerCase());
-                    LOGGER.debug("copying template " + assetPath + "/" + ressource + " to " + assetFile.toString());
-                    try {
-                        Files.copy(sourceTemplate, assetFile);
-                    } catch (Exception e) {
-                        LOGGER.error(e);
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            LOGGER.error("Error while copying initial capsule templates, there will be no loots!", e);
-        }
-    }
-
-    /**
-     * List directory contents for a resource folder. Not recursive.
-     * This is basically a brute-force implementation.
-     * Works for regular files and also JARs.
-     *
-     * @param clazz Any java class that lives in the same place as the resources you want.
-     * @param path  Should end with "/", but not start with one.
-     * @return Just the name of each member item, not the full paths.
-     * @throws URISyntaxException
-     * @throws IOException
-     * @author Greg Briggs
-     */
-    public static String[] getResourceListing(Class<?> clazz, String path) throws URISyntaxException, IOException {
-        URL dirURL = clazz.getClassLoader().getResource(path);
-
-        if (dirURL != null && dirURL.getProtocol().equals("file")) {
-            /* A file path: easy enough */
-            return new File(dirURL.toURI()).list();
-        }
-
-        if (dirURL == null) {
-            /*
-             * In case of a jar file, we can't actually find a directory. Have
-             * to assume the same jar as clazz.
-             */
-            String me = clazz.getName().replace(".", "/") + ".class";
-            dirURL = clazz.getClassLoader().getResource(me);
-        }
-
-        if (dirURL.getProtocol().equals("jar")) {
-            /* A JAR path */
-            String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
-            JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
-
-            LOGGER.debug("Listing files in " + jarPath);
-
-            Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-            Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
-            while (entries.hasMoreElements()) {
-                String name = entries.nextElement().getName();
-                if (name.startsWith(path)) { //filter according to the path
-                    LOGGER.debug("Found in jar " + name);
-                    String entry = name.replace(path + "/", "");
-                    LOGGER.debug("Keeping " + entry);
-                    result.add(entry);
-                }
-            }
-            jar.close();
-            return result.toArray(new String[result.size()]);
-
-        } else {
-
-            InputStream inputstream = clazz.getResourceAsStream("/" + path);
-            if (inputstream != null) {
-                final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
-                final BufferedReader br = new BufferedReader(isr);
-
-                Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
-                String filename = null;
-                while ((filename = br.readLine()) != null) {
-                    result.add(filename);
-                }
-                return result.toArray(new String[result.size()]);
-            }
-
-        }
-
-        throw new UnsupportedOperationException("Cannot list files for URL " + dirURL);
-    }
 
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
@@ -383,26 +223,6 @@ public class StructureSaver {
         return couldNotBeRemoved;
     }
 
-
-    public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
-        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-
-        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-        if (templatemanager == null) {
-            LOGGER.error("getTemplateManager returned null");
-            return false;
-        }
-        CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-
-        List<Template.BlockInfo> blocks = template.blocks;
-        List<Template.EntityInfo> entities = template.entities;
-
-        blocks.clear();
-        entities.clear();
-
-        return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-
-    }
 
     public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos
             dest, List<Block> overridableBlocks,
@@ -683,20 +503,27 @@ public class StructureSaver {
         if (onlyWhitelisted) {
             List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream()
                     .filter(b -> {
+                        ResourceLocation registryName = b.blockState.getBlock().getRegistryName();
                         boolean included = b.tileentityData == null
-                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:furnace")
-                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:chest")
-                                || b.blockState.getBlock().getRegistryName().toString().equals("minecraft:bed");
+                                || registryName != null && Config.blueprintWhitelist.keySet().contains(registryName.toString());
                         if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
                         return included;
                     })
                     .map(b -> {
                         if (b.tileentityData == null) return b;
-                        // remove all nbt data to prevent dupe or cheating
+                        // remove all unlisted nbt data to prevent dupe or cheating
+                        NBTTagCompound nbt = null;
+                        JsonObject allowedNBT = Config.blueprintWhitelist.get(b.blockState.getBlock().getRegistryName().toString());
+                        if(allowedNBT != null) {
+                            nbt = b.tileentityData.copy();
+                            nbt.getKeySet().removeIf(key -> !allowedNBT.has(key));
+                        } else {
+                            nbt = new NBTTagCompound();
+                        }
                         return new Template.BlockInfo(
                                 b.pos,
                                 b.blockState,
-                                new NBTTagCompound()
+                                nbt
                         );
                     }).collect(Collectors.toList());
             destTemplate.blocks.clear();

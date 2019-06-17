@@ -3,6 +3,7 @@ package capsule;
 import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
+import capsule.helpers.Files;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.StarterLoot;
@@ -102,8 +103,9 @@ public class CommonProxy {
 
     public void serverStarting(FMLServerStartingEvent e) {
         e.registerServerCommand(new CapsuleCommand());
-        StructureSaver.loadLootList(e.getServer());
-        StructureSaver.populateStarterFolder(e.getServer());
+        Files.populateAndLodloadLootList(e.getServer());
+        Files.populateAndLoadStarters(e.getServer());
+        Files.populateAndLoadConfigs(e.getServer());
     }
 
     public void openGuiScreen(EntityPlayer playerIn) {

@@ -32,6 +32,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -151,7 +152,7 @@ public class Capsule {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
                 if (!CapsuleItem.isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
-                    StructureSaver.clearTemplate(world, structureName);
+                    clearTemplate(world, structureName);
                 }
             }
 
@@ -467,5 +468,25 @@ public class Capsule {
     public static CapsuleTemplate getRewardTemplate(String structurePath, MinecraftServer server) {
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
         return srcTemplatemanager.get(server, new ResourceLocation(structurePath));
+    }
+
+    public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
+        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+
+        CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);
+        if (templatemanager == null) {
+            LOGGER.error("getTemplateManager returned null");
+            return false;
+        }
+        CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+
+        List<Template.BlockInfo> blocks = template.blocks;
+        List<Template.EntityInfo> entities = template.entities;
+
+        blocks.clear();
+        entities.clear();
+
+        return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+
     }
 }

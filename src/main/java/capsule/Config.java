@@ -2,6 +2,7 @@ package capsule;
 
 import capsule.helpers.Serialization;
 import capsule.loot.LootPathData;
+import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
@@ -31,6 +32,7 @@ public class Config {
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
+    public static HashMap<String, JsonObject> blueprintWhitelist;
 
     public static String enchantRarity;
     public static String recallEnchantType;
