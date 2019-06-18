@@ -379,7 +379,7 @@ public class CapsuleCommand extends CommandBase {
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
                 }
 
-                String destinationTemplateLocation = Config.getRewardPathFromName(outputName.toLowerCase().replace(" ", "_"));
+                String destinationTemplateLocation = Config.getRewardPathFromName(outputName.toLowerCase().replace(" ", "_").replace(":", "-"));
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
