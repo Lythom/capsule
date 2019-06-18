@@ -1,9 +1,11 @@
 package capsule.helpers;
 
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import com.google.gson.JsonObject;
 import net.minecraft.block.*;
 import net.minecraft.block.BlockDoublePlant.EnumPlantType;
 import net.minecraft.block.state.IBlockState;
@@ -12,6 +14,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -34,6 +37,7 @@ public class Blueprint {
     public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo) {
         final IBlockState state = blockInfo.blockState;
         Block block = state.getBlock();
+        NBTTagCompound blockNBT = blockInfo.tileentityData;
         try {
             // prevent door to beeing counted twice
             if (block instanceof BlockDoor) {
@@ -79,7 +83,23 @@ public class Blueprint {
                     || block instanceof BlockPistonMoving) {
                 return ItemStack.EMPTY; // Piston extension is free
             }
-            return block.getItem(null, null, state);
+            ItemStack item = block.getItem(null, null, state);
+            if (blockNBT != null) {
+                if (blockNBT.hasKey("dummy") && blockNBT.getBoolean("dummy"))
+                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
+                NBTTagCompound itemNBT = new NBTTagCompound();
+                JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
+                for (String key : blockNBT.getKeySet()) {
+                    if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
+                        String targetKey = allowedNBT.get(key).getAsString();
+                        itemNBT.setTag(targetKey, blockNBT.getTag(key));
+                    }
+                }
+                if (itemNBT.getSize() > 0) {
+                    item.setTagCompound(itemNBT);
+                }
+            }
+            return item;
         } catch (Exception e) {
             // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
             return new ItemStack(Item.getItemFromBlock(block), 1, block.damageDropped(state));
@@ -91,7 +111,8 @@ public class Blueprint {
     }
 
     @Nullable
-    public static Map<StructureSaver.ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer worldserver, EntityPlayer player) {
+    public static Map<StructureSaver.ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer
+            worldserver, EntityPlayer player) {
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);
         if (templatemanager == null) {

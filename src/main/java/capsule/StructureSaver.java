@@ -132,11 +132,11 @@ public class StructureSaver {
             return false;
 
         List<String> tempTemplateSorted = worldBlocks.stream()
-                .map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState))
+                .map(StructureSaver::serializeComparable)
                 .sorted()
                 .collect(Collectors.toList());
         List<String> blueprintTemplateSorted = blueprintBLocks.stream()
-                .map(b -> b.blockState.getBlock().getUnlocalizedName() + "@" + b.blockState.getBlock().damageDropped(b.blockState))
+                .map(StructureSaver::serializeComparable)
                 .sorted()
                 .collect(Collectors.toList());
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
@@ -153,6 +153,20 @@ public class StructureSaver {
         }
 
         return blueprintMatch;
+    }
+
+    public static String serializeComparable(Template.BlockInfo b) {
+        return b.blockState.getBlock().getUnlocalizedName()
+                + "@"
+                + b.blockState.getBlock().damageDropped(b.blockState)
+                + (b.tileentityData == null ? "" : filterIdentityNBT(b));
+    }
+
+    public static NBTTagCompound filterIdentityNBT(Template.BlockInfo b) {
+        NBTTagCompound nbt = b.tileentityData.copy();
+        List<String> converted = Config.getBlueprintIdentityNBT(b.blockState.getBlock());
+        nbt.getKeySet().removeIf(key -> !converted.contains(key));
+        return nbt;
     }
 
     public static boolean isFlowingLiquid(Template.BlockInfo b) {
@@ -513,8 +527,8 @@ public class StructureSaver {
                         if (b.tileentityData == null) return b;
                         // remove all unlisted nbt data to prevent dupe or cheating
                         NBTTagCompound nbt = null;
-                        JsonObject allowedNBT = Config.blueprintWhitelist.get(b.blockState.getBlock().getRegistryName().toString());
-                        if(allowedNBT != null) {
+                        JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.blockState.getBlock());
+                        if (allowedNBT != null) {
                             nbt = b.tileentityData.copy();
                             nbt.getKeySet().removeIf(key -> !allowedNBT.has(key));
                         } else {
@@ -617,7 +631,8 @@ public class StructureSaver {
 
         public boolean equals(Object someOther) {
             if (!(someOther instanceof ItemStackKey)) return false;
-            return ((ItemStackKey) someOther).itemStack.isItemEqual(itemStack);
+            final ItemStack otherStack = ((ItemStackKey) someOther).itemStack;
+            return otherStack.isItemEqual(this.itemStack) && (!otherStack.hasTagCompound() && !this.itemStack.hasTagCompound() || otherStack.getTagCompound().equals(this.itemStack.getTagCompound()));
         }
 
         public int hashCode() {

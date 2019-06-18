@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Config {
 
@@ -221,5 +222,19 @@ public class Config {
 
     public static String getRewardPathFromName(String structureName) {
         return rewardTemplatesPath + "/" + structureName;
+    }
+
+    public static JsonObject getBlueprintAllowedNBT(Block b) {
+        return blueprintWhitelist.get(b.getRegistryName().toString());
+    }
+
+    /**
+     * Identity NBT is NBT that is required to identify the item as a specific block. Ie. immersive engineering conveyor belts differs by their nbt but use the same block/item class.
+     */
+    public static List<String> getBlueprintIdentityNBT(Block b) {
+        return getBlueprintAllowedNBT(b).entrySet().stream()
+                .filter(ks -> !ks.getValue().isJsonNull())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 }
