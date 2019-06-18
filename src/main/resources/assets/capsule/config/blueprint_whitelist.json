@@ -8,26 +8,26 @@
   {
     "block": "minecraft:chain_command_block",
     "keepNBT": {
-      "conditionMet": "BYTE",
-      "auto": "BYTE",
-      "CustomName": "STRING",
-      "powered": "BYTE",
-      "Command": "STRING",
-      "SuccessCount": "INT",
-      "TrackOutput": "BYTE"
+      "Command": null,
+      "CustomName": null,
+      "SuccessCount": null,
+      "TrackOutput": null,
+      "auto": null,
+      "conditionMet": null,
+      "powered": null
     }
   },
   "minecraft:chest",
   {
     "block": "minecraft:command_block",
     "keepNBT": {
-      "conditionMet": "BYTE",
-      "auto": "BYTE",
-      "CustomName": "STRING",
-      "powered": "BYTE",
-      "Command": "STRING",
-      "SuccessCount": "INT",
-      "TrackOutput": "BYTE"
+      "Command": null,
+      "CustomName": null,
+      "SuccessCount": null,
+      "TrackOutput": null,
+      "auto": null,
+      "conditionMet": null,
+      "powered": null
     }
   },
   "minecraft:cyan_shulker_box",
@@ -49,7 +49,7 @@
   {
     "block": "minecraft:noteblock",
     "keepNBT": {
-      "note": "BYTE"
+      "note": null
     }
   },
   "minecraft:orange_shulker_box",
@@ -60,54 +60,54 @@
   {
     "block": "minecraft:repeating_command_block",
     "keepNBT": {
-      "conditionMet": "BYTE",
-      "auto": "BYTE",
-      "CustomName": "STRING",
-      "powered": "BYTE",
-      "Command": "STRING",
-      "SuccessCount": "INT",
-      "TrackOutput": "BYTE"
+      "Command": null,
+      "CustomName": null,
+      "SuccessCount": null,
+      "TrackOutput": null,
+      "auto": null,
+      "conditionMet": null,
+      "powered": null
     }
   },
   "minecraft:silver_shulker_box",
   {
     "block": "minecraft:skull",
     "keepNBT": {
-      "Rot": "BYTE",
-      "SkullType": "BYTE"
+      "Rot": null,
+      "SkullType": null
     }
   },
   {
     "block": "minecraft:standing_sign",
     "keepNBT": {
-      "Text4": "STRING",
-      "Text3": "STRING",
-      "Text2": "STRING",
-      "Text1": "STRING"
+      "Text1": null,
+      "Text2": null,
+      "Text3": null,
+      "Text4": null
     }
   },
   "minecraft:sticky_piston",
   {
     "block": "minecraft:structure_block",
     "keepNBT": {
-      "metadata": "STRING",
-      "mirror": "STRING",
-      "ignoreEntities": "BYTE",
-      "powered": "BYTE",
+      "author": null,
+      "ignoreEntities": null,
+      "integrity": null,
+      "metadata": null,
+      "mirror": null,
+      "mode": null,
+      "name": null,
+      "posX": null,
+      "posY": null,
+      "posZ": null,
+      "powered": null,
+      "rotation": null,
       "seed": "LONG",
-      "author": "STRING",
-      "rotation": "STRING",
-      "posX": "INT",
-      "mode": "STRING",
-      "posY": "INT",
-      "sizeX": "INT",
-      "posZ": "INT",
-      "integrity": "FLOAT",
-      "showair": "BYTE",
-      "name": "STRING",
-      "sizeY": "INT",
-      "sizeZ": "INT",
-      "showboundingbox": "BYTE"
+      "showair": null,
+      "showboundingbox": null,
+      "sizeX": null,
+      "sizeY": null,
+      "sizeZ": null
     }
   },
   "minecraft:trapped_chest",
@@ -117,469 +117,124 @@
   {
     "block": "minecraft:wall_sign",
     "keepNBT": {
-      "Text4": "STRING",
-      "Text3": "STRING",
-      "Text2": "STRING",
-      "Text1": "STRING"
+      "Text1": null,
+      "Text2": null,
+      "Text3": null,
+      "Text4": null
     }
   },
   "minecraft:white_shulker_box",
   "minecraft:yellow_shulker_box",
   {
-    "block": "enderio:blockstirlinggenerator",
+    "block": "immersiveengineering:stone_decoration_slab",
     "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
+      "slabType": null
     }
   },
   {
-    "block": "enderio:blockpaintedpressureplate",
+    "block": "immersiveengineering:storage_slab",
     "keepNBT": {
-      "silent": "BYTE",
-      "paintSource": "COMPOUND",
-      "type": "INT",
-      "rotation": "INT"
+      "slabType": null
     }
   },
   {
-    "block": "enderio:blockcombustiongenerator",
+    "block": "immersiveengineering:cloth_device",
     "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockzombiegenerator",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockreservoir",
-    "keepNBT": {
-      "autoEject": "BYTE"
-    }
-  },
-  {
-    "block": "enderio:blockalloysmelter",
-    "keepNBT": {
-      "mode": "INT",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  "enderio:blocksolarpanel",
-  {
-    "block": "enderio:blockvat",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockpowermonitorv2",
-    "keepNBT": {
-      "engineControlEnabled": "BYTE",
-      "paintSource": "COMPOUND",
-      "advanced": "BYTE",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockpowermonitor",
-    "keepNBT": {
-      "engineControlEnabled": "BYTE",
-      "paintSource": "COMPOUND",
-      "advanced": "BYTE",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blocksagmill",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockcapbank",
-    "keepNBT": {
-      "maxOutput": "INT",
-      "faceDisplayTypes": "LONG",
-      "inputControlMode": "INT",
-      "faceModes": "LONG",
-      "maxInput": "INT",
-      "type": "INT",
-      "outputControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockfarmstation",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "lockedSlots": "INT",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blocktank",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT",
-      "voidMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockcrafter",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "craftingGrid": "COMPOUND",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockvacuumchest",
-    "keepNBT": {
-      "range": "INT",
-      "redstoneControlMode": "INT"
-    }
-  },
-  "enderio:blockxpvacuum",
-  "enderio:blockwirelesscharger",
-  {
-    "block": "enderio:blockenchanter",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blocksoulbinder",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blocksliceandsplice",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockattractor",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockspawnguard",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockspawnrelocator",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockexperienceobelisk",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockweatherobelisk",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockinhibitorobelisk",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blocktransceiver",
-    "keepNBT": {
-      "paintSource": "COMPOUND",
-      "recieveItemFilter": "COMPOUND",
-      "sendChannels": "LIST",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "recieveChannels": "LIST",
-      "redstoneControlMode": "INT",
-      "sendItemFilter": "COMPOUND"
-    }
-  },
-  {
-    "block": "enderio:blockbuffer",
-    "keepNBT": {
-      "hasInventory": "BYTE",
-      "isCreative": "BYTE",
-      "hasPower": "BYTE",
-      "maxIn": "INT",
-      "maxOut": "INT",
-      "paintSource": "COMPOUND",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockinventorypanel",
-    "keepNBT": {
-      "paintSource": "COMPOUND",
-      "guiSortMode": "INT",
-      "active": "BYTE",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "guiFilterString": "STRING",
-      "storedCraftingRecipes": "COMPOUND",
-      "extractionDisabled": "BYTE",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockinventorychest",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockkillerjoe",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockpainter",
-    "keepNBT": {
-      "facing": "INT",
-      "faceModes": "LONG",
-      "paintSource": "COMPOUND",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "enderio:blockelectriclight",
-    "keepNBT": {
-      "face": "INT",
-      "isInvereted": "BYTE",
-      "isWireless": "BYTE",
-      "requiresPower": "BYTE"
-    }
-  },
-  {
-    "block": "enderio:blocktravelanchor",
-    "keepNBT": {
-      "password": "COMPOUND",
-      "owner.uuid": "STRING",
-      "owner.login": "STRING",
-      "authorisedUsers": "COMPOUND",
-      "label": "STRING",
-      "accessMode": "INT",
-      "itemLabel": "COMPOUND"
-    }
-  },
-  {
-    "block": "enderio:blocktelepad",
-    "keepNBT": {
-      "password": "COMPOUND",
-      "owner.uuid": "STRING",
-      "owner.login": "STRING",
-      "authorisedUsers": "COMPOUND",
-      "label": "STRING",
-      "accessMode": "INT",
-      "itemLabel": "COMPOUND",
-      "target": "COMPOUND"
-    }
-  },
-  {
-    "block": "enderio:blockdialingdevice",
-    "keepNBT": {
-      "facing": "INT",
-      "targets": "COMPOUND"
-    }
-  },
-  "enderio:blockgauge",
-  {
-    "block": "enderio:blockinventorypanelsensor",
-    "keepNBT": {
-      "itemToCheck": "COMPOUND",
-      "stopCount": "INT",
-      "startCount": "INT",
-      "paintSource": "COMPOUND",
-      "facing": "INT",
-      "faceModes": "LONG",
-      "redstoneControlMode": "INT"
-    }
-  },
-  {
-    "block": "immersiveengineering:stonedecorationslab",
-    "keepNBT": {
-      "slabType": "INT"
-    }
-  },
-  {
-    "block": "immersiveengineering:storageslab",
-    "keepNBT": {
-      "slabType": "INT"
-    }
-  },
-  {
-    "block": "immersiveengineering:clothdevice",
-    "keepNBT": {
-      "shader": "COMPOUND",
-      "rotation": "FLOAT",
-      "facing": "INT",
-      "style": "INT",
-      "colour0": "INT",
-      "colour1": "INT",
-      "colour": "INT",
-      "ceilingAttached": "BYTE"
+      "dummy": null,
+      "ceilingAttached": null,
+      "colour": null,
+      "colour0": null,
+      "colour1": null,
+      "facing": null,
+      "rotation": null,
+      "shader": null,
+      "style": null
     }
   },
   {
     "block": "immersiveengineering:connector",
     "keepNBT": {
-      "facing": "INT",
-      "active": "BYTE",
-      "inverted": "BYTE",
-      "rotation": "INT"
+      "active": null,
+      "facing": null,
+      "inverted": null,
+      "rotation": null
     }
   },
   {
-    "block": "immersiveengineering:metaldevice0",
+    "block": "immersiveengineering:metal_device0",
     "keepNBT": {
-      "sideConfig_0": "INT",
-      "sideConfig_1": "INT",
-      "sideConfig_2": "INT",
-      "sideConfig_3": "INT",
-      "sideConfig_4": "INT",
-      "sideConfig_5": "INT",
-      "placeCobble": "BYTE",
-      "sideConfig": "INT[]"
+      "dummy": null,
+      "placeCobble": null,
+      "sideConfig": null
     }
   },
   {
-    "block": "immersiveengineering:metaldevice1",
+    "block": "immersiveengineering:metal_device1",
     "keepNBT": {
-      "sideConfig": "INT[]",
-      "lowPower": "BYTE",
-      "side": "INT",
-      "rotX": "FLOAT",
-      "rotY": "FLOAT",
-      "owner": "STRING",
-      "facing": "INT",
-      "expelCasings": "BYTE",
-      "whitelist": "BYTE",
-      "redstoneInverted": "BYTE",
-      "attackPlayers": "BYTE",
-      "attackNeutrals": "BYTE",
-      "attackAnimals": "BYTE"
+      "dummy": null,
+      "attackAnimals": null,
+      "attackNeutrals": null,
+      "attackPlayers": null,
+      "expelCasings": null,
+      "facing": null,
+      "lowPower": null,
+      "owner": null,
+      "redstoneInverted": null,
+      "rotX": null,
+      "rotY": null,
+      "side": null,
+      "sideConfig": null,
+      "whitelist": null
     }
   },
   {
     "block": "immersiveengineering:conveyor",
     "keepNBT": {
-      "conveyorBeltSubtypeNBT": "COMPOUND",
-      "facing": "INT",
-      "conveyorBeltSubtype": "STRING"
+      "conveyorType": null,
+      "conveyorBeltSubtype": "conveyorType",
+      "conveyorBeltSubtypeNBT": null,
+      "facing": null
     }
   },
   {
-    "block": "immersiveengineering:sheetmetalslab",
+    "block": "immersiveengineering:sheetmetal_slab",
     "keepNBT": {
-      "slabType": "INT"
+      "slabType": null
     }
   },
   {
-    "block": "immersiveengineering:treatedwoodslab",
+    "block": "immersiveengineering:treated_wood_slab",
     "keepNBT": {
-      "slabType": "INT"
+      "slabType": null
     }
   },
   {
-    "block": "immersiveengineering:metaldecoration2",
+    "block": "immersiveengineering:metal_decoration2",
     "keepNBT": {
-      "orientation": "INT",
-      "facing": "INT"
-    },
-  {
-    "block": "immersiveengineering:woodendevice0",
-    "keepNBT": {
-      "filter": "LIST",
-      "sideFilter": "INT[]",
-      "sideConfig": "INT[]",
-      "invert": "BYTE",
-      "facing": "INT",
-      "redstone": "BYTE"
+      "dummy": null,
+      "facing": null,
+      "orientation": null
     }
   },
   {
-    "block": "immersiveengineering:woodendevice1",
+    "block": "immersiveengineering:wooden_device0",
     "keepNBT": {
-      "orientation": "INT",
-      "facing": "INT",
-      "rotation": "FLOAT"
+      "dummy": null,
+      "facing": null,
+      "filter": null,
+      "invert": null,
+      "redstone": null,
+      "sideConfig": null,
+      "sideFilter": null
+    }
+  },
+  {
+    "block": "immersiveengineering:wooden_device1",
+    "keepNBT": {
+      "dummy": null,
+      "facing": null,
+      "orientation": null,
+      "rotation": null
     }
   }
 ]

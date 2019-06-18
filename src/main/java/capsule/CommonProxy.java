@@ -32,6 +32,9 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
+import java.io.File;
+import java.util.ArrayList;
+
 @Mod.EventBusSubscriber
 public class CommonProxy {
 
@@ -51,7 +54,8 @@ public class CommonProxy {
 
     @SubscribeEvent
     public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
-        CapsuleItems.registerRecipes(event);
+        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir, Config.prefabsTemplatesPath);
+        CapsuleItems.registerRecipes(event, prefabsTemplatesList);
         // + other recipes in assets.capsule.recipes
     }
 
@@ -61,11 +65,15 @@ public class CommonProxy {
     }
 
     public void preInit(FMLPreInitializationEvent event) {
+        Config.configDir = new File(event.getModConfigurationDirectory(), "capsule");
         Configuration config = new Configuration(event.getSuggestedConfigurationFile());
         Config.readConfig(config);
         Config.initLootConfigs();
-        Config.initReceipeConfigs();
+        Config.initRecipesConfigs();
         Config.initEnchantsConfigs();
+
+        // copy default config and structures to config/capsule folder, and load them in Config.
+        refreshConfigTemplates();
 
         // network stuff
         simpleNetworkWrapper = NetworkRegistry.INSTANCE.newSimpleChannel("CapsuleChannel");
@@ -83,6 +91,12 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleUndeployNotifHandler.class, CapsuleUndeployNotifToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
     }
 
+    public void refreshConfigTemplates() {
+        Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
+        Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
+        Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
+    }
+
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
         MinecraftForge.EVENT_BUS.register(CapsuleItems.capsule);
@@ -91,21 +105,17 @@ public class CommonProxy {
 
     public void postInit(FMLPostInitializationEvent event) {
         Config.initCaptureConfigs();
-        Config.config.save();
         if (Config.config.hasChanged()) {
             Config.config.save();
         }
 
         CapsuleLootTableHook lootTableHook = new CapsuleLootTableHook();
         MinecraftForge.EVENT_BUS.register(lootTableHook);
-
     }
 
     public void serverStarting(FMLServerStartingEvent e) {
         e.registerServerCommand(new CapsuleCommand());
-        Files.populateAndLodloadLootList(e.getServer());
-        Files.populateAndLoadStarters(e.getServer());
-        Files.populateAndLoadConfigs(e.getServer());
+        refreshConfigTemplates();
     }
 
     public void openGuiScreen(EntityPlayer playerIn) {

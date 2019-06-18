@@ -1,0 +1,56 @@
+{
+  "type": "capsule:blueprint_capsule",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "immersiveengineering"
+    }
+  ],
+  "result": {
+    "item": "capsule:capsule",
+    "data": 3,
+    "nbt": {
+      "display": {
+        "color": 3949738
+      },
+      "sourceInventory": {},
+      "structureName": "assets/capsule/prefabs/immersiveengineering/ie-assembler",
+      "label": "IE:Assembler",
+      "size": 3
+    }
+  },
+  "pattern": [
+    "2b3",
+    "l1l",
+    "4p5"
+  ],
+  "key": {
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "p": {
+      "item": "minecraft:paper",
+      "data": 0
+    },
+    "l": {
+      "type": "forge:ore_dict",
+      "ore": "dyeBlue"
+    },
+    "1": {
+      "type": "forge:ore_dict",
+      "ore": "scaffoldingSteel"
+    },
+    "2": {
+      "item": "#empty"
+    },
+    "3": {
+      "item": "#empty"
+    },
+    "4": {
+      "item": "#empty"
+    },
+    "5": {
+      "item": "#empty"
+    }
+  }
+}

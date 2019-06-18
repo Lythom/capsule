@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 
+import java.io.File;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -31,6 +32,7 @@ public class Config {
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
     public static String starterTemplatesPath;
     public static List<String> starterTemplatesList = new ArrayList<>();
+    public static String prefabsTemplatesPath;
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
     public static HashMap<String, JsonObject> blueprintWhitelist;
@@ -43,6 +45,8 @@ public class Config {
     public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get("goldCapsuleSize");
     public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get("diamondCapsuleSize");
     public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get("opCapsuleSize");
+
+    public static File configDir = null;
 
     public static void readConfig(Configuration config) {
         try {
@@ -88,7 +92,7 @@ public class Config {
 
         // OP Excluded
         Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks", excludedBlocksOP);
-        opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
+        opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:mob_spawner");
         Block[] opExBlocks = null;
 
         opExBlocks = Serialization.deserializeBlockArray(opExcludedBlocksProp.getStringList());
@@ -155,9 +159,13 @@ public class Config {
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save structure have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
-        Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath","config/capsule/starters");
+        Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath", "config/capsule/starters");
         starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
         Config.starterTemplatesPath = starterTemplatesPathProp.getString();
+
+        Property prefabsTemplatesPathProp = Config.config.get("loots", "prefabsTemplatesPath", "config/capsule/prefabs");
+        prefabsTemplatesPathProp.setComment("Each structure in this folder will auto-generate a blueprint recipe that player will be able to craft.\nRemove/Add structure in the folder to disable/enable the recipe.\nDefault value: \"config/capsule/prefabs\"");
+        Config.prefabsTemplatesPath = prefabsTemplatesPathProp.getString();
 
         Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
         rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].");
@@ -176,7 +184,7 @@ public class Config {
         }
     }
 
-    public static void initReceipeConfigs() {
+    public static void initRecipesConfigs() {
         Property woodCapsuleSize = Config.config.get("Balancing", "woodCapsuleSize", "1");
         woodCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
 

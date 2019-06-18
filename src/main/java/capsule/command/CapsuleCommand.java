@@ -190,7 +190,7 @@ public class CapsuleCommand extends CommandBase {
             if (args.length != 1) {
                 throw new WrongUsageException(getUsage(sender));
             }
-            Files.populateAndLodloadLootList(server);
+            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
         } else {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -232,7 +232,7 @@ public class CapsuleCommand extends CommandBase {
 
         if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
 
-            CapsuleTemplate srcTemplate = Capsule.getRewardTemplate(Config.getRewardPathFromName(srcStructureName), server);
+            CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(srcStructureName), server);
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
                 if (size % 2 == 0)

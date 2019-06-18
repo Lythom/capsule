@@ -436,7 +436,7 @@ public class Capsule {
     public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, EntityPlayerMP player) {
         if (player == null) return ItemStack.EMPTY;
 
-        CapsuleTemplate srcTemplate = getRewardTemplate(srcStructurePath, player.getServer());
+        CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.getServer());
         if (srcTemplate == null) return ItemStack.EMPTY;
 
         int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
@@ -465,7 +465,7 @@ public class Capsule {
         return capsule;
     }
 
-    public static CapsuleTemplate getRewardTemplate(String structurePath, MinecraftServer server) {
+    public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
         return srcTemplatemanager.get(server, new ResourceLocation(structurePath));
     }

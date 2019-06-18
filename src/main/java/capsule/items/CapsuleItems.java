@@ -44,7 +44,13 @@ public class CapsuleItems {
         event.getRegistry().register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
     }
 
-    public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
+    public static void registerRecipes(RegistryEvent.Register<IRecipe> event, ArrayList<String> prefabsTemplatesList) {
+
+        // Add prefabs dynamic recipes here
+        for (String templateName : prefabsTemplatesList) {
+            
+        }
+
 
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here

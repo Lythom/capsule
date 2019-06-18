@@ -8,8 +8,12 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class StarterLoot {
+
+    protected static final Logger LOGGER = LogManager.getLogger(StarterLoot.class);
 
     public static StarterLoot instance = new StarterLoot();
 
@@ -24,7 +28,7 @@ public class StarterLoot {
             } else {
                 data = playerData.getCompoundTag("PlayerPersisted");
             }
-
+            LOGGER.info("playerLogin: " + (data.getBoolean("capsule:receivedStarter") ? "already received starters" : "giving starters now"));
             if (!data.getBoolean("capsule:receivedStarter")) {
                 for (String templatePath : Config.starterTemplatesList) {
                     ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);

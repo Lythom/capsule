@@ -85,7 +85,7 @@ public class CapsuleLootEntry extends LootEntry {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLodloadLootList(context.getWorld().getMinecraftServer());
+            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;
