@@ -726,10 +726,6 @@ public class CapsuleItem extends Item {
         capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
-    // TODO: whitelist some blocks for blueprints (mappings, nbt keep)
-    // TODO: ignore flowing liquids
-    // TODO: Add blueprint specific crafts (chick farm, starting base)
-
     public static void cleanDeploymentTags(ItemStack capsule) {
         capsule.getTagCompound().removeTag("spawnPosition");
         capsule.getTagCompound().removeTag("occupiedSpawnPositions"); // don't need anymore those data

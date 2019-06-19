@@ -54,8 +54,12 @@ public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRec
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getStackInSlot(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
-            if (i == ingredientOneIndex || i == ingredientTwoIndex || i == ingredientThreeIndex || itemstack.getItem() instanceof CapsuleItem) {
+            if (itemstack.getItem() instanceof CapsuleItem) {
                 nonnulllist.set(i, itemstack.copy());
+            } else if (i == ingredientOneIndex || i == ingredientTwoIndex || i == ingredientThreeIndex) {
+                ItemStack refund = itemstack.copy();
+                refund.setCount(1);
+                nonnulllist.set(i, refund);
             }
         }
 
