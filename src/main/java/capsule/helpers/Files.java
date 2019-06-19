@@ -20,6 +20,28 @@ import java.util.jar.JarFile;
 public class Files {
 
     protected static final Logger LOGGER = LogManager.getLogger(Files.class);
+    private static Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+
+    public static JsonObject readJSON(File file) {
+        if (file.exists()) {
+            try (final InputStream stream = new FileInputStream(file)) {
+                JsonObject jsonContent = JsonUtils.fromJson(GSON, new InputStreamReader(stream), JsonObject.class);
+                return jsonContent;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public static JsonObject copy(JsonObject original) {
+        try {
+            return GSON.fromJson(GSON.toJson(original, JsonObject.class), JsonObject.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static HashMap<String, JsonObject> populateWhitelistConfig(File capsuleConfigDir) {
         if (!capsuleConfigDir.exists()) {
@@ -33,11 +55,8 @@ public class Files {
                 Files.populateFolder(capsuleConfigDir, "assets/capsule/config");
             }
             if (whitelistFile.exists()) {
-                final Gson gson = new GsonBuilder().
-                        setPrettyPrinting().
-                        create();
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
-                    JsonArray whitelistElements = JsonUtils.fromJson(gson, new InputStreamReader(stream), JsonArray.class);
+                    JsonArray whitelistElements = JsonUtils.fromJson(GSON, new InputStreamReader(stream), JsonArray.class);
                     if (whitelistElements != null)
                         for (JsonElement elem : whitelistElements) {
                             if (elem.isJsonPrimitive()) {
@@ -160,7 +179,8 @@ public class Files {
                     Path path = iterator.next();
                     File file = path.toFile();
                     if (file.isFile() && (file.getName().endsWith(".nbt") || file.getName().endsWith(".schematic"))) {
-                        onTemplateFound.accept(file.getName().replaceAll(".nbt", "").replaceAll(".schematic", ""));
+                        Path relative = templateFolder.toPath().relativize(path);
+                        onTemplateFound.accept(relative.toString().replaceAll("\\\\","/").replaceAll(".nbt", "").replaceAll(".schematic", ""));
                     }
                 }
             } catch (IOException e) {

@@ -19,7 +19,6 @@
   "key": {
     "c": [
       {
-        "type": "minecraft:item_nbt",
         "item": "capsule:capsule",
         "data": 2,
         "nbt": {
@@ -27,7 +26,6 @@
         }
       },
       {
-        "type": "minecraft:item_nbt",
         "item": "capsule:capsule",
         "data": 5,
         "nbt": {

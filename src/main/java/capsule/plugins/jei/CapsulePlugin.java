@@ -64,8 +64,12 @@ public class CapsulePlugin implements IModPlugin {
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
 
         // blueprint
-        for (Pair<ItemStack, BlueprintCapsuleRecipe> r : CapsuleItems.blueprintCapsules) {
-            recipes.add(r.getValue().recipe);
+        for (Pair<ItemStack, IRecipe> r : CapsuleItems.blueprintCapsules) {
+            if(r.getValue() instanceof BlueprintCapsuleRecipe) {
+                recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
+            } else {
+                recipes.add(r.getValue());
+            }
         }
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
         CapsuleItem.setStructureName(withNewTemplate, "newTemplate");

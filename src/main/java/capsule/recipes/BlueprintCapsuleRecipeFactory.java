@@ -74,18 +74,23 @@ public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
                     }
                 }
             }
-            ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
-                    CapsuleItem.getStructureName(referenceCapsule),
-                    CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
-                    0xFFFFFF,
-                    CapsuleItem.getSize(referenceCapsule),
-                    CapsuleItem.isOverpowered(referenceCapsule),
-                    referenceCapsule.getTagCompound() != null ? referenceCapsule.getTagCompound().getString("label") : null,
-                    0
-            );
-            CapsuleItem.setBlueprint(blueprintItem);
-            CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
-            return blueprintItem;
+            try {
+                ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
+                        CapsuleItem.getStructureName(referenceCapsule),
+                        CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
+                        0xFFFFFF,
+                        CapsuleItem.getSize(referenceCapsule),
+                        CapsuleItem.isOverpowered(referenceCapsule),
+                        referenceCapsule.getTagCompound() != null ? referenceCapsule.getTagCompound().getString("label") : null,
+                        0
+                );
+                CapsuleItem.setBlueprint(blueprintItem);
+                CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
+                return blueprintItem;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ItemStack.EMPTY;
+            }
         }
 
         @Override

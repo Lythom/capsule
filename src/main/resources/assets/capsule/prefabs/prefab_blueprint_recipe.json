@@ -10,15 +10,15 @@
         "color": 3949738
       },
       "sourceInventory": {},
-      "structureName": "**auto-structureName**",
-      "label": "**auto-label**",
-      "size": "auto-size"
+      "structureName": "",
+      "label": "",
+      "size": 1
     }
   },
   "pattern": [
     "2b3",
     "l1l",
-    "4p5"
+    " p "
   ],
   "key": {
     "b": {
@@ -39,12 +39,6 @@
       "item": "minecraft:air"
     },
     "3": {
-      "item": "minecraft:air"
-    },
-    "4": {
-      "item": "minecraft:air"
-    },
-    "5": {
       "item": "minecraft:air"
     }
   }

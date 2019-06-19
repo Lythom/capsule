@@ -23,6 +23,7 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
@@ -470,7 +471,7 @@ public class CapsuleItem extends Item {
             // Add capsuleList items, loaded from json files
             subItems.addAll(CapsuleItems.capsuleList.keySet());
             subItems.addAll(CapsuleItems.opCapsuleList.keySet());
-            for (Pair<ItemStack, BlueprintCapsuleRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+            for (Pair<ItemStack, IRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
                 subItems.add(blueprintCapsule.getKey());
             }
             if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());

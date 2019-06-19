@@ -622,7 +622,7 @@ public class StructureSaver {
         return destStructureName;
     }
 
-    public static class ItemStackKey {
+    public static class ItemStackKey implements Comparable<ItemStackKey> {
         public ItemStack itemStack;
 
         public ItemStackKey(ItemStack itemStack) {
@@ -638,6 +638,19 @@ public class StructureSaver {
         public int hashCode() {
             int val = itemStack.getItem().hashCode() * 29 + itemStack.getItemDamage();
             return val;
+        }
+
+
+        @Override
+        public int compareTo(ItemStackKey o) {
+            if (o == null || o.itemStack == null) return 1;
+            return this.equals(o) ? 0 : serializeItemStack(this.itemStack).compareTo(serializeItemStack(o.itemStack));
+        }
+
+        public static String serializeItemStack(ItemStack itemstack) {
+            return itemstack.getItem().getUnlocalizedName()
+                    + "@"
+                    + itemstack.getItemDamage();
         }
     }
 
