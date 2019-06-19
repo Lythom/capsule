@@ -76,6 +76,9 @@ public class Config {
                 Serialization.serializeBlockArray(defaultExcludedBlocksOP),
                 "ic2:",
                 "refinedstorage:",
+                "superfactorymanager:",
+                "gregtech:machine",
+                "gtadditions:",
                 "bloodmagic:alchemy_table",
                 "mekanism:machineblock",
                 "mekanism:boundingblock"
