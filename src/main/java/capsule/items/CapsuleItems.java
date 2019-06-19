@@ -4,6 +4,7 @@ import capsule.Main;
 import capsule.helpers.Blueprint;
 import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
 import capsule.recipes.BlueprintChangeRecipeFactory.BlueprintChangeRecipe;
+import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import capsule.recipes.RecoveryCapsuleRecipeFactory.RecoveryCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
@@ -60,20 +61,17 @@ public class CapsuleItems {
                     upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
                 } else if (recipe instanceof BlueprintChangeRecipe) {
                     blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
+                } else if (recipe instanceof PrefabsBlueprintCapsuleRecipe) {
+                    blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), recipe));
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
                     if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedOreRecipe) {
-                        if (CapsuleItem.isBlueprint(output)) {
-                            blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), recipe));
+                        if (CapsuleItem.isOverpowered(output)) {
+                            CapsuleItems.opCapsuleList.put(output, recipe);
                         } else {
-                            if (CapsuleItem.isOverpowered(output)) {
-                                CapsuleItems.opCapsuleList.put(output, recipe);
-                            } else {
-                                CapsuleItems.capsuleList.put(output, recipe);
-                            }
+                            CapsuleItems.capsuleList.put(output, recipe);
                         }
                     }
-
                 }
             }
         }

@@ -5,6 +5,7 @@ import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
+import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;
 import mezz.jei.api.ISubtypeRegistry;
@@ -59,14 +60,16 @@ public class CapsulePlugin implements IModPlugin {
         List<ItemStack> blueprintCapsules = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).collect(Collectors.toList());
         blueprintCapsules.add(CapsuleItems.blueprintChangedCapsule.getKey());
         Ingredient anyBlueprint = Ingredient.fromStacks(blueprintCapsules.toArray(new ItemStack[0]));
-        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule))) ;
+        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule)));
         // recovery
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
 
         // blueprint
         for (Pair<ItemStack, IRecipe> r : CapsuleItems.blueprintCapsules) {
-            if(r.getValue() instanceof BlueprintCapsuleRecipe) {
+            if (r.getValue() instanceof BlueprintCapsuleRecipe) {
                 recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
+            } else if (r.getValue() instanceof PrefabsBlueprintCapsuleRecipe) {
+                recipes.add(((PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
             } else {
                 recipes.add(r.getValue());
             }

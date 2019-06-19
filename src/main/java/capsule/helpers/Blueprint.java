@@ -4,6 +4,7 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.StructureSaver.ItemStackKey;
 import capsule.items.CapsuleItem;
+import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
@@ -236,12 +237,7 @@ public class Blueprint {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("size", size);
-                    ShapedOreRecipe templateRecipe = ShapedOreRecipe.factory(new JsonContext("capsule"), jsonRecipe);
-                    templateRecipe.getIngredients().set(4, Ingredient.fromStacks(ingredients.getLeft().itemStack));
-                    if (ingredients.getMiddle() != null)
-                        templateRecipe.getIngredients().set(0, Ingredient.fromStacks(ingredients.getMiddle().itemStack));
-                    if (ingredients.getRight() != null)
-                        templateRecipe.getIngredients().set(2, Ingredient.fromStacks(ingredients.getRight().itemStack));
+                    PrefabsBlueprintCapsuleRecipe templateRecipe = new PrefabsBlueprintCapsuleRecipe(jsonRecipe, ingredients);
                     event.getRegistry().register(templateRecipe.setRegistryName("capsule:" + templateName));
                 }
             });
