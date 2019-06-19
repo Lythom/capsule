@@ -102,6 +102,7 @@ public class Capsule {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
+                CapsuleItem.setPlacement(capsule, new PlacementSettings());
                 notifyUndeploy(playerIn, startPos, size);
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
@@ -202,6 +203,7 @@ public class Capsule {
             CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
             CapsuleItem.setStructureName(capsule, capsuleID);
             CapsuleItem.setCanRotate(capsule, template.canRotate());
+            CapsuleItem.setPlacement(capsule, new PlacementSettings());
             return true;
         } else {
             // could not capture, StructureSaver.undeploy handles the feedback already
