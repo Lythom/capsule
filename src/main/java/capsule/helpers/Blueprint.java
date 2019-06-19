@@ -3,7 +3,6 @@ package capsule.helpers;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.StructureSaver.ItemStackKey;
-import capsule.items.CapsuleItem;
 import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
@@ -17,21 +16,18 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraftforge.common.crafting.JsonContext;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.oredict.ShapedOreRecipe;
+import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
@@ -122,13 +119,7 @@ public class Blueprint {
     @Nullable
     public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer
             worldserver, EntityPlayer player) {
-        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
-        CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);
-        if (templatemanager == null) {
-            LOGGER.error("getTemplateManager returned null");
-            return null;
-        }
-        CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(CapsuleItem.getStructureName(blueprint)));
+        CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return null;
 
         return getMaterialList(blueprintTemplate, player);
@@ -154,7 +145,7 @@ public class Blueprint {
         return list;
     }
 
-    public static TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> sortTemplatesByIngredients(ArrayList<String> prefabsTemplatesList, CapsuleTemplateManager tempManager) {
+    public static TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> sortTemplatesByIngredients(List<String> prefabsTemplatesList, CapsuleTemplateManager tempManager) {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
@@ -225,9 +216,15 @@ public class Blueprint {
     public static void createDynamicPrefabRecipes(RegistryEvent.Register<IRecipe> event, ArrayList<String> prefabsTemplatesList) {
         JsonObject referenceRecipe = Files.readJSON(new File(Config.configDir, "prefabs/prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
+            // declarations extract to improve readability
+            List<String> enabledPrefabsTemplatesList;
+            TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
+            Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
+            // get the minimum amount of ingredient without conflicts for each recipe
             CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Config.configDir.getParentFile().getParentFile().getPath(), FMLCommonHandler.instance().getDataFixer());
-            TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = sortTemplatesByIngredients(prefabsTemplatesList, tempManager);
-            Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced = reduceIngredientCount(templatesByIngrendients);
+            enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
+            templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
+            reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
                 CapsuleTemplate template = tempManager.get(null, new ResourceLocation(templateName));
@@ -242,5 +239,12 @@ public class Blueprint {
                 }
             });
         }
+    }
+
+    public static List<String> getModEnabledTemplates(ArrayList<String> prefabsTemplatesList) {
+        return prefabsTemplatesList.stream().filter(templatePath -> {
+            String[] path = templatePath.replaceAll(Config.prefabsTemplatesPath + "/", "").split("/");
+            return path.length == 1 || Loader.isModLoaded(path[0]);
+        }).collect(Collectors.toList());
     }
 }

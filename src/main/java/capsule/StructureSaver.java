@@ -105,19 +105,16 @@ public class StructureSaver {
 
     }
 
-    public static boolean undeployBlueprint(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+    public static boolean undeployBlueprint(WorldServer worldserver, String playerID, ItemStack blueprint, BlockPos startPos, int size, List<Block> excluded,
                                             Map<BlockPos, Block> excludedPositions) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         if (minecraftserver == null) return false;
-        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
-        if (templatemanager == null) {
-            LOGGER.error("getTemplateManager returned null");
-            return false;
-        }
-        CapsuleTemplate tempTemplate = new CapsuleTemplate();
-        CapsuleTemplate blueprintTemplate = templatemanager.get(minecraftserver, new ResourceLocation(capsuleStructureId));
+
+        CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return false;
+
+        CapsuleTemplate tempTemplate = new CapsuleTemplate();
         List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
                 excluded, null);
         List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
@@ -165,7 +162,7 @@ public class StructureSaver {
     public static NBTTagCompound filterIdentityNBT(Template.BlockInfo b) {
         NBTTagCompound nbt = b.tileentityData.copy();
         List<String> converted = Config.getBlueprintIdentityNBT(b.blockState.getBlock());
-        nbt.getKeySet().removeIf(key -> !converted.contains(key));
+        nbt.getKeySet().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
     }
 
@@ -358,7 +355,7 @@ public class StructureSaver {
 
         boolean isReward = CapsuleItem.isReward(capsule);
         String structureName = CapsuleItem.getStructureName(capsule);
-        if (isReward) {
+        if (isReward || structureName.startsWith("config/") && CapsuleItem.isBlueprint(capsule)) {
             template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
         } else {
             template = getTemplateForCapsule(playerWorld, structureName);
@@ -558,7 +555,7 @@ public class StructureSaver {
 
     public static NBTTagCompound getTemplateNBTData(String path, WorldServer worldServer) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
-        if (path.startsWith(Config.rewardTemplatesPath)) {
+        if (path.startsWith(Config.rewardTemplatesPath) || path.startsWith("config/")) {
             sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getMinecraftServer(), path);
         } else {
             sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);

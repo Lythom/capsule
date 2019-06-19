@@ -87,7 +87,7 @@ public class Capsule {
 
         // do the transportation
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);

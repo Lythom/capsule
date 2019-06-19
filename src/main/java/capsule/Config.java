@@ -240,7 +240,9 @@ public class Config {
      * Identity NBT is NBT that is required to identify the item as a specific block. Ie. immersive engineering conveyor belts differs by their nbt but use the same block/item class.
      */
     public static List<String> getBlueprintIdentityNBT(Block b) {
-        return getBlueprintAllowedNBT(b).entrySet().stream()
+        JsonObject allowedNBT = getBlueprintAllowedNBT(b);
+        if (allowedNBT == null) return null;
+        return allowedNBT.entrySet().stream()
                 .filter(ks -> !ks.getValue().isJsonNull())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
