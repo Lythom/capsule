@@ -2,10 +2,12 @@
 
 Those commands are accessible only with the op permissions. They are designed to help content creators to play around with capsule and create whatever capsule they want.
 
-Parameters marked with a * have autocompletion available using the tabulation key.
+**Parameters marked with a * have autocompletion available using the tabulation key.**
 
 - [Capsule in-game Commands](#capsule-in-game-commands)
   * [giveEmpty](#giveempty)
+  * [giveLinked](#givelinked)
+  * [giveBlueprint](#giveblueprint)
   * [exportHeldItem](#exporthelditem)
   * [exportSeenBlock](#exportseenblock)
   * [fromHeldCapsule](#fromheldcapsule)
@@ -42,8 +44,8 @@ Give an standard capsule with preloaded content.
 ```
 /capsule giveLinked <reward_name> [playerName]
 ```
-* **reward_name*** Required. Name of the structure reward to load from. Use tab for auto-completion from the reward folder.
-* **playerName** Optional. Name of the player that will receive the reward.
+* **reward_name*** Required. Name of the structure reward to load from.
+* **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
 
@@ -57,7 +59,7 @@ Give an uncharged blueprint capsule with preconfigured structure.
 /capsule giveBlueprint <reward_name> [playerName]
 ```
 * **reward_name*** Required. Name of the structure reward to load from. Use tab for auto-completion from the reward folder.
-* **playerName** Optional. Name of the player that will receive the reward.
+* **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
 ## exportHeldItem ##
@@ -109,8 +111,8 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 ```
 /capsule fromStructure <structure_name> [playerName]
 ```
-* **structureName*** Required. Name of the structure Template to load from.
-* [since 3.2.91] **playerName** Optional. Name of the player that will receive the reward.
+* **structure_name*** Required. Name of the structure Template to load from.
+* [since 3.2.91] **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
 ## fromExistingReward ##
@@ -121,7 +123,7 @@ Give a One Use Capsule linked to the reward template named <templateName> from t
 /capsule fromExistingReward <reward_name> [playerName]
 ```
 * **reward_name*** Required. Name of the reward Template to load from.
-* [since 3.2.91] **playerName** Optional. Name of the player that will receive the reward.
+* [since 3.2.91] **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
 ## giveRandomLoot ##
