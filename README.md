@@ -2,13 +2,48 @@
 
 Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
 
-## Mod page ##
+## Mod page and downloads ##
 [https://minecraft.curseforge.com/projects/capsule](https://minecraft.curseforge.com/projects/capsule)
 
 ## Wiki ##
 [https://github.com/Lythom/capsule/wiki](https://github.com/Lythom/capsule/wiki)
 
 ## Changelog ##
+
+**1.12.2-3.2.99 : Modpacker's daydream update**
+
+First an update notice: 
+- some incompatible mods have been identified and added to configuration, please remove the `excludedBlocks` and `opExcludedBlocks` entries in your `config/capsule.cfg` so that they regenerates. Sorry gregtech machines, superfactorymanager and refined storage, you can't go into capsules.
+- New loot included! Remove the `config/capsule/loot` folder to generate the new loots !
+
+Now the cool stuff!    
+New options for modpack makers!
+- You can give the player recipes for pre-configured blueprint.
+    - Once the blueprint is crafted (ie. Immersive Engineering Arc Furnace blueprint), the player only have to gather the materials to be able to deploy the structure. 
+    - Rotation, mirror and undo are possibles so it makes it very easy to try and place correctly a multiblock. 
+    - Any structure can easily be added as pre-configured blueprint, recipes are generated automatically! See [https://github.com/Lythom/capsule/wiki/Modpack-making#add-a-preconfigured-blueprint](https://github.com/Lythom/capsule/wiki/Modpack-making#add-a-preconfigured-blueprint) for more information.
+- You can give the player starter(s) preloaded caspule.
+    - Default starter is a small house designed to serve as mobile base but it can be removed or changed. See [https://github.com/Lythom/capsule/wiki/Modpack-making#how-to-give-one](https://github.com/Lythom/capsule/wiki/Modpack-making#how-to-give-one) for more information.
+    
+Full changelist and fixes :
+- Add rotation and mirror to standard capsule if their content support it (ie. basic block or whitelisted tile entity).
+- Add starter capsule mechanic and a default starter.
+- Add new loots ! Remove the `config/capsule/loot` folder to get the new ones !
+- Add preconfigured blueprint recipes. Check JEI for blueprints ! Blocks used in the structure are given back.
+- Add Immersive engineering, Immersive Tech and Immersive Petroleum multiblocks as preconfigured blueprint (only when the mod is loaded).
+- Add a few vanilla based preconfigured blueprints.
+- Add a [whitelist](https://github.com/Lythom/capsule/wiki/Modpack-making#whitelist) mechanic to allow more blocks to be used in blueprints.
+- Add fluid support in blueprints (only through buckets for now).
+- Add [giveBlueprint](https://github.com/Lythom/capsule/wiki/Commands#giveblueprint) command.
+- Add [giveLinked](https://github.com/Lythom/capsule/wiki/Commands#givelinked) command.
+- Add optional "playerName" argument to all relevant commands to give any kind of capsule to any player.
+- Improve tooltip display for all capsules..
+- Revert forge version dependency to latest recommended (14.23.5.2768).
+- Blueprints capsule can now be crafted not only from standard capsule but also from reward, recovery and other blueprint capsules.
+- Recovery capsule recipe is shapeless again.
+- Improve JEI recipes and descriptions.
+- Update excludedBlocks for newly discovered incompatibilities. please remove the `excludedBlocks` and `opExcludedBlocks` entries in your `config/capsule.cfg` so that they regenerates.
+- Fix a bug where ":" in the label of a reward would mess the structure file location.
 
 **1.12.2-3.2.91 : Builder's daydream update**
 
