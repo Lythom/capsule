@@ -84,7 +84,7 @@ Blueprints crafted by player have a dedicate template created when crafted that 
 
 #### Whitelist
 
-By default tile entities are not supported by capsules. Still, it is possible to allow specific tile entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (ie. "minecraft:chest") or a json object with properties "block" and "keepNBT". Exemple of the immersive engineering conveyor belt that is whitelisted by default:
+By default tile entities are not supported by blueprints. Still, it is possible to allow specific tile entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (ie. "minecraft:chest") or a json object with properties "block" and "keepNBT". Exemple of the immersive engineering conveyor belt that is whitelisted by default:
 ```json
 {
   "block": "immersiveengineering:conveyor",
