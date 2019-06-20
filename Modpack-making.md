@@ -37,8 +37,8 @@ When the player capture some new content with an Empty Capsule, a new Template f
 #### How to give one
 
 Apart from the player crafting it's own capsule, there are 2 ways to give players preloaded standard (reusable) capsules :
-- Using the command [`/capsule giveLinked <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#givelinked).
-- As starter capsule, given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
+- [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#givelinked).
+- [since 3.2.95] As starter capsule, given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
 
 ### Rewards
 
@@ -50,7 +50,7 @@ Those capsule are always oneUse (item is destroyed when successfully deployed), 
 
 The players won't be able to get those capsules by themselves. They can be given:
 
-- Using the command [`/capsule fromExistingReward <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#fromexistingreward)
+- [since 3.2.95] Using the command [`/capsule fromExistingReward <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#fromexistingreward)
 - in another reward or loot capsule (#capsuleception :D)
 - as a quest reward (choose your favorite quest mod)
 - using any mod that can reward an ItemStack with custom nbt data
@@ -70,17 +70,17 @@ Each folder will get an entry in the capsule config file on server restart, to b
 
 ### Blueprints
 
+[since 3.2.95]
+
 Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [https://imgur.com/gallery/vN1sJrf](https://imgur.com/gallery/vN1sJrf) for more information on how to use as a player).
+
+Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
 
 #### How to give one
 
 Apart from the default player recipe, Blueprints capsules can be accessed in 2 ways :
 - Using a craft recipe of [preconfigured blueprints](#add-a-preconfigured-blueprint) (the modpack maker can provide specific structures to be craftable).
 - using command [`/capsule giveBlueprint <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#giveblueprint).
-
-#### Player made blueprints
-
-Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
 
 #### Whitelist
 
@@ -130,6 +130,7 @@ To allow more advanced captures :
 
 [Click to see Demo of using `/capsule fromStructure <structure_name>`
 ![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
+
 
 ### Add a preconfigured blueprint
 
