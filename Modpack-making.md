@@ -26,13 +26,17 @@
 
 There are 3 types of capsules to know in order to use Capsule as a modpack making tool.
 
-### Standard 
+### Standard
 
 Standard capsules are live created by players while playing. They are stored in <worldsave>/structures/capsules for each world.
 
 When the player capture some new content with an Empty Capsule, a new Template file is created there. Through the game, only this crafted Capsule and the Recovery Capsules linked to it can modify the Template file. In-game commands for modpackmakers are non-destructive on live created capsules, so you can't mess with players contents if using commands on a "live" server. The Template file is empty if the capsule is deployed, and contains the captured region data if the capsule is undeployed, so you want to create rewards from undeployed capsules.
 
-[WIP] Allow a standard capsule with preloaded content to be given to the player, aka. "The starting traveller"s base".
+#### How to give one
+
+Apart from the player crafting it's own capsule, there are 2 ways to give players preloaded standard (reusable) capsules :
+- Using the command [`/capsule giveLinked <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#givelinked).
+- As starter capsule, given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
 
 ### Rewards
 
@@ -40,31 +44,74 @@ Reward capsules are what you would be doing most. They are prepared by modpack m
 
 Those capsule are always oneUse (item is destroyed when successfully deployed), but the Template file is never emptied. That means a Reward Capsule can be given any number of time to any number of players.
 
-The players won't be able to get thoses capsules by themselves. They must be given, ie. :
+#### How to give one
 
-* if using a map template, placed anywhere in the world (chest, item frame, be creative !)
-* in another reward or loot capsule (#capsuleception :D)
-* as a quest reward (choose your favorite quest mod)
-* using any mod that can reward an ItemStack with custom nbt data
-* using the /give command with the right nbt data
+The players won't be able to get those capsules by themselves. They can be given:
 
-### Loots 
+- Using the command [`/capsule fromExistingReward <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#fromexistingreward)
+- in another reward or loot capsule (#capsuleception :D)
+- as a quest reward (choose your favorite quest mod)
+- using any mod that can reward an ItemStack with custom nbt data
+- if using a map template, placed anywhere in the world (chest, item frame, be creative !)
+
+
+### Loots
 
 Loot capsules are reward capsule that appears in the loot table of dungeon chests. They are taken from specifics folders defined in the config file.
 
-The Template files located under any of the "lootTemplatesPaths" entry in the config file will be eligible to spawn as loot in dungeon chests. They work the same way as Reward Capsule except they have this additional way to be obtain : the player can find them in a loot chest.
+The Template files located under any of the `lootTemplatesPaths` entry in the config file will be eligible to spawn as loot in dungeon chests. They work the same way as Reward Capsule except they have this additional way to be obtain : the player can find them in a loot chest.
 
 By default, 3 folders are defined in the config file (in "/config/capsule/loot/…") that can be filled as you wish.
 
 Each folder will get an entry in the capsule config file on server restart, to be able to configure weight (chance for the folder to be picked rather than another when selecting a loot).
 
+
 ### Blueprints
 
-Blueprints capsules allow player to duplicate structures by taking materials from any linked inventory.    
-Blueprints are crafted by players from an undeployed capsule or reward.
-Blueprints have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
+Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [https://imgur.com/gallery/vN1sJrf](https://imgur.com/gallery/vN1sJrf) for more information on how to use as a player).
 
-[WIP] Allow custom blueprints recipes from reward template. Would allow the player to craft a blueprint as a "structure deployer", but the player would still need to gather the materials. See [Create a Reward Capsule](#create-a-reward-capsule) to create a reward template that can be included in a pack.
+#### How to give one
+
+Apart from the default player recipe, Blueprints capsules can be accessed in 2 ways :
+- Using a craft recipe of [pre-configured blueprints](#preconfigured-blueprints) (the modpack maker can provide specific structures to be craftable).
+- using command [`/capsule giveBlueprint <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#giveblueprint).
+
+#### Player made blueprints
+
+Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
+
+
+#### Preconfigured blueprints
+
+To add a new craftable pre-configured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. That's all !
+
+Additional notes:
+- The recipe will be created using the `config/prefabs/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with most used blocks in the structure the create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change ingredients and move around 1, 2 and 3 in the json.
+- Blueprints are limited to plain blocks. Tile entities are ignored during blueprint structure copy unless they are listed in the [whitelist](#whitelist).
+- If inside a sub-folder, a mod with the same name as the folder must me loaded to enable the recipe.
+- Ensure the file name is lowercase only, _ will be replaced by spaces and each word is capitalize for the capsule label.
+
+
+#### Whitelist
+
+By default tile entities are not supported by capsules. Still, it is possible to allow specific tile entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (ie. "minecraft:chest") or a json object with properties "block" and "keepNBT". Exemple of the immersive engineering conveyor belt that is whitelisted by default:
+```json
+{
+  "block": "immersiveengineering:conveyor",
+  "keepNBT": {
+    "conveyorType": null,
+    "conveyorBeltSubtype": "conveyorType",
+    "conveyorBeltSubtypeNBT": null,
+    "facing": null
+  }
+},
+```
+In this example, the conveyor block will be allowed in blueprints,
+- the NBT properties of the tile entity listed under `keepNBT` will be reserved in the blueprints,
+- all unlisted properties will be removed. Typically, only configuration should be kept, "items" or inventory properties if kept would lead to dupe issues.
+
+`keepNBT` is a key/value object where almost every property value is `null` except `"conveyorBeltSubtype": "conveyorType"`, it means than the item required to charge this blueprint MUST have the `conveyorType` nbt data in the item, and the value of the item `conveyorType` must match the value of the block nbt `conveyorBeltSubtype` to be a valid material. `null` value means the material item don't requires a specific NBT to be a valid material. In this example it forces the type of conveyor belt in the inventory to match the type of conveyor belt built in the blueprint, not any conveyor belt could be used as item input.
+
 
 ## How to
 
@@ -78,20 +125,20 @@ Manipulating nbt data can be tricky. Capsule mod include some commands and tools
 
 ### Create a Reward Capsule
 
-This procedure will have you create a template file located under config/capsule/reward/. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work on the player game.
+This procedure will have you create a template file located under `config/capsule/rewards`. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work on the player game.
 
-1. Get an empty capsule, 
+1. Get an empty capsule,
 2. capture the content you want to reward on a Capture Base,
-3. finally use the command [`/capsule fromHeldCapsule`](https://github.com/Lythom/capsule/wiki/Commands#fromheldcapsule) while having the capsule in main hand
+3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](https://github.com/Lythom/capsule/wiki/Commands#fromheldcapsule) while having the capsule in main hand. The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
 
 To allow more advanced captures :
 
 1. Setup a structure block in save mode
-2. Configure the way you want (you can even capture entities and blocks a capsule wouldn't capture like mobs or monsters or EntityItems on the ground), 
-3. Save using a unique name (lowercase only), 
-4. Finally use the command [`/capsule fromStructure <structureName>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structureName>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content. If the name contains uppercase characters, the capsule won't deploy on linux server (which most of server providers uses).
+2. Configure the way you want (you can even capture entities and blocks a capsule wouldn't capture like mobs or monsters or EntityItems on the ground),
+3. Save using a unique name (lowercase only),
+4. Finally use the command [`/capsule fromStructure <structure_name>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structure_name>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content. If the name contains uppercase characters, the capsule won't deploy on linux server (which most of server providers uses).
 
-[Click to see Demo of using `/capsule fromStructure <structureName>`     
+[Click to see Demo of using `/capsule fromStructure <structure_name>`
 ![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
 
 ### Relabeling a Capsule
@@ -123,7 +170,7 @@ Steps :
 1. [Create a Reward Capsule](#create-a-reward-capsule)
 2. [Set the label](#relabeling-a-capsule) and [Set the author](#setting-the-author-of-a-capsule),
 3. Either :
-    * a. [Submit your creation](#submit-your-templates-) to be distributed with the capsule mod !  
+    * a. [Submit your creation](#submit-your-templates-) to be distributed with the capsule mod !
     * b. Copy/paste the Template file from "config/capsule/rewards/<CapsuleName.nbt>" to a valid capsule loot folder (ie. "config/capsule/loots/common/<CapsuleName.nbt>").
 
 Your template now have a chance to spawn in a loot chest !
@@ -145,7 +192,7 @@ Submit your template .nbt file at https://github.com/Lythom/capsule/issues/new?t
 
 ### Exporting the item NBT
 
-The Capsule item is ready but you may need the give command to setup a command block, or the NBT data the configure a mod. Use the command  [`/capsule exportHeldItem`](https://github.com/Lythom/capsule/wiki/Commands#exporthelditem) to generate a the /give command in the chat. Click the message to open the log file and be able to copy/paste it. The last parameter is the NBT data. 
+The Capsule item is ready but you may need the give command to setup a command block, or the NBT data the configure a mod. Use the command  [`/capsule exportHeldItem`](https://github.com/Lythom/capsule/wiki/Commands#exporthelditem) to generate a the /give command in the chat. Click the message to open the log file and be able to copy/paste it. The last parameter is the NBT data.
 
 Note : this command will work for any item, not only capsules.
 
