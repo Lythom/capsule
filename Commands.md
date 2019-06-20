@@ -32,6 +32,34 @@ Give an empty capsule.
 * **overpowered** Optional, default false. Value must be true or false
 
 ---
+
+## giveLinked ##
+
+[since 3.2.91]
+
+Give an standard capsule with preloaded content.
+
+```
+/capsule giveLinked <reward_name> [playerName]
+```
+* **reward_name*** Required. Name of the structure reward to load from. Use tab for auto-completion from the reward folder.
+* **playerName** Optional. Name of the player that will receive the reward.
+
+---
+
+## giveBlueprint ##
+
+[since 3.2.91]
+
+Give an uncharged blueprint capsule with preconfigured structure.
+
+```
+/capsule giveBlueprint <reward_name> [playerName]
+```
+* **reward_name*** Required. Name of the structure reward to load from. Use tab for auto-completion from the reward folder.
+* **playerName** Optional. Name of the player that will receive the reward.
+
+---
 ## exportHeldItem ##
 
 Print the /give command that would give the exact item in hand. The item can be any item (not limited to capsules).  
@@ -79,7 +107,7 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 **Warning** : If a template already exists with the name in the reward folder, it will be overwritten without confirmation.
 
 ```
-/capsule fromStructure <structureName> [playerName]
+/capsule fromStructure <structure_name> [playerName]
 ```
 * **structureName*** Required. Name of the structure Template to load from.
 * [since 3.2.91] **playerName** Optional. Name of the player that will receive the reward.
@@ -90,9 +118,9 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 Give a One Use Capsule linked to the reward template named <templateName> from the configured reward folder (default config/capsule/rewards).
 
 ```
-/capsule fromExistingReward <templateName> [playerName]
+/capsule fromExistingReward <reward_name> [playerName]
 ```
-* **templateName*** Required. Name of the reward Template to load from.
+* **reward_name*** Required. Name of the reward Template to load from.
 * [since 3.2.91] **playerName** Optional. Name of the player that will receive the reward.
 
 ---
