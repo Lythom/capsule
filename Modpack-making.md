@@ -14,10 +14,10 @@
     + [Dying a capsule](#dying-a-capsule)
     + [Create a Template to be used as Loot](#create-a-template-to-be-used-as-loot)
     + [Test looting system](#test-looting-system)
-  * [Submit your templates !](#submit-your-templates-)
+  * [Submit your templates !](#submit-your-templates--)
   * [Other tools](#other-tools)
     + [Exporting the item NBT](#exporting-the-item-nbt)
-    + [Exporting a block + TileEntity](#exporting-a-block--tileentity)
+    + [Exporting a block + TileEntity](#exporting-a-block---tileentity)
   * [Capsule NBT data reference](#capsule-nbt-data-reference)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -80,18 +80,6 @@ Apart from the default player recipe, Blueprints capsules can be accessed in 2 w
 
 Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
 
-
-#### Preconfigured blueprints
-
-To add a new craftable pre-configured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. That's all !
-
-Additional notes:
-- The recipe will be created using the `config/prefabs/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with most used blocks in the structure the create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change ingredients and move around 1, 2 and 3 in the json.
-- Blueprints are limited to plain blocks. Tile entities are ignored during blueprint structure copy unless they are listed in the [whitelist](#whitelist).
-- If inside a sub-folder, a mod with the same name as the folder must me loaded to enable the recipe.
-- Ensure the file name is lowercase only, _ will be replaced by spaces and each word is capitalize for the capsule label.
-
-
 #### Whitelist
 
 By default tile entities are not supported by capsules. Still, it is possible to allow specific tile entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (ie. "minecraft:chest") or a json object with properties "block" and "keepNBT". Exemple of the immersive engineering conveyor belt that is whitelisted by default:
@@ -140,6 +128,17 @@ To allow more advanced captures :
 
 [Click to see Demo of using `/capsule fromStructure <structure_name>`
 ![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
+
+### Add a pre-configured blueprint
+
+To add a new craftable pre-configured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. A recipe for this pre-configured blueprint will be dynamically created and added to JEI and creative tabs.
+
+Additional notes:
+- The recipe will be created using the `config/prefabs/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with most used blocks in the structure the create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change ingredients and move around 1, 2 and 3 in the json.
+- Blueprints are limited to plain blocks. Tile entities are ignored during blueprint structure copy unless they are listed in the [whitelist](#whitelist).
+- If inside a sub-folder, a mod with the same name as the folder must me loaded to enable the recipe.
+- Ensure the file name is lowercase only, _ will be replaced by spaces and each word is capitalize for the capsule label.
+
 
 ### Relabeling a Capsule
 
