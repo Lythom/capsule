@@ -9,6 +9,7 @@
   * [How to](#how-to)
     + [Create an Empty Capsule](#create-an-empty-capsule)
     + [Create a Reward Capsule](#create-a-reward-capsule)
+    + [Add a preconfigured blueprint](#add-a-preconfigured-blueprint)
     + [Relabeling a Capsule](#relabeling-a-capsule)
     + [Setting the author of a capsule](#setting-the-author-of-a-capsule)
     + [Dying a capsule](#dying-a-capsule)
@@ -21,6 +22,7 @@
   * [Capsule NBT data reference](#capsule-nbt-data-reference)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 ## Types of Capsules
 
@@ -73,7 +75,7 @@ Blueprints capsules allow player to build structures multiple times by taking ma
 #### How to give one
 
 Apart from the default player recipe, Blueprints capsules can be accessed in 2 ways :
-- Using a craft recipe of [pre-configured blueprints](#preconfigured-blueprints) (the modpack maker can provide specific structures to be craftable).
+- Using a craft recipe of [preconfigured blueprints](#add-a-preconfigured-blueprint) (the modpack maker can provide specific structures to be craftable).
 - using command [`/capsule giveBlueprint <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#giveblueprint).
 
 #### Player made blueprints
@@ -129,9 +131,9 @@ To allow more advanced captures :
 [Click to see Demo of using `/capsule fromStructure <structure_name>`
 ![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
 
-### Add a pre-configured blueprint
+### Add a preconfigured blueprint
 
-To add a new craftable pre-configured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. A recipe for this pre-configured blueprint will be dynamically created and added to JEI and creative tabs.
+To add a new craftable preconfigured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. A recipe for this preconfigured blueprint will be dynamically created and added to JEI and creative tabs.
 
 Additional notes:
 - The recipe will be created using the `config/prefabs/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with most used blocks in the structure the create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change ingredients and move around 1, 2 and 3 in the json.
