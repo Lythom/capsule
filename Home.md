@@ -20,7 +20,20 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Getting started ##
 
-You first need a capture base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
+The first capsule you will have access to is made of wood. It's size is 1x1x1 which enables the "instant mode".
+
+> ![empty, stone button, empty - wood plank, chest, wood plank - empty, wood slab, empty](https://imgur.com/cNPwMo5.png)
+> 
+> "Wooden capsule" recipe
+
+It means you can capture any block (ie. a chest or a crafting table) by right clicking it, then deploy and undeploy it instantly by right clicking again with the capsule in hand.
+
+If right click open a GUI, try to capture from a distance or while sneaking.
+
+
+## Getting bigger##
+
+To go bigger you need a capture base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
 
 > ![capture-base-recipe.png](https://imgur.com/X7w0NVj.png)
 > 
@@ -39,6 +52,9 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 > ![capsule-diamond-recipe.png](https://imgur.com/hvNMJcm.png)
 >
 > "DiamondEmpty Capsule" recipe, default capture size : 5x5x5
+
+Obsidian (9x9x9) and Emerald (11x11x11) capsules also exists, check JEI !
+
 
 ### Empty Capsule
 
