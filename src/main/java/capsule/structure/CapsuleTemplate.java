@@ -79,12 +79,15 @@ public class CapsuleTemplate {
 
     private void addEntitiesToWorld(World worldIn, BlockPos pos, Mirror mirrorIn, Rotation rotationIn, @Nullable StructureBoundingBox aabb, List<Entity> spawnedEntities) {
         for (Template.EntityInfo template$entityinfo : this.entities) {
-            BlockPos blockpos = transformedBlockPos(template$entityinfo.blockPos, mirrorIn, rotationIn).add(pos).add(recenterRotation((size.getX() - 1) / 2, mirrorIn, rotationIn));
+            BlockPos recenterOffset = recenterRotation((size.getX() - 1) / 2, mirrorIn, rotationIn);
+            BlockPos blockpos = transformedBlockPos(template$entityinfo.blockPos, mirrorIn, rotationIn).add(pos).add(recenterOffset);
 
             if (aabb == null || aabb.isVecInside(blockpos)) {
                 NBTTagCompound nbttagcompound = template$entityinfo.entityData;
                 Vec3d vec3d = transformedVec3d(template$entityinfo.pos, mirrorIn, rotationIn);
-                Vec3d vec3d1 = vec3d.addVector((double) pos.getX(), (double) pos.getY(), (double) pos.getZ());
+                Vec3d vec3d1 = vec3d
+                        .addVector((double) pos.getX(), (double) pos.getY(), (double) pos.getZ())
+                        .addVector((double) recenterOffset.getX(), (double) recenterOffset.getY(), (double) recenterOffset.getZ());
                 NBTTagList nbttaglist = new NBTTagList();
                 nbttaglist.appendTag(new NBTTagDouble(vec3d1.x));
                 nbttaglist.appendTag(new NBTTagDouble(vec3d1.y));
