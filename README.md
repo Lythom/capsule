@@ -29,6 +29,7 @@ Full changelist and fixes :
 - Add rotation and mirror to standard capsule if their content support it (ie. basic block or whitelisted tile entity).
 - Add starter capsule mechanic and a default starter.
 - Add new loots ! Remove the `config/capsule/loot` folder to get the new ones !
+- Add Loot now can be charged (pre-filled) blueprints instead of one use capsules.
 - Add preconfigured blueprint recipes. Check JEI for blueprints ! Blocks used in the structure are given back.
 - Add Immersive engineering, Immersive Tech and Immersive Petroleum multiblocks as preconfigured blueprint (only when the mod is loaded).
 - Add a few vanilla based preconfigured blueprints.
@@ -44,6 +45,7 @@ Full changelist and fixes :
 - Improve JEI recipes and descriptions.
 - Update excludedBlocks for newly discovered incompatibilities. please remove the `excludedBlocks` and `opExcludedBlocks` entries in your `config/capsule.cfg` so that they regenerates.
 - Fix a bug where ":" in the label of a reward would mess the structure file location.
+- Fix entity rotation (ie. item frames or armor stands)
 
 **1.12.2-3.2.91 : Builder's daydream update**
 
