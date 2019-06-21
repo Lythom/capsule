@@ -243,7 +243,7 @@ public class CapsuleCommand extends CommandBase {
                         0xFFFFFF,
                         size,
                         false,
-                        WordUtils.capitalize(srcStructureName.replace("_", " ")),
+                        Capsule.labelFromPath(srcStructureName),
                         0
                 );
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
@@ -305,7 +305,7 @@ public class CapsuleCommand extends CommandBase {
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
                         size,
-                        WordUtils.capitalize(structureName.replace("_", " ")),
+                        Capsule.labelFromPath(structureName),
                         template.getAuthor());
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 giveCapsule(capsule, player);

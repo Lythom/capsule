@@ -62,19 +62,34 @@ public class CapsuleLootEntry extends LootEntry {
                 CapsuleTemplate template = templatePair.getRight();
                 String templatePath = templatePair.getLeft();
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
-                String[] path = templatePath.split("/");
-                if (path.length == 0)
-                    return;
 
-                ItemStack capsule = Capsule.newRewardCapsuleItemStack(
-                        templatePath,
-                        getRandomColor(),
-                        getRandomColor(),
-                        size,
-                        WordUtils.capitalize(path[path.length - 1]),
-                        template.getAuthor());
-                CapsuleItem.setCanRotate(capsule, template.canRotate());
-                stacks.add(capsule);
+                if (template.entities.isEmpty()) {
+                    // blueprint if there is no entities in the capsule
+                    ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
+                            templatePath,
+                            getRandomColor(),
+                            getRandomColor(),
+                            size,
+                            false,
+                            Capsule.labelFromPath(templatePath),
+                            0);
+                    CapsuleItem.setAuthor(capsule, template.getAuthor());
+                    CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
+                    CapsuleItem.setBlueprint(capsule);
+                    CapsuleItem.setCanRotate(capsule, template.canRotate());
+                    stacks.add(capsule);
+                } else {
+                    // one use if there are entities and a risk of dupe
+                    ItemStack capsule = Capsule.newRewardCapsuleItemStack(
+                            templatePath,
+                            getRandomColor(),
+                            getRandomColor(),
+                            size,
+                            Capsule.labelFromPath(templatePath),
+                            template.getAuthor());
+                    CapsuleItem.setCanRotate(capsule, template.canRotate());
+                    stacks.add(capsule);
+                }
             }
 
         }
