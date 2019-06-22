@@ -10,7 +10,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
-**1.12.2-3.2.99 : Modpacker's daydream update**
+**1.12.2-3.2.100 : Modpacker's daydream update**
 
 First an update notice: 
 - some incompatible mods have been identified and added to configuration, please remove the `excludedBlocks` and `opExcludedBlocks` entries in your `config/capsule.cfg` so that they regenerates. Sorry gregtech machines, superfactorymanager and refined storage, you can't go into capsules.
