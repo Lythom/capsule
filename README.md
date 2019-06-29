@@ -10,6 +10,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.2.101 : recipe fix**
+
+- [Community report] Fix "clear capsule" recipe that can make strange conversions. [Thanks to Ghoul-Generator](https://github.com/Lythom/capsule/issues/13).
+
+
 **1.12.2-3.2.100 : Modpacker's daydream update**
 
 First an update notice: 
