@@ -65,6 +65,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
         }
 
         public boolean canBeEmptyCapsule(ItemStack itemstack) {
+            if (!(itemstack.getItem() instanceof CapsuleItem)) return false;
             return CapsuleItem.isLinkedStateCapsule(itemstack) || (itemstack.getItemDamage() == CapsuleItem.STATE_DEPLOYED && !CapsuleItem.isBlueprint(itemstack));
         }
 
