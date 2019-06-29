@@ -63,7 +63,6 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
          * Returns an Item that is the result of this recipe
          */
         public ItemStack getCraftingResult(InventoryCrafting craftingGrid) {
-
             ItemStack input = ItemStack.EMPTY;
             int material = 0;
             for (int i = 0; i < craftingGrid.getHeight(); ++i) {

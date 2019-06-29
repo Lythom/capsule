@@ -59,7 +59,6 @@ public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
          * Returns a copy built from the original capsule.
          */
         public ItemStack getCraftingResult(InventoryCrafting invC) {
-            ItemStack configuredOutput = recipe.getRecipeOutput();
             for (int i = 0; i < invC.getHeight(); ++i) {
                 for (int j = 0; j < invC.getWidth(); ++j) {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);
