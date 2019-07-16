@@ -10,6 +10,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.2.102 : loot reward **
+
+- [Community suggestion] Add configuration to force one-use capsules over precharged blueprint as dungeon chests loots. [Thanks to TheQKnight](https://www.curseforge.com/minecraft/mc-mods/capsule#c158).
+
+
 **1.12.2-3.2.101 : recipe fix**
 
 - [Community report] Fix "clear capsule" recipe that can make strange conversions. [Thanks to Ghoul-Generator](https://github.com/Lythom/capsule/issues/13).
@@ -237,5 +242,4 @@ Blocks :
 
 ## Planned ##
 
-* Blueprint capsules that can be loaded with material and then spawn several times the same pattern
 * Capsule shirts, Capsules banner logo (idea of AlexisMachina)
