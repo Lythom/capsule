@@ -36,6 +36,7 @@ public class Config {
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
     public static HashMap<String, JsonObject> blueprintWhitelist;
+    public static boolean allowBlueprintReward;
 
     public static String enchantRarity;
     public static String recallEnchantType;
@@ -173,6 +174,10 @@ public class Config {
         Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
         rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].");
         Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
+
+        Property allowBlueprintRewardProp = Config.config.get("loots", "allowBlueprintReward", true);
+        allowBlueprintRewardProp.setComment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true");
+        Config.allowBlueprintReward = allowBlueprintRewardProp.getBoolean();
 
         // init paths properties from config
         for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
