@@ -3,6 +3,7 @@ package capsule.helpers;
 import capsule.loot.LootPathData;
 import com.google.gson.*;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -80,6 +81,7 @@ public class Files {
     }
 
     public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath) {
+        if (StringUtils.isNullOrEmpty(starterTemplatesPath)) return new ArrayList<>();
         File startersFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), starterTemplatesPath);
 
         if (!startersFolder.exists()) {
@@ -180,7 +182,7 @@ public class Files {
                     File file = path.toFile();
                     if (file.isFile() && (file.getName().endsWith(".nbt") || file.getName().endsWith(".schematic"))) {
                         Path relative = templateFolder.toPath().relativize(path);
-                        onTemplateFound.accept(relative.toString().replaceAll("\\\\","/").replaceAll(".nbt", "").replaceAll(".schematic", ""));
+                        onTemplateFound.accept(relative.toString().replaceAll("\\\\", "/").replaceAll(".nbt", "").replaceAll(".schematic", ""));
                     }
                 }
             } catch (IOException e) {

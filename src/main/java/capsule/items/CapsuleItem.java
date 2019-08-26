@@ -11,7 +11,6 @@ import capsule.helpers.Spacial;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
-import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
@@ -166,7 +165,7 @@ public class CapsuleItem extends Item {
         if (!hasStructureLink(stack) && stack.getItemDamage() != STATE_LINKED) {
             return I18n.translateToLocal("item.capsule.content_empty");
         } else if (stack.hasTagCompound() && stack.getTagCompound().hasKey("label") && !"".equals(stack.getTagCompound().getString("label"))) {
-            return "“" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "”";
+            return "«" + TextFormatting.ITALIC + stack.getTagCompound().getString("label") + TextFormatting.RESET + "»";
         }
         return I18n.translateToLocal("item.capsule.content_unlabeled");
     }
