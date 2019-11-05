@@ -97,7 +97,7 @@ By default tile entities are not supported by blueprints. Still, it is possible 
 },
 ```
 In this example, the conveyor block will be allowed in blueprints,
-- the NBT properties of the tile entity listed under `keepNBT` will be reserved in the blueprints,
+- the NBT properties of the tile entity listed under `keepNBT` will be preserved in the blueprints,
 - all unlisted properties will be removed. Typically, only configuration should be kept, "items" or inventory properties if kept would lead to dupe issues.
 
 `keepNBT` is a key/value object where almost every property value is `null` except `"conveyorBeltSubtype": "conveyorType"`, it means than the item required to charge this blueprint MUST have the `conveyorType` nbt data in the item, and the value of the item `conveyorType` must match the value of the block nbt `conveyorBeltSubtype` to be a valid material. `null` value means the material item don't requires a specific NBT to be a valid material. In this example it forces the type of conveyor belt in the inventory to match the type of conveyor belt built in the blueprint, not any conveyor belt could be used as item input.
