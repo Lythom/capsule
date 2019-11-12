@@ -33,7 +33,15 @@ public class StarterLoot {
                 for (String templatePath : Config.starterTemplatesList) {
                     ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
                     int stackIdx = player.inventory.getFirstEmptyStack();
-                    player.inventory.setInventorySlotContents(stackIdx, starterCapsule);
+                    if (stackIdx < 0 || stackIdx >= player.inventory.getSizeInventory()) {
+                        Capsule.throwCapsule(starterCapsule, player, player.getPosition());
+                    } else {
+                        try {
+                            player.inventory.setInventorySlotContents(stackIdx, starterCapsule);
+                        } catch (Exception e) {
+                            Capsule.throwCapsule(starterCapsule, player, player.getPosition());
+                        }
+                    }
                 }
 
                 data.setBoolean("capsule:receivedStarter", true);
