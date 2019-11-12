@@ -10,6 +10,12 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.3.5 : Disable starters config**
+- [Submissions] Add some player submissions as default loots! [Thanks Kam](https://github.com/Lythom/capsule/issues/18) for new loots, [Thanks Grade](https://github.com/Lythom/capsule/issues/16) for new starters, Thanks heaven_k for new loot.
+- [Community suggestion] Add randomized starters. Default configuration is now to give a random starter instead of all starters in the folder. A new config entry as been added: starterMode which can take values "all", "random" or "none". Starters remains disabled if "starterTemplatesPath" configuration is empty. [Thanks to happybandit360](https://github.com/Lythom/capsule/issues/19)
+- [Community report] Fix server crash when starter fail to be delivered to the player. [Thanks to LennartCockx](https://github.com/Lythom/capsule/issues/20)
+- Fix blueprint undeploy sometimes not not matching properly when nbt is empty
+
 **1.12.2-3.2.103 : Disable starters config**
 - [Community report] Emptying "starterTemplatesPath" config value now disables starters. [Thanks to Boolyman](https://github.com/Lythom/capsule/issues/14) and [Thanks to TheQKnight](https://www.curseforge.com/minecraft/mc-mods/capsule?comment=157).
 

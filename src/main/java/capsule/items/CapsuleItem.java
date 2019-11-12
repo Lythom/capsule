@@ -710,6 +710,8 @@ public class CapsuleItem extends Item {
     }
 
     public static void setOccupiedSourcePos(ItemStack capsule, Map<BlockPos, Block> occupiedSpawnPositions) {
+        // TODO: refuse the deploy if too many blocks, because it cause the nbt to overflow the network limit
+        // see https://projects.samuel-bouchet.fr/T109
         NBTTagList entries = new NBTTagList();
         if (occupiedSpawnPositions != null) {
             for (Entry<BlockPos, Block> entry : occupiedSpawnPositions.entrySet()) {
