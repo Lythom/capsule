@@ -156,7 +156,7 @@ public class StructureSaver {
         return b.blockState.getBlock().getUnlocalizedName()
                 + "@"
                 + b.blockState.getBlock().damageDropped(b.blockState)
-                + (b.tileentityData == null ? "" : filterIdentityNBT(b));
+                + (b.tileentityData == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
     }
 
     public static NBTTagCompound filterIdentityNBT(Template.BlockInfo b) {
@@ -164,6 +164,11 @@ public class StructureSaver {
         List<String> converted = Config.getBlueprintIdentityNBT(b.blockState.getBlock());
         nbt.getKeySet().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
+    }
+
+    public static String nbtStringNotEmpty(NBTTagCompound nbt) {
+        if (nbt.hasNoTags()) return "";
+        return nbt.toString();
     }
 
     public static boolean isFlowingLiquid(Template.BlockInfo b) {
