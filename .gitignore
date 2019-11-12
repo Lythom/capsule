@@ -11,6 +11,7 @@
 /eclipse
 /.classpath
 /build
+/classes
 /run
 /run/config/splash.properties
 /out
