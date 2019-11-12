@@ -10,7 +10,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
-**1.12.2-3.2.102 : loot reward **
+**1.12.2-3.2.103 : Disable starters config**
+- [Community report] Emptying "starterTemplatesPath" config value now disables starters. [Thanks to Boolyman](https://github.com/Lythom/capsule/issues/14) and [Thanks to TheQKnight](https://www.curseforge.com/minecraft/mc-mods/capsule?comment=157).
+
+
+**1.12.2-3.2.102 : loot reward**
 
 - [Community suggestion] Add configuration to force one-use capsules over precharged blueprint as dungeon chests loots. [Thanks to TheQKnight](https://www.curseforge.com/minecraft/mc-mods/capsule#c158).
 

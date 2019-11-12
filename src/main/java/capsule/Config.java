@@ -164,7 +164,7 @@ public class Config {
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
 
         Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath", "config/capsule/starters");
-        starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
+        starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
         Config.starterTemplatesPath = starterTemplatesPathProp.getString();
 
         Property prefabsTemplatesPathProp = Config.config.get("loots", "prefabsTemplatesPath", "config/capsule/prefabs");
