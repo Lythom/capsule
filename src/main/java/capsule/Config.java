@@ -37,6 +37,7 @@ public class Config {
     public static int upgradeLimit;
     public static HashMap<String, JsonObject> blueprintWhitelist;
     public static boolean allowBlueprintReward;
+    public static String starterMode;
 
     public static String enchantRarity;
     public static String recallEnchantType;
@@ -162,6 +163,10 @@ public class Config {
         });
         lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save structure have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
         Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
+
+        Property starterModeProp = Config.config.get("loots", "starterMode", "random");
+        starterModeProp.setComment("Players can be given one or several starter structures on their first arrival.\nThose structures nbt files can be placed in the folder defined at starterTemplatesPath below.\nPossible values : \"all\", \"random\", or \"none\".\nDefault value: \"random\"");
+        Config.starterMode = starterModeProp.getString();
 
         Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath", "config/capsule/starters");
         starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
