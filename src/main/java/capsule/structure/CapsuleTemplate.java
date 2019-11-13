@@ -1,5 +1,6 @@
 package capsule.structure;
 
+import capsule.Config;
 import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -584,7 +585,7 @@ public class CapsuleTemplate {
     public boolean canRotate() {
         try {
             for (Template.BlockInfo block : blocks) {
-                if (block.tileentityData != null && !block.blockState.getBlock().getRegistryName().getResourceDomain().equalsIgnoreCase("minecraft")) {
+                if (block.tileentityData != null && !Config.blueprintWhitelist.keySet().contains(block.blockState.getBlock().getRegistryName().toString())) {
                     return false;
                 }
             }

@@ -10,7 +10,14 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.12.2-3.3.7 : Fix deployment can create network overflow**
+
+-  [Community report] Fix: deploying was flooding item nbt with occupiedPositions informations if a big capsule was deployed in dense non-air environment (ie. under water). This fix saves occupiedPositions in the template files instead of nbt data to prevent any network transmission of this data. [Thanks to Kazahm on Discord](https://discord.gg/pgfCwW9).
+-  [Community report] Allow whitelisted tile entities to be rotated in standard capsules. It uses the blueprint whitelist: `config/capsule/blueprint_whitelist.json`. See docmentation at https://github.com/Lythom/capsule/wiki/Modpack-making#whitelist). [Thanks to MFWalter on Discord](https://discord.gg/pgfCwW9).
+
+
 **1.12.2-3.3.5 : Disable starters config**
+
 - [Submissions] Add some player submissions as default loots! [Thanks Kam](https://github.com/Lythom/capsule/issues/18) for new loots, [Thanks Grade](https://github.com/Lythom/capsule/issues/16) for new starters, Thanks heaven_k for new loot.
 - [Community suggestion] Add randomized starters. Default configuration is now to give a random starter instead of all starters in the folder. A new config entry as been added: starterMode which can take values "all", "random" or "none". Starters remains disabled if "starterTemplatesPath" configuration is empty. [Thanks to happybandit360](https://github.com/Lythom/capsule/issues/19)
 - [Community report] Fix server crash when starter fail to be delivered to the player. [Thanks to LennartCockx](https://github.com/Lythom/capsule/issues/20)
