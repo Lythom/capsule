@@ -87,7 +87,7 @@ public class Capsule {
 
         // do the transportation
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getName(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
@@ -138,15 +138,11 @@ public class Capsule {
         String structureName = capsule.getTagCompound().getString("structureName");
 
         // do the transportation
-        Map<BlockPos, Block> occupiedSpawnPositions = new HashMap<>();
         List<String> outEntityBlocking = new ArrayList<>();
 
-        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, occupiedSpawnPositions, outEntityBlocking, CapsuleItem.getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, outEntityBlocking, CapsuleItem.getPlacement(capsule));
 
         if (result) {
-
-            CapsuleItem.setOccupiedSourcePos(capsule, occupiedSpawnPositions);
-
             // register the link in the capsule
             if (!CapsuleItem.isReward(capsule)) {
                 CapsuleItem.saveSpawnPosition(capsule, dest, world.provider.getDimension());

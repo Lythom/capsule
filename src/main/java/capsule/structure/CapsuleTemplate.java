@@ -36,7 +36,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * Exact copy of mc original net.minecraft.world.gen.structure.template.Template class, but having fields public to allow external manipulation
+ * Copy of mc original net.minecraft.world.gen.structure.template.Template class, but having fields public to allow external manipulation.
+ * Also include some specificities to capsules
  *
  * @author Lythom
  */
@@ -45,6 +46,8 @@ public class CapsuleTemplate {
 
     public final List<Template.BlockInfo> blocks = Lists.<Template.BlockInfo>newArrayList();
     public final List<Template.EntityInfo> entities = Lists.<Template.EntityInfo>newArrayList();
+    public Map<BlockPos, Block> occupiedPositions = null;
+
     /**
      * size of the structure
      */
@@ -214,6 +217,18 @@ public class CapsuleTemplate {
         nbt.setTag("size", this.writeInts(this.size.getX(), this.size.getY(), this.size.getZ()));
         nbt.setString("author", this.author);
         nbt.setInteger("DataVersion", 1343);
+
+        // CAPSULE save already occupied positions when deployed
+        NBTTagList occupiedSpawnPositionstaglist = new NBTTagList();
+        if (this.occupiedPositions != null) {
+            for (Map.Entry<BlockPos, Block> entry : occupiedPositions.entrySet()) {
+                NBTTagCompound nbtEntry = new NBTTagCompound();
+                nbtEntry.setLong("pos", entry.getKey().toLong());
+                nbtEntry.setInteger("blockId", Block.getIdFromBlock(entry.getValue()));
+                occupiedSpawnPositionstaglist.appendTag(nbtEntry);
+            }
+            nbt.setTag("capsule_occupiedSources", occupiedSpawnPositionstaglist);
+        }
         return nbt;
     }
 
@@ -263,6 +278,17 @@ public class CapsuleTemplate {
                 NBTTagCompound nbttagcompound2 = nbttagcompound3.getCompoundTag("nbt");
                 this.entities.add(new Template.EntityInfo(vec3d, blockpos1, nbttagcompound2));
             }
+        }
+
+        // CAPSULE read already occupied positions when deployed
+        if (compound.hasKey("capsule_occupiedSources")) {
+            Map<BlockPos, Block> occupiedSources = new HashMap<>();
+            NBTTagList list = compound.getTagList("capsule_occupiedSources", 10);
+            for (int i = 0; i < list.tagCount(); i++) {
+                NBTTagCompound entry = list.getCompoundTagAt(i);
+                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getBlockById(entry.getInteger("blockId")));
+            }
+            this.occupiedPositions = occupiedSources;
         }
     }
 
@@ -324,11 +350,19 @@ public class CapsuleTemplate {
 
     // CAPSULE additions
 
+    public void removeOccupiedPositions() {
+        this.occupiedPositions = null;
+    }
+
+    public void saveOccupiedPositions(Map<BlockPos, Block> occupiedPositions) {
+        this.occupiedPositions = occupiedPositions;
+    }
+
     /**
      * takes blocks from the world and puts the data them into this template
      */
     public List<BlockPos> snapshotBlocksFromWorld(World worldIn, BlockPos startPos, BlockPos endPos,
-                                                  Map<BlockPos, Block> sourceIgnorePos, List<Block> excluded, List<Entity> outCapturedEntities) {
+                                                  Map<BlockPos, Block> occupiedPositionsToIgnore, List<Block> excluded, List<Entity> outCapturedEntities) {
 
         List<BlockPos> transferedBlocks = new ArrayList<>();
 
@@ -348,14 +382,10 @@ public class CapsuleTemplate {
                 IBlockState iblockstate = worldIn.getBlockState(blockpos$mutableblockpos);
                 Block iblock = iblockstate.getBlock();
 
-                if (!excluded.contains(iblock) // excluded blocks are not
-                        // captured at all
-                        && (sourceIgnorePos == null // exclude sourceBlock that
-                        // were already presents.
-                        // Capture if it was
-                        // changed.
-                        || !(sourceIgnorePos.keySet().contains(blockpos$mutableblockpos)
-                        && sourceIgnorePos.get(blockpos$mutableblockpos).equals(iblock)))) {
+                if (!excluded.contains(iblock) // excluded blocks are not captured at all
+                        && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
+                        || !(occupiedPositionsToIgnore.keySet().contains(blockpos$mutableblockpos)
+                        && occupiedPositionsToIgnore.get(blockpos$mutableblockpos).equals(iblock)))) {
                     TileEntity tileentity = worldIn.getTileEntity(blockpos$mutableblockpos);
 
                     if (tileentity != null) {
@@ -369,9 +399,8 @@ public class CapsuleTemplate {
                     } else {
                         list.add(new Template.BlockInfo(blockpos3, iblockstate, null));
                     }
-                    transferedBlocks.add(new BlockPos(blockpos$mutableblockpos.getX(), blockpos$mutableblockpos.getY(), blockpos$mutableblockpos.getZ())); // save
-                    // a
-                    // copy
+                    // save a copy
+                    transferedBlocks.add(new BlockPos(blockpos$mutableblockpos.getX(), blockpos$mutableblockpos.getY(), blockpos$mutableblockpos.getZ()));
                 }
             }
 

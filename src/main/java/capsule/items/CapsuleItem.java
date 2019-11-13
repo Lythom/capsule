@@ -49,7 +49,6 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 @SuppressWarnings({"deprecation", "ConstantConditions"})
 public class CapsuleItem extends Item {
@@ -91,7 +90,6 @@ public class CapsuleItem extends Item {
      * string prevStructureName                                   // Used to remove older unused blueprint templates
      * tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
      * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
-     * tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
      * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
      * int upgraded                                               // How many upgrades the capsule has
      * tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
@@ -451,10 +449,6 @@ public class CapsuleItem extends Item {
         }
     }
 
-    public void tooltipAddMultiline(List<String> tooltip, String key) {
-        tooltipAddMultiline(tooltip, key, null);
-    }
-
     public void tooltipAddMultiline(List<String> tooltip, String key, TextFormatting formatting) {
         for (String s : I18n.translateToLocal(key).trim().split("\\\\n")) {
             tooltip.add(formatting == null ? s : formatting + s);
@@ -698,8 +692,9 @@ public class CapsuleItem extends Item {
     }
 
     public static Map<BlockPos, Block> getOccupiedSourcePos(ItemStack capsule) {
-        Map<BlockPos, Block> occupiedSources = new HashMap<>();
+        Map<BlockPos, Block> occupiedSources = null;
         if (capsule.hasTagCompound() && capsule.getTagCompound().hasKey("occupiedSpawnPositions")) {
+            occupiedSources = new HashMap<>();
             NBTTagList list = capsule.getTagCompound().getTagList("occupiedSpawnPositions", 10);
             for (int i = 0; i < list.tagCount(); i++) {
                 NBTTagCompound entry = list.getCompoundTagAt(i);
@@ -707,24 +702,6 @@ public class CapsuleItem extends Item {
             }
         }
         return occupiedSources;
-    }
-
-    public static void setOccupiedSourcePos(ItemStack capsule, Map<BlockPos, Block> occupiedSpawnPositions) {
-        // TODO: refuse the deploy if too many blocks, because it cause the nbt to overflow the network limit
-        // see https://projects.samuel-bouchet.fr/T109
-        NBTTagList entries = new NBTTagList();
-        if (occupiedSpawnPositions != null) {
-            for (Entry<BlockPos, Block> entry : occupiedSpawnPositions.entrySet()) {
-                NBTTagCompound nbtEntry = new NBTTagCompound();
-                nbtEntry.setLong("pos", entry.getKey().toLong());
-                nbtEntry.setInteger("blockId", Block.getIdFromBlock(entry.getValue()));
-                entries.appendTag(nbtEntry);
-            }
-        }
-        if (!capsule.hasTagCompound()) {
-            capsule.setTagCompound(new NBTTagCompound());
-        }
-        capsule.getTagCompound().setTag("occupiedSpawnPositions", entries);
     }
 
     public static void cleanDeploymentTags(ItemStack capsule) {

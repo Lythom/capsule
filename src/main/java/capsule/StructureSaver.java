@@ -60,7 +60,7 @@ public class StructureSaver {
     }
 
     public static CapsuleTemplate undeploy(WorldServer worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
-                                           Map<BlockPos, Block> excludedPositions) {
+                                           Map<BlockPos, Block> legacyItemOccupied) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         if (minecraftserver == null) {
@@ -75,8 +75,11 @@ public class StructureSaver {
             return null;
         }
         CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
-        List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
+        Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
+        if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
+        List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, outCapturedEntities);
+        template.removeOccupiedPositions();
         EntityPlayer player = null;
         if (playerID != null) {
             template.setAuthor(playerID);
@@ -92,30 +95,31 @@ public class StructureSaver {
             // check if some remove failed, exclude those blocks from the template.
             if (couldNotBeRemoved != null) {
                 template.removeBlocks(couldNotBeRemoved, startPos);
-                templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
             }
+            templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+
         } else {
-            LOGGER.error("Couldn't write template " + capsuleStructureId);
-            if (player != null) {
-                player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
-            }
+            printWriteTemplateError(player, capsuleStructureId);
         }
 
         return template;
 
     }
 
-    public static boolean undeployBlueprint(WorldServer worldserver, String playerID, ItemStack blueprint, BlockPos startPos, int size, List<Block> excluded,
-                                            Map<BlockPos, Block> excludedPositions) {
+    public static boolean undeployBlueprint(WorldServer worldserver, String playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
 
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
         if (minecraftserver == null) return false;
 
-        CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
+        Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
+        CapsuleTemplate blueprintTemplate = blueprint.getRight();
         if (blueprintTemplate == null) return false;
 
         CapsuleTemplate tempTemplate = new CapsuleTemplate();
-        List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), excludedPositions,
+        Map<BlockPos, Block> occupiedPositions = blueprintTemplate.occupiedPositions;
+        Map<BlockPos, Block> legacyItemOccupied = CapsuleItem.getOccupiedSourcePos(blueprintItemStack);
+        if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
+        List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, null);
         List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
         List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
@@ -142,10 +146,17 @@ public class StructureSaver {
         blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.tileentityData == null || !b.tileentityData.hasKey("Items") || b.tileentityData.getTagList("Items", Constants.NBT.TAG_COMPOUND).hasNoTags());
 
         if (blueprintMatch) {
-            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
-            // check if some remove failed, it should never happen but keep it in case to prevent exploits
-            if (couldNotBeRemoved != null) {
-                return false;
+            blueprintTemplate.removeOccupiedPositions();
+            String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
+            boolean written = blueprint.getLeft().writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+            if (written) {
+                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
+                // check if some remove failed, it should never happen but keep it in case to prevent exploits
+                if (couldNotBeRemoved != null) {
+                    return false;
+                }
+            } else {
+                printWriteTemplateError(player, capsuleStructureId);
             }
         }
 
@@ -219,10 +230,7 @@ public class StructureSaver {
                     couldNotBeRemoved.add(pos);
                 }
             } catch (Exception e) {
-                LOGGER.error("Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.", e);
-                if (player != null) {
-                    player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
-                }
+                printDeployError(player, e, "Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.");
                 try {
                     world.setBlockState(pos, b);
                 } catch (Exception ignored) {
@@ -241,85 +249,108 @@ public class StructureSaver {
 
 
     public static boolean deploy(ItemStack capsule, WorldServer playerWorld, String thrower, BlockPos
-            dest, List<Block> overridableBlocks,
-                                 Map<BlockPos, Block> outOccupiedSpawnPositions, List<String> outEntityBlocking, PlacementSettings
-                                         placementsettings) {
-
+            dest, List<Block> overridableBlocks, List<String> outEntityBlocking, PlacementSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
+
+        if (template == null) return false;
 
         EntityPlayer player = null;
         if (thrower != null) {
             player = playerWorld.getPlayerEntityByName(thrower);
         }
 
-        if (template != null) {
-            int size = CapsuleItem.getSize(capsule);
-            // check if the destination is valid : no unoverwritable block and no entities in the way.
-            boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
-
-            if (destValid) {
-                List<BlockPos> spawnedBlocks = new ArrayList<>();
-                List<Entity> spawnedEntities = new ArrayList<>();
-                try {
-                    // check if the player can place a block
-                    if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
-                        player.sendMessage(new TextComponentTranslation("capsule.error.notAllowed"));
-                        return false;
-                    }
-
-                    template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
-
-                    // Players don't block deployment, instead they are pushed up if they would suffocate
-                    List<EntityLivingBase> players = playerWorld.getEntitiesWithinAABB(
-                            EntityLivingBase.class,
-                            new AxisAlignedBB(dest.getX(), dest.getY(), dest.getZ(), dest.getX() + size, dest.getY() + size, dest.getZ() + size),
-                            entity -> (entity instanceof EntityPlayer)
-                    );
-                    for (EntityLivingBase p : players) {
-                        for (int y = 0; y < size; y++) {
-                            if (playerWorld.collidesWithAnyBlock(p.getEntityBoundingBox())) {
-                                p.setPositionAndUpdate(p.posX, p.posY + 1, p.posZ);
-                            }
-                        }
-                    }
-
-                    return true;
-                } catch (Exception err) {
-                    LOGGER.error("Couldn't deploy the capsule", err);
-                    if (player != null) {
-                        player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
-                    }
-
-                    // rollback
-                    removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
-                    for (Entity e : spawnedEntities) {
-                        e.setDropItemsWhenDead(false);
-                        e.setDead();
-                    }
-                }
-            } else {
-                // send a chat message to explain failure
-                if (player != null) {
-                    if (outEntityBlocking.size() > 0) {
-                        player.sendMessage(
-                                new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
-                                        StringUtils.join(outEntityBlocking, ", ")));
-                    } else {
-                        player.sendMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
-                    }
-                }
-            }
-        } else {
-            // send a chat message to explain failure
-            if (player != null) {
-                player.sendMessage(new TextComponentTranslation("capsule.error.capsuleContentNotFound", CapsuleItem.getStructureName(capsule)));
-            }
+        Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
+        int size = CapsuleItem.getSize(capsule);
+        // check if the destination is valid : no unoverwritable block and no entities in the way.
+        boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
+        if (!destValid) {
+            printDeployFailure(outEntityBlocking, player);
+            return false;
         }
 
+        // check if the player can place a block
+        if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
+            player.sendMessage(new TextComponentTranslation("capsule.error.notAllowed"));
+            return false;
+        }
 
-        return false;
+        final Map<BlockPos, Block> occupiedPositions = outOccupiedSpawnPositions;
+        List<BlockPos> spawnedBlocks = new ArrayList<>();
+        List<Entity> spawnedEntities = new ArrayList<>();
+
+        CapsuleTemplateManager templateManager = templatepair.getLeft();
+        String capsuleStructureId = CapsuleItem.getStructureName(capsule);
+        template.saveOccupiedPositions(occupiedPositions);
+        if (!templateManager.writeTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleStructureId))) {
+            printWriteTemplateError(player, capsuleStructureId);
+            return false;
+        }
+
+        try {
+            template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+            placePlayerOnTop(playerWorld, dest, size);
+
+            return true;
+        } catch (Exception err) {
+            printDeployError(player, err, "Couldn't deploy the capsule");
+
+            // rollback
+            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
+            template.removeOccupiedPositions();
+            if (!templateManager.writeTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleStructureId))) {
+                printWriteTemplateError(player, capsuleStructureId);
+            }
+            for (Entity e : spawnedEntities) {
+                e.setDropItemsWhenDead(false);
+                e.setDead();
+            }
+            return false;
+        }
+    }
+
+    public static void placePlayerOnTop(WorldServer playerWorld, BlockPos dest, int size) {
+        // Players don't block deployment, instead they are pushed up if they would suffocate
+        List<EntityLivingBase> players = playerWorld.getEntitiesWithinAABB(
+                EntityLivingBase.class,
+                new AxisAlignedBB(dest.getX(), dest.getY(), dest.getZ(), dest.getX() + size, dest.getY() + size, dest.getZ() + size),
+                entity -> (entity instanceof EntityPlayer)
+        );
+        for (EntityLivingBase p : players) {
+            for (int y = 0; y < size; y++) {
+                if (playerWorld.collidesWithAnyBlock(p.getEntityBoundingBox())) {
+                    p.setPositionAndUpdate(p.posX, p.posY + 1, p.posZ);
+                }
+            }
+        }
+    }
+
+    public static void printDeployFailure(List<String> outEntityBlocking, EntityPlayer player) {
+        // send a chat message to explain failure
+        if (player != null) {
+            if (outEntityBlocking.size() > 0) {
+                player.sendMessage(
+                        new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+                                StringUtils.join(outEntityBlocking, ", ")));
+            } else {
+                player.sendMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+            }
+        }
+    }
+
+    public static void printDeployError(EntityPlayer player, Exception err, String s) {
+        LOGGER.error(s, err);
+        if (player != null) {
+            player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+        }
+    }
+
+    public static void printWriteTemplateError(EntityPlayer player, String capsuleStructureId) {
+        LOGGER.error("Couldn't write template " + capsuleStructureId);
+        if (player != null) {
+            player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+        }
     }
 
     /**
@@ -515,6 +546,8 @@ public class StructureSaver {
         CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
         // populate template from source data
         destTemplate.read(templateData);
+        // empty occupied position, it makes no sense for a new template to copy those situational data
+        destTemplate.occupiedPositions = null;
         // remove all tile entities
         if (onlyWhitelisted) {
             List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream()
