@@ -1,5 +1,7 @@
 # Capsule mod by Lythom #
 
+[![CircleCI](https://circleci.com/gh/Lythom/capsule.svg?style=svg)](https://circleci.com/gh/Lythom/capsule)
+
 Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
 
 ## Mod page and downloads ##
