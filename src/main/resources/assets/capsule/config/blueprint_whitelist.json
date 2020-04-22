@@ -236,5 +236,13 @@
       "orientation": null,
       "rotation": null
     }
-  }
+  },
+  "betterboiler:controller",
+  "betterboiler:boiler",
+  "betterboiler:firebox",
+  "betterboiler:firebox_hatch",
+  "betterboiler:boiler_valve",
+  "betterboiler:boiler_vent",
+  "betterboiler:boiler_pump",
+  "betterboiler:boiler_pump"
 ]

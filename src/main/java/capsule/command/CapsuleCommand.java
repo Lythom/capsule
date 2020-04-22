@@ -61,6 +61,7 @@ public class CapsuleCommand extends CommandBase {
             "fromStructure",
             "giveRandomLoot",
             "reloadLootList",
+            "reloadWhitelist",
             "setAuthor",
             "setBaseColor",
             "setMaterialColor"
@@ -77,6 +78,7 @@ public class CapsuleCommand extends CommandBase {
             "fromStructure <structureName> [playerName]",
             "giveRandomLoot [playerName]",
             "reloadLootList",
+            "reloadWhitelist",
             "setAuthor <authorName>",
             "setBaseColor <color>",
             "setMaterialColor <color>"
@@ -191,6 +193,13 @@ public class CapsuleCommand extends CommandBase {
                 throw new WrongUsageException(getUsage(sender));
             }
             Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
+        } else if ("reloadWhitelist".equalsIgnoreCase(args[0])) {
+            if (args.length != 1) {
+                throw new WrongUsageException(getUsage(sender));
+            }
+            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
+            Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
+            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
         } else {
             throw new WrongUsageException(getUsage(sender));
         }
