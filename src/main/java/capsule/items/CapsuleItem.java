@@ -680,9 +680,9 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCreated(ItemStack capsule, World worldIn, EntityPlayer playerIn) {
-        if (capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
+        if (!worldIn.isRemote && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
-            if (srcStructurePath != null && !worldIn.isRemote && !srcStructurePath.startsWith(StructureSaver.BLUEPRINT_PREFIX)) {
+            if (srcStructurePath != null) {
                 String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (WorldServer) worldIn, playerIn);
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
