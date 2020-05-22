@@ -37,6 +37,7 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -684,6 +685,22 @@ public class CapsuleItem extends Item {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
             if (srcStructurePath != null) {
                 String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (WorldServer) worldIn, playerIn);
+                // anyway we write the structure name
+                // we dont want to have the same link as the original capsule
+                CapsuleItem.setStructureName(capsule, templateName);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    @SideOnly(Side.SERVER)
+    public void OnCraftBlueprint(PlayerEvent.ItemCraftedEvent e)
+    {
+        ItemStack capsule = e.crafting;
+        if (capsule != null && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
+            String srcStructurePath = CapsuleItem.getStructureName(capsule);
+            if (srcStructurePath != null) {
+                String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (WorldServer) e.player.world, e.player);
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
                 CapsuleItem.setStructureName(capsule, templateName);
