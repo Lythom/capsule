@@ -6,6 +6,7 @@
     + [Rewards](#rewards)
     + [Loots](#loots)
     + [Blueprints](#blueprints)
+        - [Whitelist](#whitelist)
   * [How to](#how-to)
     + [Create an Empty Capsule](#create-an-empty-capsule)
     + [Create a Reward Capsule](#create-a-reward-capsule)
