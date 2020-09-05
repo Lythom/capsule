@@ -1,6 +1,6 @@
 package capsule.blocks;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
@@ -24,7 +24,7 @@ public class TileEntityCapture extends TileEntity {
 
     @Override
     public void onChunkUnload() {
-        this.getTileData().setInteger("size", 0);
+        this.getTileData().putInt("size", 0);
     }
 
     /**
@@ -32,7 +32,7 @@ public class TileEntityCapture extends TileEntity {
      *
      * @return the maximum distance squared at which the TESR should render
      */
-    @SideOnly(Side.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     @Override
     public double getMaxRenderDistanceSquared() {
         final int MAXIMUM_DISTANCE_IN_BLOCKS = 32;
@@ -43,7 +43,7 @@ public class TileEntityCapture extends TileEntity {
     //  it uses getUpdatePacket() and onDataPacket() to do this
     @Override
     public SPacketUpdateTileEntity getUpdatePacket() {
-        NBTTagCompound nbtTagCompound = new NBTTagCompound();
+        CompoundNBT nbtTagCompound = new CompoundNBT();
         writeToNBT(nbtTagCompound);
         int metadata = getBlockMetadata();
         return new SPacketUpdateTileEntity(this.pos, metadata, nbtTagCompound);
@@ -57,7 +57,7 @@ public class TileEntityCapture extends TileEntity {
     /**
      * @return an appropriately size AABB for the TileEntity
      */
-    @SideOnly(Side.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     @Override
     public AxisAlignedBB getRenderBoundingBox() {
         return this.getBoundingBox();
@@ -65,16 +65,16 @@ public class TileEntityCapture extends TileEntity {
 
     public int getSize() {
         int size = 0;
-        if (this.getTileData().hasKey("size")) {
-            size = this.getTileData().getInteger("size");
+        if (this.getTileData().contains("size")) {
+            size = this.getTileData().getInt("size");
         }
         return size;
     }
 
     public int getColor() {
         int color = 0;
-        if (this.getTileData().hasKey("color")) {
-            color = this.getTileData().getInteger("color");
+        if (this.getTileData().contains("color")) {
+            color = this.getTileData().getInt("color");
         }
         return color;
     }

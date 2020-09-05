@@ -2,8 +2,8 @@ package capsule.helpers;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.*;
@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
 
-    public static BlockPos findBottomBlock(EntityItem entityItem) {
-        return findBottomBlock(entityItem.posX, entityItem.posY, entityItem.posZ);
+    public static BlockPos findBottomBlock(ItemEntity ItemEntity) {
+        return findBottomBlock(ItemEntity.posX, ItemEntity.posY, ItemEntity.posZ);
     }
 
     public static BlockPos findBottomBlock(double x, double y, double z) {
@@ -45,30 +45,31 @@ public class Spacial {
         return !entity.isOffsetPositionInLiquid(0, 1.5, 0);
     }
 
-    public static RayTraceResult clientRayTracePreview(EntityPlayer thePlayer, float partialTicks, int size) {
+    public static BlockRayTraceResult clientRayTracePreview(PlayerEntity thePlayer, float partialTicks, int size) {
         int blockReachDistance = 18 + size;
-        Vec3d vec3d = thePlayer.getPositionEyes(partialTicks);
+        Vec3d vec3d = thePlayer.getEyePosition(partialTicks);
         Vec3d vec3d1 = thePlayer.getLook(partialTicks);
-        Vec3d vec3d2 = vec3d.addVector(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
+        Vec3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
-        RayTraceResult rtc = thePlayer.getEntityWorld().rayTraceBlocks(vec3d, vec3d2, stopOnLiquid);
-        return rtc;
+        return thePlayer.getEntityWorld().rayTraceBlocks(
+                new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.COLLIDER, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
+        );
     }
 
     @Nullable
-    public static BlockPos findSpecificBlock(EntityItem entityItem, int maxRange, Class searchedBlock) {
+    public static BlockPos findSpecificBlock(ItemEntity ItemEntity, int maxRange, Class searchedBlock) {
         if (searchedBlock == null)
             return null;
 
-        double i = entityItem.posX;
-        double j = entityItem.posY;
-        double k = entityItem.posZ;
+        double i = ItemEntity.posX;
+        double j = ItemEntity.posY;
+        double k = ItemEntity.posZ;
 
         for (int range = 1; range < maxRange; range++) {
             Iterable<BlockPos.MutableBlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
                     new BlockPos(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
-                Block block = entityItem.getEntityWorld().isBlockLoaded(pos) ? entityItem.getEntityWorld().getBlockState(pos).getBlock() : null;
+                Block block = ItemEntity.getEntityWorld().isBlockLoaded(pos) ? ItemEntity.getEntityWorld().getBlockState(pos).getBlock() : null;
                 if (block != null && block.getClass().equals(searchedBlock)) {
                     return new BlockPos(pos.getX(), pos.getY(), pos.getZ()); // return a copy
                 }
@@ -148,30 +149,30 @@ public class Spacial {
                 .orElse(null);
     }
 
-    public static boolean isThrowerUnderLiquid(final EntityItem entityItem) {
-        String thrower = entityItem.getThrower();
+    public static boolean isThrowerUnderLiquid(final ItemEntity ItemEntity) {
+        String thrower = ItemEntity.getThrower();
         if (StringUtils.isNullOrEmpty(thrower)) return false;
-        EntityPlayer player = entityItem.getEntityWorld().getPlayerEntityByName(thrower);
+        PlayerEntity player = ItemEntity.getEntityWorld().getPlayerEntityByName(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
     }
 
-    public static boolean isEntityCollidingLiquid(final EntityItem entityItem) {
-        return !entityItem.isOffsetPositionInLiquid(0, -0.1, 0);
+    public static boolean isEntityCollidingLiquid(final ItemEntity ItemEntity) {
+        return !ItemEntity.isOffsetPositionInLiquid(0, -0.1, 0);
     }
 
-    public static boolean entityItemShouldAndCollideLiquid(final EntityItem entityItem) {
-        boolean throwerInLiquid = isThrowerUnderLiquid(entityItem);
-        boolean entityInLiquid = isEntityCollidingLiquid(entityItem);
+    public static boolean ItemEntityShouldAndCollideLiquid(final ItemEntity ItemEntity) {
+        boolean throwerInLiquid = isThrowerUnderLiquid(ItemEntity);
+        boolean entityInLiquid = isEntityCollidingLiquid(ItemEntity);
         return !throwerInLiquid && entityInLiquid;
     }
 
-    public static void moveEntityItemToDeployPos(final EntityItem entityItem, final ItemStack capsule, boolean keepMomentum) {
-        if (capsule.getTagCompound() == null) return;
-        BlockPos dest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
+    public static void moveItemEntityToDeployPos(final ItemEntity ItemEntity, final ItemStack capsule, boolean keepMomentum) {
+        if (capsule.getTag() == null) return;
+        BlockPos dest = BlockPos.fromLong(capsule.getTag().getLong("deployAt"));
         // +0.5 to aim the center of the block
-        double diffX = (dest.getX() + 0.5 - entityItem.posX);
-        double diffZ = (dest.getZ() + 0.5 - entityItem.posZ);
+        double diffX = (dest.getX() + 0.5 - ItemEntity.posX);
+        double diffZ = (dest.getZ() + 0.5 - ItemEntity.posZ);
 
         double distance = MathHelper.sqrt(diffX * diffX + diffZ * diffZ);
 
@@ -182,7 +183,7 @@ public class Spacial {
         double normalizedDiffZ = (diffZ / distance);
 
         // momentum allow to hit side walls
-        entityItem.motionX = keepMomentum ? 0.9 * entityItem.motionX + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity;
-        entityItem.motionZ = keepMomentum ? 0.9 * entityItem.motionZ + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity;
+        ItemEntity.motionX = keepMomentum ? 0.9 * ItemEntity.motionX + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity;
+        ItemEntity.motionZ = keepMomentum ? 0.9 * ItemEntity.motionZ + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity;
     }
 }

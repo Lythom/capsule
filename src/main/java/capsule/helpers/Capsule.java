@@ -12,13 +12,13 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.server.MinecraftServer;
@@ -30,9 +30,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.WorldServer;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
-import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.ServerWorld;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -72,16 +71,16 @@ public class Capsule {
         return "0";
     }
 
-    public static void resentToCapsule(final ItemStack capsule, final EntityPlayer playerIn) {
+    public static void resentToCapsule(final ItemStack capsule, final PlayerEntity playerIn) {
         // store again
         Integer dimensionId = CapsuleItem.getDimension(capsule);
         MinecraftServer server = playerIn.getServer();
         if (server == null) return;
-        final WorldServer world = dimensionId != null ? server.getWorld(dimensionId) : (WorldServer) playerIn.getEntityWorld();
+        final ServerWorld world = dimensionId != null ? server.getWorld(dimensionId) : (ServerWorld) playerIn.getEntityWorld();
 
-        if (capsule.getTagCompound() == null) return;
-        NBTTagCompound spawnPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
-        BlockPos startPos = new BlockPos(spawnPos.getInteger("x"), spawnPos.getInteger("y"), spawnPos.getInteger("z"));
+        if (capsule.getTag() == null) return;
+        CompoundNBT spawnPos = capsule.getTag().getCompound("spawnPosition");
+        BlockPos startPos = new BlockPos(spawnPos.getInt("x"), spawnPos.getInt("y"), spawnPos.getInt("z"));
 
         int size = CapsuleItem.getSize(capsule);
 
@@ -96,7 +95,7 @@ public class Capsule {
                 playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintDontMatch"));
             }
         } else {
-            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getName(), capsule.getTagCompound().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getName(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
@@ -111,7 +110,7 @@ public class Capsule {
         }
     }
 
-    private static void notifyUndeploy(EntityPlayer playerIn, BlockPos startPos, int size) {
+    private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size) {
         BlockPos center = startPos.add(size / 2, size / 2, size / 2);
         CommonProxy.simpleNetworkWrapper.sendToAllAround(
                 new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size),
@@ -122,20 +121,20 @@ public class Capsule {
     /**
      * Deploy the capsule at the anchorBlockPos position. update capsule state
      */
-    public static boolean deployCapsule(ItemStack capsule, BlockPos anchorBlockPos, String thrower, int extendLength, WorldServer world) {
+    public static boolean deployCapsule(ItemStack capsule, BlockPos anchorBlockPos, String thrower, int extendLength, ServerWorld world) {
         // specify target to capture
 
         boolean didSpawn = false;
 
         BlockPos dest;
-        if (capsule.getTagCompound() != null && capsule.getTagCompound().hasKey("deployAt")) {
-            BlockPos centerDest = BlockPos.fromLong(capsule.getTagCompound().getLong("deployAt"));
+        if (capsule.getTag() != null && capsule.getTag().contains("deployAt")) {
+            BlockPos centerDest = BlockPos.fromLong(capsule.getTag().getLong("deployAt"));
             dest = centerDest.add(-extendLength, 0, -extendLength);
-            capsule.getTagCompound().removeTag("deployAt");
+            capsule.getTag().remove("deployAt");
         } else {
             dest = anchorBlockPos.add(-extendLength, 1, -extendLength);
         }
-        String structureName = capsule.getTagCompound().getString("structureName");
+        String structureName = capsule.getTag().getString("structureName");
 
         // do the transportation
         List<String> outEntityBlocking = new ArrayList<>();
@@ -164,9 +163,9 @@ public class Capsule {
     }
 
     /**
-     * Capture the content around the capsule entityItem, update capsule state.
+     * Capture the content around the capsule ItemEntity, update capsule state.
      */
-    public static boolean captureContentIntoCapsule(ItemStack capsule, BlockPos anchor, String thrower, int size, int extendLength, WorldServer playerWorld) {
+    public static boolean captureContentIntoCapsule(ItemStack capsule, BlockPos anchor, String thrower, int size, int extendLength, ServerWorld playerWorld) {
 
         // if there is an anchor, it's an initial capture, else an undeploy
         if (anchor != null) {
@@ -177,7 +176,7 @@ public class Capsule {
         } else {
             CapsuleItem.revertStateFromActivated(capsule);
             // send a chat message to explain failure
-            EntityPlayer player = playerWorld.getPlayerEntityByName(thrower);
+            PlayerEntity player = playerWorld.getPlayerEntityByName(thrower);
             if (player != null) {
                 player.sendMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
             }
@@ -186,7 +185,7 @@ public class Capsule {
         return false;
     }
 
-    public static boolean captureAtPosition(ItemStack capsule, String thrower, int size, WorldServer playerWorld, BlockPos source) {
+    public static boolean captureAtPosition(ItemStack capsule, String thrower, int size, ServerWorld playerWorld, BlockPos source) {
         String player = "CapsuleMod";
         if (thrower != null) {
             player = thrower;
@@ -233,7 +232,7 @@ public class Capsule {
         }
     }
 
-    public static void showDeployParticules(WorldServer world, BlockPos blockpos, int size) {
+    public static void showDeployParticules(ServerWorld world, BlockPos blockpos, int size) {
         double d0 = (double) ((float) blockpos.getX()) + 0.5D;
         double d1 = (double) ((float) blockpos.getY()) + 0.5D;
         double d2 = (double) ((float) blockpos.getZ()) + 0.5D;
@@ -241,7 +240,7 @@ public class Capsule {
     }
 
     @Nullable
-    public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, WorldServer world, EntityPlayer player) {
+    public static Map<StructureSaver.ItemStackKey, Integer> reloadBlueprint(ItemStack blueprint, ServerWorld world, PlayerEntity player) {
         // list required materials
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world, player);
         if (missingMaterials == null) {
@@ -303,21 +302,21 @@ public class Capsule {
     }
 
     /**
-     * Throw an item and return the new EntityItem created. Simulated a drop
+     * Throw an item and return the new ItemEntity created. Simulated a drop
      * with stronger throw.
      */
-    public static EntityItem throwCapsule(ItemStack capsule, EntityPlayer playerIn, BlockPos destination) {
+    public static ItemEntity throwCapsule(ItemStack capsule, PlayerEntity playerIn, BlockPos destination) {
         // startPosition from EntityThrowable
         double startPosition = playerIn.posY - 0.3D + (double) playerIn.getEyeHeight();
-        EntityItem entityitem = new EntityItem(playerIn.getEntityWorld(), playerIn.posX, startPosition, playerIn.posZ, capsule);
-        entityitem.setPickupDelay(20);// cannot be picked up before deployment
-        entityitem.setThrower(playerIn.getName());
-        entityitem.setNoDespawn();
+        ItemEntity ItemEntity = new ItemEntity(playerIn.getEntityWorld(), playerIn.posX, startPosition, playerIn.posZ, capsule);
+        ItemEntity.setPickupDelay(20);// cannot be picked up before deployment
+        ItemEntity.setThrower(playerIn.getName());
+        ItemEntity.setNoDespawn();
 
-        if (destination != null && capsule.getTagCompound() != null) {
-            capsule.getTagCompound().setLong("deployAt", destination.toLong());
+        if (destination != null && capsule.getTag() != null) {
+            capsule.getTag().setLong("deployAt", destination.toLong());
 
-            Spacial.moveEntityItemToDeployPos(entityitem, capsule, false);
+            Spacial.moveItemEntityToDeployPos(ItemEntity, capsule, false);
             BlockPos playerPos = playerIn.getPosition();
             // +0.5 to aim the center of the block
             double diffX = (destination.getX() + 0.5 - playerPos.getX());
@@ -326,21 +325,21 @@ public class Capsule {
 
             double diffY = destination.getY() - playerPos.getY() + Math.min(1, flatDistance / 3);
             double yVelocity = (diffY / 10) - (0.5 * 10 * -1 * CapsuleItem.GRAVITY_PER_TICK); // move up then down
-            entityitem.motionY = Math.max(0.05, yVelocity);
+            ItemEntity.motionY = Math.max(0.05, yVelocity);
 
         } else {
             float f = 0.5F;
 
-            entityitem.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw * CapsuleItem.TO_RAD) * MathHelper.cos(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f) + playerIn.motionX;
-            entityitem.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw * CapsuleItem.TO_RAD) * MathHelper.cos(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f) + playerIn.motionZ;
-            entityitem.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f + 0.1F) + playerIn.motionY;
+            ItemEntity.motionX = (double) (-MathHelper.sin(playerIn.rotationYaw * CapsuleItem.TO_RAD) * MathHelper.cos(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f) + playerIn.motionX;
+            ItemEntity.motionZ = (double) (MathHelper.cos(playerIn.rotationYaw * CapsuleItem.TO_RAD) * MathHelper.cos(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f) + playerIn.motionZ;
+            ItemEntity.motionY = (double) (-MathHelper.sin(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f + 0.1F) + playerIn.motionY;
         }
 
-        playerIn.dropItemAndGetStack(entityitem);
+        playerIn.dropItemAndGetStack(ItemEntity);
         playerIn.inventory.setInventorySlotContents(playerIn.inventory.currentItem, ItemStack.EMPTY);
-        playerIn.getEntityWorld().playSound(null, entityitem.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.1f);
+        playerIn.getEntityWorld().playSound(null, ItemEntity.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.1f);
 
-        return entityitem;
+        return ItemEntity;
     }
 
     public static ItemStack newRewardCapsuleItemStack(String structureName, int baseColor, int materialColor, int size, @Nullable String label, @Nullable String author) {
@@ -377,30 +376,30 @@ public class Capsule {
         return capsule;
     }
 
-    public static void handleEntityItemOnGround(EntityItem entityItem, ItemStack capsule) {
+    public static void handleItemEntityOnGround(ItemEntity ItemEntity, ItemStack capsule) {
         // stop the capsule where it collided
-        entityItem.motionX = 0;
-        entityItem.motionZ = 0;
-        entityItem.motionY = 0;
+        ItemEntity.motionX = 0;
+        ItemEntity.motionZ = 0;
+        ItemEntity.motionY = 0;
 
         final int size = CapsuleItem.getSize(capsule);
         final int extendLength = (size - 1) / 2;
 
         // get destination world available position
-        final WorldServer itemWorld = (WorldServer) entityItem.getEntityWorld();
+        final ServerWorld itemWorld = (ServerWorld) ItemEntity.getEntityWorld();
 
         if (CapsuleItem.hasStructureLink(capsule)) {
 
             // DEPLOY
             // is linked, deploy
-            BlockPos throwPos = Spacial.findBottomBlock(entityItem);
-            boolean deployed = deployCapsule(capsule, throwPos, entityItem.getThrower(), extendLength, itemWorld);
+            BlockPos throwPos = Spacial.findBottomBlock(ItemEntity);
+            boolean deployed = deployCapsule(capsule, throwPos, ItemEntity.getThrower(), extendLength, itemWorld);
             if (deployed) {
-                itemWorld.playSound(null, entityItem.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
-                showDeployParticules(itemWorld, entityItem.getPosition(), size);
+                itemWorld.playSound(null, ItemEntity.getPosition(), SoundEvents.ENTITY_IRONGOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                showDeployParticules(itemWorld, ItemEntity.getPosition(), size);
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {
-                entityItem.setDead();
+                ItemEntity.setDead();
             }
 
         } else {
@@ -408,13 +407,13 @@ public class Capsule {
             // CAPTURE
             // is not linked, capture
             try {
-                BlockPos anchor = Spacial.findSpecificBlock(entityItem, size + 2, BlockCapsuleMarker.class);
-                boolean captured = captureContentIntoCapsule(capsule, anchor, entityItem.getThrower(), size, extendLength, itemWorld);
+                BlockPos anchor = Spacial.findSpecificBlock(ItemEntity, size + 2, BlockCapsuleMarker.class);
+                boolean captured = captureContentIntoCapsule(capsule, anchor, ItemEntity.getThrower(), size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.add(0, size / 2, 0);
                     CommonProxy.simpleNetworkWrapper.sendToAllAround(
-                            new CapsuleUndeployNotifToClient(center, entityItem.getPosition(), size),
-                            new NetworkRegistry.TargetPoint(entityItem.dimension, center.getX(), center.getY(), center.getZ(), 200 + size)
+                            new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size),
+                            new NetworkRegistry.TargetPoint(ItemEntity.dimension, center.getX(), center.getY(), center.getZ(), 200 + size)
                     );
                 }
             } catch (Exception e) {
@@ -431,7 +430,7 @@ public class Capsule {
         }
     }
 
-    public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, EntityPlayerMP player) {
+    public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, PlayerEntityMP player) {
         if (player == null) return ItemStack.EMPTY;
 
         CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.getServer());
@@ -452,7 +451,7 @@ public class Capsule {
                 0
         );
 
-        NBTTagCompound srcData = new NBTTagCompound();
+        CompoundNBT srcData = new CompoundNBT();
         srcTemplate.writeToNBT(srcData);
         StructureSaver.duplicateTemplate(
                 srcData,
@@ -468,7 +467,7 @@ public class Capsule {
         return srcTemplatemanager.get(server, new ResourceLocation(structurePath));
     }
 
-    public static boolean clearTemplate(WorldServer worldserver, String capsuleStructureId) {
+    public static boolean clearTemplate(ServerWorld worldserver, String capsuleStructureId) {
         MinecraftServer minecraftserver = worldserver.getMinecraftServer();
 
         CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);

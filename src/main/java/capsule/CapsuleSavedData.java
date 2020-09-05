@@ -1,6 +1,6 @@
 package capsule;
 
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.world.storage.WorldSavedData;
 
 /**
@@ -18,14 +18,14 @@ public class CapsuleSavedData extends WorldSavedData {
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound nbt) {
+    public void readFromNBT(CompoundNBT nbt) {
         // retrieve lastReservedPosition
-        capsuleCounter = nbt.getInteger("counter");
+        capsuleCounter = nbt.getInt("counter");
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        nbt.setInteger("counter", capsuleCounter);
+    public CompoundNBT writeToNBT(CompoundNBT nbt) {
+        nbt.putInt("counter", capsuleCounter);
         return nbt;
     }
 

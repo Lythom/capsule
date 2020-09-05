@@ -9,7 +9,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
@@ -87,12 +87,12 @@ public class CapsuleTemplate {
             BlockPos blockpos = transformedBlockPos(template$entityinfo.blockPos, mirrorIn, rotationIn).add(pos).add(recenterOffset);
 
             if (aabb == null || aabb.isVecInside(blockpos)) {
-                NBTTagCompound nbttagcompound = template$entityinfo.entityData;
+                CompoundNBT nbttagcompound = template$entityinfo.entityData;
                 Vec3d vec3d = transformedVec3d(template$entityinfo.pos, mirrorIn, rotationIn);
                 Vec3d vec3d1 = vec3d
                         .addVector((double) pos.getX(), (double) pos.getY(), (double) pos.getZ())
                         .addVector((double) recenterOffset.getX(), (double) recenterOffset.getY(), (double) recenterOffset.getZ());
-                NBTTagList nbttaglist = new NBTTagList();
+                ListNBT nbttaglist = new ListNBT();
                 nbttaglist.appendTag(new NBTTagDouble(vec3d1.x));
                 nbttaglist.appendTag(new NBTTagDouble(vec3d1.y));
                 nbttaglist.appendTag(new NBTTagDouble(vec3d1.z));
@@ -175,14 +175,14 @@ public class CapsuleTemplate {
         }
     }
 
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    public CompoundNBT writeToNBT(CompoundNBT nbt) {
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
-        NBTTagList nbttaglist = new NBTTagList();
+        ListNBT nbttaglist = new ListNBT();
 
         for (Template.BlockInfo template$blockinfo : this.blocks) {
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
+            CompoundNBT nbttagcompound = new CompoundNBT();
             nbttagcompound.setTag("pos", this.writeInts(template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()));
-            nbttagcompound.setInteger("state", template$basicpalette.idFor(template$blockinfo.blockState));
+            nbttagcompound.putInt("state", template$basicpalette.idFor(template$blockinfo.blockState));
 
             if (template$blockinfo.tileentityData != null) {
                 nbttagcompound.setTag("nbt", template$blockinfo.tileentityData);
@@ -191,10 +191,10 @@ public class CapsuleTemplate {
             nbttaglist.appendTag(nbttagcompound);
         }
 
-        NBTTagList nbttaglist1 = new NBTTagList();
+        ListNBT nbttaglist1 = new ListNBT();
 
         for (Template.EntityInfo template$entityinfo : this.entities) {
-            NBTTagCompound nbttagcompound1 = new NBTTagCompound();
+            CompoundNBT nbttagcompound1 = new CompoundNBT();
             nbttagcompound1.setTag("pos", this.writeDoubles(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
             nbttagcompound1.setTag("blockPos", this.writeInts(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
 
@@ -205,10 +205,10 @@ public class CapsuleTemplate {
             nbttaglist1.appendTag(nbttagcompound1);
         }
 
-        NBTTagList nbttaglist2 = new NBTTagList();
+        ListNBT nbttaglist2 = new ListNBT();
 
         for (IBlockState iblockstate : template$basicpalette) {
-            nbttaglist2.appendTag(NBTUtil.writeBlockState(new NBTTagCompound(), iblockstate));
+            nbttaglist2.appendTag(NBTUtil.writeBlockState(new CompoundNBT(), iblockstate));
         }
 
         net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt); //Moved up for MC updating reasons.
@@ -216,16 +216,16 @@ public class CapsuleTemplate {
         nbt.setTag("blocks", nbttaglist);
         nbt.setTag("entities", nbttaglist1);
         nbt.setTag("size", this.writeInts(this.size.getX(), this.size.getY(), this.size.getZ()));
-        nbt.setString("author", this.author);
-        nbt.setInteger("DataVersion", 1343);
+        nbt.putString("author", this.author);
+        nbt.putInt("DataVersion", 1343);
 
         // CAPSULE save already occupied positions when deployed
-        NBTTagList occupiedSpawnPositionstaglist = new NBTTagList();
+        ListNBT occupiedSpawnPositionstaglist = new ListNBT();
         if (this.occupiedPositions != null) {
             for (Map.Entry<BlockPos, Block> entry : occupiedPositions.entrySet()) {
-                NBTTagCompound nbtEntry = new NBTTagCompound();
+                CompoundNBT nbtEntry = new CompoundNBT();
                 nbtEntry.setLong("pos", entry.getKey().toLong());
-                nbtEntry.setInteger("blockId", Block.getIdFromBlock(entry.getValue()));
+                nbtEntry.putInt("blockId", Block.getIdFromBlock(entry.getValue()));
                 occupiedSpawnPositionstaglist.appendTag(nbtEntry);
             }
             nbt.setTag("capsule_occupiedSources", occupiedSpawnPositionstaglist);
@@ -233,31 +233,31 @@ public class CapsuleTemplate {
         return nbt;
     }
 
-    public void read(NBTTagCompound compound) {
+    public void read(CompoundNBT compound) {
         this.blocks.clear();
         this.entities.clear();
-        NBTTagList nbttaglist = compound.getTagList("size", 3);
+        ListNBT nbttaglist = compound.getTagList("size", 3);
         this.size = new BlockPos(nbttaglist.getIntAt(0), nbttaglist.getIntAt(1), nbttaglist.getIntAt(2));
         this.author = compound.getString("author");
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
-        NBTTagList nbttaglist1 = compound.getTagList("palette", 10);
+        ListNBT nbttaglist1 = compound.getTagList("palette", 10);
 
-        for (int i = 0; i < nbttaglist1.tagCount(); ++i) {
-            template$basicpalette.addMapping(NBTUtil.readBlockState(nbttaglist1.getCompoundTagAt(i)), i);
+        for (int i = 0; i < nbttaglist1.size(); ++i) {
+            template$basicpalette.addMapping(NBTUtil.readBlockState(nbttaglist1.getCompound(i)), i);
         }
 
-        NBTTagList nbttaglist3 = compound.getTagList("blocks", 10);
+        ListNBT nbttaglist3 = compound.getTagList("blocks", 10);
 
-        for (int j = 0; j < nbttaglist3.tagCount(); ++j) {
-            NBTTagCompound nbttagcompound = nbttaglist3.getCompoundTagAt(j);
-            NBTTagList nbttaglist2 = nbttagcompound.getTagList("pos", 3);
+        for (int j = 0; j < nbttaglist3.size(); ++j) {
+            CompoundNBT nbttagcompound = nbttaglist3.getCompound(j);
+            ListNBT nbttaglist2 = nbttagcompound.getTagList("pos", 3);
             BlockPos blockpos = new BlockPos(nbttaglist2.getIntAt(0), nbttaglist2.getIntAt(1), nbttaglist2.getIntAt(2));
-            IBlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInteger("state"));
+            IBlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInt("state"));
             if (iblockstate != null && iblockstate.getMaterial() != Material.AIR) {
-                NBTTagCompound nbttagcompound1;
+                CompoundNBT nbttagcompound1;
 
-                if (nbttagcompound.hasKey("nbt")) {
-                    nbttagcompound1 = nbttagcompound.getCompoundTag("nbt");
+                if (nbttagcompound.contains("nbt")) {
+                    nbttagcompound1 = nbttagcompound.getCompound("nbt");
                 } else {
                     nbttagcompound1 = null;
                 }
@@ -266,35 +266,35 @@ public class CapsuleTemplate {
             }
         }
 
-        NBTTagList nbttaglist4 = compound.getTagList("entities", 10);
+        ListNBT nbttaglist4 = compound.getTagList("entities", 10);
 
-        for (int k = 0; k < nbttaglist4.tagCount(); ++k) {
-            NBTTagCompound nbttagcompound3 = nbttaglist4.getCompoundTagAt(k);
-            NBTTagList nbttaglist5 = nbttagcompound3.getTagList("pos", 6);
+        for (int k = 0; k < nbttaglist4.size(); ++k) {
+            CompoundNBT nbttagcompound3 = nbttaglist4.getCompound(k);
+            ListNBT nbttaglist5 = nbttagcompound3.getTagList("pos", 6);
             Vec3d vec3d = new Vec3d(nbttaglist5.getDoubleAt(0), nbttaglist5.getDoubleAt(1), nbttaglist5.getDoubleAt(2));
-            NBTTagList nbttaglist6 = nbttagcompound3.getTagList("blockPos", 3);
+            ListNBT nbttaglist6 = nbttagcompound3.getTagList("blockPos", 3);
             BlockPos blockpos1 = new BlockPos(nbttaglist6.getIntAt(0), nbttaglist6.getIntAt(1), nbttaglist6.getIntAt(2));
 
-            if (nbttagcompound3.hasKey("nbt")) {
-                NBTTagCompound nbttagcompound2 = nbttagcompound3.getCompoundTag("nbt");
+            if (nbttagcompound3.contains("nbt")) {
+                CompoundNBT nbttagcompound2 = nbttagcompound3.getCompound("nbt");
                 this.entities.add(new Template.EntityInfo(vec3d, blockpos1, nbttagcompound2));
             }
         }
 
         // CAPSULE read already occupied positions when deployed
-        if (compound.hasKey("capsule_occupiedSources")) {
+        if (compound.contains("capsule_occupiedSources")) {
             Map<BlockPos, Block> occupiedSources = new HashMap<>();
-            NBTTagList list = compound.getTagList("capsule_occupiedSources", 10);
-            for (int i = 0; i < list.tagCount(); i++) {
-                NBTTagCompound entry = list.getCompoundTagAt(i);
-                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getBlockById(entry.getInteger("blockId")));
+            ListNBT list = compound.getTagList("capsule_occupiedSources", 10);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundNBT entry = list.getCompound(i);
+                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getBlockById(entry.getInt("blockId")));
             }
             this.occupiedPositions = occupiedSources;
         }
     }
 
-    private NBTTagList writeInts(int... values) {
-        NBTTagList nbttaglist = new NBTTagList();
+    private ListNBT writeInts(int... values) {
+        ListNBT nbttaglist = new ListNBT();
 
         for (int i : values) {
             nbttaglist.appendTag(new NBTTagInt(i));
@@ -303,8 +303,8 @@ public class CapsuleTemplate {
         return nbttaglist;
     }
 
-    private NBTTagList writeDoubles(double... values) {
-        NBTTagList nbttaglist = new NBTTagList();
+    private ListNBT writeDoubles(double... values) {
+        ListNBT nbttaglist = new ListNBT();
 
         for (double d0 : values) {
             nbttaglist.appendTag(new NBTTagDouble(d0));
@@ -390,10 +390,10 @@ public class CapsuleTemplate {
                     TileEntity tileentity = worldIn.getTileEntity(blockpos$mutableblockpos);
 
                     if (tileentity != null) {
-                        NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
-                        nbttagcompound.removeTag("x");
-                        nbttagcompound.removeTag("y");
-                        nbttagcompound.removeTag("z");
+                        CompoundNBT nbttagcompound = tileentity.writeToNBT(new CompoundNBT());
+                        nbttagcompound.remove("x");
+                        nbttagcompound.remove("y");
+                        nbttagcompound.remove("z");
                         list1.add(new Template.BlockInfo(blockpos3, iblockstate, nbttagcompound));
                     } else if (!iblockstate.isFullBlock() && !iblockstate.isFullCube()) {
                         list2.add(new Template.BlockInfo(blockpos3, iblockstate, null));
@@ -430,13 +430,13 @@ public class CapsuleTemplate {
         List<Entity> list = worldIn.getEntitiesWithinAABB(
                 Entity.class,
                 new AxisAlignedBB(startPos, endPos),
-                entity -> !(entity instanceof EntityItem) && (!(entity instanceof EntityLivingBase) || (entity instanceof EntityArmorStand))
+                entity -> !(entity instanceof ItemEntity) && (!(entity instanceof EntityLivingBase) || (entity instanceof EntityArmorStand))
         );
         entities.clear();
 
         for (Entity entity : list) {
             Vec3d vec3d = new Vec3d(entity.posX - (double) startPos.getX(), entity.posY - (double) startPos.getY(), entity.posZ - (double) startPos.getZ());
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
+            CompoundNBT nbttagcompound = new CompoundNBT();
             entity.writeToNBTOptional(nbttagcompound);
             BlockPos blockpos;
 
@@ -499,9 +499,9 @@ public class CapsuleTemplate {
                             TileEntity tileentity2 = worldIn.getTileEntity(blockpos);
 
                             if (tileentity2 != null) {
-                                template$blockinfo1.tileentityData.setInteger("x", blockpos.getX());
-                                template$blockinfo1.tileentityData.setInteger("y", blockpos.getY());
-                                template$blockinfo1.tileentityData.setInteger("z", blockpos.getZ());
+                                template$blockinfo1.tileentityData.putInt("x", blockpos.getX());
+                                template$blockinfo1.tileentityData.putInt("y", blockpos.getY());
+                                template$blockinfo1.tileentityData.putInt("z", blockpos.getZ());
                                 tileentity2.readFromNBT(template$blockinfo1.tileentityData);
                                 tileentity2.mirror(placementIn.getMirror());
                                 tileentity2.rotate(placementIn.getRotation());
@@ -599,10 +599,10 @@ public class CapsuleTemplate {
 
     // inspired by https://github.com/maruohon/worldprimer/blob/master/src/main/java/fi/dy/masa/worldprimer/util/Schematic.java
     // Also for schematic V2 See https://github.com/EngineHub/WorldEdit/blob/master/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java for version 2
-    public boolean readSchematic(NBTTagCompound nbt) {
+    public boolean readSchematic(CompoundNBT nbt) {
 
-        if (!nbt.hasKey("Blocks", Constants.NBT.TAG_BYTE_ARRAY) ||
-                !nbt.hasKey("Data", Constants.NBT.TAG_BYTE_ARRAY)) {
+        if (!nbt.contains("Blocks", Constants.NBT.TAG_BYTE_ARRAY) ||
+                !nbt.contains("Data", Constants.NBT.TAG_BYTE_ARRAY)) {
             LOGGER.error("Schematic: Missing block data in the schematic");
             return false;
         }
@@ -639,14 +639,14 @@ public class CapsuleTemplate {
         if (blocksById == null) return false;
 
         // get tile entities
-        Map<BlockPos, NBTTagCompound> tiles = getSchematicTiles(nbt);
+        Map<BlockPos, CompoundNBT> tiles = getSchematicTiles(nbt);
 
         // get entities
         this.entities.clear();
-        NBTTagList tagList = nbt.getTagList("Entities", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < tagList.tagCount(); ++i) {
-            NBTTagCompound entityNBT = tagList.getCompoundTagAt(i);
-            NBTTagList posList = entityNBT.getTagList("Pos", Constants.NBT.TAG_DOUBLE);
+        ListNBT tagList = nbt.getTagList("Entities", Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < tagList.size(); ++i) {
+            CompoundNBT entityNBT = tagList.getCompound(i);
+            ListNBT posList = entityNBT.getTagList("Pos", Constants.NBT.TAG_DOUBLE);
             Vec3d vec3d = new Vec3d(posList.getDoubleAt(0), posList.getDoubleAt(1), posList.getDoubleAt(2));
             this.entities.add(new Template.EntityInfo(vec3d, new BlockPos(vec3d), entityNBT));
         }
@@ -662,7 +662,7 @@ public class CapsuleTemplate {
                     IBlockState state = blocksById[index];
                     if (state.getBlock() != Blocks.AIR) {
                         BlockPos pos = new BlockPos(x, y, z);
-                        NBTTagCompound teNBT = tiles.get(pos);
+                        CompoundNBT teNBT = tiles.get(pos);
                         this.blocks.add(new Template.BlockInfo(pos, state, teNBT));
                         if (pos.getX() > sizeX) sizeX = pos.getX();
                         if (pos.getY() > sizeY) sizeY = pos.getY();
@@ -678,21 +678,21 @@ public class CapsuleTemplate {
         return true;
     }
 
-    private Map<BlockPos, NBTTagCompound> getSchematicTiles(NBTTagCompound nbt) {
-        Map<BlockPos, NBTTagCompound> tiles = new HashMap<>();
-        NBTTagList tagList = nbt.getTagList("TileEntities", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < tagList.tagCount(); ++i) {
-            NBTTagCompound tag = tagList.getCompoundTagAt(i);
-            BlockPos pos = new BlockPos(tag.getInteger("x"), tag.getInteger("y"), tag.getInteger("z"));
+    private Map<BlockPos, CompoundNBT> getSchematicTiles(CompoundNBT nbt) {
+        Map<BlockPos, CompoundNBT> tiles = new HashMap<>();
+        ListNBT tagList = nbt.getTagList("TileEntities", Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < tagList.size(); ++i) {
+            CompoundNBT tag = tagList.getCompound(i);
+            BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
             tiles.put(pos, tag);
         }
         return tiles;
     }
 
     @Nullable
-    private IBlockState[] getSchematicBlocks(NBTTagCompound nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
+    private IBlockState[] getSchematicBlocks(CompoundNBT nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
         IBlockState[] blocksById = new IBlockState[numBlocks];
-        if (nbt.hasKey("AddBlocks", Constants.NBT.TAG_BYTE_ARRAY)) {
+        if (nbt.contains("AddBlocks", Constants.NBT.TAG_BYTE_ARRAY)) {
             byte[] add = nbt.getByteArray("AddBlocks");
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);
 
@@ -737,13 +737,13 @@ public class CapsuleTemplate {
             }
         }
         // Old Schematica format
-        else if (nbt.hasKey("Add", Constants.NBT.TAG_BYTE_ARRAY)) {
+        else if (nbt.contains("Add", Constants.NBT.TAG_BYTE_ARRAY)) {
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
         // V2 Schematica format
-        else if (nbt.hasKey("Version", Constants.NBT.TAG_INT)) {
-            LOGGER.error("Schematic: Newer Schematica format {} detected, not implemented", nbt.getInteger("Version"));
+        else if (nbt.contains("Version", Constants.NBT.TAG_INT)) {
+            LOGGER.error("Schematic: Newer Schematica format {} detected, not implemented", nbt.getInt("Version"));
             return null;
         }
         // No palette, use the registry IDs directly
@@ -757,14 +757,14 @@ public class CapsuleTemplate {
     }
 
     @Nullable
-    private Block[] readSchematicPalette(NBTTagCompound nbt) {
+    private Block[] readSchematicPalette(CompoundNBT nbt) {
         final Block air = Blocks.AIR;
         Block[] palette = new Block[4096];
         Arrays.fill(palette, air);
 
         // Schematica palette
-        if (nbt.hasKey("SchematicaMapping", Constants.NBT.TAG_COMPOUND)) {
-            NBTTagCompound tag = nbt.getCompoundTag("SchematicaMapping");
+        if (nbt.contains("SchematicaMapping", Constants.NBT.TAG_COMPOUND)) {
+            CompoundNBT tag = nbt.getCompound("SchematicaMapping");
             Set<String> keys = tag.getKeySet();
 
             for (String key : keys) {
@@ -785,8 +785,8 @@ public class CapsuleTemplate {
             }
         }
         // MCEdit2 palette
-        else if (nbt.hasKey("BlockIDs", Constants.NBT.TAG_COMPOUND)) {
-            NBTTagCompound tag = nbt.getCompoundTag("BlockIDs");
+        else if (nbt.contains("BlockIDs", Constants.NBT.TAG_COMPOUND)) {
+            CompoundNBT tag = nbt.getCompound("BlockIDs");
             Set<String> keys = tag.getKeySet();
 
             for (String idStr : keys) {

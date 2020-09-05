@@ -7,15 +7,16 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.entity.PlayerEntitySP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
@@ -62,22 +63,22 @@ public class CapsulePreviewHandler {
     public void onLivingUpdateEvent(PlayerTickEvent event) {
 
         // do something to player every update tick:
-        if (event.player instanceof EntityPlayerSP && event.phase.equals(Phase.START)) {
-            EntityPlayerSP player = (EntityPlayerSP) event.player;
+        if (event.player instanceof PlayerEntitySP && event.phase.equals(Phase.START)) {
+            PlayerEntitySP player = (PlayerEntitySP) event.player;
             tryPreviewCapture(player, player.getHeldItemMainhand());
         }
     }
 
-    private boolean tryPreviewCapture(EntityPlayerSP player, ItemStack heldItem) {
+    private boolean tryPreviewCapture(PlayerEntitySP player, ItemStack heldItem) {
         // an item is in hand
         if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
-            if (heldItemItem instanceof CapsuleItem && (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY || heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
+            if (heldItemItem instanceof CapsuleItem && (heldItem.getDamage() == CapsuleItem.STATE_EMPTY || heldItem.getDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
                 CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
                 //noinspection ConstantConditions
-                if (heldItem.hasTagCompound() && heldItem.getTagCompound().hasKey("size")) {
-                    setCaptureTESizeColor(heldItem.getTagCompound().getInteger("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
+                if (heldItem.hasTag() && heldItem.getTag().contains("size")) {
+                    setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
                     return true;
                 }
 
@@ -93,22 +94,22 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private void tryPreviewDeploy(EntityPlayerSP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
+    private void tryPreviewDeploy(PlayerEntitySP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
 
         if (heldItemMainhand.getItem() instanceof CapsuleItem
-                && heldItemMainhand.hasTagCompound()
-                && (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ACTIVATED
-                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
-                || heldItemMainhand.getItemDamage() == CapsuleItem.STATE_BLUEPRINT
-                || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getItemDamage() != CapsuleItem.STATE_DEPLOYED)
+                && heldItemMainhand.hasTag()
+                && (heldItemMainhand.getDamage() == CapsuleItem.STATE_ACTIVATED
+                || heldItemMainhand.getDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
+                || heldItemMainhand.getDamage() == CapsuleItem.STATE_BLUEPRINT
+                || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getDamage() != CapsuleItem.STATE_DEPLOYED)
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
-            RayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
+            BlockRayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
-                String structureName = heldItemMainhand.getTagCompound().getString("structureName");
+                String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 AxisAlignedBB errorBoundingBox = new AxisAlignedBB(
                         0,
@@ -124,7 +125,7 @@ public class CapsulePreviewHandler {
                         List<AxisAlignedBB> blockspos = new ArrayList<>();
                         if (size > 1) {
                             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-                        } else if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                        } else if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
                             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
                             BlockPos pos = rtc.getBlockPos().subtract(destOriginPos);
                             blockspos.add(new AxisAlignedBB(pos, pos));
@@ -149,7 +150,7 @@ public class CapsulePreviewHandler {
                                     .expand(1, 1, 1);
 
                             int color = 0xDDDDDD;
-                            if (heldItemMainhand.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                            if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
                                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
                                 GL11.glLineWidth(5.0F);
                                 color = CapsuleItem.getBaseColor(heldItemMainhand);
@@ -194,15 +195,15 @@ public class CapsulePreviewHandler {
             // it's an empty capsule : show capture zones
             //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
-                    && (heldItem.getItemDamage() == CapsuleItem.STATE_DEPLOYED || heldItem.getItemDamage() == CapsuleItem.STATE_BLUEPRINT)
-                    && heldItem.hasTagCompound()
-                    && heldItem.getTagCompound().hasKey("spawnPosition")) {
+                    && (heldItem.getDamage() == CapsuleItem.STATE_DEPLOYED || heldItem.getDamage() == CapsuleItem.STATE_BLUEPRINT)
+                    && heldItem.hasTag()
+                    && heldItem.getTag().contains("spawnPosition")) {
                 previewRecall(heldItem);
             }
         }
     }
 
-    private void tryPreviewLinkedInventory(EntityPlayerSP player, ItemStack heldItem) {
+    private void tryPreviewLinkedInventory(PlayerEntitySP player, ItemStack heldItem) {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
@@ -247,17 +248,17 @@ public class CapsulePreviewHandler {
     }
 
     private void previewRecall(ItemStack capsule) {
-        if (capsule.getTagCompound() == null) return;
-        NBTTagCompound linkPos = capsule.getTagCompound().getCompoundTag("spawnPosition");
+        if (capsule.getTag() == null) return;
+        CompoundNBT linkPos = capsule.getTag().getCompound("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
         CaptureTESR.drawCaptureZone(
-                linkPos.getInteger("x") + extendSize,
-                linkPos.getInteger("y") - 1,
-                linkPos.getInteger("z") + extendSize, size,
+                linkPos.getInt("x") + extendSize,
+                linkPos.getInt("y") - 1,
+                linkPos.getInt("z") + extendSize, size,
                 extendSize, color);
     }
 
@@ -269,8 +270,8 @@ public class CapsulePreviewHandler {
         for (TileEntityCapture te : TileEntityCapture.instances) {
             if (te.getWorld() == worldIn) {
                 TileEntityCapture tec = te;
-                tec.getTileData().setInteger("size", size);
-                tec.getTileData().setInteger("color", color);
+                tec.getTileData().putInt("size", size);
+                tec.getTileData().putInt("color", color);
                 worldIn.markBlockRangeForRenderUpdate(
                         te.getPos().add(-size / 2, -size / 2, -size / 2),
                         te.getPos().add(size / 2, size / 2, size / 2)

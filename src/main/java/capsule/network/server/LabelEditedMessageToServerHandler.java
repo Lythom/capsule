@@ -2,9 +2,9 @@ package capsule.network.server;
 
 import capsule.items.CapsuleItem;
 import capsule.network.LabelEditedMessageToServer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -41,12 +41,12 @@ public class LabelEditedMessageToServerHandler implements IMessageHandler<LabelE
         }
 
         // we know for sure that this handler is only used on the server side, so it is ok to assume
-        //  that the ctx handler is a serverhandler, and that WorldServer exists.
+        //  that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently!  See MessageHandlerOnClient
 
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
+        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("EntityPlayerMP was null when LabelEditedMessageToServer was received");
+            LOGGER.error("PlayerEntityMP was null when LabelEditedMessageToServer was received");
             return null;
         }
 
@@ -54,15 +54,15 @@ public class LabelEditedMessageToServerHandler implements IMessageHandler<LabelE
         //  for example see MinecraftServer.updateTimeLightAndEntities(), just under section
         //      this.theProfiler.startSection("jobs");
         //  In this case, the task is to call messageHandlerOnServer.processMessage(message, sendingPlayer)
-        final WorldServer playerWorldServer = sendingPlayer.getServerWorld();
-        playerWorldServer.addScheduledTask(() -> processMessage(message, sendingPlayer));
+        final ServerWorld playerServerWorld = sendingPlayer.getServerWorld();
+        playerServerWorld.addScheduledTask(() -> processMessage(message, sendingPlayer));
 
         return null;
     }
 
     // This message is called from the Server thread.
     //   It spawns a random number of the given projectile at a position above the target location
-    void processMessage(LabelEditedMessageToServer message, EntityPlayerMP sendingPlayer) {
+    void processMessage(LabelEditedMessageToServer message, PlayerEntityMP sendingPlayer) {
         ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
         if (serverStack.getItem() instanceof CapsuleItem) {
             // of the player didn't swap item during ui opening

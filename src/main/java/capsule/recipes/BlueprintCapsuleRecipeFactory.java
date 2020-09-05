@@ -81,13 +81,13 @@ public class BlueprintCapsuleRecipeFactory implements IRecipeFactory {
                         0xFFFFFF,
                         CapsuleItem.getSize(referenceCapsule),
                         CapsuleItem.isOverpowered(referenceCapsule),
-                        referenceCapsule.getTagCompound() != null ? referenceCapsule.getTagCompound().getString("label") : null,
+                        referenceCapsule.getTag() != null ? referenceCapsule.getTag().getString("label") : null,
                         0
                 );
                 CapsuleItem.setBlueprint(blueprintItem);
                 // hack to force a tempalte copy if it's not done after craft
-                if (blueprintItem.getTagCompound() != null) {
-                    blueprintItem.getTagCompound().setBoolean("templateShouldBeCopied", true);
+                if (blueprintItem.getTag() != null) {
+                    blueprintItem.getTag().putBoolean("templateShouldBeCopied", true);
                 }
                 CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
                 return blueprintItem;

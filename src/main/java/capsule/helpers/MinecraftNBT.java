@@ -1,7 +1,7 @@
 package capsule.helpers;
 
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 
 public class MinecraftNBT {
     /**
@@ -9,21 +9,21 @@ public class MinecraftNBT {
      */
     @SuppressWarnings("ConstantConditions")
     public static boolean hasColor(ItemStack stack) {
-        if (!stack.hasTagCompound()) return false;
-        if (!stack.getTagCompound().hasKey("display", 10)) return false;
-        return stack.getTagCompound().getCompoundTag("display").hasKey("color", 3);
+        if (!stack.hasTag()) return false;
+        if (!stack.getTag().contains("display", 10)) return false;
+        return stack.getTag().getCompound("display").contains("color", 3);
     }
 
     /**
      * Return the color for the specified ItemStack.
      */
     public static int getColor(ItemStack stack) {
-        NBTTagCompound nbttagcompound = stack.getTagCompound();
+        CompoundNBT nbttagcompound = stack.getTag();
 
         if (nbttagcompound != null) {
-            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-            if (nbttagcompound1.hasKey("color", 3)) {
-                return nbttagcompound1.getInteger("color");
+            CompoundNBT nbttagcompound1 = nbttagcompound.getCompound("display");
+            if (nbttagcompound1.contains("color", 3)) {
+                return nbttagcompound1.getInt("color");
             }
         }
 
@@ -34,18 +34,18 @@ public class MinecraftNBT {
      * Sets the color of the specified ItemStack
      */
     public static void setColor(ItemStack stack, int color) {
-        NBTTagCompound nbttagcompound = stack.getTagCompound();
+        CompoundNBT nbttagcompound = stack.getTag();
 
         if (nbttagcompound == null) {
-            nbttagcompound = new NBTTagCompound();
-            stack.setTagCompound(nbttagcompound);
+            nbttagcompound = new CompoundNBT();
+            stack.setTag(nbttagcompound);
         }
 
-        NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("display");
-        if (!nbttagcompound.hasKey("display", 10)) {
+        CompoundNBT nbttagcompound1 = nbttagcompound.getCompound("display");
+        if (!nbttagcompound.contains("display", 10)) {
             nbttagcompound.setTag("display", nbttagcompound1);
         }
 
-        nbttagcompound1.setInteger("color", color);
+        nbttagcompound1.putInt("color", color);
     }
 }

@@ -2,9 +2,9 @@ package capsule.loot;
 
 import capsule.Config;
 import capsule.helpers.Capsule;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -28,19 +28,19 @@ public class StarterLoot {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
             }
-            EntityPlayerMP player = (EntityPlayerMP) event.player;
-            NBTTagCompound playerData = player.getEntityData();
-            NBTTagCompound data;
-            if (!playerData.hasKey("PlayerPersisted")) {
-                data = new NBTTagCompound();
+            PlayerEntityMP player = (PlayerEntityMP) event.player;
+            CompoundNBT playerData = player.getEntityData();
+            CompoundNBT data;
+            if (!playerData.contains("PlayerPersisted")) {
+                data = new CompoundNBT();
             } else {
-                data = playerData.getCompoundTag("PlayerPersisted");
+                data = playerData.getCompound("PlayerPersisted");
             }
             LOGGER.info("playerLogin: " + (data.getBoolean("capsule:receivedStarter") ? "already received starters" : "giving starters now"));
             if (!data.getBoolean("capsule:receivedStarter")) {
                 if ("all".equals(Config.starterMode.toLowerCase())) {
                     giveAllStarters(player, Config.starterTemplatesList);
-                    data.setBoolean("capsule:receivedStarter", true);
+                    data.putBoolean("capsule:receivedStarter", true);
 
                 } else if ("random".equals(Config.starterMode)) {
                     giveAllStarters(player, Collections.singletonList(
@@ -48,7 +48,7 @@ public class StarterLoot {
                                     (int) (Math.random() * Config.starterTemplatesList.size())
                             )
                     ));
-                    data.setBoolean("capsule:receivedStarter", true);
+                    data.putBoolean("capsule:receivedStarter", true);
                 }
                 playerData.setTag("PlayerPersisted", data);
             }
@@ -56,7 +56,7 @@ public class StarterLoot {
         }
     }
 
-    public void giveAllStarters(EntityPlayerMP player, List<String> allStartersToGive) {
+    public void giveAllStarters(PlayerEntityMP player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
             int stackIdx = player.inventory.getFirstEmptyStack();

@@ -1,0 +1,35 @@
+# This is an example mods.toml file. It contains the data relating to the loading mods.
+# There are several mandatory fields (#mandatory), and many more that are optional (#optional).
+# The overall format is standard TOML format, v0.5.0.
+# Note that there are a couple of TOML lists in this file.
+# Find more information on toml format here:  https://github.com/toml-lang/toml
+# The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
+modLoader="javafml" #mandatory
+# A version range to match for said mod loader - for regular FML @Mod it will be the forge version
+loaderVersion="[31,)" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+# A URL to refer people to when problems occur with this mod
+issueTrackerURL="https://github.com/Lythom/capsule/issues" #optional
+# A list of mods - how many allowed here is determined by the individual mod loader
+[[mods]] #mandatory
+# The modid of the mod
+modId="capsule" #mandatory
+# The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
+version="${file.jarVersion}" #mandatory
+ # A display name for the mod
+displayName="Capsule" #mandatory
+# A URL to query for updates for this mod. See the JSON update specification <here>
+# updateJSONURL="https://www.curseforge.com/minecraft/mc-mods/capsule" #optional
+# A URL for the "homepage" for this mod, displayed in the mod UI
+displayURL="https://www.curseforge.com/minecraft/mc-mods/capsule" #optional
+# A file name (in the root of the mod JAR) containing a logo for display
+logoFile="assets/capsule/textures/items/capsule_base.png" #optional
+# A text field displayed in the mod UI
+# credits="Thanks for this example mod goes to Java" #optional
+# A text field displayed in the mod UI
+authors="Lythom" #optional
+# The description text for the mod (multi line!) (#mandatory)
+description='''
+Bring your base!
+Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will.
+Inspired by Dragon Ball capsules.
+'''

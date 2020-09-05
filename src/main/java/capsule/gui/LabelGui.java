@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -21,10 +21,10 @@ public class LabelGui extends GuiScreen {
     public static int GUI_HEIGHT = 20;
 
     private GuiTextField textInput;
-    private EntityPlayer player;
+    private PlayerEntity player;
     private GuiButton buttonDone;
 
-    public LabelGui(EntityPlayer player) {
+    public LabelGui(PlayerEntity player) {
         this.player = player;
     }
 
@@ -44,9 +44,9 @@ public class LabelGui extends GuiScreen {
 
         String label = "";
         ItemStack itemStack = this.getItemStack();
-        if (!itemStack.isEmpty() && itemStack.hasTagCompound()) {
+        if (!itemStack.isEmpty() && itemStack.hasTag()) {
             //noinspection ConstantConditions
-            label = itemStack.getTagCompound().getString("label");
+            label = itemStack.getTag().getString("label");
         }
         textInput.setText(label);
 

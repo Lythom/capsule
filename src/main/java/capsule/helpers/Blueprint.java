@@ -10,16 +10,16 @@ import com.google.gson.JsonObject;
 import net.minecraft.block.*;
 import net.minecraft.block.BlockDoublePlant.EnumPlantType;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.Fluid;
@@ -43,7 +43,7 @@ public class Blueprint {
     public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo) {
         final IBlockState state = blockInfo.blockState;
         Block block = state.getBlock();
-        NBTTagCompound blockNBT = blockInfo.tileentityData;
+        CompoundNBT blockNBT = blockInfo.tileentityData;
         try {
             // prevent door to beeing counted twice
             if (block instanceof BlockDoor) {
@@ -54,7 +54,7 @@ public class Blueprint {
 
             } else if (block instanceof BlockBed) {
                 if (state.getValue(BlockBed.PART) == BlockBed.EnumPartType.HEAD) {
-                    return new ItemStack(Items.BED, 1, blockInfo.tileentityData.getInteger("color"));
+                    return new ItemStack(Items.BED, 1, blockInfo.tileentityData.getInt("color"));
                 }
                 return ItemStack.EMPTY; // Bed foot is free, only head counts.
 
@@ -91,9 +91,9 @@ public class Blueprint {
             }
             ItemStack item = block.getItem(null, null, state);
             if (blockNBT != null) {
-                if (blockNBT.hasKey("dummy") && blockNBT.getBoolean("dummy"))
+                if (blockNBT.contains("dummy") && blockNBT.getBoolean("dummy"))
                     return ItemStack.EMPTY; // second part of Immersive engineering extended block.
-                NBTTagCompound itemNBT = new NBTTagCompound();
+                CompoundNBT itemNBT = new CompoundNBT();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
                 for (String key : blockNBT.getKeySet()) {
                     if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
@@ -102,7 +102,7 @@ public class Blueprint {
                     }
                 }
                 if (itemNBT.getSize() > 0) {
-                    item.setTagCompound(itemNBT);
+                    item.setTag(itemNBT);
                 }
             }
             return item;
@@ -117,15 +117,15 @@ public class Blueprint {
     }
 
     @Nullable
-    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, WorldServer
-            worldserver, EntityPlayer player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, ServerWorld
+            worldserver, PlayerEntity player) {
         CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return null;
 
         return getMaterialList(blueprintTemplate, player);
     }
 
-    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable EntityPlayer player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
         for (Template.BlockInfo block : blueprintTemplate.blocks) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);

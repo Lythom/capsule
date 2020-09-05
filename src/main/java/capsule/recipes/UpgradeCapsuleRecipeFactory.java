@@ -46,7 +46,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
                 for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                     ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                    if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                    if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit.get()) {
                         sourceCapsule = itemstack;
                     } else if (upgradeIngredient.apply(itemstack)) {
                         material++;
@@ -56,7 +56,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
                 }
             }
 
-            return sourceCapsule != null && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit;
+            return sourceCapsule != null && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit.get();
         }
 
         /**
@@ -69,7 +69,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
                 for (int j = 0; j < craftingGrid.getWidth(); ++j) {
                     ItemStack itemstack = craftingGrid.getStackInRowAndColumn(j, i);
 
-                    if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
+                    if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                         input = itemstack;
                     } else if (upgradeIngredient.apply(itemstack)) {
                         material++;

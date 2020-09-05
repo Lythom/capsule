@@ -51,7 +51,7 @@ public class BlockCapsuleMarker extends BlockContainer {
     }
 
     public Boolean isProjecting(TileEntityCapture tec) {
-        return tec != null && tec.getTileData().getInteger("size") > 0;
+        return tec != null && tec.getTileData().getInt("size") > 0;
     }
 
     protected BlockStateContainer createBlockState() {
@@ -62,7 +62,7 @@ public class BlockCapsuleMarker extends BlockContainer {
         return 0;
     }
 
-    @SideOnly(Side.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public BlockRenderLayer getBlockLayer() {
         return BlockRenderLayer.CUTOUT_MIPPED;
     }

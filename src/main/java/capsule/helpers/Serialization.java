@@ -3,6 +3,7 @@ package capsule.helpers;
 import net.minecraft.block.Block;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,16 +14,16 @@ import java.util.stream.Collectors;
 public class Serialization {
     protected static final Logger LOGGER = LogManager.getLogger(Serialization.class);
 
-    public static Block[] deserializeBlockArray(String[] blockIds) {
+    public static List<Block> deserializeBlockList(String[] blockIds) {
         ArrayList<Block> states = new ArrayList<>();
         ArrayList<String> notfound = new ArrayList<>();
 
         for (String blockId : blockIds) {
-            Block b = Block.getBlockFromName(blockId);
+            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockId));
             if (b != null) {
                 states.add(b);
             } else {
-                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValuesCollection().stream()
+                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
                         .filter(block -> {
                             ResourceLocation registryName = block.getRegistryName();
                             if (registryName == null) return false;
@@ -42,16 +43,15 @@ public class Serialization {
             ));
         }
         Block[] output = new Block[states.size()];
-        return states.toArray(output);
+        return states;
     }
 
     public static String[] serializeBlockArray(Block[] states) {
-
         String[] blocksNames = new String[states.length];
         for (int i = 0; i < states.length; i++) {
-            blocksNames[i] = Block.REGISTRY.getNameForObject(states[i]).toString();
+            ResourceLocation registryName = states[i].getRegistryName();
+            blocksNames[i] = registryName == null ? null : registryName.toString();
         }
         return blocksNames;
-
     }
 }

@@ -2,7 +2,7 @@ package capsule.structure;
 
 import com.google.common.collect.Maps;
 import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.datafix.DataFixer;
@@ -144,11 +144,11 @@ public class CapsuleTemplateManager
      */
     public void readTemplateFromStream(String id, InputStream stream) throws IOException
     {
-        NBTTagCompound nbttagcompound = CompressedStreamTools.readCompressed(stream);
+        CompoundNBT nbttagcompound = CompressedStreamTools.readCompressed(stream);
 
-        if (!nbttagcompound.hasKey("DataVersion", 99))
+        if (!nbttagcompound.contains("DataVersion", 99))
         {
-            nbttagcompound.setInteger("DataVersion", 500);
+            nbttagcompound.putInt("DataVersion", 500);
         }
 
         CapsuleTemplate template = new CapsuleTemplate();
@@ -186,7 +186,7 @@ public class CapsuleTemplateManager
 
             try
             {
-                NBTTagCompound nbttagcompound = template.writeToNBT(new NBTTagCompound());
+                CompoundNBT nbttagcompound = template.writeToNBT(new CompoundNBT());
                 outputstream = new FileOutputStream(file2);
                 CompressedStreamTools.writeCompressed(nbttagcompound, outputstream);
                 flag = true;
@@ -231,7 +231,7 @@ public class CapsuleTemplateManager
             try
             {
                 inputstream = new FileInputStream(file1);
-                NBTTagCompound schematicNBT = CompressedStreamTools.readCompressed(inputstream);
+                CompoundNBT schematicNBT = CompressedStreamTools.readCompressed(inputstream);
                 CapsuleTemplate template = new CapsuleTemplate();
                 template.readSchematic(schematicNBT);
                 this.templates.put(s, template);

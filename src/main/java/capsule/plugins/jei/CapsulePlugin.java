@@ -43,7 +43,7 @@ public class CapsulePlugin implements IModPlugin {
 
         Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
-            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
+            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit.get()); upLevel++) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
                 NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
                 ingredients.set(0, Ingredient.fromStacks(capsule));
@@ -94,8 +94,8 @@ public class CapsulePlugin implements IModPlugin {
         @Override
         public String apply(ItemStack itemStack) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
-            String isOP = String.valueOf(itemStack.getTagCompound() != null && itemStack.getTagCompound().hasKey("overpowered") && itemStack.getTagCompound().getBoolean("overpowered"));
-            String capsuleState = String.valueOf(itemStack.getItemDamage());
+            String isOP = String.valueOf(itemStack.getTag() != null && itemStack.getTag().contains("overpowered") && itemStack.getTag().getBoolean("overpowered"));
+            String capsuleState = String.valueOf(itemStack.getDamage());
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));
             String label = CapsuleItem.getLabel(itemStack);

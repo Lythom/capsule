@@ -7,7 +7,7 @@ import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import org.apache.logging.log4j.LogManager;
@@ -23,8 +23,8 @@ public class Enchantments {
     @SuppressWarnings("rawtypes")
     public static final Predicate hasRecallEnchant = new Predicate() {
         public boolean apply(Entity entityIn) {
-            return entityIn instanceof EntityItem
-                    && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((EntityItem) entityIn).getItem()) > 0;
+            return entityIn instanceof ItemEntity
+                    && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
         }
 
         public boolean test(Object obj) {

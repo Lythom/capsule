@@ -1,20 +1,36 @@
 /mods
 /saves
-/bin
 /crash-reports
 /logs
 /config/splash.properties
-/.gradle
 /world
-/.project
-/.settings
 /eclipse
-/.classpath
-/build
 /classes
-/run
-/run/config/splash.properties
-/out
-/.idea
 /*_run.zip
 /public
+
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+
+# Files from Forge MDK
+forge*changelog.txt

@@ -5,12 +5,12 @@ import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
 import capsule.network.CapsuleUndeployNotifToClient;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -52,17 +52,17 @@ public class CapsuleThrowQueryHandler
 
         // we know for sure that this handler is only used on the server side,
         // so it is ok to assume
-        // that the ctx handler is a serverhandler, and that WorldServer exists.
+        // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
+        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("EntityPlayerMP was null when CapsuleThrowQueryToServer was received");
+            LOGGER.error("PlayerEntityMP was null when CapsuleThrowQueryToServer was received");
             return null;
         }
 
         // Execute the action on the main server thread by adding it as a scheduled task
-        WorldServer world = sendingPlayer.getServerWorld();
+        ServerWorld world = sendingPlayer.getServerWorld();
         world.addScheduledTask(() -> {
             ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
             if (heldItem.getItem() instanceof CapsuleItem) {
@@ -70,7 +70,7 @@ public class CapsuleThrowQueryHandler
                     int size = CapsuleItem.getSize(heldItem);
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
-                    if (heldItem.getItemDamage() == CapsuleItem.STATE_EMPTY) {
+                    if (heldItem.getDamage() == CapsuleItem.STATE_EMPTY) {
                         boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getName(), size, world, message.pos);
                         if (captured) {
                             BlockPos center = message.pos.add(0, size / 2, 0);

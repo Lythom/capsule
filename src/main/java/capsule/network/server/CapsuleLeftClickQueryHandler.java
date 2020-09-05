@@ -4,7 +4,7 @@ import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleLeftClickQueryToServer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
@@ -53,12 +53,12 @@ public class CapsuleLeftClickQueryHandler
 
         // we know for sure that this handler is only used on the server side,
         // so it is ok to assume
-        // that the ctx handler is a serverhandler, and that WorldServer exists.
+        // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
+        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("EntityPlayerMP was null when CapsuleLeftClickQueryToServer was received");
+            LOGGER.error("PlayerEntityMP was null when CapsuleLeftClickQueryToServer was received");
             return null;
         }
 
@@ -66,7 +66,7 @@ public class CapsuleLeftClickQueryHandler
         sendingPlayer.getServerWorld().addScheduledTask(() -> {
             // read the content of the template and send it back to the client
             ItemStack stack = sendingPlayer.getHeldItemMainhand();
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getItemDamage() == CapsuleItem.STATE_DEPLOYED) {
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getDamage() == CapsuleItem.STATE_DEPLOYED) {
                 // Reload if no missing materials
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {

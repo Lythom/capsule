@@ -7,11 +7,11 @@ import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
@@ -54,12 +54,12 @@ public class CapsuleContentPreviewQueryHandler
 
         // we know for sure that this handler is only used on the server side,
         // so it is ok to assume
-        // that the ctx handler is a serverhandler, and that WorldServer exists.
+        // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final EntityPlayerMP sendingPlayer = ctx.getServerHandler().player;
+        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("EntityPlayerMP was null when AskCapsuleContentPreviewMessageToServer was received");
+            LOGGER.error("PlayerEntityMP was null when AskCapsuleContentPreviewMessageToServer was received");
             return null;
         }
 
@@ -69,7 +69,7 @@ public class CapsuleContentPreviewQueryHandler
             return null;
         }
 
-        WorldServer serverworld = sendingPlayer.getServerWorld();
+        ServerWorld serverworld = sendingPlayer.getServerWorld();
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
         CapsuleTemplate template = templatepair.getRight();
 
@@ -77,9 +77,9 @@ public class CapsuleContentPreviewQueryHandler
             List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.blocks);
             return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 
-        } else if (heldItem.hasTagCompound()) {
+        } else if (heldItem.hasTag()) {
             //noinspection ConstantConditions
-            String structureName = heldItem.getTagCompound().getString("structureName");
+            String structureName = heldItem.getTag().getString("structureName");
             sendingPlayer.sendMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
         }
 

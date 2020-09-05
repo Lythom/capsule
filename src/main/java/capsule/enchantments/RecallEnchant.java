@@ -5,12 +5,12 @@ import capsule.items.CapsuleItem;
 import com.google.common.base.Strings;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
@@ -21,7 +21,7 @@ import java.util.List;
 public class RecallEnchant extends Enchantment {
 
     protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnumEnchantmentType enchType) {
-        super(rarity, enchType, EntityEquipmentSlot.values());
+        super(rarity, enchType, EquipmentSlotType.values());
         this.setName("recall");
         this.setRegistryName(enchName);
     }
@@ -51,7 +51,7 @@ public class RecallEnchant extends Enchantment {
         return 1;
     }
 
-    public void pickupItemBack(EntityItem entity, EntityPlayer player) {
+    public void pickupItemBack(ItemEntity entity, PlayerEntity player) {
 
         if (player != null) {
             entity.setNoPickupDelay();
@@ -66,11 +66,11 @@ public class RecallEnchant extends Enchantment {
         if (wte.side == Side.CLIENT || wte.phase != Phase.END)
             return;
 
-        WorldServer world = (WorldServer) wte.world;
+        ServerWorld world = (ServerWorld) wte.world;
         @SuppressWarnings("unchecked")
-        List<EntityItem> recallEntities = world.<EntityItem>getEntities(EntityItem.class, Enchantments.hasRecallEnchant::test);
-        for (EntityItem entity : recallEntities) {
-            if (!Strings.isNullOrEmpty(entity.getThrower()) && (entity.collided || Spacial.entityItemShouldAndCollideLiquid(entity))) {
+        List<ItemEntity> recallEntities = world.<ItemEntity>getEntities(ItemEntity.class, Enchantments.hasRecallEnchant::test);
+        for (ItemEntity entity : recallEntities) {
+            if (!Strings.isNullOrEmpty(entity.getThrower()) && (entity.collided || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.onUpdate();

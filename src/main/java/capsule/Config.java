@@ -2,79 +2,124 @@ package capsule;
 
 import capsule.helpers.Serialization;
 import capsule.loot.LootPathData;
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.pattern.BlockMaterialMatcher;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.storage.loot.LootTableList;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@EventBusSubscriber
 public class Config {
 
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Config.class);
 
-    public static Configuration config = null;
-    public static List<Block> excludedBlocks;
-    public static List<Block> overridableBlocks;
-    public static List<Block> opExcludedBlocks;
-    public static String[] lootTemplatesPaths;
-    public static List<String> lootTablesList;
-    public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
-    public static String starterTemplatesPath;
-    public static List<String> starterTemplatesList = new ArrayList<>();
-    public static String prefabsTemplatesPath;
-    public static String rewardTemplatesPath;
-    public static int upgradeLimit;
-    public static HashMap<String, JsonObject> blueprintWhitelist;
-    public static boolean allowBlueprintReward;
-    public static String starterMode;
+    private static final ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
+    private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
+    public static ForgeConfigSpec COMMON_CONFIG;
+    public static ForgeConfigSpec CLIENT_CONFIG;
 
-    public static String enchantRarity;
-    public static String recallEnchantType;
-    public static Map<String, Integer> capsuleSizes = new HashMap<>();
+    public static final String CATEGORY_BALANCE = "balance";
+    public static final String CATEGORY_LOOT = "loot";
+    public static final String CATEGORY_RECIPE = "recipe";
+    public static final String CATEGORY_ENCHANTS = "enchants";
 
-    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get("ironCapsuleSize");
-    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get("goldCapsuleSize");
-    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get("diamondCapsuleSize");
-    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get("opCapsuleSize");
+    static {
+        COMMON_BUILDER.comment("Balancing settings").push(CATEGORY_BALANCE);
+        COMMON_BUILDER.pop();
+        initCaptureConfigs();
 
-    public static File configDir = null;
+        COMMON_BUILDER.comment("Loot settings").push(CATEGORY_LOOT);
+        COMMON_BUILDER.pop();
+        initLootConfigs();
 
-    public static void readConfig(Configuration config) {
-        try {
-            Config.config = config;
-            config.load();
-        } catch (Exception e1) {
-            LOGGER.error("Problem loading config file !", e1);
-        } finally {
-            if (config.hasChanged()) {
-                config.save();
-            }
-        }
+        COMMON_BUILDER.comment("Recipe settings").push(CATEGORY_RECIPE);
+        COMMON_BUILDER.pop();
+        initRecipesConfigs();
+
+        COMMON_BUILDER.comment("enchants settings").push(CATEGORY_ENCHANTS);
+        COMMON_BUILDER.pop();
+        initEnchantsConfigs();
+
+        COMMON_BUILDER.pop();
+        COMMON_CONFIG = COMMON_BUILDER.build();
+        CLIENT_CONFIG = CLIENT_BUILDER.build();
     }
+
+    public static ForgeConfigSpec.ConfigValue<List<Block>> excludedBlocks;
+    public static ForgeConfigSpec.ConfigValue<List<Block>> overridableBlocks;
+    public static ForgeConfigSpec.ConfigValue<List<Block>> opExcludedBlocks;
+    public static ForgeConfigSpec.ConfigValue<String[]> lootTemplatesPaths;
+    public static ForgeConfigSpec.ConfigValue<List<String>> lootTablesList;
+    public static ForgeConfigSpec.ConfigValue<Map<String, LootPathData>> lootTemplatesData;
+    public static ForgeConfigSpec.ConfigValue<String> starterTemplatesPath;
+    public static ForgeConfigSpec.ConfigValue<List<String>> starterTemplatesList;
+    public static ForgeConfigSpec.ConfigValue<String> prefabsTemplatesPath;
+    public static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPath;
+    public static ForgeConfigSpec.IntValue upgradeLimit;
+    public static ForgeConfigSpec.ConfigValue<HashMap<String, JsonObject>> blueprintWhitelist;
+    public static ForgeConfigSpec.BooleanValue allowBlueprintReward;
+    public static ForgeConfigSpec.ConfigValue<String> starterMode;
+
+    public static ForgeConfigSpec.ConfigValue<String> enchantRarity;
+    public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
+    public static ForgeConfigSpec.ConfigValue<Map<String, Integer>> capsuleSizes;
+
+    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get().get("ironCapsuleSize");
+    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get().get("goldCapsuleSize");
+    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get().get("diamondCapsuleSize");
+    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get().get("opCapsuleSize");
+
+    public static Path configDir = null;
+
+    public static void loadConfig(ForgeConfigSpec spec, Path path) {
+
+        final CommentedFileConfig configData = CommentedFileConfig.builder(path)
+                .sync()
+                .autosave()
+                .writingMode(WritingMode.REPLACE)
+                .build();
+
+        configData.load();
+        spec.setConfig(configData);
+    }
+
+    @SubscribeEvent
+    public static void onLoad(final ModConfig.Loading configEvent) {
+
+    }
+
+    @SubscribeEvent
+    public static void onReload(final ModConfig.Reloading configEvent) {
+    }
+
 
     public static void initCaptureConfigs() {
 
         // upgrade limits
-        Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
-        upgradesLimit.setComment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
-        Config.upgradeLimit = upgradesLimit.getInt();
+        upgradeLimit = COMMON_BUILDER.comment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.")
+                .defineInRange("capsuleUpgradesLimit", 10, 0, Integer.MAX_VALUE);
 
         // Excluded
         Block[] defaultExcludedBlocksOP = new Block[]{Blocks.AIR, Blocks.STRUCTURE_VOID, Blocks.BEDROCK};
-        Block[] defaultExcludedBlocks = new Block[]{Blocks.MOB_SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME};
+        Block[] defaultExcludedBlocks = new Block[]{Blocks.SPAWNER, Blocks.END_PORTAL, Blocks.END_PORTAL_FRAME};
 
-        String[] excludedBlocksOP = ArrayUtils.addAll(
+        String[] excludedBlocksOPArray = ArrayUtils.addAll(
                 Serialization.serializeBlockArray(defaultExcludedBlocksOP),
                 "ic2:",
                 "refinedstorage:",
@@ -85,54 +130,23 @@ public class Config {
                 "mekanism:machineblock",
                 "mekanism:boundingblock"
         );
-        String[] excludedBlocks = ArrayUtils.addAll(
+        String[] excludedBlocksStandardArray = ArrayUtils.addAll(
                 Serialization.serializeBlockArray(defaultExcludedBlocks),
-                excludedBlocksOP
+                excludedBlocksOPArray
         );
-        Property excludedBlocksProp = Config.config.get("Balancing", "excludedBlocks", excludedBlocks);
-        excludedBlocksProp.setComment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner");
-        Block[] exBlocks = null;
-        exBlocks = Serialization.deserializeBlockArray(excludedBlocksProp.getStringList());
-        Config.excludedBlocks = Arrays.asList(exBlocks);
+        excludedBlocks = COMMON_BUILDER.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner")
+                .define("excludedBlocks", Serialization.deserializeBlockList(excludedBlocksStandardArray));
 
-        // OP Excluded
-        Property opExcludedBlocksProp = Config.config.get("Balancing", "opExcludedBlocks", excludedBlocksOP);
-        opExcludedBlocksProp.setComment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:mob_spawner");
-        Block[] opExBlocks = null;
-
-        opExBlocks = Serialization.deserializeBlockArray(opExcludedBlocksProp.getStringList());
-        Config.opExcludedBlocks = Arrays.asList(opExBlocks);
-
+        opExcludedBlocks = COMMON_BUILDER.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:mob_spawner")
+                .define("excludedBlocks", Serialization.deserializeBlockList(excludedBlocksOPArray));
 
         // Overridable
-        Block[] defaultOverridable = new Block[]{Blocks.AIR, Blocks.WATER, Blocks.LEAVES,
-                Blocks.LEAVES2, Blocks.TALLGRASS, Blocks.RED_FLOWER, Blocks.YELLOW_FLOWER,
-                Blocks.SNOW_LAYER, Blocks.BROWN_MUSHROOM, Blocks.RED_MUSHROOM, Blocks.DOUBLE_PLANT};
-
-        String[] dynamicOverridable = ForgeRegistries.BLOCKS.getValuesCollection().stream()
-                .filter(block -> {
-                    ResourceLocation registryName = block.getRegistryName();
-                    String domain = registryName != null ? registryName.getResourceDomain() : "";
-                    String path = registryName != null ? registryName.getResourcePath().toLowerCase() : "";
-                    return Arrays.stream(new String[]{"capsule", "minecraft"}).noneMatch(d -> d.equalsIgnoreCase(domain))
-                            && Arrays.stream(new String[]{"leaves", "sapling", "mushroom", "vine"}).anyMatch(path::contains);
-                })
-                .map(block -> block.getRegistryName().toString())
-                .toArray(String[]::new);
-
-        Property overridableBlocksProp = Config.config.get(
-                "Balancing",
-                "overridableBlocks",
-                ArrayUtils.addAll(
-                        Serialization.serializeBlockArray(defaultOverridable),
-                        dynamicOverridable)
-
-        );
-        overridableBlocksProp.setComment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.");
-
-        Block[] ovBlocks = null;
-        ovBlocks = Serialization.deserializeBlockArray(overridableBlocksProp.getStringList());
-        Config.overridableBlocks = Arrays.asList(ovBlocks);
+        List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.TALL_PLANTS, Material.SNOW);
+        List<Block> overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
+                .filter(block -> overridableMaterials.contains(block.getDefaultState().getMaterial()))
+                .collect(Collectors.toList());
+        overridableBlocks = COMMON_BUILDER.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
+                .define("overridableBlocks", overridableBlocksList);
     }
 
     public static void initLootConfigs() {

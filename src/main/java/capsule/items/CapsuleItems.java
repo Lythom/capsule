@@ -82,7 +82,7 @@ public class CapsuleItems {
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
-        unlabelledCapsule.setItemDamage(CapsuleItem.STATE_LINKED);
+        unlabelledCapsule.setDamage(CapsuleItem.STATE_LINKED);
         CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
         return unlabelledCapsule;
     }

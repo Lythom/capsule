@@ -14,23 +14,24 @@ import com.google.common.base.Joiner;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.*;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.ClickEvent.Action;
 import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.WorldServer;
+import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraft.world.storage.loot.LootContext;
@@ -110,7 +111,7 @@ public class CapsuleCommand extends CommandBase {
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
 
-        EntityPlayerMP player = null;
+        PlayerEntityMP player = null;
         switch (args.length) {
             case 1:
                 return getListOfStringsMatchingLastWord(args, COMMAND_LIST);
@@ -159,9 +160,9 @@ public class CapsuleCommand extends CommandBase {
             throw new WrongUsageException(getUsage(sender));
         }
 
-        EntityPlayerMP player = null;
-        if (sender instanceof EntityPlayerMP) {
-            player = (EntityPlayerMP) sender;
+        PlayerEntityMP player = null;
+        if (sender instanceof PlayerEntityMP) {
+            player = (PlayerEntityMP) sender;
         }
 
         if ("giveEmpty".equalsIgnoreCase(args[0])) {
@@ -205,7 +206,7 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeGiveEmpty(String[] args, EntityPlayerMP player) {
+    private void executeGiveEmpty(String[] args, PlayerEntityMP player) {
         if (player != null) {
             ItemStack capsule = Capsule.newEmptyCapsuleItemStack(
                     0xFFFFFF,
@@ -219,12 +220,12 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeGiveLinked(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP p) throws CommandException {
+    private void executeGiveLinked(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP p) throws CommandException {
         StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
+        PlayerEntityMP player = structureAndPlayerArgs.getTargetedPlayer();
         String srcStructureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(srcStructureName), player);
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
@@ -234,12 +235,12 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeGiveBlueprint(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP p) throws CommandException {
+    private void executeGiveBlueprint(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP p) throws CommandException {
         StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
+        PlayerEntityMP player = structureAndPlayerArgs.getTargetedPlayer();
         String srcStructureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
 
             CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(srcStructureName), server);
             if (srcTemplate != null) {
@@ -272,7 +273,7 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeGiveRandomLoot(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws CommandException {
+    private void executeGiveRandomLoot(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP player) throws CommandException {
         if (args.length != 1 && args.length != 2) {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -294,12 +295,12 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeFromExistingReward(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP p) throws CommandException {
+    private void executeFromExistingReward(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP p) throws CommandException {
         StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
+        PlayerEntityMP player = structureAndPlayerArgs.getTargetedPlayer();
         String structureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof ServerWorld) {
 
             String structurePath = Config.getRewardPathFromName(structureName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(server);
@@ -325,12 +326,12 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeFromStructure(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP p) throws CommandException {
+    private void executeFromStructure(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP p) throws CommandException {
         StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        EntityPlayerMP player = structureAndPlayerArgs.getTargetedPlayer();
+        PlayerEntityMP player = structureAndPlayerArgs.getTargetedPlayer();
         String srcStructureName = structureAndPlayerArgs.getStructureName();
 
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof WorldServer) {
+        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
             // template
             TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
             Template template = templatemanager.get(server, new ResourceLocation(srcStructureName));
@@ -340,7 +341,7 @@ public class CapsuleCommand extends CommandBase {
                     size++;
 
                 // get source template data
-                NBTTagCompound data = new NBTTagCompound();
+                CompoundNBT data = new CompoundNBT();
                 template.writeToNBT(data);
 
                 // create a destination template
@@ -367,19 +368,19 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeFromHeldCapsule(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeFromHeldCapsule(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 1 && args.length != 2) {
             throw new WrongUsageException(getUsage(sender));
         }
 
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
-            if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
+            if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
                 String outputName;
                 if (args.length == 1) {
                     //noinspection ConstantConditions
-                    outputName = heldItem.getTagCompound().getString("label");
+                    outputName = heldItem.getTag().getString("label");
                 } else {
                     outputName = args[1];
                 }
@@ -417,7 +418,7 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeSetMaterialColor(ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeSetMaterialColor(ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 2) {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -437,7 +438,7 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeSetBaseColor(ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeSetBaseColor(ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 2) {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -457,20 +458,20 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeSetAuthor(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeSetAuthor(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 1 && args.length != 2) {
             throw new WrongUsageException(getUsage(sender));
         }
 
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
-            if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTagCompound()) {
+            if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
                 if (args.length == 2) {
                     // set a new author
                     String author = args[1];
                     //noinspection ConstantConditions
-                    heldItem.getTagCompound().setString("author", args[1]);
+                    heldItem.getTag().putString("author", args[1]);
                     Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
@@ -482,7 +483,7 @@ public class CapsuleCommand extends CommandBase {
                 } else {
                     // called with one parameter = remove author information
                     //noinspection ConstantConditions
-                    heldItem.getTagCompound().removeTag("author");
+                    heldItem.getTag().remove("author");
                     Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
@@ -496,13 +497,13 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeExportSeenBlock(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeExportSeenBlock(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 1) {
             throw new WrongUsageException(getUsage(sender));
         }
         if (player != null) {
             if (!server.isDedicatedServer()) {
-                RayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
+                BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
 
                 if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
 
@@ -528,7 +529,7 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void executeExportHeldItem(ICommandSender sender, String[] args, EntityPlayerMP player) throws WrongUsageException {
+    private void executeExportHeldItem(ICommandSender sender, String[] args, PlayerEntityMP player) throws WrongUsageException {
         if (args.length != 1) {
             throw new WrongUsageException(getUsage(sender));
         }
@@ -536,10 +537,10 @@ public class CapsuleCommand extends CommandBase {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (!heldItem.isEmpty()) {
 
-                String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getItemDamage();
-                if (heldItem.hasTagCompound()) {
+                String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getDamage();
+                if (heldItem.hasTag()) {
                     //noinspection ConstantConditions
-                    command += " " + heldItem.getTagCompound().toString();
+                    command += " " + heldItem.getTag().toString();
                 }
                 TextComponentString msg = new TextComponentString(command);
                 msg.getStyle()
@@ -552,8 +553,8 @@ public class CapsuleCommand extends CommandBase {
         }
     }
 
-    private void giveCapsule(ItemStack capsule, EntityPlayer player) {
-        EntityItem entity = new EntityItem(player.getEntityWorld(), player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
+    private void giveCapsule(ItemStack capsule, PlayerEntity player) {
+        ItemEntity entity = new ItemEntity(player.getEntityWorld(), player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
         entity.setNoPickupDelay();
         entity.onCollideWithPlayer(player);
     }
@@ -563,10 +564,10 @@ public class CapsuleCommand extends CommandBase {
      * Target player must be the last argument.
      */
     private class StructureAndPlayerArgs {
-        private EntityPlayerMP targetedPlayer;
+        private PlayerEntityMP targetedPlayer;
         private String structureName;
 
-        public EntityPlayerMP getTargetedPlayer() {
+        public PlayerEntityMP getTargetedPlayer() {
             return targetedPlayer;
         }
 
@@ -574,14 +575,14 @@ public class CapsuleCommand extends CommandBase {
             return structureName;
         }
 
-        public StructureAndPlayerArgs invoke(MinecraftServer server, ICommandSender sender, String[] args, EntityPlayerMP senderPlayer) throws CommandException {
+        public StructureAndPlayerArgs invoke(MinecraftServer server, ICommandSender sender, String[] args, PlayerEntityMP senderPlayer) throws CommandException {
             if (args.length == 1) {
                 throw new WrongUsageException(getUsage(sender));
             }
             targetedPlayer = senderPlayer;
             int finalArgsCount = 0;
             if (args.length > 2) {
-                EntityPlayerMP p = null;
+                PlayerEntityMP p = null;
                 try {
                     p = getPlayer(server, sender, args[args.length - 1]);
                 } catch (Exception ignored) {
