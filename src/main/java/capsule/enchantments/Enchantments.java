@@ -5,7 +5,7 @@ import capsule.Main;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.enchantment.EnchantmentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.util.ResourceLocation;
@@ -41,9 +41,9 @@ public class Enchantments {
             LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity + ". Using RARE instead.");
         }
 
-        EnumEnchantmentType recallEnchantTypeEnumValue = null;
+        EnchantmentType recallEnchantTypeEnumValue = null;
         try {
-            recallEnchantTypeEnumValue = EnumEnchantmentType.valueOf(Config.recallEnchantType);
+            recallEnchantTypeEnumValue = EnchantmentType.valueOf(Config.recallEnchantType);
         } catch (IllegalArgumentException ignored) {
         }
 

@@ -8,7 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.*;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
-import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.feature.template.Template;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

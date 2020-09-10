@@ -11,7 +11,7 @@ import capsule.loot.CapsuleLootTableHook;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.common.base.Joiner;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.*;
 import net.minecraft.entity.item.ItemEntity;
@@ -26,16 +26,15 @@ import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.ClickEvent.Action;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.structure.template.Template;
-import net.minecraft.world.gen.structure.template.TemplateManager;
+import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.storage.loot.LootContext;
-import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -99,7 +98,7 @@ public class CapsuleCommand extends CommandBase {
     public String getUsage(ICommandSender sender) {
 
         if (!sentUsageURL.contains(sender)) {
-            TextComponentString msg = new TextComponentString(
+            StringTextComponent msg = new StringTextComponent(
                     "see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
             msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
             sender.sendMessage(msg);
@@ -286,7 +285,7 @@ public class CapsuleCommand extends CommandBase {
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool.generateLoot(loots, new Random(), lootcontext$builder.build());
             if (loots.size() <= 0) {
-                player.sendMessage(new TextComponentString("No loot this time !"));
+                player.sendMessage(new StringTextComponent("No loot this time !"));
             } else {
                 for (ItemStack loot : loots) {
                     giveCapsule(loot, player);
@@ -400,7 +399,7 @@ public class CapsuleCommand extends CommandBase {
                 );
 
                 if (!created) {
-                    player.sendMessage(new TextComponentString("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
+                    player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
                     return;
                 }
 
@@ -508,23 +507,23 @@ public class CapsuleCommand extends CommandBase {
                 if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
 
                     BlockPos position = rtc.getBlockPos();
-                    IBlockState state = player.getServerWorld().getBlockState(position);
+                    BlockState state = player.getServerWorld().getBlockState(position);
                     TileEntity tileentity = player.getServerWorld().getTileEntity(position);
 
                     String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 " + state.getBlock().getMetaFromState(state);
                     if (tileentity != null) {
                         command += " {BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
                     }
-                    TextComponentString msg = new TextComponentString(command);
+                    StringTextComponent msg = new StringTextComponent(command);
                     msg.getStyle()
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
                     msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
                     player.sendMessage(msg);
 
                 }
             } else {
-                player.sendMessage(new TextComponentString("This command only works on an integrated server, not on an dedicated one"));
+                player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"));
             }
         }
     }
@@ -542,9 +541,9 @@ public class CapsuleCommand extends CommandBase {
                     //noinspection ConstantConditions
                     command += " " + heldItem.getTag().toString();
                 }
-                TextComponentString msg = new TextComponentString(command);
+                StringTextComponent msg = new StringTextComponent(command);
                 msg.getStyle()
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponentString("Copy/Paste from client log (click to open)")));
+                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
                 msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
                 player.sendMessage(msg);

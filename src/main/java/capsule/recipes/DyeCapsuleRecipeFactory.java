@@ -5,8 +5,8 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
-import net.minecraft.init.Items;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
@@ -28,7 +28,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Used to check if a recipe matches current crafting inventory
          */
-        public boolean matches(InventoryCrafting inv, World worldIn) {
+        public boolean matches(CraftingInventory inv, World worldIn) {
             ItemStack itemstack = ItemStack.EMPTY;
             ArrayList<ItemStack> arraylist = Lists.<ItemStack>newArrayList();
 
@@ -54,7 +54,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Returns an Item that is the result of this recipe
          */
-        public ItemStack getCraftingResult(InventoryCrafting invCrafting) {
+        public ItemStack getCraftingResult(CraftingInventory invCrafting) {
             ItemStack itemstack = ItemStack.EMPTY;
             int[] aint = new int[3];
             int i = 0;
@@ -132,7 +132,7 @@ public class DyeCapsuleRecipeFactory implements IRecipeFactory {
             return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         }
 
-        public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {

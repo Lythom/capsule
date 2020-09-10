@@ -2,7 +2,7 @@ package capsule.recipes;
 
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
@@ -34,7 +34,7 @@ public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * The original capsule remains in the crafting grid
          */
-        public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -51,14 +51,14 @@ public class RecoveryCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Used to check if a recipe matches current crafting inventory
          */
-        public boolean matches(InventoryCrafting inv, World worldIn) {
+        public boolean matches(CraftingInventory inv, World worldIn) {
             return recipe.matches(inv, worldIn);
         }
 
         /**
          * Returns a copy built from the original capsule.
          */
-        public ItemStack getCraftingResult(InventoryCrafting invC) {
+        public ItemStack getCraftingResult(CraftingInventory invC) {
             for (int i = 0; i < invC.getHeight(); ++i) {
                 for (int j = 0; j < invC.getWidth(); ++j) {
                     ItemStack itemstack = invC.getStackInRowAndColumn(j, i);

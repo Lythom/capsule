@@ -8,8 +8,8 @@ import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -71,7 +71,7 @@ public class CapsuleLeftClickQueryHandler
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
                     String missingListText = missing.entrySet().stream().map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getItemStackDisplayName(entry.getKey().itemStack))).collect(Collectors.joining("\n* "));
-                    sendingPlayer.sendMessage(new TextComponentTranslation(
+                    sendingPlayer.sendMessage(new TranslationTextComponent(
                             "Missing : \n* " + missingListText
                     ));
                 }
@@ -90,10 +90,10 @@ public class CapsuleLeftClickQueryHandler
                             placement.setMirror(Mirror.FRONT_BACK);
                             break;
                     }
-                    sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)));
                 } else {
                     placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)));
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }

@@ -3,7 +3,7 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
@@ -31,7 +31,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
             return bp;
         }
 
-        public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
             ItemStack blueprintCapsule = null;
@@ -54,7 +54,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
         /**
          * Used to check if a recipe matches current crafting inventory
          */
-        public boolean matches(InventoryCrafting inv, World worldIn) {
+        public boolean matches(CraftingInventory inv, World worldIn) {
             int sourceCapsule = 0;
             int blueprint = 0;
             for (int i = 0; i < inv.getHeight(); ++i) {
@@ -79,7 +79,7 @@ public class BlueprintChangeRecipeFactory implements IRecipeFactory {
         /**
          * Returns an Item that is the result of this recipe
          */
-        public ItemStack getCraftingResult(InventoryCrafting inv) {
+        public ItemStack getCraftingResult(CraftingInventory inv) {
             String templateStructure = null;
             Integer templateSize = null;
             ItemStack blueprintCapsule = null;

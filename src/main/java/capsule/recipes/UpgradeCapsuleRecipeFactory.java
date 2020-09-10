@@ -4,7 +4,7 @@ import capsule.Config;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -38,7 +38,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Used to check if a recipe matches current crafting inventory
          */
-        public boolean matches(InventoryCrafting craftingGrid, World worldIn) {
+        public boolean matches(CraftingInventory craftingGrid, World worldIn) {
 
             ItemStack sourceCapsule = ItemStack.EMPTY;
             int material = 0;
@@ -62,7 +62,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Returns an Item that is the result of this recipe
          */
-        public ItemStack getCraftingResult(InventoryCrafting craftingGrid) {
+        public ItemStack getCraftingResult(CraftingInventory craftingGrid) {
             ItemStack input = ItemStack.EMPTY;
             int material = 0;
             for (int i = 0; i < craftingGrid.getHeight(); ++i) {

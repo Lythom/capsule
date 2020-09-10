@@ -3,8 +3,8 @@ package capsule.blocks;
 import capsule.Main;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -51,13 +51,13 @@ public class CapsuleBlocks {
 
     @SuppressWarnings("ConstantConditions")
     public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
-        event.getRegistry().register(new ItemBlock(blockCapsuleMarker).setRegistryName(blockCapsuleMarker.getRegistryName()));
+        event.getRegistry().register(new BlockItem(blockCapsuleMarker).setRegistryName(blockCapsuleMarker.getRegistryName()));
 
         // testing blocks
         Map<String, String> env = System.getenv();
         if ("DEV".equals(env.get("__ENV__"))) {
-            event.getRegistry().register(new ItemBlock(blockCaptureCrasher).setRegistryName(blockCaptureCrasher.getRegistryName()));
-            event.getRegistry().register(new ItemBlock(blockDeployCrasher).setRegistryName(blockDeployCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockCaptureCrasher).setRegistryName(blockCaptureCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockDeployCrasher).setRegistryName(blockDeployCrasher.getRegistryName()));
         }
     }
 }

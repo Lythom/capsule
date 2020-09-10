@@ -215,7 +215,7 @@ public class StructureSaver {
         for (BlockPos pos : transferedPositions) {
             IBlockState b = world.getBlockState(pos);
             try {
-                // uses same mechanic for TileEntity than net.minecraft.world.gen.structure.template.Template
+                // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                 if (playerCanRemove(world, pos, player)) {
                     world.setBlockToAir(pos);
                 } else {

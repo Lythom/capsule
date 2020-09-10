@@ -3,7 +3,7 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.NonNullList;
@@ -27,7 +27,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
             return new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         }
 
-        public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+        public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -47,7 +47,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Used to check if a recipe matches current crafting inventory
          */
-        public boolean matches(InventoryCrafting inv, World worldIn) {
+        public boolean matches(CraftingInventory inv, World worldIn) {
             int sourceCapsule = 0;
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
@@ -72,7 +72,7 @@ public class ClearCapsuleRecipeFactory implements IRecipeFactory {
         /**
          * Returns an Item that is the result of this recipe
          */
-        public ItemStack getCraftingResult(InventoryCrafting inv) {
+        public ItemStack getCraftingResult(CraftingInventory inv) {
             for (int i = 0; i < inv.getHeight(); ++i) {
                 for (int j = 0; j < inv.getWidth(); ++j) {
                     ItemStack itemstack = inv.getStackInRowAndColumn(j, i);

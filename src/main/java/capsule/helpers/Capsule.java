@@ -10,17 +10,16 @@ import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.block.Block;
-import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerEntityMP;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.nbt.ByteNBT;
+import net.minecraft.nbt.IntNBT;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagByte;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTTagInt;
-import net.minecraft.nbt.NBTTagString;
+import net.minecraft.nbt.StringNBT;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
@@ -28,7 +27,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -92,7 +91,7 @@ public class Capsule {
                 CapsuleItem.cleanDeploymentTags(capsule);
                 notifyUndeploy(playerIn, startPos, size);
             } else {
-                playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintDontMatch"));
+                playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"));
             }
         } else {
             CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getName(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
@@ -105,7 +104,7 @@ public class Capsule {
                 notifyUndeploy(playerIn, startPos, size);
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
-                playerIn.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
             }
         }
     }
@@ -178,7 +177,7 @@ public class Capsule {
             // send a chat message to explain failure
             PlayerEntity player = playerWorld.getPlayerEntityByName(thrower);
             if (player != null) {
-                player.sendMessage(new TextComponentTranslation("capsule.error.noCaptureBase"));
+                player.sendMessage(new TranslationTextComponent("capsule.error.noCaptureBase"));
             }
         }
 
@@ -207,7 +206,7 @@ public class Capsule {
         return false;
     }
 
-    public static void showUndeployParticules(WorldClient world, BlockPos posFrom, BlockPos posTo, int size) {
+    public static void showUndeployParticules(ClientWorld world, BlockPos posFrom, BlockPos posTo, int size) {
         for (int i = 0; i < 8 * size; i++) {
             double x = (double) posFrom.getX() + 0.5D + Math.random() * size - size * 0.5;
             double y = (double) posFrom.getY() + Math.random() * size - size * 0.5;
@@ -245,7 +244,7 @@ public class Capsule {
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world, player);
         if (missingMaterials == null) {
             if (player != null) {
-                player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+                player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
             }
             return null;
         }
@@ -361,16 +360,16 @@ public class Capsule {
     public static ItemStack newEmptyCapsuleItemStack(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
         ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1, CapsuleItem.STATE_EMPTY);
         MinecraftNBT.setColor(capsule, baseColor); // standard dye is for baseColor
-        capsule.setTagInfo("color", new NBTTagInt(materialColor)); // "color" is for materialColor
-        capsule.setTagInfo("size", new NBTTagInt(size));
+        capsule.setTagInfo("color", new IntNBT(materialColor)); // "color" is for materialColor
+        capsule.setTagInfo("size", new IntNBT(size));
         if (upgraded != null) {
-            capsule.setTagInfo("upgraded", new NBTTagInt(upgraded));
+            capsule.setTagInfo("upgraded", new IntNBT(upgraded));
         }
         if (overpowered) {
-            capsule.setTagInfo("overpowered", new NBTTagByte((byte) 1));
+            capsule.setTagInfo("overpowered", new ByteNBT((byte) 1));
         }
         if (label != null) {
-            capsule.setTagInfo("label", new NBTTagString(label));
+            capsule.setTagInfo("label", new StringNBT(label));
         }
 
         return capsule;

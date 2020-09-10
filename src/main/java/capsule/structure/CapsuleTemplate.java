@@ -3,15 +3,15 @@ package capsule.structure;
 import capsule.Config;
 import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ArmorStandEntity;
 import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.item.EntityPainting;
-import net.minecraft.init.Blocks;
+import net.minecraft.entity.item.PaintingEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.nbt.*;
 import net.minecraft.tileentity.TileEntity;
@@ -27,7 +27,7 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
-import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -93,9 +93,9 @@ public class CapsuleTemplate {
                         .addVector((double) pos.getX(), (double) pos.getY(), (double) pos.getZ())
                         .addVector((double) recenterOffset.getX(), (double) recenterOffset.getY(), (double) recenterOffset.getZ());
                 ListNBT nbttaglist = new ListNBT();
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.x));
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.y));
-                nbttaglist.appendTag(new NBTTagDouble(vec3d1.z));
+                nbttaglist.appendTag(new DoubleNBT(vec3d1.x));
+                nbttaglist.appendTag(new DoubleNBT(vec3d1.y));
+                nbttaglist.appendTag(new DoubleNBT(vec3d1.z));
                 nbttagcompound.setTag("Pos", nbttaglist);
                 nbttagcompound.setUniqueId("UUID", UUID.randomUUID());
                 Entity entity;
@@ -207,7 +207,7 @@ public class CapsuleTemplate {
 
         ListNBT nbttaglist2 = new ListNBT();
 
-        for (IBlockState iblockstate : template$basicpalette) {
+        for (BlockState iblockstate : template$basicpalette) {
             nbttaglist2.appendTag(NBTUtil.writeBlockState(new CompoundNBT(), iblockstate));
         }
 
@@ -252,7 +252,7 @@ public class CapsuleTemplate {
             CompoundNBT nbttagcompound = nbttaglist3.getCompound(j);
             ListNBT nbttaglist2 = nbttagcompound.getTagList("pos", 3);
             BlockPos blockpos = new BlockPos(nbttaglist2.getIntAt(0), nbttaglist2.getIntAt(1), nbttaglist2.getIntAt(2));
-            IBlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInt("state"));
+            BlockState iblockstate = template$basicpalette.stateFor(nbttagcompound.getInt("state"));
             if (iblockstate != null && iblockstate.getMaterial() != Material.AIR) {
                 CompoundNBT nbttagcompound1;
 
@@ -297,7 +297,7 @@ public class CapsuleTemplate {
         ListNBT nbttaglist = new ListNBT();
 
         for (int i : values) {
-            nbttaglist.appendTag(new NBTTagInt(i));
+            nbttaglist.appendTag(new IntNBT(i));
         }
 
         return nbttaglist;
@@ -307,22 +307,22 @@ public class CapsuleTemplate {
         ListNBT nbttaglist = new ListNBT();
 
         for (double d0 : values) {
-            nbttaglist.appendTag(new NBTTagDouble(d0));
+            nbttaglist.appendTag(new DoubleNBT(d0));
         }
 
         return nbttaglist;
     }
 
-    static class BasicPalette implements Iterable<IBlockState> {
-        public static final IBlockState DEFAULT_BLOCK_STATE = Blocks.AIR.getDefaultState();
-        final ObjectIntIdentityMap<IBlockState> ids;
+    static class BasicPalette implements Iterable<BlockState> {
+        public static final BlockState DEFAULT_BLOCK_STATE = Blocks.AIR.getDefaultState();
+        final ObjectIntIdentityMap<BlockState> ids;
         private int lastId;
 
         private BasicPalette() {
             this.ids = new ObjectIntIdentityMap<>(16);
         }
 
-        public int idFor(IBlockState state) {
+        public int idFor(BlockState state) {
             int i = this.ids.get(state);
 
             if (i == -1) {
@@ -334,16 +334,16 @@ public class CapsuleTemplate {
         }
 
         @Nullable
-        public IBlockState stateFor(int id) {
-            IBlockState iblockstate = this.ids.getByValue(id);
+        public BlockState stateFor(int id) {
+            BlockState iblockstate = this.ids.getByValue(id);
             return iblockstate == null ? DEFAULT_BLOCK_STATE : iblockstate;
         }
 
-        public Iterator<IBlockState> iterator() {
+        public Iterator<BlockState> iterator() {
             return this.ids.iterator();
         }
 
-        public void addMapping(IBlockState p_189956_1_, int p_189956_2_) {
+        public void addMapping(BlockState p_189956_1_, int p_189956_2_) {
             this.ids.put(p_189956_1_, p_189956_2_);
         }
     }
@@ -380,7 +380,7 @@ public class CapsuleTemplate {
 
             for (BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos1, blockpos2)) {
                 BlockPos blockpos3 = blockpos$mutableblockpos.subtract(blockpos1);
-                IBlockState iblockstate = worldIn.getBlockState(blockpos$mutableblockpos);
+                BlockState iblockstate = worldIn.getBlockState(blockpos$mutableblockpos);
                 Block iblock = iblockstate.getBlock();
 
                 if (!excluded.contains(iblock) // excluded blocks are not captured at all
@@ -430,7 +430,7 @@ public class CapsuleTemplate {
         List<Entity> list = worldIn.getEntitiesWithinAABB(
                 Entity.class,
                 new AxisAlignedBB(startPos, endPos),
-                entity -> !(entity instanceof ItemEntity) && (!(entity instanceof EntityLivingBase) || (entity instanceof EntityArmorStand))
+                entity -> !(entity instanceof ItemEntity) && (!(entity instanceof LivingEntity) || (entity instanceof ArmorStandEntity))
         );
         entities.clear();
 
@@ -440,8 +440,8 @@ public class CapsuleTemplate {
             entity.writeToNBTOptional(nbttagcompound);
             BlockPos blockpos;
 
-            if (entity instanceof EntityPainting) {
-                blockpos = ((EntityPainting) entity).getHangingPosition().subtract(startPos);
+            if (entity instanceof PaintingEntity) {
+                blockpos = ((PaintingEntity) entity).getHangingPosition().subtract(startPos);
             } else {
                 blockpos = new BlockPos(vec3d);
             }
@@ -480,8 +480,8 @@ public class CapsuleTemplate {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
                         if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
-                        IBlockState iblockstate = template$blockinfo1.blockState.withMirror(placementIn.getMirror());
-                        IBlockState iblockstate1 = iblockstate.withRotation(placementIn.getRotation());
+                        BlockState iblockstate = template$blockinfo1.blockState.withMirror(placementIn.getMirror());
+                        BlockState iblockstate1 = iblockstate.withRotation(placementIn.getRotation());
 
                         if (template$blockinfo1.tileentityData != null) {
                             TileEntity tileentity = worldIn.getTileEntity(blockpos);
@@ -635,7 +635,7 @@ public class CapsuleTemplate {
         }
 
         // get blocks informations
-        IBlockState[] blocksById = getSchematicBlocks(nbt, blockIdsByte, metaArr, numBlocks, palette);
+        BlockState[] blocksById = getSchematicBlocks(nbt, blockIdsByte, metaArr, numBlocks, palette);
         if (blocksById == null) return false;
 
         // get tile entities
@@ -659,7 +659,7 @@ public class CapsuleTemplate {
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < length; ++z) {
                 for (int x = 0; x < width; ++x, index++) {
-                    IBlockState state = blocksById[index];
+                    BlockState state = blocksById[index];
                     if (state.getBlock() != Blocks.AIR) {
                         BlockPos pos = new BlockPos(x, y, z);
                         CompoundNBT teNBT = tiles.get(pos);
@@ -690,8 +690,8 @@ public class CapsuleTemplate {
     }
 
     @Nullable
-    private IBlockState[] getSchematicBlocks(CompoundNBT nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
-        IBlockState[] blocksById = new IBlockState[numBlocks];
+    private BlockState[] getSchematicBlocks(CompoundNBT nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
+        BlockState[] blocksById = new BlockState[numBlocks];
         if (nbt.contains("AddBlocks", Constants.NBT.TAG_BYTE_ARRAY)) {
             byte[] add = nbt.getByteArray("AddBlocks");
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);

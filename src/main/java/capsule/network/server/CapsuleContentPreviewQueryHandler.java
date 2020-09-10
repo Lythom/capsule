@@ -10,7 +10,7 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.PlayerEntityMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -80,7 +80,7 @@ public class CapsuleContentPreviewQueryHandler
         } else if (heldItem.hasTag()) {
             //noinspection ConstantConditions
             String structureName = heldItem.getTag().getString("structureName");
-            sendingPlayer.sendMessage(new TextComponentTranslation("capsule.error.templateNotFound", structureName));
+            sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName));
         }
 
         return null;

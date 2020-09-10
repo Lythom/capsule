@@ -10,10 +10,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootEntry;
-import net.minecraft.world.storage.loot.conditions.LootCondition;
+import net.minecraft.world.storage.loot.ILootGenerator;
+import net.minecraft.world.storage.loot.conditions.ILootCondition;
 import net.minecraft.world.storage.loot.conditions.LootConditionManager;
-import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -23,7 +22,7 @@ import java.util.Random;
 /**
  * @author Lythom
  */
-public class CapsuleLootEntry extends LootEntry {
+public class CapsuleLootEntry extends ILootGenerator {
 
     public static String[] COLOR_PALETTE = new String[]{
             "0xCCCCCC", "0x549b57", "0xe08822", "0x5e8eb7", "0x6c6c6c", "0xbd5757", "0x99c33d", "0x4a4cba", "0x7b2e89", "0x95d5e7", "0xffffff"
@@ -38,7 +37,7 @@ public class CapsuleLootEntry extends LootEntry {
      * @param conditionsIn
      * @param entryName
      */
-    protected CapsuleLootEntry(String templatesPath, int weightIn, int qualityIn, LootCondition[] conditionsIn, String entryName) {
+    protected CapsuleLootEntry(String templatesPath, int weightIn, int qualityIn, ILootCondition[] conditionsIn, String entryName) {
         super(weightIn, qualityIn, conditionsIn, entryName);
         this.templatesPath = templatesPath;
     }

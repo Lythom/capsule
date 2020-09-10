@@ -10,7 +10,7 @@ import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.nbt.NBTTagInt;
+import net.minecraft.nbt.IntNBT;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import org.apache.commons.lang3.tuple.Pair;
@@ -91,7 +91,7 @@ public class CapsuleItems {
         ItemStack capsuleUp = ironCapsule.copy();
         CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
         CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
-        capsuleUp.setTagInfo("upgraded", new NBTTagInt(upLevel));
+        capsuleUp.setTagInfo("upgraded", new IntNBT(upLevel));
         return capsuleUp;
     }
 

@@ -4,7 +4,7 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import com.google.common.base.Strings;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.enchantment.EnchantmentType;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class RecallEnchant extends Enchantment {
 
-    protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnumEnchantmentType enchType) {
+    protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnchantmentType enchType) {
         super(rarity, enchType, EquipmentSlotType.values());
         this.setName("recall");
         this.setRegistryName(enchName);

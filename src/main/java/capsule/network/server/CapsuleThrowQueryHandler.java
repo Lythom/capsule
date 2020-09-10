@@ -6,7 +6,7 @@ import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
 import capsule.network.CapsuleUndeployNotifToClient;
 import net.minecraft.entity.player.PlayerEntityMP;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;

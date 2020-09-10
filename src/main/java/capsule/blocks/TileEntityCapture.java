@@ -2,7 +2,7 @@ package capsule.blocks;
 
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -42,15 +42,15 @@ public class TileEntityCapture extends TileEntity {
     // When the world loads from disk, the server needs to send the TileEntity information to the client
     //  it uses getUpdatePacket() and onDataPacket() to do this
     @Override
-    public SPacketUpdateTileEntity getUpdatePacket() {
+    public SUpdateTileEntityPacket getUpdatePacket() {
         CompoundNBT nbtTagCompound = new CompoundNBT();
         writeToNBT(nbtTagCompound);
         int metadata = getBlockMetadata();
-        return new SPacketUpdateTileEntity(this.pos, metadata, nbtTagCompound);
+        return new SUpdateTileEntityPacket(this.pos, metadata, nbtTagCompound);
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
         readFromNBT(pkt.getNbtCompound());
     }
 

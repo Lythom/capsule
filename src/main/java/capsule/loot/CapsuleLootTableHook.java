@@ -1,10 +1,10 @@
 package capsule.loot;
 
 import capsule.Config;
-import net.minecraft.world.storage.loot.LootEntry;
+import net.minecraft.world.storage.loot.ILootGenerator;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.RandomValueRange;
-import net.minecraft.world.storage.loot.conditions.LootCondition;
+import net.minecraft.world.storage.loot.conditions.ILootCondition;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -32,12 +32,12 @@ public class CapsuleLootTableHook {
             List<CapsuleLootEntry> entries = new ArrayList<>();
             for (String path : Config.lootTemplatesPaths) {
                 int weight = findConfiguredWeight(path);
-                entries.add(new CapsuleLootEntry(path, weight, 0, new LootCondition[0], "capsule:capsuleLootsEntry" + path.replace("/", "_")));
+                entries.add(new CapsuleLootEntry(path, weight, 0, new ILootCondition[0], "capsule:capsuleLootsEntry" + path.replace("/", "_")));
             }
 
             capsulePool = new LootPool(
-                    entries.toArray(new LootEntry[0]),    // the loot is taken from a Capsule managed entry list
-                    new LootCondition[0],                // no particular condition, always loot one capsule
+                    entries.toArray(new ILootGenerator[0]),    // the loot is taken from a Capsule managed entry list
+                    new ILootCondition[0],                // no particular condition, always loot one capsule
                     new RandomValueRange(1.0F, 1.0F),    // spawn one capsule using that pool
                     new RandomValueRange(0.0F, 0.0F),    // no extra capsuleList
                     "capsulePool");

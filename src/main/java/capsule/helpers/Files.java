@@ -2,7 +2,7 @@ package capsule.helpers;
 
 import capsule.loot.LootPathData;
 import com.google.gson.*;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +26,7 @@ public class Files {
     public static JsonObject readJSON(File file) {
         if (file.exists()) {
             try (final InputStream stream = new FileInputStream(file)) {
-                JsonObject jsonContent = JsonUtils.fromJson(GSON, new InputStreamReader(stream), JsonObject.class);
+                JsonObject jsonContent = JSONUtils.fromJson(GSON, new InputStreamReader(stream), JsonObject.class);
                 return jsonContent;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -57,7 +57,7 @@ public class Files {
             }
             if (whitelistFile.exists()) {
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
-                    JsonArray whitelistElements = JsonUtils.fromJson(GSON, new InputStreamReader(stream), JsonArray.class);
+                    JsonArray whitelistElements = JSONUtils.fromJson(GSON, new InputStreamReader(stream), JsonArray.class);
                     if (whitelistElements != null)
                         for (JsonElement elem : whitelistElements) {
                             if (elem.isJsonPrimitive()) {

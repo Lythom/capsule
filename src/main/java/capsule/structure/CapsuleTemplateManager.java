@@ -16,7 +16,7 @@ import java.io.*;
 import java.util.Map;
 
 /**
- * Initiated from mc original net.minecraft.world.gen.structure.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
+ * Initiated from mc original net.minecraft.world.gen.feature.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
  * Added support to load schematic file as Template.
  */
 public class CapsuleTemplateManager

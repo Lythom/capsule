@@ -2,7 +2,7 @@ package capsule.blocks;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -18,7 +18,7 @@ public class BlockDeployCrasher extends Block {
     }
 
     @Override
-    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
+    public void onBlockAdded(World worldIn, BlockPos pos, BlockState state) {
         super.onBlockAdded(worldIn, pos, state);
         if (pos.getY() > 70) {
             throw new RuntimeException("testing purpose deploy crasher");

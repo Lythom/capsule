@@ -4,11 +4,11 @@ import capsule.StructureSaver;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.JsonUtils;
+import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraftforge.common.crafting.JsonContext;
@@ -29,7 +29,7 @@ public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRec
     }
 
     public void buildRecipeFromPattern(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
-        JsonArray patternArr = JsonUtils.getJsonArray(template, "pattern");
+        JsonArray patternArr = JSONUtils.getJsonArray(template, "pattern");
         String pattern = patternArr.get(0).getAsString() + patternArr.get(1).getAsString() + patternArr.get(2).getAsString();
         ingredientOneIndex = pattern.indexOf("1");
         ingredientTwoIndex = pattern.indexOf("2");
@@ -48,7 +48,7 @@ public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRec
     /**
      * Only blueprint material is consumed. Materials used inside blueprint are given back.
      */
-    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -66,11 +66,11 @@ public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRec
         return nonnulllist;
     }
 
-    public boolean matches(InventoryCrafting inv, World worldIn) {
+    public boolean matches(CraftingInventory inv, World worldIn) {
         return recipe.matches(inv, worldIn);
     }
 
-    public ItemStack getCraftingResult(InventoryCrafting invC) {
+    public ItemStack getCraftingResult(CraftingInventory invC) {
         return recipe.getCraftingResult(invC);
     }
 

@@ -2,9 +2,9 @@ package capsule.gui;
 
 import capsule.CommonProxy;
 import capsule.network.LabelEditedMessageToServer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -16,13 +16,13 @@ import java.io.IOException;
 /**
  * @author Lythom
  */
-public class LabelGui extends GuiScreen {
+public class LabelGui extends Screen {
     public static int GUI_WIDTH = 250;
     public static int GUI_HEIGHT = 20;
 
-    private GuiTextField textInput;
+    private TextFieldWidget textInput;
     private PlayerEntity player;
-    private GuiButton buttonDone;
+    private Button buttonDone;
 
     public LabelGui(PlayerEntity player) {
         this.player = player;
@@ -33,12 +33,12 @@ public class LabelGui extends GuiScreen {
         buttonList.clear();
         Keyboard.enableRepeatEvents(true);
 
-        textInput = new GuiTextField(0, this.fontRenderer, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT);
+        textInput = new TextFieldWidget(0, this.fontRenderer, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT);
         textInput.setMaxStringLength(32);
         textInput.setFocused(true);
 
 
-        buttonDone = new GuiButton(1, textInput.x + textInput.width - 98, textInput.y + textInput.height + 10, 98, 20, I18n.format("gui.done", new Object[0]));
+        buttonDone = new Button(1, textInput.x + textInput.width - 98, textInput.y + textInput.height + 10, 98, 20, I18n.format("gui.done", new Object[0]));
         buttonDone.enabled = true;
         buttonList.add(buttonDone);
 
@@ -70,7 +70,7 @@ public class LabelGui extends GuiScreen {
     }
 
     @Override
-    public void actionPerformed(GuiButton button) {
+    public void actionPerformed(Button button) {
         if (button == buttonDone) {
             closeGui();
         }

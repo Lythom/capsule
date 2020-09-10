@@ -10,6 +10,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.pattern.BlockMaterialMatcher;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -153,17 +154,26 @@ public class Config {
 
         // Loot tables that can reward a capsule
         String[] defaultLootTablesList = new String[]{
-                LootTableList.CHESTS_ABANDONED_MINESHAFT.toString(),
-                LootTableList.CHESTS_DESERT_PYRAMID.toString(),
-                LootTableList.CHESTS_END_CITY_TREASURE.toString(),
-                LootTableList.CHESTS_IGLOO_CHEST.toString(),
-                LootTableList.CHESTS_JUNGLE_TEMPLE.toString(),
-                LootTableList.CHESTS_SIMPLE_DUNGEON.toString(),
-                LootTableList.CHESTS_STRONGHOLD_CORRIDOR.toString(),
-                LootTableList.CHESTS_STRONGHOLD_CROSSING.toString(),
-                LootTableList.CHESTS_STRONGHOLD_LIBRARY.toString(),
-                LootTableList.CHESTS_VILLAGE_BLACKSMITH.toString(),
-                LootTableList.CHESTS_WOODLAND_MANSION.toString()
+                LootTables.CHESTS_ABANDONED_MINESHAFT.toString(),
+                LootTables.CHESTS_DESERT_PYRAMID.toString(),
+                LootTables.CHESTS_END_CITY_TREASURE.toString(),
+                LootTables.CHESTS_IGLOO_CHEST.toString(),
+                LootTables.CHESTS_JUNGLE_TEMPLE.toString(),
+                LootTables.CHESTS_SIMPLE_DUNGEON.toString(),
+                LootTables.CHESTS_STRONGHOLD_CORRIDOR.toString(),
+                LootTables.CHESTS_STRONGHOLD_CROSSING.toString(),
+                LootTables.CHESTS_STRONGHOLD_LIBRARY.toString(),
+                LootTables.CHESTS_VILLAGE_VILLAGE_TOOLSMITH.toString(),
+                LootTables.CHESTS_VILLAGE_VILLAGE_ARMORER.toString(),
+                LootTables.CHESTS_VILLAGE_VILLAGE_TEMPLE.toString(),
+                LootTables.CHESTS_VILLAGE_VILLAGE_WEAPONSMITH.toString(),
+                LootTables.CHESTS_BURIED_TREASURE.toString(),
+                LootTables.CHESTS_JUNGLE_TEMPLE_DISPENSER.toString(),
+                LootTables.CHESTS_PILLAGER_OUTPOST.toString(),
+                LootTables.CHESTS_SHIPWRECK_TREASURE.toString(),
+                LootTables.CHESTS_UNDERWATER_RUIN_BIG.toString(),
+                LootTables.CHESTS_UNDERWATER_RUIN_SMALL.toString(),
+                LootTables.CHESTS_WOODLAND_MANSION.toString()
         };
         Property lootTablesListProp = Config.config.get("loots", "lootTablesList", defaultLootTablesList);
         lootTablesListProp.setComment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.");
