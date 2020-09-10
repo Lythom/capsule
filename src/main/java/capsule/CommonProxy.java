@@ -77,15 +77,11 @@ public class CommonProxy {
     }
 
     public void setup(FMLCommonSetupEvent event) {
+        Config.configDir = FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
-
-        Config.configDir = FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml");
         Config.loadConfig(Config.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml"));
         Config.loadConfig(Config.COMMON_CONFIG, FMLPaths.CONFIGDIR.get().resolve("capsule-common.toml"));
-
-        // copy default config and structures to config/capsule folder, and load them in Config.
-        refreshConfigTemplates();
 
         // network stuff
         // client ask server to edit capsule label
@@ -100,12 +96,6 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
         // server sends to client the data needed to render undeploy
         simpleNetworkWrapper.registerMessage(CapsuleUndeployNotifHandler.class, CapsuleUndeployNotifToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
-    }
-
-    public void refreshConfigTemplates() {
-        Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
-        Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
-        Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
     }
 
     public void init(FMLInitializationEvent event) {
@@ -126,7 +116,6 @@ public class CommonProxy {
 
     public void serverStarting(FMLServerStartingEvent e) {
         e.registerServerCommand(new CapsuleCommand());
-        refreshConfigTemplates();
     }
 
     public void openGuiScreen(PlayerEntity playerIn) {

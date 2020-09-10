@@ -97,7 +97,7 @@ public class Files {
         return starterTemplatesList;
     }
 
-    public static void populateAndLoadLootList(File capsuleConfigDir, String[] lootTemplatesPaths, Map<String, LootPathData> outLootTemplatesData) {
+    public static void populateAndLoadLootList(File capsuleConfigDir, List<String> lootTemplatesPaths, Map<String, LootPathData> outLootTemplatesData) {
         // Init the manager for reward Lists
         for (String path : lootTemplatesPaths) {
             LootPathData data = outLootTemplatesData.get(path);

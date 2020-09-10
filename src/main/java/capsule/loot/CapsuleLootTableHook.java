@@ -30,7 +30,7 @@ public class CapsuleLootTableHook {
         // create a capsule loot entry per folder
         if (capsulePool == null) {
             List<CapsuleLootEntry> entries = new ArrayList<>();
-            for (String path : Config.lootTemplatesPaths) {
+            for (String path : Config.lootTemplatesPaths.get()) {
                 int weight = findConfiguredWeight(path);
                 entries.add(new CapsuleLootEntry(path, weight, 0, new ILootCondition[0], "capsule:capsuleLootsEntry" + path.replace("/", "_")));
             }
@@ -51,7 +51,7 @@ public class CapsuleLootTableHook {
     public int findConfiguredWeight(String path) {
         int weight = DEFAULT_WEIGHT;
         if (Config.lootTemplatesData.containsKey(path)) {
-            weight = Config.lootTemplatesData.get(path).weigth;
+            weight = Config.lootTemplatesData.get(path).weigth.get();
         }
         return weight;
     }

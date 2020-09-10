@@ -1,5 +1,6 @@
 package capsule;
 
+import capsule.helpers.Files;
 import capsule.helpers.Serialization;
 import capsule.loot.LootPathData;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
@@ -41,50 +42,48 @@ public class Config {
     public static final String CATEGORY_ENCHANTS = "enchants";
 
     static {
-        COMMON_BUILDER.comment("Balancing settings").push(CATEGORY_BALANCE);
-        COMMON_BUILDER.pop();
-        initCaptureConfigs();
-
         COMMON_BUILDER.comment("Loot settings").push(CATEGORY_LOOT);
-        COMMON_BUILDER.pop();
         initLootConfigs();
-
-        COMMON_BUILDER.comment("Recipe settings").push(CATEGORY_RECIPE);
         COMMON_BUILDER.pop();
-        initRecipesConfigs();
 
         COMMON_BUILDER.comment("enchants settings").push(CATEGORY_ENCHANTS);
-        COMMON_BUILDER.pop();
         initEnchantsConfigs();
-
         COMMON_BUILDER.pop();
+
+        COMMON_BUILDER.comment("Balancing settings").push(CATEGORY_BALANCE);
+        initCaptureConfigs();
+        COMMON_BUILDER.pop();
+
         COMMON_CONFIG = COMMON_BUILDER.build();
         CLIENT_CONFIG = CLIENT_BUILDER.build();
     }
 
+    // calculated and cached from init
+    public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
+    public static List<String> starterTemplatesList = new ArrayList<>();
+    public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
+    public static Map<String, ForgeConfigSpec.ConfigValue<Integer>> capsuleSizes = new HashMap<>();
+
+    // provided by spec
     public static ForgeConfigSpec.ConfigValue<List<Block>> excludedBlocks;
     public static ForgeConfigSpec.ConfigValue<List<Block>> overridableBlocks;
     public static ForgeConfigSpec.ConfigValue<List<Block>> opExcludedBlocks;
-    public static ForgeConfigSpec.ConfigValue<String[]> lootTemplatesPaths;
+    public static ForgeConfigSpec.ConfigValue<List<String>> lootTemplatesPaths;
     public static ForgeConfigSpec.ConfigValue<List<String>> lootTablesList;
-    public static ForgeConfigSpec.ConfigValue<Map<String, LootPathData>> lootTemplatesData;
     public static ForgeConfigSpec.ConfigValue<String> starterTemplatesPath;
-    public static ForgeConfigSpec.ConfigValue<List<String>> starterTemplatesList;
     public static ForgeConfigSpec.ConfigValue<String> prefabsTemplatesPath;
     public static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPath;
     public static ForgeConfigSpec.IntValue upgradeLimit;
-    public static ForgeConfigSpec.ConfigValue<HashMap<String, JsonObject>> blueprintWhitelist;
     public static ForgeConfigSpec.BooleanValue allowBlueprintReward;
     public static ForgeConfigSpec.ConfigValue<String> starterMode;
 
     public static ForgeConfigSpec.ConfigValue<String> enchantRarity;
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
-    public static ForgeConfigSpec.ConfigValue<Map<String, Integer>> capsuleSizes;
 
-    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get().get("ironCapsuleSize");
-    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get().get("goldCapsuleSize");
-    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get().get("diamondCapsuleSize");
-    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get().get("opCapsuleSize");
+    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get("ironCapsuleSize").get();
+    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get("goldCapsuleSize").get();
+    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get("diamondCapsuleSize").get();
+    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get("opCapsuleSize").get();
 
     public static Path configDir = null;
 
@@ -102,11 +101,26 @@ public class Config {
 
     @SubscribeEvent
     public static void onLoad(final ModConfig.Loading configEvent) {
+        // init paths properties from config
+        for (int i = 0; i < Config.lootTemplatesPaths.get().size(); i++) {
+            String path = Config.lootTemplatesPaths.get().get(i);
+
+            if (!Config.lootTemplatesData.containsKey(path)) {
+                Config.lootTemplatesData.put(path, new LootPathData());
+            }
+
+            Config.lootTemplatesData.get(path).weigth = COMMON_BUILDER.comment("Chances to get a capsule from this folder. Higher means more common. Default : 2 (rare), 6 (uncommon) or 10 (common)")
+                    .define("lootWeight:" + path, path.endsWith("rare") ? 2 : path.endsWith("uncommon") ? 6 : 10);
+        }
+
 
     }
 
     @SubscribeEvent
     public static void onReload(final ModConfig.Reloading configEvent) {
+        Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
+        Config.starterTemplatesList = Files.populateStarters(Config.configDir.toFile(), Config.starterTemplatesPath.get());
+        Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir.toFile());
     }
 
 
@@ -153,7 +167,7 @@ public class Config {
     public static void initLootConfigs() {
 
         // Loot tables that can reward a capsule
-        String[] defaultLootTablesList = new String[]{
+        List<String> defaultLootTablesList = Arrays.asList(
                 LootTables.CHESTS_ABANDONED_MINESHAFT.toString(),
                 LootTables.CHESTS_DESERT_PYRAMID.toString(),
                 LootTables.CHESTS_END_CITY_TREASURE.toString(),
@@ -173,95 +187,45 @@ public class Config {
                 LootTables.CHESTS_SHIPWRECK_TREASURE.toString(),
                 LootTables.CHESTS_UNDERWATER_RUIN_BIG.toString(),
                 LootTables.CHESTS_UNDERWATER_RUIN_SMALL.toString(),
-                LootTables.CHESTS_WOODLAND_MANSION.toString()
-        };
-        Property lootTablesListProp = Config.config.get("loots", "lootTablesList", defaultLootTablesList);
-        lootTablesListProp.setComment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.");
-        Config.lootTablesList = new ArrayList<>(Arrays.asList(lootTablesListProp.getStringList()));
+                LootTables.CHESTS_WOODLAND_MANSION.toString());
 
-        // CapsuleTemplate Paths
-        Property lootTemplatesPathsProp = Config.config.get("loots", "lootTemplatesPaths", new String[]{
-                "config/capsule/loot/common",
-                "config/capsule/loot/uncommon",
-                "config/capsule/loot/rare"
-        });
-        lootTemplatesPathsProp.setComment("List of paths where the mod will look for structureBlock files. Each save structure have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).");
-        Config.lootTemplatesPaths = lootTemplatesPathsProp.getStringList();
+        Config.lootTablesList = COMMON_BUILDER.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
+                .define("lootTablesList", defaultLootTablesList);
 
-        Property starterModeProp = Config.config.get("loots", "starterMode", "random");
-        starterModeProp.setComment("Players can be given one or several starter structures on their first arrival.\nThose structures nbt files can be placed in the folder defined at starterTemplatesPath below.\nPossible values : \"all\", \"random\", or \"none\".\nDefault value: \"random\"");
-        Config.starterMode = starterModeProp.getString();
+        Config.lootTemplatesPaths = COMMON_BUILDER.comment("List of paths where the mod will look for structureBlock files. Each save structure have a chance to appear as a reward capsule in a dungeon chest.\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly (more weigth on empty folder = less capsule chance per chest).")
+                .define("lootTemplatesPaths", Arrays.asList(
+                        "config/capsule/loot/common",
+                        "config/capsule/loot/uncommon",
+                        "config/capsule/loot/rare"
+                ));
 
-        Property starterTemplatesPathProp = Config.config.get("loots", "starterTemplatesPath", "config/capsule/starters");
-        starterTemplatesPathProp.setComment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"");
-        Config.starterTemplatesPath = starterTemplatesPathProp.getString();
+        Config.starterMode = COMMON_BUILDER.comment("Players can be given one or several starter structures on their first arrival.\nThose structures nbt files can be placed in the folder defined at starterTemplatesPath below.\nPossible values : \"all\", \"random\", or \"none\".\nDefault value: \"random\"")
+                .define("starterMode", "random");
 
-        Property prefabsTemplatesPathProp = Config.config.get("loots", "prefabsTemplatesPath", "config/capsule/prefabs");
-        prefabsTemplatesPathProp.setComment("Each structure in this folder will auto-generate a blueprint recipe that player will be able to craft.\nRemove/Add structure in the folder to disable/enable the recipe.\nDefault value: \"config/capsule/prefabs\"");
-        Config.prefabsTemplatesPath = prefabsTemplatesPathProp.getString();
+        Config.starterTemplatesPath = COMMON_BUILDER.comment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"")
+                .define("starterTemplatesPath", "config/capsule/starters");
 
-        Property rewardTemplatesPathProp = Config.config.get("loots", "rewardTemplatesPath", "config/capsule/rewards");
-        rewardTemplatesPathProp.setComment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].");
-        Config.rewardTemplatesPath = rewardTemplatesPathProp.getString();
+        Config.prefabsTemplatesPath = COMMON_BUILDER.comment("Each structure in this folder will auto-generate a blueprint recipe that player will be able to craft.\nRemove/Add structure in the folder to disable/enable the recipe.\nDefault value: \"config/capsule/prefabs\"")
+                .define("prefabsTemplatesPath", "config/capsule/prefabs");
 
-        Property allowBlueprintRewardProp = Config.config.get("loots", "allowBlueprintReward", true);
-        allowBlueprintRewardProp.setComment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true");
-        Config.allowBlueprintReward = allowBlueprintRewardProp.getBoolean();
+        Config.rewardTemplatesPath = COMMON_BUILDER.comment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].")
+                .define("rewardTemplatesPath", "config/capsule/rewards");
 
-        // init paths properties from config
-        for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {
-            String path = Config.lootTemplatesPaths[i];
-
-            if (!Config.lootTemplatesData.containsKey(path)) {
-                Config.lootTemplatesData.put(path, new LootPathData());
-            }
-            Property pathDataWeight = Config.config.get("loots:" + path, "weight", path.endsWith("rare") ? 2 : path.endsWith("uncommon") ? 6 : 10);
-            pathDataWeight.setComment("Chances to get a capsule from this folder. Higher means more common. Default : 2 (rare), 6 (uncommon) or 10 (common)");
-            Config.lootTemplatesData.get(path).weigth = pathDataWeight.getInt();
-        }
-    }
-
-    public static void initRecipesConfigs() {
-        Property woodCapsuleSize = Config.config.get("Balancing", "woodCapsuleSize", "1");
-        woodCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-
-        Property ironCapsuleSize = Config.config.get("Balancing", "ironCapsuleSize", "3");
-        ironCapsuleSize.setComment("Size of the capture cube side for an Iron Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 3");
-
-        Property goldCapsuleSize = Config.config.get("Balancing", "goldCapsuleSize", "5");
-        goldCapsuleSize.setComment("Size of the capture cube side for a Gold Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 5");
-
-        Property diamondCapsuleSize = Config.config.get("Balancing", "diamondCapsuleSize", "7");
-        diamondCapsuleSize.setComment("Size of the capture cube side for a Diamond Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 7");
-
-        Property obsidianCapsuleSize = Config.config.get("Balancing", "obsidianCapsuleSize", "9");
-        obsidianCapsuleSize.setComment("Size of the capture cube side for an Obsidian Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 9");
-
-        Property emeraldCapsuleSize = Config.config.get("Balancing", "emeraldCapsuleSize", "11");
-        emeraldCapsuleSize.setComment("Size of the capture cube side for an Emerald Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 11");
-
-        Property opCapsuleSize = Config.config.get("Balancing", "opCapsuleSize", "1");
-        opCapsuleSize.setComment("Size of the capture cube side for a Overpowered Capsule. Must be an Odd Number (or it will be rounded down with error message).\n0 to disable.\nDefault: 1");
-
-        Config.config.getCategory("Balancing").values().forEach(property -> {
-            if (property.getName().endsWith("CapsuleSize")) {
-                Config.capsuleSizes.put(property.getName(), property.getInt());
-            }
-        });
+        Config.allowBlueprintReward = COMMON_BUILDER.comment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true")
+                .define("allowBlueprintReward", true);
     }
 
     public static void initEnchantsConfigs() {
-        Property enchantRarityConfig = Config.config.get("Balancing", "recallEnchantRarity", "RARE");
-        enchantRarityConfig.setComment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.");
-        Config.enchantRarity = enchantRarityConfig.getString();
 
-        Property recallEnchantTypeConfig = Config.config.get("Balancing", "recallEnchantType", "null");
-        recallEnchantTypeConfig.setComment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.");
-        Config.recallEnchantType = recallEnchantTypeConfig.getString();
+        Config.enchantRarity = COMMON_BUILDER.comment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.")
+                .define("recallEnchantRarity", "RARE");
+
+        Config.recallEnchantType = COMMON_BUILDER.comment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.")
+                .define("recallEnchantType", "null");
     }
 
     public static BooleanSupplier isEnabled(String key) {
-        return () -> !Config.capsuleSizes.containsKey(key) || Config.capsuleSizes.get(key) > 0;
+        return () -> !Config.capsuleSizes.containsKey(key) || Config.capsuleSizes.get(key).get() > 0;
     }
 
 

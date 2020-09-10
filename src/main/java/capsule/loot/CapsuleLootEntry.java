@@ -46,6 +46,7 @@ public class CapsuleLootEntry extends ILootGenerator {
         return Integer.decode(COLOR_PALETTE[(int) (Math.random() * COLOR_PALETTE.length)]);
     }
 
+
     /**
      * Add all eligible capsuleList to the list to be picked from.
      */
