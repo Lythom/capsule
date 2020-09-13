@@ -4,8 +4,8 @@
   "conditions": [],
   "result": {
     "item": "capsule:capsule",
-    "data": 3,
     "nbt": {
+      "Damage": 3,
       "display": {
         "color": 3949738
       },
@@ -25,8 +25,7 @@
       "item": "minecraft:stone_button"
     },
     "p": {
-      "item": "minecraft:paper",
-      "data": 0
+      "item": "minecraft:paper"
     },
     "l": {
       "type": "forge:ore_dict",

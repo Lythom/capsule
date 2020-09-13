@@ -62,8 +62,6 @@ public class Config {
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
-    public static Map<String, ForgeConfigSpec.ConfigValue<Integer>> capsuleSizes = new HashMap<>();
-
     // provided by spec
     public static ForgeConfigSpec.ConfigValue<List<Block>> excludedBlocks;
     public static ForgeConfigSpec.ConfigValue<List<Block>> overridableBlocks;
@@ -79,11 +77,6 @@ public class Config {
 
     public static ForgeConfigSpec.ConfigValue<String> enchantRarity;
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
-
-    public static Supplier<Integer> ironCapsuleSize = () -> capsuleSizes.get("ironCapsuleSize").get();
-    public static Supplier<Integer> goldCapsuleSize = () -> capsuleSizes.get("goldCapsuleSize").get();
-    public static Supplier<Integer> diamondCapsuleSize = () -> capsuleSizes.get("diamondCapsuleSize").get();
-    public static Supplier<Integer> opCapsuleSize = () -> capsuleSizes.get("opCapsuleSize").get();
 
     public static Path configDir = null;
 
@@ -222,10 +215,6 @@ public class Config {
 
         Config.recallEnchantType = COMMON_BUILDER.comment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.")
                 .define("recallEnchantType", "null");
-    }
-
-    public static BooleanSupplier isEnabled(String key) {
-        return () -> !Config.capsuleSizes.containsKey(key) || Config.capsuleSizes.get(key).get() > 0;
     }
 
 

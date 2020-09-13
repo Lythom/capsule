@@ -7,10 +7,10 @@
     "#C#",
     "#T#"
   ],
-  "type": "forge:ore_shaped",
+  "type": "forge:crafting_shaped",
   "key": {
     "#": {
-      "item": "minecraft:cobblestone"
+      "tag": "forge:cobblestone"
     },
     "G": {
       "item": "minecraft:glass_pane"

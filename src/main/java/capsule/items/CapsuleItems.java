@@ -2,25 +2,31 @@ package capsule.items;
 
 import capsule.Main;
 import capsule.helpers.Blueprint;
-import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
-import capsule.recipes.BlueprintChangeRecipeFactory.BlueprintChangeRecipe;
 import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
-import capsule.recipes.RecoveryCapsuleRecipeFactory.RecoveryCapsuleRecipe;
-import capsule.recipes.UpgradeCapsuleRecipeFactory.UpgradeCapsuleRecipe;
+import capsule.recipes.UpgradeCapsuleRecipeSerializer.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.nbt.IntNBT;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.oredict.ShapedOreRecipe;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeMap;
 
 public class CapsuleItems {
 
     private static final int UPGRADE_STEP = 2;
     public static CapsuleItem capsule;
+
+    public static ItemStack withState(int state) {
+        ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1);
+        CapsuleItem.setState(capsule, CapsuleItem.STATE_EMPTY);
+        return capsule;
+    }
 
     public static String CAPSULE_REGISTERY_NAME = "capsule";
 
@@ -65,7 +71,7 @@ public class CapsuleItems {
                     blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), recipe));
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
-                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedOreRecipe) {
+                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
                         if (CapsuleItem.isOverpowered(output)) {
                             CapsuleItems.opCapsuleList.put(output, recipe);
                         } else {

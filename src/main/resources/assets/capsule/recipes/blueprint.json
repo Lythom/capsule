@@ -2,8 +2,8 @@
   "type": "capsule:blueprint_capsule",
   "result": {
     "item": "capsule:capsule",
-    "data": 3,
     "nbt": {
+      "Damage": 3,
       "display": {
         "color": 3949738
       },
@@ -20,15 +20,15 @@
     "c": [
       {
         "item": "capsule:capsule",
-        "data": 2,
         "nbt": {
+          "Damage": 2,
           "structureName": ""
         }
       },
       {
         "item": "capsule:capsule",
-        "data": 5,
         "nbt": {
+          "Damage": 5,
           "structureName": "",
           "oneUse": true,
           "isReward": true
@@ -39,12 +39,10 @@
       "item": "minecraft:stone_button"
     },
     "p": {
-      "item": "minecraft:paper",
-      "data": 0
+      "item": "minecraft:paper"
     },
     "l": {
-      "type": "forge:ore_dict",
-      "ore": "dyeBlue"
+      "tag": "forge:dyes/blue"
     }
   }
 }

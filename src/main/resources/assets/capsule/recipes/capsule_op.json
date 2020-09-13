@@ -1,16 +1,10 @@
 {
-  "type": "capsule:capsule",
-  "conditions": [
-    {
-      "type": "capsule:is_enabled",
-      "property": "opCapsuleSize"
-    }
-  ],
+  "type": "minecraft:crafting_shaped",
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
-    "data": 0,
     "nbt": {
+      "Damage": 0,
       "color": 16777215,
       "size": 1,
       "overpowered": 1
@@ -23,16 +17,16 @@
   ],
   "key": {
     "#": {
-      "item": "minecraft:iron_ingot"
+      "tag": "forge:ingots/iron"
     },
     "b": {
       "item": "minecraft:stone_button"
     },
     "e": {
-      "item": "minecraft:nether_star"
+      "item": "forge:nether_stars"
     },
     "i": {
-      "item": "minecraft:iron_ingot"
+      "tag": "forge:ingots/iron"
     }
   }
 }

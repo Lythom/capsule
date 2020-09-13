@@ -2,8 +2,8 @@
   "type": "capsule:recovery_capsule",
   "result": {
     "item": "capsule:capsule",
-    "data": 5,
     "nbt": {
+      "Damage": 5,
       "isReward": true,
       "oneUse": true
     }
@@ -11,7 +11,9 @@
   "ingredients": [
     {
       "item": "capsule:capsule",
-      "data": 2
+      "nbt": {
+        "Damage": 2
+      }
     },
     {
       "item": "minecraft:glass_bottle"

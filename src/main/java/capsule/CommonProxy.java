@@ -14,32 +14,31 @@ import capsule.network.server.CapsuleContentPreviewQueryHandler;
 import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleThrowQueryHandler;
 import capsule.network.server.LabelEditedMessageToServerHandler;
+import capsule.recipes.BlueprintCapsuleRecipe;
+import capsule.recipes.BlueprintCapsuleRecipeSerializer;
+import capsule.recipes.BlueprintChangeRecipe;
+import capsule.recipes.DyeCapsuleRecipe;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Mod.EventBusSubscriber
 public class CommonProxy {
@@ -53,6 +52,26 @@ public class CommonProxy {
             .simpleChannel();
     public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
+    public static final IRecipeSerializer<BlueprintCapsuleRecipe> BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
+    public static final SpecialRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SpecialRecipeSerializer<>(BlueprintChangeRecipe::new));
+    public static final IRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
+
+    private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
+        t.setRegistryName(new ResourceLocation(Main.MODID, name));
+        return t;
+    }
+
+    @SubscribeEvent
+    public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+        event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
+        event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
+        event.getRegistry().register(DYE_CAPSULE_SERIALIZER);
+
+        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir, Config.prefabsTemplatesPath);
+        CapsuleItems.registerRecipes(event, prefabsTemplatesList);
+        // + other recipes in assets.capsule.recipes
+    }
+
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         CapsuleBlocks.registerBlocks(event);
@@ -64,12 +83,7 @@ public class CommonProxy {
         CapsuleItems.registerItems(event);
     }
 
-    @SubscribeEvent
-    public static void registerRecipes(RegistryEvent.Register<IRecipe> event) {
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir, Config.prefabsTemplatesPath);
-        CapsuleItems.registerRecipes(event, prefabsTemplatesList);
-        // + other recipes in assets.capsule.recipes
-    }
+
 
     @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {

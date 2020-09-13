@@ -12,19 +12,19 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraftforge.common.crafting.JsonContext;
-import net.minecraftforge.oredict.ShapedOreRecipe;
+import net.minecraftforge.oredict.ShapedRecipe;
 import org.apache.commons.lang3.tuple.Triple;
 
 import static net.minecraftforge.registries.IForgeRegistryEntry.Impl;
 
 public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRecipe {
-    public final ShapedOreRecipe recipe;
+    public final ShapedRecipe recipe;
     private int ingredientOneIndex = 4;
     private int ingredientTwoIndex = 0;
     private int ingredientThreeIndex = 2;
 
     public PrefabsBlueprintCapsuleRecipe(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
-        this.recipe = ShapedOreRecipe.factory(new JsonContext("capsule"), template);
+        this.recipe = ShapedRecipe.factory(new JsonContext("capsule"), template);
         buildRecipeFromPattern(template, ingredients);
     }
 
@@ -77,9 +77,5 @@ public class PrefabsBlueprintCapsuleRecipe extends Impl<IRecipe> implements IRec
     @Override
     public boolean canFit(int width, int height) {
         return recipe.canFit(width, height);
-    }
-
-    public boolean isDynamic() {
-        return true;
     }
 }

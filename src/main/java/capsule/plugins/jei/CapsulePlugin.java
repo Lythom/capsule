@@ -4,7 +4,7 @@ import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import capsule.recipes.BlueprintCapsuleRecipeFactory.BlueprintCapsuleRecipe;
+import capsule.recipes.BlueprintCapsuleRecipeSerializer.BlueprintCapsuleRecipe;
 import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.IModRegistry;

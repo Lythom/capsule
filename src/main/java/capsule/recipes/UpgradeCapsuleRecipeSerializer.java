@@ -10,10 +10,10 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.world.World;
 import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.common.crafting.IRecipeFactory;
+import net.minecraftforge.common.crafting.IRecipeSerializer;
 import net.minecraftforge.common.crafting.JsonContext;
 
-public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
+public class UpgradeCapsuleRecipeSerializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer< {
 
     @Override
     public IRecipe parse(JsonContext context, JsonObject json) {
@@ -97,10 +97,6 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
         @Override
         public boolean canFit(int width, int height) {
             return width * height >= 2;
-        }
-
-        public boolean isDynamic() {
-            return true;
         }
     }
 }
