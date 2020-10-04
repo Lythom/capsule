@@ -1,4 +1,5 @@
 {
+  "type": "minecraft:crafting_shaped",
   "result": {
     "item": "capsule:capsulemarker"
   },
@@ -7,7 +8,6 @@
     "#C#",
     "#T#"
   ],
-  "type": "forge:crafting_shaped",
   "key": {
     "#": {
       "tag": "forge:cobblestone"

@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "capsule",
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
     "nbt": {
       "Damage": 0,
-      "color": 1972267,
-      "size": 9
+      "color": 1564002,
+      "size": 11
     }
   },
   "pattern": [
@@ -16,7 +17,7 @@
   ],
   "key": {
     "#": {
-      "tag": "forge:obsidian"
+      "tag": "forge:ores/emerald"
     },
     "b": {
       "item": "minecraft:stone_button"

@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "capsule",
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
     "nbt": {
       "Damage": 0,
-      "color": 16766720,
-      "size": 5
+      "color": 65522,
+      "size": 7
     }
   },
   "pattern": [
@@ -16,7 +17,7 @@
   ],
   "key": {
     "#": {
-      "tag": "forge:ingots/gold"
+      "tag": "forge:ores/diamond"
     },
     "b": {
       "item": "minecraft:stone_button"

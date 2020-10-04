@@ -1,12 +1,14 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "capsule",
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
     "nbt": {
       "Damage": 0,
-      "color": 1564002,
-      "size": 11
+      "color": 16777215,
+      "size": 1,
+      "overpowered": 1
     }
   },
   "pattern": [
@@ -16,13 +18,13 @@
   ],
   "key": {
     "#": {
-      "tag": "forge:ores/emerald"
+      "tag": "forge:ingots/iron"
     },
     "b": {
       "item": "minecraft:stone_button"
     },
     "e": {
-      "tag": "forge:ender_pearls"
+      "item": "forge:nether_stars"
     },
     "i": {
       "tag": "forge:ingots/iron"

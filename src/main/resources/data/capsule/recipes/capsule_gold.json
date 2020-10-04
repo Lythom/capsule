@@ -1,15 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
+  "group": "capsule",
   "result": {
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
     "nbt": {
       "Damage": 0,
-      "color": 12359778,
-      "size": 1,
-      "display": {
-        "color": 11833434
-      }
+      "color": 16766720,
+      "size": 5
     }
   },
   "pattern": [
@@ -19,16 +17,16 @@
   ],
   "key": {
     "#": {
-      "tag": "minecraft:planks"
+      "tag": "forge:ingots/gold"
     },
     "b": {
       "item": "minecraft:stone_button"
     },
     "e": {
-      "tag": "minecraft:chests"
+      "tag": "forge:ender_pearls"
     },
     "i": {
-      "tag": "minecraft:wooden_slabs"
+      "tag": "forge:ingots/iron"
     }
   }
 }
