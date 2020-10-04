@@ -14,15 +14,14 @@ import capsule.network.server.CapsuleContentPreviewQueryHandler;
 import capsule.network.server.CapsuleLeftClickQueryHandler;
 import capsule.network.server.CapsuleThrowQueryHandler;
 import capsule.network.server.LabelEditedMessageToServerHandler;
-import capsule.recipes.BlueprintCapsuleRecipe;
-import capsule.recipes.BlueprintCapsuleRecipeSerializer;
-import capsule.recipes.BlueprintChangeRecipe;
-import capsule.recipes.DyeCapsuleRecipe;
+import capsule.recipes.*;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.crafting.*;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.SpecialRecipeSerializer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -35,10 +34,8 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import net.minecraftforge.registries.IForgeRegistry;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @Mod.EventBusSubscriber
 public class CommonProxy {
@@ -54,7 +51,9 @@ public class CommonProxy {
 
     public static final IRecipeSerializer<BlueprintCapsuleRecipe> BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
     public static final SpecialRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SpecialRecipeSerializer<>(BlueprintChangeRecipe::new));
-    public static final IRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
+    public static final SpecialRecipeSerializer<ClearCapsuleRecipe> CLEAR_CAPSULE_SERIALIZER = register("clear_capsule", new SpecialRecipeSerializer<>(ClearCapsuleRecipe::new));
+    public static final SpecialRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
+    public static final SpecialRecipeSerializer<PrefabsBlueprintAggregatorRecipe> PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new SpecialRecipeSerializer<>(PrefabsBlueprintAggregatorRecipe::new));
 
     private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(Main.MODID, name));
@@ -66,8 +65,10 @@ public class CommonProxy {
         event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
         event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
         event.getRegistry().register(DYE_CAPSULE_SERIALIZER);
+        event.getRegistry().register(CLEAR_CAPSULE_SERIALIZER);
+        event.getRegistry().register(PREFABS_AGGREGATOR_SERIALIZER);
 
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir, Config.prefabsTemplatesPath);
+        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir.toFile(), Config.prefabsTemplatesPath.get());
         CapsuleItems.registerRecipes(event, prefabsTemplatesList);
         // + other recipes in assets.capsule.recipes
     }
@@ -110,22 +111,6 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
         // server sends to client the data needed to render undeploy
         simpleNetworkWrapper.registerMessage(CapsuleUndeployNotifHandler.class, CapsuleUndeployNotifToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
-    }
-
-    public void init(FMLInitializationEvent event) {
-        MinecraftForge.EVENT_BUS.register(Enchantments.recallEnchant);
-        MinecraftForge.EVENT_BUS.register(CapsuleItems.capsule);
-        MinecraftForge.EVENT_BUS.register(StarterLoot.instance);
-    }
-
-    public void postInit(FMLPostInitializationEvent event) {
-        Config.initCaptureConfigs();
-        if (Config.config.hasChanged()) {
-            Config.config.save();
-        }
-
-        CapsuleLootTableHook lootTableHook = new CapsuleLootTableHook();
-        MinecraftForge.EVENT_BUS.register(lootTableHook);
     }
 
     public void serverStarting(FMLServerStartingEvent e) {

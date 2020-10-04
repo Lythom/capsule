@@ -1,6 +1,7 @@
 package capsule.structure;
 
 import com.google.common.collect.Maps;
+import com.mojang.datafixers.DataFixer;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;

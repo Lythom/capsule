@@ -36,14 +36,14 @@ public class Enchantments {
 
         Rarity enchantRarity = Rarity.RARE;
         try {
-            enchantRarity = Rarity.valueOf(Config.enchantRarity);
+            enchantRarity = Rarity.valueOf(Config.enchantRarity.get());
         } catch (Exception e) {
             LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity + ". Using RARE instead.");
         }
 
         EnchantmentType recallEnchantTypeEnumValue = null;
         try {
-            recallEnchantTypeEnumValue = EnchantmentType.valueOf(Config.recallEnchantType);
+            recallEnchantTypeEnumValue = EnchantmentType.valueOf(Config.recallEnchantType.get());
         } catch (IllegalArgumentException ignored) {
         }
 

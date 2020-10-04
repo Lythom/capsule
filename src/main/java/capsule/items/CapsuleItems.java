@@ -7,6 +7,7 @@ import capsule.recipes.UpgradeCapsuleRecipeSerializer.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.nbt.IntNBT;
 import net.minecraftforge.event.RegistryEvent;
@@ -49,7 +50,7 @@ public class CapsuleItems {
         event.getRegistry().register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
     }
 
-    public static void registerRecipes(RegistryEvent.Register<IRecipe> event, ArrayList<String> prefabsTemplatesList) {
+    public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> event, ArrayList<String> prefabsTemplatesList) {
 
         // Add prefabs dynamic recipes here
         Blueprint.createDynamicPrefabRecipes(event, prefabsTemplatesList);

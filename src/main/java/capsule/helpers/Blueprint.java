@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.feature.template.Template;
@@ -31,6 +32,7 @@ import net.minecraftforge.fml.common.Loader;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -213,15 +215,15 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(RegistryEvent.Register<IRecipe> event, ArrayList<String> prefabsTemplatesList) {
-        JsonObject referenceRecipe = Files.readJSON(new File(Config.configDir, "prefabs/prefab_blueprint_recipe.json"));
+    public static void createDynamicPrefabRecipes(ArrayList<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+        JsonObject referenceRecipe = Files.readJSON(new File(Config.configDir.toString(), "prefabs/prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
             List<String> enabledPrefabsTemplatesList;
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Config.configDir.getParentFile().getParentFile().getPath(), FMLCommonHandler.instance().getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Config.configDir.toFile().getParentFile().getParentFile().getPath(), DataFixesManager.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);
@@ -234,8 +236,7 @@ public class Blueprint {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("size", size);
-                    PrefabsBlueprintCapsuleRecipe templateRecipe = new PrefabsBlueprintCapsuleRecipe(jsonRecipe, ingredients);
-                    event.getRegistry().register(templateRecipe.setRegistryName("capsule:" + templateName));
+                    parseTemplate.accept(new ResourceLocation(templateName), jsonRecipe, ingredients);
                 }
             });
         }
