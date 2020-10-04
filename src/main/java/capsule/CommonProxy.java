@@ -1,12 +1,11 @@
 package capsule;
 
 import capsule.blocks.CapsuleBlocks;
+import capsule.command.CapsuleComman;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItems;
-import capsule.loot.CapsuleLootTableHook;
-import capsule.loot.StarterLoot;
 import capsule.network.*;
 import capsule.network.client.CapsuleContentPreviewAnswerHandler;
 import capsule.network.client.CapsuleUndeployNotifHandler;
@@ -23,7 +22,6 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.SpecialRecipeSerializer;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -49,11 +47,13 @@ public class CommonProxy {
             .simpleChannel();
     public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
-    public static final IRecipeSerializer<BlueprintCapsuleRecipe> BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
+    public static final BlueprintCapsuleRecipe.Serializer BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
     public static final SpecialRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SpecialRecipeSerializer<>(BlueprintChangeRecipe::new));
     public static final SpecialRecipeSerializer<ClearCapsuleRecipe> CLEAR_CAPSULE_SERIALIZER = register("clear_capsule", new SpecialRecipeSerializer<>(ClearCapsuleRecipe::new));
     public static final SpecialRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
     public static final SpecialRecipeSerializer<PrefabsBlueprintAggregatorRecipe> PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new SpecialRecipeSerializer<>(PrefabsBlueprintAggregatorRecipe::new));
+    public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
+    public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("recovery_capsule", new UpgradeCapsuleRecipe.Serializer());
 
     private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(Main.MODID, name));
@@ -64,12 +64,12 @@ public class CommonProxy {
     public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> event) {
         event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
         event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
-        event.getRegistry().register(DYE_CAPSULE_SERIALIZER);
         event.getRegistry().register(CLEAR_CAPSULE_SERIALIZER);
+        event.getRegistry().register(DYE_CAPSULE_SERIALIZER);
         event.getRegistry().register(PREFABS_AGGREGATOR_SERIALIZER);
+        event.getRegistry().register(RECOVERY_CAPSULE_SERIALIZER);
+        event.getRegistry().register(UPGRADE_CAPSULE_SERIALIZER);
 
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir.toFile(), Config.prefabsTemplatesPath.get());
-        CapsuleItems.registerRecipes(event, prefabsTemplatesList);
         // + other recipes in assets.capsule.recipes
     }
 
@@ -114,7 +114,7 @@ public class CommonProxy {
     }
 
     public void serverStarting(FMLServerStartingEvent e) {
-        e.registerServerCommand(new CapsuleCommand());
+        CapsuleComman.register(e.getCommandDispatcher());
     }
 
     public void openGuiScreen(PlayerEntity playerIn) {

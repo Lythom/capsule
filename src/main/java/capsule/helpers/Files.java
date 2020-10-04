@@ -53,7 +53,7 @@ public class Files {
             File whitelistFile = new File(capsuleConfigDir, "blueprint_whitelist.json");
             if (!whitelistFile.exists()) {
                 LOGGER.info("First load: initializing the configs in " + capsuleConfigDir.getPath() + ".");
-                Files.populateFolder(capsuleConfigDir, "assets/capsule/config");
+                Files.populateFolder(capsuleConfigDir, "data/capsule/config");
             }
             if (whitelistFile.exists()) {
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
@@ -88,7 +88,7 @@ public class Files {
             startersFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the starters in " + starterTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
-            Files.populateFolder(startersFolder, "assets/capsule/starters");
+            Files.populateFolder(startersFolder, "data/capsule/starters");
         }
         ArrayList<String> starterTemplatesList = new ArrayList<>();
         iterateTemplates(startersFolder, templateName -> {
@@ -108,9 +108,9 @@ public class Files {
                 templateFolder.mkdirs();
                 // initial with example capsule the first time
                 LOGGER.info("First load: initializing the loots in " + path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
-                String assetPath = "assets/capsule/loot/common";
-                if (templateFolder.getPath().contains("uncommon")) assetPath = "assets/capsule/loot/uncommon";
-                if (templateFolder.getPath().contains("rare")) assetPath = "assets/capsule/loot/rare";
+                String assetPath = "data/capsule/loot/common";
+                if (templateFolder.getPath().contains("uncommon")) assetPath = "data/capsule/loot/uncommon";
+                if (templateFolder.getPath().contains("rare")) assetPath = "data/capsule/loot/rare";
                 populateFolder(templateFolder, assetPath);
             }
 
@@ -128,7 +128,7 @@ public class Files {
             prefabsFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the prefabs in " + prefabsTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no blueprint prefabs recipes.");
-            Files.populateFolder(prefabsFolder, "assets/capsule/prefabs");
+            Files.populateFolder(prefabsFolder, "data/capsule/prefabs");
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
         iterateTemplates(prefabsFolder, templateName -> {

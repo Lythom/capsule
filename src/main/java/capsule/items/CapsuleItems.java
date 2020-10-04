@@ -2,7 +2,6 @@ package capsule.items;
 
 import capsule.Main;
 import capsule.helpers.Blueprint;
-import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipeSerializer.UpgradeCapsuleRecipe;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
