@@ -2,7 +2,7 @@ package capsule.loot;
 
 import capsule.Config;
 import capsule.helpers.Capsule;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.StringUtils;
@@ -30,7 +30,7 @@ public class StarterLoot {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
             }
-            PlayerEntityMP player = (PlayerEntityMP) event.player;
+            ServerPlayerEntity player = (ServerPlayerEntity) event.player;
             CompoundNBT playerData = player.getEntityData();
             CompoundNBT data;
             if (!playerData.contains("PlayerPersisted")) {
@@ -58,7 +58,7 @@ public class StarterLoot {
         }
     }
 
-    public void giveAllStarters(PlayerEntityMP player, List<String> allStartersToGive) {
+    public void giveAllStarters(ServerPlayerEntity player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
             int stackIdx = player.inventory.getFirstEmptyStack();

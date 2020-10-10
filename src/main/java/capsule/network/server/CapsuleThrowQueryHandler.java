@@ -5,7 +5,7 @@ import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleThrowQueryToServer;
 import capsule.network.CapsuleUndeployNotifToClient;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.SoundCategory;
@@ -55,9 +55,9 @@ public class CapsuleThrowQueryHandler
         // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
+        final ServerPlayerEntity sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("PlayerEntityMP was null when CapsuleThrowQueryToServer was received");
+            LOGGER.error("ServerPlayerEntity was null when CapsuleThrowQueryToServer was received");
             return null;
         }
 

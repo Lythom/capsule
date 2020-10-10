@@ -4,7 +4,7 @@ import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleLeftClickQueryToServer;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
@@ -56,9 +56,9 @@ public class CapsuleLeftClickQueryHandler
         // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
+        final ServerPlayerEntity sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("PlayerEntityMP was null when CapsuleLeftClickQueryToServer was received");
+            LOGGER.error("ServerPlayerEntity was null when CapsuleLeftClickQueryToServer was received");
             return null;
         }
 

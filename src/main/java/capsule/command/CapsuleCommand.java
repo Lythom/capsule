@@ -14,7 +14,9 @@ import com.google.common.base.Joiner;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.block.BlockState;
@@ -22,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -39,19 +42,31 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.ClickEvent.Action;
 import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.loot.LootContext;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.*;
 
+import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
+import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
+import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
+import static com.mojang.brigadier.arguments.StringArgumentType.getString;
+import static com.mojang.brigadier.arguments.StringArgumentType.string;
+import static net.minecraft.command.arguments.ColorArgument.color;
+import static net.minecraft.command.arguments.ColorArgument.getColor;
+import static net.minecraft.command.arguments.EntityArgument.getPlayer;
+import static net.minecraft.command.arguments.EntityArgument.player;
+
 /**
  * @author Lythom
  */
 public class CapsuleComman {
 
-    public static List<CommandSource> sentUsageURL = new ArrayList<>();
+    public static List<ServerPlayerEntity> sentUsageURL = new ArrayList<>();
 
     public static final String[] COMMAND_LIST = new String[]{
             "giveEmpty",
@@ -70,23 +85,13 @@ public class CapsuleComman {
             "setMaterialColor"
     };
 
-    public static final String[] COMMAND_HELP = new String[]{
-            "giveEmpty [size] [overpowered]",
-            "giveLinked <rewardName> [playerName]",
-            "giveBlueprint <rewardName> [playerName]",
-            "exportHeldItem",
-            "exportSeenBlock",
-            "fromExistingReward <rewardName> [playerName]",
-            "fromHeldCapsule [outputName]",
-            "fromStructure <structureName> [playerName]",
-            "giveRandomLoot [playerName]",
-            "reloadLootList",
-            "reloadWhitelist",
-            "setAuthor <authorName>",
-            "setBaseColor <color>",
-            "setMaterialColor <color>"
-    };
+    public static String[] getStructuresList(ServerPlayerEntity player) {
+        return (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list();
+    }
 
+    public static String[] getRewardsList(ServerPlayerEntity player) {
+        return (new File(Config.rewardTemplatesPath.get())).list();
+    }
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
 
@@ -96,12 +101,12 @@ public class CapsuleComman {
                 .then(Commands.literal("help")
                         .executes(ctx -> {
                             int count = 0;
-                            if (!sentUsageURL.contains(ctx.getSource())) {
+                            if (!sentUsageURL.contains(ctx.getSource().asPlayer())) {
                                 StringTextComponent msg = new StringTextComponent(
                                         "see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
                                 msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
                                 ctx.getSource().sendFeedback(msg, false);
-                                sentUsageURL.add(ctx.getSource());
+                                sentUsageURL.add(ctx.getSource().asPlayer());
                                 count++;
                             }
                             Map<CommandNode<CommandSource>, String> map = dispatcher.getSmartUsage(capsuleCommand.getRedirect(), ctx.getSource());
@@ -112,179 +117,111 @@ public class CapsuleComman {
 
                             return map.size() + count;
                         }))
+                // giveEmpty [size] [overpowered]
                 .then(Commands.literal("giveEmpty")
-                        .then(Commands.argument("size", IntegerArgumentType.integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
-                                .then(Commands.argument("overpowered", BoolArgumentType.bool()))
-                                .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), IntegerArgumentType.getInteger(ctx, "size"), BoolArgumentType.getBool(ctx, "overpowered")))
+                        .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), 3, false))
+                        .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
+                                .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
+                                .then(Commands.argument("overpowered", BoolArgumentType.bool())
+                                        .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
+                                )
                         )
-                        .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), IntegerArgumentType.getInteger(ctx, "size"), false))
                 )
-                .then(Commands.literal("executeGiveLinked")
-                        // TODO
+                // giveLinked <rewardTemplateName> [playerName]
+                .then(Commands.literal("giveLinked")
+                        // TODO templates suggestions from folder
+                        .then(Commands.argument("rewardTemplateName", string())
+                                .executes(ctx -> executeGiveLinked(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .then(Commands.argument("target", player())
+                                        .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                )
+                        )
+                )
+                // giveBlueprint <rewardTemplateName> [playerName]
+                .then(Commands.literal("giveBlueprint")
+                        .then(Commands.argument("rewardTemplateName", string())
+                                .executes(ctx -> executeGiveBlueprint(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .then(Commands.argument("target", player())
+                                        .executes(ctx -> executeGiveBlueprint(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                )
+                        )
+                )
+                // exportHeldItem
+                .then(Commands.literal("exportHeldItem")
+                        .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
+                )
+                // exportSeenBlock
+                .then(Commands.literal("exportHeldItem")
+                        .executes(ctx -> executeExportSeenBlock(ctx.getSource().asPlayer()))
+                )
+                // fromExistingReward <rewardTemplateName> [playerName]
+                .then(Commands.literal("fromExistingReward")
+                        .then(Commands.argument("rewardTemplateName", string())
+                                .executes(ctx -> executeFromExistingReward(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .then(Commands.argument("target", player())
+                                        .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                )
+                        )
+                )
+                // fromStructure <structureTemplateName> [playerName]
+                .then(Commands.literal("fromStructure")
+                        .then(Commands.argument("rewardTemplateName", string())
+                                .executes(ctx -> executeFromStructure(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .then(Commands.argument("target", player())
+                                        .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                )
+                        )
+                )
+                // fromHeldCapsule [outputTemplateName]
+                .then(Commands.literal("fromHeldCapsule")
+                        .then(Commands.argument("outputTemplateName", string())
+                                .executes(ctx -> executeFromHeldCapsule(ctx.getSource().asPlayer(), getString(ctx, "outputTemplateName")))
+                        )
+                )
+                // giveRandomLoot [playerName]
+                .then(Commands.literal("giveRandomLoot")
+                        .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
+                        .then(Commands.argument("target", player())
+                                .executes(ctx -> executeGiveRandomLoot(getPlayer(ctx, "target")))
+                        )
+                )
+                // reloadLootList
+                .then(Commands.literal("reloadLootList")
+                        .executes(ctx -> {
+                            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
+                            return 1;
+                        })
+                )
+                // reloadWhitelist
+                .then(Commands.literal("reloadWhitelist")
+                        .executes(ctx -> {
+                            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
+                            Config.starterTemplatesList = Files.populateStarters(Config.configDir.toFile(), Config.starterTemplatesPath.get());
+                            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir.toFile());
+                            return 1;
+                        })
+                )
+                // setAuthor <authorName>
+                .then(Commands.literal("setAuthor")
+                        .then(Commands.argument("authorName", string())
+                                .executes(ctx -> executeSetAuthor(ctx.getSource().asPlayer(), getString(ctx, "authorName")))
+                        )
+                )
+                // setBaseColor <color>
+                .then(Commands.literal("setBaseColor")
+                        .then(Commands.argument("color", color())
+                                        .executes(ctx -> executeSetBaseColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
+                                // TODO color suggestions and examples
+                        )
+                )
+                // setMaterialColor <color>
+                .then(Commands.literal("setMaterialColor")
+                        .then(Commands.argument("color", color())
+                                        .executes(ctx -> executeSetMaterialColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
+                                // TODO color suggestions and examples
+                        )
                 )
         ;
-
-        dispatcher.register(capsuleCommand);
-
-        if (args.length < 1 || "help".equalsIgnoreCase(args[0])) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
-        ServerPlayerEntity player = null;
-        if (sender instanceof ServerPlayerEntity) {
-            player = (ServerPlayerEntity) sender;
-        }
-
-        if ("giveEmpty".equalsIgnoreCase(args[0])) {
-            executeGiveEmpty(args, player);
-        } else if ("giveLinked".equalsIgnoreCase(args[0])) {
-            executeGiveLinked(server, sender, args, player);
-        } else if ("giveBlueprint".equalsIgnoreCase(args[0])) {
-            executeGiveBlueprint(server, sender, args, player);
-        } else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
-            executeExportHeldItem(sender, args, player);
-        } else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
-            executeExportSeenBlock(server, sender, args, player);
-        } else if ("setAuthor".equalsIgnoreCase(args[0])) {
-            executeSetAuthor(server, sender, args, player);
-        } else if ("setBaseColor".equalsIgnoreCase(args[0])) {
-            executeSetBaseColor(sender, args, player);
-        } else if ("setMaterialColor".equalsIgnoreCase(args[0])) {
-            executeSetMaterialColor(sender, args, player);
-        } else if ("fromHeldCapsule".equalsIgnoreCase(args[0])) {
-            executeFromHeldCapsule(server, sender, args, player);
-        } else if ("fromStructure".equalsIgnoreCase(args[0])) {
-            executeFromStructure(server, sender, args, player);
-        } else if ("fromExistingReward".equalsIgnoreCase(args[0])) {
-            executeFromExistingReward(server, sender, args, player);
-        } else if ("giveRandomLoot".equalsIgnoreCase(args[0])) {
-            executeGiveRandomLoot(server, sender, args, player);
-        } else if ("reloadLootList".equalsIgnoreCase(args[0])) {
-            if (args.length != 1) {
-                throw new SimpleCommandExceptionType(getUsage(sender));
-            }
-            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
-        } else if ("reloadWhitelist".equalsIgnoreCase(args[0])) {
-            if (args.length != 1) {
-                throw new SimpleCommandExceptionType(getUsage(sender));
-            }
-            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
-            Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
-            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
-        } else {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-    }
-
-
-    public static String getUsage(ServerPlayerEntity sender) {
-
-        if (!sentUsageURL.contains(sender)) {
-            StringTextComponent msg = new StringTextComponent(
-                    "see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
-            msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
-            sender.sendMessage(msg);
-            sentUsageURL.add(sender);
-        }
-        return "Capsule commands list:\n/capsule " + Joiner.on("\n/capsule ").join(COMMAND_HELP);
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
-
-        ServerPlayerEntity player = null;
-        switch (args.length) {
-            case 1:
-                return getListOfStringsMatchingLastWord(args, COMMAND_LIST);
-            case 2:
-                switch (args[0]) {
-                    case "giveRandomLoot":
-                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
-
-                    case "setBaseColor":
-                    case "setMaterialColor":
-                        return getListOfStringsMatchingLastWord(args, CapsuleLootEntry.COLOR_PALETTE);
-
-                    case "fromStructure":
-                        try {
-                            player = getCommandSenderAsPlayer(sender);
-                            String[] structuresList = (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list();
-                            if (structuresList == null) return new ArrayList<>();
-                            return getListOfStringsMatchingLastWord(args, structuresList);
-                        } catch (PlayerNotFoundException ignored) {
-                        }
-                        break;
-
-                    case "fromExistingReward":
-                    case "giveLinked":
-                    case "giveBlueprint":
-                        String[] rewardsList = (new File(Config.rewardTemplatesPath)).list();
-                        if (rewardsList == null) return new ArrayList<>();
-                        return getListOfStringsMatchingLastWord(args, rewardsList);
-                }
-            case 3:
-                switch (args[0]) {
-                    case "fromStructure":
-                    case "fromExistingReward":
-                    case "giveLinked":
-                    case "giveBlueprint":
-                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
-                }
-        }
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-
-        if (args.length < 1 || "help".equalsIgnoreCase(args[0])) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
-        ServerPlayerEntity player = null;
-        if (sender instanceof ServerPlayerEntity) {
-            player = (ServerPlayerEntity) sender;
-        }
-
-        if ("giveEmpty".equalsIgnoreCase(args[0])) {
-            executeGiveEmpty(args, player);
-        } else if ("giveLinked".equalsIgnoreCase(args[0])) {
-            executeGiveLinked(server, sender, args, player);
-        } else if ("giveBlueprint".equalsIgnoreCase(args[0])) {
-            executeGiveBlueprint(server, sender, args, player);
-        } else if ("exportHeldItem".equalsIgnoreCase(args[0])) {
-            executeExportHeldItem(sender, args, player);
-        } else if ("exportSeenBlock".equalsIgnoreCase(args[0])) {
-            executeExportSeenBlock(server, sender, args, player);
-        } else if ("setAuthor".equalsIgnoreCase(args[0])) {
-            executeSetAuthor(server, sender, args, player);
-        } else if ("setBaseColor".equalsIgnoreCase(args[0])) {
-            executeSetBaseColor(sender, args, player);
-        } else if ("setMaterialColor".equalsIgnoreCase(args[0])) {
-            executeSetMaterialColor(sender, args, player);
-        } else if ("fromHeldCapsule".equalsIgnoreCase(args[0])) {
-            executeFromHeldCapsule(server, sender, args, player);
-        } else if ("fromStructure".equalsIgnoreCase(args[0])) {
-            executeFromStructure(server, sender, args, player);
-        } else if ("fromExistingReward".equalsIgnoreCase(args[0])) {
-            executeFromExistingReward(server, sender, args, player);
-        } else if ("giveRandomLoot".equalsIgnoreCase(args[0])) {
-            executeGiveRandomLoot(server, sender, args, player);
-        } else if ("reloadLootList".equalsIgnoreCase(args[0])) {
-            if (args.length != 1) {
-                throw new SimpleCommandExceptionType(getUsage(sender));
-            }
-            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
-        } else if ("reloadWhitelist".equalsIgnoreCase(args[0])) {
-            if (args.length != 1) {
-                throw new SimpleCommandExceptionType(getUsage(sender));
-            }
-            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
-            Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
-            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
-        } else {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
     }
 
     private static int executeGiveEmpty(ServerPlayerEntity player, int size, boolean overpowered) {
@@ -303,29 +240,25 @@ public class CapsuleComman {
         return 0;
     }
 
-    private static void executeGiveLinked(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity p) throws CommandException {
-        StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        ServerPlayerEntity player = structureAndPlayerArgs.getTargetedPlayer();
-        String srcStructureName = structureAndPlayerArgs.getStructureName();
-
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
-            ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(srcStructureName), player);
+    private static int executeGiveLinked(ServerPlayerEntity player, String rewardTemplateName) {
+        String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+            ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
             } else {
-                throw new CommandException("Reward Capsule \"%s\" not found ", srcStructureName);
+                throw new CommandException(new StringTextComponent("Reward Capsule " + rewardTemplateName + " not found "));
             }
+            return 1;
         }
+        return 0;
     }
 
-    private static void executeGiveBlueprint(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity p) throws CommandException {
-        StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        ServerPlayerEntity player = structureAndPlayerArgs.getTargetedPlayer();
-        String srcStructureName = structureAndPlayerArgs.getStructureName();
+    private static int executeGiveBlueprint(ServerPlayerEntity player, String rewardTemplateName) {
+        String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
 
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
-
-            CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(srcStructureName), server);
+            CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.getServer());
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
                 if (size % 2 == 0)
@@ -336,14 +269,14 @@ public class CapsuleComman {
                         0xFFFFFF,
                         size,
                         false,
-                        Capsule.labelFromPath(srcStructureName),
+                        Capsule.labelFromPath(templateName),
                         0
                 );
                 CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
                 CapsuleItem.setBlueprint(capsule);
 
                 String destTemplate = StructureSaver.createBlueprintTemplate(
-                        Config.getRewardPathFromName(srcStructureName), capsule,
+                        Config.getRewardPathFromName(templateName), capsule,
                         player.getServerWorld(),
                         player
                 );
@@ -351,19 +284,13 @@ public class CapsuleComman {
                 giveCapsule(capsule, player);
 
             } else {
-                throw new CommandException("Reward Capsule \"%s\" not found ", srcStructureName);
+                throw new CommandException(new StringTextComponent("Reward Capsule " + rewardTemplateName + " not found "));
             }
         }
+        return 0;
     }
 
-    private static void executeGiveRandomLoot(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity player) throws CommandException {
-        if (args.length != 1 && args.length != 2) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
-        if (args.length == 2) {
-            player = CommandBase.getPlayer(server, sender, args[1]);
-        }
+    private static int executeGiveRandomLoot(ServerPlayerEntity player) throws CommandException {
         if (player != null) {
             LootContext.Builder lootcontext$builder = new LootContext.Builder(player.getServerWorld());
             List<ItemStack> loots = new ArrayList<>();
@@ -373,21 +300,19 @@ public class CapsuleComman {
             } else {
                 for (ItemStack loot : loots) {
                     giveCapsule(loot, player);
+                    return 1;
                 }
             }
         }
+        return 0;
     }
 
-    private static void executeFromExistingReward(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity p) throws CommandException {
-        StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        ServerPlayerEntity player = structureAndPlayerArgs.getTargetedPlayer();
-        String structureName = structureAndPlayerArgs.getStructureName();
+    private static int executeFromExistingReward(ServerPlayerEntity player, String templateName) throws CommandException {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
 
-        if (player != null && !StringUtils.isNullOrEmpty(structureName) && player.getEntityWorld() instanceof ServerWorld) {
-
-            String structurePath = Config.getRewardPathFromName(structureName);
-            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(server);
-            CapsuleTemplate template = templatemanager.get(server, new ResourceLocation(structurePath));
+            String structurePath = Config.getRewardPathFromName(templateName);
+            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
+            CapsuleTemplate template = templatemanager.get(player.getServer(), new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -398,26 +323,24 @@ public class CapsuleComman {
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
                         size,
-                        Capsule.labelFromPath(structureName),
+                        Capsule.labelFromPath(templateName),
                         template.getAuthor());
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 giveCapsule(capsule, player);
 
             } else {
-                throw new CommandException("Reward Capsule \"%s\" not found ", structureName);
+                throw new CommandException(new StringTextComponent("Reward Capsule \"" + templateName + "\" not found "));
             }
+            return 1;
         }
+        return 0;
     }
 
-    private static void executeFromStructure(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity p) throws CommandException {
-        StructureAndPlayerArgs structureAndPlayerArgs = new StructureAndPlayerArgs().invoke(server, sender, args, p);
-        ServerPlayerEntity player = structureAndPlayerArgs.getTargetedPlayer();
-        String srcStructureName = structureAndPlayerArgs.getStructureName();
-
-        if (player != null && !StringUtils.isNullOrEmpty(srcStructureName) && player.getEntityWorld() instanceof ServerWorld) {
+    private static int executeFromStructure(ServerPlayerEntity player, String templateName) throws CommandException {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
             // template
             TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
-            Template template = templatemanager.get(server, new ResourceLocation(srcStructureName));
+            Template template = templatemanager.getTemplate(new ResourceLocation(templateName));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -428,55 +351,53 @@ public class CapsuleComman {
                 template.writeToNBT(data);
 
                 // create a destination template
-                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + srcStructureName);
-                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(server);
-                CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
+                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + templateName);
+                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
+                CapsuleTemplate destTemplate = destManager.getTemplate(player.getServer(), destinationLocation);
                 // write template from source data
                 destTemplate.read(data);
-                destManager.writeTemplate(server, destinationLocation);
+                destManager.writeTemplate(player.getServer(), destinationLocation);
 
                 ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         destinationLocation.toString(),
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
                         size,
-                        srcStructureName,
+                        templateName,
                         template.getAuthor());
                 CapsuleItem.setCanRotate(capsule, destTemplate.canRotate());
                 giveCapsule(capsule, player);
-
+                return 1;
             } else {
-                throw new CommandException("Structure \"%s\" not found ", srcStructureName);
+                throw new CommandException(new StringTextComponent("Structure \"" + templateName + "\" not found "));
             }
         }
+        return 0;
     }
 
-    private static void executeFromHeldCapsule(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 1 && args.length != 2) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
+    private static int executeFromHeldCapsule(ServerPlayerEntity player, String templateName) throws CommandSyntaxException {
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
                 String outputName;
-                if (args.length == 1) {
+                if (StringUtils.isNullOrEmpty(templateName)) {
                     //noinspection ConstantConditions
                     outputName = heldItem.getTag().getString("label");
                 } else {
-                    outputName = args[1];
+                    outputName = templateName;
                 }
                 if (StringUtils.isNullOrEmpty(outputName)) {
-                    throw new SimpleCommandExceptionType(
-                            "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template.");
+                    throw new SimpleCommandExceptionType(new StringTextComponent(
+                            "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template."
+                    )).create();
                 }
 
                 String destinationTemplateLocation = Config.getRewardPathFromName(outputName.toLowerCase().replace(" ", "_").replace(":", "-"));
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
-                        StructureSaver.getRewardManager(server),
+                        StructureSaver.getRewardManager(player.getServer()),
                         player.getServerWorld(),
                         false,
                         null
@@ -484,7 +405,7 @@ public class CapsuleComman {
 
                 if (!created) {
                     player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
-                    return;
+                    return 0;
                 }
 
                 ItemStack capsule = Capsule.newRewardCapsuleItemStack(
@@ -496,71 +417,63 @@ public class CapsuleComman {
                         CapsuleItem.getAuthor(heldItem));
                 CapsuleItem.setCanRotate(capsule, CapsuleItem.canRotate(heldItem));
                 giveCapsule(capsule, player);
-
+                return 1;
             }
         }
+        return 0;
     }
 
-    private static void executeSetMaterialColor(ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 2) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
+    private static int executeSetMaterialColor(ServerPlayerEntity player, String colorAsInt) throws CommandSyntaxException {
         int color = 0;
         try {
-            color = Integer.decode(args[1]);
+            color = Integer.decode(colorAsInt);
         } catch (NumberFormatException e) {
-            throw new SimpleCommandExceptionType("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456");
+            throw new SimpleCommandExceptionType(new StringTextComponent("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
         }
 
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (heldItem.getItem() instanceof CapsuleItem) {
                 CapsuleItem.setMaterialColor(heldItem, color);
+                return 1;
             }
         }
+        return 0;
     }
 
-    private static void executeSetBaseColor(ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 2) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
+    private static int executeSetBaseColor(ServerPlayerEntity player, String colorAsInt) throws CommandSyntaxException {
         int color = 0;
         try {
-            color = Integer.decode(args[1]);
+            color = Integer.decode(colorAsInt);
         } catch (NumberFormatException e) {
-            throw new SimpleCommandExceptionType("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456");
+            throw new SimpleCommandExceptionType(new StringTextComponent("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
         }
 
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (heldItem.getItem() instanceof CapsuleItem) {
                 CapsuleItem.setBaseColor(heldItem, color);
+                return 1;
             }
         }
+        return 0;
     }
 
-    private static void executeSetAuthor(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 1 && args.length != 2) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
-
+    private static int executeSetAuthor(ServerPlayerEntity player, String authorName) {
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
-                if (args.length == 2) {
+                if (!StringUtils.isNullOrEmpty(authorName)) {
                     // set a new author
-                    String author = args[1];
                     //noinspection ConstantConditions
-                    heldItem.getTag().putString("author", args[1]);
+                    heldItem.getTag().putString("author", authorName);
                     Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
-                        template.setAuthor(author);
-                        templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        template.setAuthor(authorName);
+                        templatemanager.writeTemplate(player.getServer(), new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
                     }
 
                 } else {
@@ -572,29 +485,27 @@ public class CapsuleComman {
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor("?");
-                        templatemanager.writeTemplate(server, new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeTemplate(player.getServer(), new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
                     }
                 }
-
+                return 1;
             }
         }
+        return 0;
     }
 
-    private static void executeExportSeenBlock(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 1) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
+    private static int executeExportSeenBlock(ServerPlayerEntity player) throws CommandSyntaxException {
         if (player != null) {
-            if (!server.isDedicatedServer()) {
-                BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getMinecraft().getRenderPartialTicks(), 50);
+            if (!player.getServer().isDedicatedServer()) {
+                BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getRenderPartialTicks(), 50);
 
-                if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
+                if (rtc.getType() == RayTraceResult.Type.BLOCK) {
 
-                    BlockPos position = rtc.getBlockPos();
+                    BlockPos position = rtc.getPos();
                     BlockState state = player.getServerWorld().getBlockState(position);
                     TileEntity tileentity = player.getServerWorld().getTileEntity(position);
 
-                    String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 " + state.getBlock().getMetaFromState(state);
+                    String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 ";
                     if (tileentity != null) {
                         command += " {BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
                     }
@@ -612,10 +523,7 @@ public class CapsuleComman {
         }
     }
 
-    private static void executeExportHeldItem(ICommandSender sender, String[] args, ServerPlayerEntity player) throws WrongUsageException {
-        if (args.length != 1) {
-            throw new SimpleCommandExceptionType(getUsage(sender));
-        }
+    private static int executeExportHeldItem(ServerPlayerEntity player) {
         if (player != null) {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (!heldItem.isEmpty()) {
@@ -631,58 +539,15 @@ public class CapsuleComman {
                 msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
                 player.sendMessage(msg);
-
+                return 1;
             }
         }
+        return 0;
     }
 
     private static void giveCapsule(ItemStack capsule, PlayerEntity player) {
         ItemEntity entity = new ItemEntity(player.getEntityWorld(), player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
         entity.setNoPickupDelay();
         entity.onCollideWithPlayer(player);
-    }
-
-    /**
-     * Extract a target player from command args or command executor.
-     * Target player must be the last argument.
-     */
-    private class StructureAndPlayerArgs {
-        private ServerPlayerEntity targetedPlayer;
-        private String structureName;
-
-        public ServerPlayerEntity getTargetedPlayer() {
-            return targetedPlayer;
-        }
-
-        public String getStructureName() {
-            return structureName;
-        }
-
-        public StructureAndPlayerArgs invoke(MinecraftServer server, ICommandSender sender, String[] args, ServerPlayerEntity senderPlayer) throws CommandException {
-            if (args.length == 1) {
-                throw new SimpleCommandExceptionType(getUsage(sender));
-            }
-            targetedPlayer = senderPlayer;
-            int finalArgsCount = 0;
-            if (args.length > 2) {
-                ServerPlayerEntity p = null;
-                try {
-                    p = getPlayer(server, sender, args[args.length - 1]);
-                } catch (Exception ignored) {
-                }
-                if (p != null) {
-                    targetedPlayer = p;
-                    finalArgsCount = 1;
-                }
-            }
-            StringBuilder structureNameB = new StringBuilder();
-            for (int i = 1; i < args.length - finalArgsCount; i++) {
-                structureNameB.append(args[i]);
-                if (i < args.length - finalArgsCount - 1) structureNameB.append(" ");
-            }
-
-            structureName = structureNameB.toString().replaceAll(".nbt", "").replaceAll(".schematic", "");
-            return this;
-        }
     }
 }

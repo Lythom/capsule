@@ -7,7 +7,7 @@ import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -57,9 +57,9 @@ public class CapsuleContentPreviewQueryHandler
         // that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently! See
         // MessageHandlerOnClient
-        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
+        final ServerPlayerEntity sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("PlayerEntityMP was null when AskCapsuleContentPreviewMessageToServer was received");
+            LOGGER.error("ServerPlayerEntity was null when AskCapsuleContentPreviewMessageToServer was received");
             return null;
         }
 

@@ -2,7 +2,7 @@ package capsule.network.server;
 
 import capsule.items.CapsuleItem;
 import capsule.network.LabelEditedMessageToServer;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.ServerWorld;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -44,9 +44,9 @@ public class LabelEditedMessageToServerHandler implements IMessageHandler<LabelE
         //  that the ctx handler is a serverhandler, and that ServerWorld exists.
         // Packets received on the client side must be handled differently!  See MessageHandlerOnClient
 
-        final PlayerEntityMP sendingPlayer = ctx.getServerHandler().player;
+        final ServerPlayerEntity sendingPlayer = ctx.getServerHandler().player;
         if (sendingPlayer == null) {
-            LOGGER.error("PlayerEntityMP was null when LabelEditedMessageToServer was received");
+            LOGGER.error("ServerPlayerEntity was null when LabelEditedMessageToServer was received");
             return null;
         }
 
@@ -62,7 +62,7 @@ public class LabelEditedMessageToServerHandler implements IMessageHandler<LabelE
 
     // This message is called from the Server thread.
     //   It spawns a random number of the given projectile at a position above the target location
-    void processMessage(LabelEditedMessageToServer message, PlayerEntityMP sendingPlayer) {
+    void processMessage(LabelEditedMessageToServer message, ServerPlayerEntity sendingPlayer) {
         ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
         if (serverStack.getItem() instanceof CapsuleItem) {
             // of the player didn't swap item during ui opening

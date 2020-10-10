@@ -13,7 +13,7 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerEntityMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.ByteNBT;
 import net.minecraft.nbt.IntNBT;
 import net.minecraft.util.SoundEvents;
@@ -429,7 +429,7 @@ public class Capsule {
         }
     }
 
-    public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, PlayerEntityMP player) {
+    public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, ServerPlayerEntity player) {
         if (player == null) return ItemStack.EMPTY;
 
         CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.getServer());
