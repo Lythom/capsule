@@ -10,11 +10,8 @@ import capsule.loot.CapsuleLootEntry;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import com.google.common.base.Joiner;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -24,13 +21,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
@@ -46,10 +41,13 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootParameterSets;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
@@ -57,14 +55,13 @@ import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
 import static net.minecraft.command.arguments.ColorArgument.color;
-import static net.minecraft.command.arguments.ColorArgument.getColor;
 import static net.minecraft.command.arguments.EntityArgument.getPlayer;
 import static net.minecraft.command.arguments.EntityArgument.player;
 
 /**
  * @author Lythom
  */
-public class CapsuleComman {
+public class CapsuleCommand {
 
     public static List<ServerPlayerEntity> sentUsageURL = new ArrayList<>();
 
@@ -294,7 +291,7 @@ public class CapsuleComman {
         if (player != null) {
             LootContext.Builder lootcontext$builder = new LootContext.Builder(player.getServerWorld());
             List<ItemStack> loots = new ArrayList<>();
-            CapsuleLootTableHook.capsulePool.generateLoot(loots, new Random(), lootcontext$builder.build());
+            CapsuleLootTableHook.capsulePool.generate(loots::add, lootcontext$builder.build(LootParameterSets.COMMAND));
             if (loots.size() <= 0) {
                 player.sendMessage(new StringTextComponent("No loot this time !"));
             } else {
@@ -424,7 +421,7 @@ public class CapsuleComman {
     }
 
     private static int executeSetMaterialColor(ServerPlayerEntity player, String colorAsInt) throws CommandSyntaxException {
-        int color = 0;
+        int color;
         try {
             color = Integer.decode(colorAsInt);
         } catch (NumberFormatException e) {
@@ -494,9 +491,9 @@ public class CapsuleComman {
         return 0;
     }
 
-    private static int executeExportSeenBlock(ServerPlayerEntity player) throws CommandSyntaxException {
+    private static int executeExportSeenBlock(ServerPlayerEntity player) {
         if (player != null) {
-            if (!player.getServer().isDedicatedServer()) {
+            if (player.getServer() != null && !player.getServer().isDedicatedServer()) {
                 BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getRenderPartialTicks(), 50);
 
                 if (rtc.getType() == RayTraceResult.Type.BLOCK) {
@@ -515,12 +512,13 @@ public class CapsuleComman {
                     msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
                     player.sendMessage(msg);
-
+                    return 1;
                 }
             } else {
                 player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"));
             }
         }
+        return 0;
     }
 
     private static int executeExportHeldItem(ServerPlayerEntity player) {

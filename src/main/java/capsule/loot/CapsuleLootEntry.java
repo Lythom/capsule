@@ -6,39 +6,51 @@ import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.ILootGenerator;
+import net.minecraft.world.storage.loot.LootEntry;
+import net.minecraft.world.storage.loot.StandaloneLootEntry;
 import net.minecraft.world.storage.loot.conditions.ILootCondition;
-import net.minecraft.world.storage.loot.conditions.LootConditionManager;
+import net.minecraft.world.storage.loot.functions.ILootFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
 import java.util.Random;
+import java.util.function.Consumer;
 
 /**
  * @author Lythom
  */
-public class CapsuleLootEntry extends ILootGenerator {
+public class CapsuleLootEntry extends StandaloneLootEntry {
 
+    public static final int DEFAULT_WEIGHT = 3;
     public static String[] COLOR_PALETTE = new String[]{
             "0xCCCCCC", "0x549b57", "0xe08822", "0x5e8eb7", "0x6c6c6c", "0xbd5757", "0x99c33d", "0x4a4cba", "0x7b2e89", "0x95d5e7", "0xffffff"
     };
-    private static Random random = new Random();
+    private static final Random random = new Random();
     private String templatesPath = null;
+
+    public static LootEntry.Builder<?> builder(String templatePath) {
+        return builder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
+            int weight = findConfiguredWeight(templatePath);
+            return new CapsuleLootEntry(templatePath, weight);
+        });
+    }
+
+    public static int findConfiguredWeight(String path) {
+        int weight = DEFAULT_WEIGHT;
+        if (Config.lootTemplatesData.containsKey(path)) {
+            weight = Config.lootTemplatesData.get(path).weigth.get();
+        }
+        return weight;
+    }
 
     /**
      * @param templatesPath
      * @param weightIn
-     * @param qualityIn
-     * @param conditionsIn
-     * @param entryName
      */
-    protected CapsuleLootEntry(String templatesPath, int weightIn, int qualityIn, ILootCondition[] conditionsIn, String entryName) {
-        super(weightIn, qualityIn, conditionsIn, entryName);
+    protected CapsuleLootEntry(String templatesPath, int weightIn) {
+        super(weightIn, 0, new ILootCondition[0], new ILootFunction[0]);
         this.templatesPath = templatesPath;
     }
 
@@ -46,15 +58,14 @@ public class CapsuleLootEntry extends ILootGenerator {
         return Integer.decode(COLOR_PALETTE[(int) (Math.random() * COLOR_PALETTE.length)]);
     }
 
-
     /**
      * Add all eligible capsuleList to the list to be picked from.
      */
     @Override
-    public void addLoot(Collection<ItemStack> stacks, Random rand, LootContext context) {
+    public void func_216154_a(Consumer<ItemStack> stacks, LootContext context) {
         if (this.templatesPath == null) return;
 
-        if (LootConditionManager.testAllConditions(this.conditions, rand, context) && Config.lootTemplatesData.containsKey(this.templatesPath)) {
+        if (Config.lootTemplatesData.containsKey(this.templatesPath)) {
 
             Pair<String, CapsuleTemplate> templatePair = getRandomTemplate(context);
 
@@ -63,7 +74,7 @@ public class CapsuleLootEntry extends ILootGenerator {
                 String templatePath = templatePair.getLeft();
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 
-                if (template.entities.isEmpty() && Config.allowBlueprintReward) {
+                if (template.entities.isEmpty() && Config.allowBlueprintReward.get()) {
                     // blueprint if there is no entities in the capsule
                     ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
                             templatePath,
@@ -77,7 +88,7 @@ public class CapsuleLootEntry extends ILootGenerator {
                     CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
                     CapsuleItem.setBlueprint(capsule);
                     CapsuleItem.setCanRotate(capsule, template.canRotate());
-                    stacks.add(capsule);
+                    stacks.accept(capsule);
                 } else {
                     // one use if there are entities and a risk of dupe
                     ItemStack capsule = Capsule.newRewardCapsuleItemStack(
@@ -88,7 +99,7 @@ public class CapsuleLootEntry extends ILootGenerator {
                             Capsule.labelFromPath(templatePath),
                             template.getAuthor());
                     CapsuleItem.setCanRotate(capsule, template.canRotate());
-                    stacks.add(capsule);
+                    stacks.accept(capsule);
                 }
             }
 
@@ -100,7 +111,7 @@ public class CapsuleLootEntry extends ILootGenerator {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
+            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;
@@ -111,15 +122,9 @@ public class CapsuleLootEntry extends ILootGenerator {
         for (int i = 0; i < lpd.files.size(); i++) {
             int ri = (initRand + i) % lpd.files.size();
             String structureName = lpd.files.get(ri);
-            CapsuleTemplate template = StructureSaver.getTemplateForReward(context.getWorld().getMinecraftServer(), this.templatesPath + "/" + structureName).getRight();
+            CapsuleTemplate template = StructureSaver.getTemplateForReward(context.getWorld().getServer(), this.templatesPath + "/" + structureName).getRight();
             if (template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
         }
         return null;
     }
-
-    @Override
-    protected void serialize(JsonObject json, JsonSerializationContext context) {
-
-    }
-
 }
