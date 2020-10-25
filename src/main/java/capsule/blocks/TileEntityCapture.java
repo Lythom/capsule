@@ -1,13 +1,14 @@
 package capsule.blocks;
 
+import capsule.CommonProxy;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,14 +18,8 @@ public class TileEntityCapture extends TileEntity {
     public static List<TileEntityCapture> instances = new ArrayList<>();
 
     public TileEntityCapture() {
-        super();
+        super(CommonProxy.MARKER_TE);
         instances.add(this);
-    }
-
-
-    @Override
-    public void onChunkUnload() {
-        this.getTileData().putInt("size", 0);
     }
 
     /**
@@ -44,14 +39,13 @@ public class TileEntityCapture extends TileEntity {
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
         CompoundNBT nbtTagCompound = new CompoundNBT();
-        writeToNBT(nbtTagCompound);
-        int metadata = getBlockMetadata();
-        return new SUpdateTileEntityPacket(this.pos, metadata, nbtTagCompound);
+        write(nbtTagCompound);
+        return new SUpdateTileEntityPacket(this.pos, 0, nbtTagCompound);
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        readFromNBT(pkt.getNbtCompound());
+        read(pkt.getNbtCompound());
     }
 
     /**

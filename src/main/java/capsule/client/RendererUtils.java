@@ -1,49 +1,53 @@
 package capsule.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import org.lwjgl.opengl.GL11;
 
 public class RendererUtils {
     public static void doPositionPrologue() {
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(-TileEntityRendererDispatcher.staticPlayerX, -TileEntityRendererDispatcher.staticPlayerY, -TileEntityRendererDispatcher.staticPlayerZ);
+        RenderSystem.pushMatrix();
+        ActiveRenderInfo renderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
+        double projectedX = renderInfo.getProjectedView().x;
+        double projectedY = renderInfo.getProjectedView().y;
+        double projectedZ = renderInfo.getProjectedView().z;
+        RenderSystem.translated(-projectedX, -projectedY, -projectedZ);
     }
 
     public static void doPositionEpilogue() {
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     public static void doOverlayPrologue() {
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-        GlStateManager.disableDepth();
-        GlStateManager.enableBlend();
+        RenderSystem.disableLighting();
+        RenderSystem.disableTexture();
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableBlend();
     }
 
     public static void doOverlayEpilogue() {
-        GlStateManager.enableLighting();
-        GlStateManager.enableTexture2D();
-        GlStateManager.enableDepth();
-        GlStateManager.disableBlend();
+        RenderSystem.enableLighting();
+        RenderSystem.enableTexture();
+        RenderSystem.enableDepthTest();
+        RenderSystem.disableBlend();
     }
 
     public static void doWirePrologue() {
-        GlStateManager.disableCull();
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-        GlStateManager.glLineWidth(3.0F);
+        RenderSystem.disableCull();
+        RenderSystem.disableLighting();
+        RenderSystem.disableTexture();
+        RenderSystem.lineWidth(3.0F);
     }
 
     public static void doWireEpilogue() {
-        GlStateManager.glLineWidth(1.0F);
-        GlStateManager.enableTexture2D();
-        GlStateManager.enableLighting();
-        GlStateManager.enableCull();
+        RenderSystem.lineWidth(1.0F);
+        RenderSystem.enableTexture();
+        RenderSystem.enableLighting();
+        RenderSystem.enableCull();
 
     }
 
@@ -115,6 +119,7 @@ public class RendererUtils {
         bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ).endVertex();
         bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).endVertex();
     }
+
     public static void drawCubeTop(AxisAlignedBB boundingBox, BufferBuilder bufferBuilder) {
         bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).endVertex();
         bufferBuilder.pos(boundingBox.maxX, boundingBox.maxY, boundingBox.minZ).endVertex();
@@ -122,6 +127,7 @@ public class RendererUtils {
         bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.maxZ).endVertex();
         bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).endVertex();
     }
+
     public static void drawCubeSides(AxisAlignedBB boundingBox, BufferBuilder bufferBuilder) {
         bufferBuilder.pos(boundingBox.minX, boundingBox.minY, boundingBox.minZ).endVertex();
         bufferBuilder.pos(boundingBox.minX, boundingBox.maxY, boundingBox.minZ).endVertex();
@@ -143,22 +149,22 @@ public class RendererUtils {
         final float gf = g / 255f;
         final float bf = b / 255f;
 
-        GlStateManager.color(rf, gf, bf, af);
+        RenderSystem.color4f(rf, gf, bf, af);
     }
 
     public static void resetLightmap(boolean prevStateEnabled) {
         if (prevStateEnabled) {
-            GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-            GlStateManager.enableTexture2D();
-            GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            RenderSystem.activeTexture(33986);
+            RenderSystem.enableTexture();
+            RenderSystem.activeTexture(33984);
         }
     }
 
     public static boolean disableLightmap() {
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        RenderSystem.activeTexture(33986);
         boolean lightmapState = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
-        if (lightmapState) GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        RenderSystem.disableTexture();
+        RenderSystem.activeTexture(33984);
         return lightmapState;
     }
 }

@@ -1,15 +1,26 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import capsule.CommonProxy;
+import capsule.StructureSaver;
+import capsule.helpers.Spacial;
+import capsule.items.CapsuleItem;
+import capsule.structure.CapsuleTemplate;
+import capsule.structure.CapsuleTemplateManager;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.network.NetworkEvent;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * This Network Message is sent from the client to the server
- */
-public class CapsuleContentPreviewQueryToServer implements IMessage {
+import java.util.List;
+import java.util.function.Supplier;
+
+public class CapsuleContentPreviewQueryToServer {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewQueryToServer.class);
 
@@ -19,25 +30,9 @@ public class CapsuleContentPreviewQueryToServer implements IMessage {
         this.setStructureName(structureName);
     }
 
-    // for use by the message handler only.
-    public CapsuleContentPreviewQueryToServer() {
-
-    }
-
-    /**
-     * Called by the network code once it has received the message bytes over
-     * the network. Used to read the ByteBuf contents into your member variables
-     *
-     * @param buf buffer content to read from
-     */
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public CapsuleContentPreviewQueryToServer(PacketBuffer buf) {
         try {
-            // these methods may also be of use for your code:
-            // for Itemstacks - ByteBufUtils.readItemStack()
-            // for MinecraftNBT tags ByteBufUtils.readTag();
-            // for Strings: ByteBufUtils.readUTF8String();
-            this.setStructureName(ByteBufUtils.readUTF8String(buf));
+            this.setStructureName(buf.readString());
 
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
@@ -45,25 +40,38 @@ public class CapsuleContentPreviewQueryToServer implements IMessage {
         }
     }
 
-    /**
-     * Called by the network code. Used to write the contents of your message
-     * member variables into the ByteBuf, ready for transmission over the
-     * network.
-     *
-     * @param buf buffer content to write into
-     */
-    @Override
-    public void toBytes(ByteBuf buf) {
-
-        // these methods may also be of use for your code:
-        // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for MinecraftNBT tags ByteBufUtils.writeTag();
-        // for Strings: ByteBufUtils.writeUTF8String();
-        ByteBufUtils.writeUTF8String(buf, this.getStructureName());
+    public void toBytes(PacketBuffer buf) {
+        buf.writeString(this.getStructureName());
     }
 
-    public boolean isMessageValid() {
-        return this.getStructureName() != null;
+    public void onServer(Supplier<NetworkEvent.Context> ctx) {
+        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        if (sendingPlayer == null) {
+            LOGGER.error("ServerPlayerEntity was null when AskCapsuleContentPreviewMessageToServer was received");
+            return;
+        }
+
+        ctx.get().enqueueWork(() -> {
+            // read the content of the template and send it back to the client
+            ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+            if (!(heldItem.getItem() instanceof CapsuleItem) || CapsuleItem.getStructureName(heldItem) == null) {
+                return;
+            }
+
+            ServerWorld serverworld = sendingPlayer.getServerWorld();
+            Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
+            CapsuleTemplate template = templatepair.getRight();
+
+            if (template != null) {
+                List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.blocks);
+                CommonProxy.simpleNetworkWrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
+            } else if (heldItem.hasTag()) {
+                //noinspection ConstantConditions
+                String structureName = heldItem.getTag().getString("structureName");
+                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName));
+            }
+        });
+        ctx.get().setPacketHandled(true);
     }
 
     @Override

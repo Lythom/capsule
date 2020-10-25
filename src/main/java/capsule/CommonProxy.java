@@ -1,18 +1,11 @@
 package capsule;
 
 import capsule.blocks.CapsuleBlocks;
-import capsule.command.CapsuleComman;
+import capsule.blocks.TileEntityCapture;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
-import capsule.helpers.Files;
 import capsule.items.CapsuleItems;
 import capsule.network.*;
-import capsule.network.client.CapsuleContentPreviewAnswerHandler;
-import capsule.network.client.CapsuleUndeployNotifHandler;
-import capsule.network.server.CapsuleContentPreviewQueryHandler;
-import capsule.network.server.CapsuleLeftClickQueryHandler;
-import capsule.network.server.CapsuleThrowQueryHandler;
-import capsule.network.server.LabelEditedMessageToServerHandler;
 import capsule.recipes.*;
 import net.minecraft.block.Block;
 import net.minecraft.enchantment.Enchantment;
@@ -21,6 +14,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.SpecialRecipeSerializer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,18 +28,20 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber
 public class CommonProxy {
 
     private static final String PROTOCOL_VERSION = "1";
-    public static SimpleChannel simpleNetworkWrapper = NetworkRegistry.ChannelBuilder
-            .named(new ResourceLocation("capsule", "CapsuleChannel"))
-            .clientAcceptedVersions(PROTOCOL_VERSION::equals)
-            .serverAcceptedVersions(PROTOCOL_VERSION::equals)
-            .networkProtocolVersion(() -> PROTOCOL_VERSION)
-            .simpleChannel();
+    public static SimpleChannel simpleNetworkWrapper = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation("capsule", "CapsuleChannel"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals
+    );
     public static byte CAPSULE_CHANNEL_MESSAGE_ID = 1;
 
     public static final BlueprintCapsuleRecipe.Serializer BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
@@ -54,6 +51,8 @@ public class CommonProxy {
     public static final SpecialRecipeSerializer<PrefabsBlueprintAggregatorRecipe> PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new SpecialRecipeSerializer<>(PrefabsBlueprintAggregatorRecipe::new));
     public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
     public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("recovery_capsule", new UpgradeCapsuleRecipe.Serializer());
+
+    public static final TileEntityType<TileEntityCapture> MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.blockCapsuleMarker);
 
     private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(Main.MODID, name));
@@ -84,7 +83,20 @@ public class CommonProxy {
         CapsuleItems.registerItems(event);
     }
 
+    private static final Set<TileEntityType<?>> TILE_ENTITIES = new HashSet<>();
 
+    private static <T extends TileEntity> TileEntityType<T> buildTileEntity(Supplier<T> supplier, String label, Block... blocks) {
+        TileEntityType<T> te = TileEntityType.Builder.create(supplier, blocks).build(null);
+        te.setRegistryName(Main.MODID + ":" + label);
+        TILE_ENTITIES.add(te);
+        return te;
+    }
+
+    @SubscribeEvent
+    public static void registerTileEntities(final RegistryEvent.Register<TileEntityType<?>> event) {
+        TILE_ENTITIES.forEach(te -> event.getRegistry().register(te));
+        TILE_ENTITIES.clear();
+    }
 
     @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
@@ -100,21 +112,21 @@ public class CommonProxy {
 
         // network stuff
         // client ask server to edit capsule label
-        simpleNetworkWrapper.registerMessage(LabelEditedMessageToServerHandler.class, LabelEditedMessageToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, LabelEditedMessageToServer.class, LabelEditedMessageToServer::toBytes, LabelEditedMessageToServer::new, LabelEditedMessageToServer::onServer);
         // client ask server data needed to preview a deploy
-        simpleNetworkWrapper.registerMessage(CapsuleContentPreviewQueryHandler.class, CapsuleContentPreviewQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleContentPreviewQueryToServer.class, CapsuleContentPreviewQueryToServer::toBytes, CapsuleContentPreviewQueryToServer::new, CapsuleContentPreviewQueryToServer::onServer);
         // client ask server to throw item to a specific position
-        simpleNetworkWrapper.registerMessage(CapsuleThrowQueryHandler.class, CapsuleThrowQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleThrowQueryToServer.class, CapsuleThrowQueryToServer::toBytes, CapsuleThrowQueryToServer::new, CapsuleThrowQueryToServer::onServer);
         // client ask server to reload the held blueprint capsule
-        simpleNetworkWrapper.registerMessage(CapsuleLeftClickQueryHandler.class, CapsuleLeftClickQueryToServer.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.SERVER);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleLeftClickQueryToServer.class, CapsuleLeftClickQueryToServer::toBytes, CapsuleLeftClickQueryToServer::new, CapsuleLeftClickQueryToServer::onServer);
         // server sends to client the data needed to preview a deploy
-        simpleNetworkWrapper.registerMessage(CapsuleContentPreviewAnswerHandler.class, CapsuleContentPreviewAnswerToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleContentPreviewAnswerToClient.class, CapsuleContentPreviewAnswerToClient::toBytes, CapsuleContentPreviewAnswerToClient::new, CapsuleContentPreviewAnswerToClient::onClient);
         // server sends to client the data needed to render undeploy
-        simpleNetworkWrapper.registerMessage(CapsuleUndeployNotifHandler.class, CapsuleUndeployNotifToClient.class, CAPSULE_CHANNEL_MESSAGE_ID++, Side.CLIENT);
+        simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleUndeployNotifToClient.class, CapsuleUndeployNotifToClient::toBytes, CapsuleUndeployNotifToClient::new, CapsuleUndeployNotifToClient::onClient);
     }
 
     public void serverStarting(FMLServerStartingEvent e) {
-        CapsuleComman.register(e.getCommandDispatcher());
+        CapsuleCommand.register(e.getCommandDispatcher());
     }
 
     public void openGuiScreen(PlayerEntity playerIn) {

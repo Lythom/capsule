@@ -23,6 +23,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
@@ -605,6 +606,10 @@ public class CapsuleTemplate {
                 !nbt.contains("Data", Constants.NBT.TAG_BYTE_ARRAY)) {
             LOGGER.error("Schematic: Missing block data in the schematic");
             return false;
+        }
+
+        if (!nbt.contains("DataVersion", 99)) {
+            nbt.putInt("DataVersion", 500);
         }
 
         this.blocks.clear();

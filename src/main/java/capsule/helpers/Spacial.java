@@ -150,9 +150,9 @@ public class Spacial {
     }
 
     public static boolean isThrowerUnderLiquid(final ItemEntity ItemEntity) {
-        String thrower = ItemEntity.getThrower();
+        UUID thrower = ItemEntity.getThrower();
         if (StringUtils.isNullOrEmpty(thrower)) return false;
-        PlayerEntity player = ItemEntity.getEntityWorld().getPlayerEntityByName(thrower);
+        PlayerEntity player = ItemEntity.getEntityWorld().getPlayerByUuid(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
     }

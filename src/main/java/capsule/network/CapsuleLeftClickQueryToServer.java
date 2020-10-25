@@ -1,41 +1,81 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import capsule.StructureSaver;
+import capsule.helpers.Capsule;
+import capsule.items.CapsuleItem;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
+import net.minecraftforge.fml.network.NetworkEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- * This Network Message is sent from the client to the server
- */
-public class CapsuleLeftClickQueryToServer implements IMessage {
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-    // for use by the message handler only.
+public class CapsuleLeftClickQueryToServer {
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewQueryToServer.class);
+
     public CapsuleLeftClickQueryToServer() {
-
     }
 
-    /**
-     * Called by the network code once it has received the message bytes over
-     * the network. Used to read the ByteBuf contents into your member variables
-     *
-     * @param buf
-     */
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public CapsuleLeftClickQueryToServer(PacketBuffer buf) {
     }
 
-    /**
-     * Called by the network code. Used to write the contents of your message
-     * member variables into the ByteBuf, ready for transmission over the
-     * network.
-     *
-     * @param buf
-     */
-    @Override
-    public void toBytes(ByteBuf buf) {
+    public void onServer(Supplier<NetworkEvent.Context> ctx) {
+        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        if (sendingPlayer == null) {
+            LOGGER.error("ServerPlayerEntity was null when " + this.getClass().getName() + " was received");
+            return;
+        }
+
+        ctx.get().enqueueWork(() -> {
+            // read the content of the template and send it back to the client
+            ItemStack stack = sendingPlayer.getHeldItemMainhand();
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getDamage() == CapsuleItem.STATE_DEPLOYED) {
+                // Reload if no missing materials
+                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
+                if (missing != null && missing.size() > 0) {
+                    String missingListText = missing.entrySet().stream()
+
+                            .map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack)))
+                            .collect(Collectors.joining("\n* "));
+                    sendingPlayer.sendMessage(new TranslationTextComponent(
+                            "Missing : \n* " + missingListText
+                    ));
+                }
+            } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
+                PlacementSettings placement = CapsuleItem.getPlacement(stack);
+                if (sendingPlayer.isSneaking()) {
+                    switch (placement.getMirror()) {
+                        case FRONT_BACK:
+                            placement.setMirror(Mirror.LEFT_RIGHT);
+                            break;
+                        case LEFT_RIGHT:
+                            placement.setMirror(Mirror.NONE);
+                            break;
+                        case NONE:
+                            placement.setMirror(Mirror.FRONT_BACK);
+                            break;
+                    }
+                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)));
+                } else {
+                    placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)));
+                }
+                CapsuleItem.setPlacement(stack, placement);
+            }
+        });
+        ctx.get().setPacketHandled(true);
     }
 
-    public boolean isMessageValid() {
-        return true;
+    public void toBytes(PacketBuffer buf) {
     }
 
     @Override

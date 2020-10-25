@@ -7,19 +7,30 @@ import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.tileentity.BannerTileEntity;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
 
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
@@ -52,7 +63,7 @@ public class ClientProxy extends CommonProxy {
     private static void registerBlockRenderer(String modid) {
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(CapsuleBlocks.blockCapsuleMarker), 0,
                 new ModelResourceLocation(modid + ":capsulemarker", "inventory"));
-        ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCapture.class, new CaptureTESR());
+        ClientRegistry.bindTileEntityRenderer(TileEntityCapture.class, CaptureTESR::new);
     }
 
     public static void registerItemRenderers(String modid) {

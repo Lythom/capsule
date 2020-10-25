@@ -1,13 +1,25 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
+import capsule.CommonProxy;
+import capsule.helpers.Capsule;
+import capsule.items.CapsuleItem;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.PacketDistributor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- * This Network Message is sent from the client to the server
- */
-public class CapsuleThrowQueryToServer implements IMessage {
+import java.util.function.Supplier;
+
+public class CapsuleThrowQueryToServer {
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleThrowQueryToServer.class);
 
     public BlockPos pos = null;
     public boolean instant = false;
@@ -17,24 +29,53 @@ public class CapsuleThrowQueryToServer implements IMessage {
         this.instant = instant;
     }
 
-    // for use by the message handler only.
-    public CapsuleThrowQueryToServer() {
+    public void onServer(Supplier<NetworkEvent.Context> ctx) {
+        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        if (sendingPlayer == null) {
+            LOGGER.error("ServerPlayerEntity was null when " + this.getClass().getName() + " was received");
+            return;
+        }
 
+        ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+        ServerWorld world = sendingPlayer.getServerWorld();
+        ctx.get().enqueueWork(() -> {
+            if (heldItem.getItem() instanceof CapsuleItem) {
+                if (instant && pos != null) {
+                    int size = CapsuleItem.getSize(heldItem);
+                    int extendLength = (size - 1) / 2;
+                    // instant capsule initial capture
+                    if (heldItem.getDamage() == CapsuleItem.STATE_EMPTY) {
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getGameProfile().getName(), size, sendingPlayer.getServerWorld(), pos);
+                        if (captured) {
+                            BlockPos center = pos.add(0, size / 2, 0);
+                            CommonProxy.simpleNetworkWrapper.send(
+                                    PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, sendingPlayer.dimension)),
+                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size)
+                            );
+                        }
+                    }
+                    // instant deployment
+                    else {
+                        boolean deployed = Capsule.deployCapsule(heldItem, pos.add(0, -1, 0), sendingPlayer.getGameProfile().getName(), extendLength, world);
+                        if (deployed) {
+                            world.playSound(null, pos, SoundEvents.ENTITY_IRON_GOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                            Capsule.showDeployParticules(world, pos, size);
+                        }
+                        if (deployed && CapsuleItem.isOneUse(heldItem)) {
+                            heldItem.shrink(1);
+                        }
+                    }
+                }
+                if (!instant) {
+                    Capsule.throwCapsule(heldItem, sendingPlayer, pos);
+                }
+            }
+        });
+        ctx.get().setPacketHandled(true);
     }
 
-    /**
-     * Called by the network code once it has received the message bytes over
-     * the network. Used to read the ByteBuf contents into your member variables
-     *
-     * @param buf
-     */
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public CapsuleThrowQueryToServer(PacketBuffer buf) {
         try {
-            // these methods may also be of use for your code:
-            // for Itemstacks - ByteBufUtils.readItemStack()
-            // for MinecraftNBT tags ByteBufUtils.readTag();
-            // for Strings: ByteBufUtils.readUTF8String();
             this.instant = buf.readBoolean();
             boolean hasPos = buf.readBoolean();
             if (hasPos) {
@@ -45,36 +86,17 @@ public class CapsuleThrowQueryToServer implements IMessage {
         }
     }
 
-    /**
-     * Called by the network code. Used to write the contents of your message
-     * member variables into the ByteBuf, ready for transmission over the
-     * network.
-     *
-     * @param buf
-     */
-    @Override
-    public void toBytes(ByteBuf buf) {
-
-        // these methods may also be of use for your code:
-        // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for MinecraftNBT tags ByteBufUtils.writeTag();
-        // for Strings: ByteBufUtils.writeUTF8String();
+    public void toBytes(PacketBuffer buf) {
         buf.writeBoolean(this.instant);
         boolean hasPos = this.pos != null;
         buf.writeBoolean(hasPos);
         if (hasPos) {
             buf.writeLong(this.pos.toLong());
         }
-
-    }
-
-    public boolean isMessageValid() {
-        return true;
     }
 
     @Override
     public String toString() {
         return getClass().toString();
     }
-
 }

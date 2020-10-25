@@ -77,7 +77,7 @@ public class RecallEnchant extends Enchantment {
                 }
                 // then recall to inventory
                 if (!entity.isDead) {
-                    this.pickupItemBack(entity, world.getPlayerEntityByName(entity.getThrower()));
+                    this.pickupItemBack(entity, world.getPlayerByUuid(entity.getThrower()));
                 }
             }
         }

@@ -5,15 +5,22 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.GameRules;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
+import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
@@ -26,10 +33,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -52,12 +56,12 @@ public class StructureSaver {
         return RewardManager;
     }
 
-    public static CapsuleTemplate undeploy(ServerWorld worldserver, String playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+    public static CapsuleTemplate undeploy(ServerWorld worldserver, UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
                                            Map<BlockPos, Block> legacyItemOccupied) {
 
-        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        MinecraftServer minecraftserver = worldserver.getServer();
         if (minecraftserver == null) {
-            LOGGER.error("worldserver.getMinecraftServer() returned null");
+            LOGGER.error("worldserver.getServer() returned null");
             return null;
         }
         List<Entity> outCapturedEntities = new ArrayList<>();
@@ -76,7 +80,7 @@ public class StructureSaver {
         PlayerEntity player = null;
         if (playerID != null) {
             template.setAuthor(playerID);
-            player = worldserver.getPlayerEntityByName(playerID);
+            player = worldserver.getPlayerByUuid(playerID);
         }
         boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
         if (writingOK) {
@@ -99,9 +103,9 @@ public class StructureSaver {
 
     }
 
-    public static boolean undeployBlueprint(ServerWorld worldserver, String playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
+    public static boolean undeployBlueprint(ServerWorld worldserver, UUID playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
 
-        MinecraftServer minecraftserver = worldserver.getMinecraftServer();
+        MinecraftServer minecraftserver = worldserver.getServer();
         if (minecraftserver == null) return false;
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
@@ -119,7 +123,7 @@ public class StructureSaver {
 
         PlayerEntity player = null;
         if (playerID != null) {
-            player = worldserver.getPlayerEntityByName(playerID);
+            player = worldserver.getPlayerByUuid(playerID);
         }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintBLocks.size() != worldBlocks.size())
@@ -189,7 +193,7 @@ public class StructureSaver {
         if (!CapsulesManagers.containsKey(directoryPath)) {
             File capsuleDir = new File(directory, "structures/capsule");
             capsuleDir.mkdirs();
-            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString(), net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer()));
+            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString(), DataFixesManager.getDataFixer()));
         }
         return CapsulesManagers.get(directoryPath);
     }
@@ -206,18 +210,19 @@ public class StructureSaver {
 
         // disable tileDrop during the operation so that broken block are not
         // itemized on the ground.
-        boolean flagdoTileDrops = world.getGameRules().getBoolean("doTileDrops");
-        world.getGameRules().setOrCreateGameRule("doTileDrops", "false");
+        GameRules.BooleanValue entityDropsGameRule = world.getGameRules().get(GameRules.DO_ENTITY_DROPS);
+
+        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS);
+        entityDropsGameRule.set(false, world.getServer());
         world.restoringBlockSnapshots = true;
 
         // delete everything that as been saved in the capsule
-
         for (BlockPos pos : transferedPositions) {
-            IBlockState b = world.getBlockState(pos);
+            BlockState b = world.getBlockState(pos);
             try {
                 // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                 if (playerCanRemove(world, pos, player)) {
-                    world.setBlockToAir(pos);
+                    world.setBlockState(pos, Blocks.AIR.getDefaultState());
                 } else {
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                     couldNotBeRemoved.add(pos);
@@ -235,13 +240,12 @@ public class StructureSaver {
 
         // revert rule to previous value even in case of crash
         world.restoringBlockSnapshots = false;
-        world.getGameRules().setOrCreateGameRule("doTileDrops", String.valueOf(flagdoTileDrops));
-
+        entityDropsGameRule.set(flagdoTileDrops, world.getServer());
         return couldNotBeRemoved;
     }
 
 
-    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, String thrower, BlockPos
+    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, UUID thrower, BlockPos
             dest, List<Block> overridableBlocks, List<String> outEntityBlocking, PlacementSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
@@ -251,7 +255,7 @@ public class StructureSaver {
 
         PlayerEntity player = null;
         if (thrower != null) {
-            player = playerWorld.getPlayerEntityByName(thrower);
+            player = playerWorld.getPlayerByUuid(thrower);
         }
 
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
@@ -265,7 +269,7 @@ public class StructureSaver {
 
         // check if the player can place a block
         if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
-            player.sendMessage(new TextComponentTranslation("capsule.error.notAllowed"));
+            player.sendMessage(new TranslationTextComponent("capsule.error.notAllowed"));
             return false;
         }
 
@@ -276,7 +280,7 @@ public class StructureSaver {
         CapsuleTemplateManager templateManager = templatepair.getLeft();
         String capsuleStructureId = CapsuleItem.getStructureName(capsule);
         template.saveOccupiedPositions(occupiedPositions);
-        if (!templateManager.writeTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleStructureId))) {
+        if (!templateManager.writeTemplate(playerWorld.getServer(), new ResourceLocation(capsuleStructureId))) {
             printWriteTemplateError(player, capsuleStructureId);
             return false;
         }
@@ -292,7 +296,7 @@ public class StructureSaver {
             // rollback
             removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
             template.removeOccupiedPositions();
-            if (!templateManager.writeTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleStructureId))) {
+            if (!templateManager.writeTemplate(playerWorld.getServer(), new ResourceLocation(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
@@ -305,15 +309,15 @@ public class StructureSaver {
 
     public static void placePlayerOnTop(ServerWorld playerWorld, BlockPos dest, int size) {
         // Players don't block deployment, instead they are pushed up if they would suffocate
-        List<EntityLivingBase> players = playerWorld.getEntitiesWithinAABB(
-                EntityLivingBase.class,
+        List<LivingEntity> players = playerWorld.getEntitiesWithinAABB(
+                LivingEntity.class,
                 new AxisAlignedBB(dest.getX(), dest.getY(), dest.getZ(), dest.getX() + size, dest.getY() + size, dest.getZ() + size),
                 entity -> (entity instanceof PlayerEntity)
         );
-        for (EntityLivingBase p : players) {
+        for (LivingEntity p : players) {
             for (int y = 0; y < size; y++) {
-                if (playerWorld.collidesWithAnyBlock(p.getEntityBoundingBox())) {
-                    p.setPositionAndUpdate(p.posX, p.posY + 1, p.posZ);
+                if (playerWorld.checkBlockCollision(p.getBoundingBox())) {
+                    p.setPositionAndUpdate(p.getPosX(), p.getPosY() + 1, p.getPosZ());
                 }
             }
         }
@@ -324,10 +328,10 @@ public class StructureSaver {
         if (player != null) {
             if (outEntityBlocking.size() > 0) {
                 player.sendMessage(
-                        new TextComponentTranslation("capsule.error.cantMergeWithDestinationEntity",
+                        new TranslationTextComponent("capsule.error.cantMergeWithDestinationEntity",
                                 StringUtils.join(outEntityBlocking, ", ")));
             } else {
-                player.sendMessage(new TextComponentTranslation("capsule.error.cantMergeWithDestination"));
+                player.sendMessage(new TranslationTextComponent("capsule.error.cantMergeWithDestination"));
             }
         }
     }
@@ -335,14 +339,14 @@ public class StructureSaver {
     public static void printDeployError(PlayerEntity player, Exception err, String s) {
         LOGGER.error(s, err);
         if (player != null) {
-            player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
         }
     }
 
     public static void printWriteTemplateError(PlayerEntity player, String capsuleStructureId) {
         LOGGER.error("Couldn't write template " + capsuleStructureId);
         if (player != null) {
-            player.sendMessage(new TextComponentTranslation("capsule.error.technicalError"));
+            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
         }
     }
 
@@ -354,7 +358,7 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (blockPos.getY() >= worldserver.getHeight() || !isPlaceEventAllowed(worldserver, blockPos, player))
+                if (blockPos.getY() >= worldserver.getHeight() || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
                     return false;
             }
         }
@@ -366,14 +370,14 @@ public class StructureSaver {
      */
     private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
         if (player != null) {
-            return isPlaceEventAllowed(worldserver, blockPos, player);
+            return isEntityPlaceEventAllowed(worldserver, blockPos, player);
         }
         return true;
     }
 
-    private static boolean isPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
+    private static boolean isEntityPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
         BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
-        BlockEvent.PlaceEvent event = new BlockEvent.PlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player, Hand.MAIN_HAND);
+        BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player);
         MinecraftForge.EVENT_BUS.post(event);
         return !event.isCanceled();
     }
@@ -385,7 +389,7 @@ public class StructureSaver {
         boolean isReward = CapsuleItem.isReward(capsule);
         String structureName = CapsuleItem.getStructureName(capsule);
         if (isReward || structureName.startsWith("config/") && CapsuleItem.isBlueprint(capsule)) {
-            template = getTemplateForReward(playerWorld.getMinecraftServer(), structureName);
+            template = getTemplateForReward(playerWorld.getServer(), structureName);
         } else {
             template = getTemplateForCapsule(playerWorld, structureName);
         }
@@ -398,7 +402,7 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structureName))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getMinecraftServer(), new ResourceLocation(structureName));
+        CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getServer(), new ResourceLocation(structureName));
         return Pair.of(templatemanager, template);
     }
 
@@ -421,9 +425,9 @@ public class StructureSaver {
      */
     public static boolean isDestinationValid(CapsuleTemplate template, PlacementSettings placementIn, ServerWorld
             destWorld, BlockPos destOriginPos, int size,
-                                             List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<String> outEntityBlocking) {
+                                             List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<UUID> outEntityBlocking) {
 
-        IBlockState air = Blocks.AIR.getDefaultState();
+        BlockState air = Blocks.AIR.getDefaultState();
 
         List<Template.BlockInfo> srcblocks = template.blocks;
 
@@ -440,13 +444,13 @@ public class StructureSaver {
 
                     BlockPos destPos = destOriginPos.add(x, y, z);
                     Template.BlockInfo srcInfo = blockInfoByPosition.get(destPos);
-                    IBlockState templateBlockState = air;
+                    BlockState templateBlockState = air;
                     if (srcInfo != null) {
-                        templateBlockState = srcInfo.blockState;
+                        templateBlockState = srcInfo.state;
                     }
 
                     if (!destWorld.isBlockLoaded(destPos)) return false;
-                    IBlockState worldDestState = destWorld.getBlockState(destPos);
+                    BlockState worldDestState = destWorld.getBlockState(destPos);
 
                     boolean worldDestOccupied = (worldDestState != air && !overridable.contains(worldDestState.getBlock()));
                     if (worldDestState != air && outOccupiedPositions != null) {
@@ -455,8 +459,8 @@ public class StructureSaver {
 
                     boolean srcOccupied = (templateBlockState != air && !overridable.contains(templateBlockState.getBlock()));
 
-                    List<EntityLivingBase> entities = destWorld.getEntitiesWithinAABB(
-                            EntityLivingBase.class,
+                    List<LivingEntity> entities = destWorld.getEntitiesWithinAABB(
+                            LivingEntity.class,
                             new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() + 1, destPos.getY() + 1, destPos.getZ() + 1),
                             entity -> !(entity instanceof PlayerEntity)
                     );
@@ -470,7 +474,7 @@ public class StructureSaver {
                             for (Object e : entities) {
                                 Entity entity = (Entity) e;
                                 if (entity != null) {
-                                    outEntityBlocking.add(entity.getName());
+                                    outEntityBlocking.add(entity.getUniqueID());
                                 }
                             }
 
@@ -488,7 +492,7 @@ public class StructureSaver {
     /**
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
      */
-    public static String getUniqueName(ServerWorld playerWorld, String player) {
+    public static String getUniqueName(ServerWorld playerWorld, UUID player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
         String capsuleID = "C-" + player + "-" + csd.getNextCount();
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
@@ -496,7 +500,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "CExcetion-" + player + "-" + csd.getNextCount();
         }
-        while (templatemanager.get(playerWorld.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.get(playerWorld.getServer(), new ResourceLocation(capsuleID)) != null) {
             capsuleID = "C-" + player + "-" + csd.getNextCount();
         }
 
@@ -514,7 +518,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "BException-" + csd.getNextCount();
         }
-        while (templatemanager.get(world.getMinecraftServer(), new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.get(world.getServer(), new ResourceLocation(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -525,7 +529,7 @@ public class StructureSaver {
             destManager, ServerWorld worldServer, boolean onlyBlocks, List<String> outExcluded) {
         CompoundNBT srcTemplateData = getTemplateNBTData(capsule, worldServer);
         if (srcTemplateData == null) return false; // capsule template not found
-        return duplicateTemplate(srcTemplateData, destinationStructureName, destManager, worldServer.getMinecraftServer(), onlyBlocks, outExcluded);
+        return duplicateTemplate(srcTemplateData, destinationStructureName, destManager, worldServer.getServer(), onlyBlocks, outExcluded);
 
     }
 
@@ -587,7 +591,7 @@ public class StructureSaver {
     public static CompoundNBT getTemplateNBTData(String path, ServerWorld worldServer) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
         if (path.startsWith(Config.rewardTemplatesPath) || path.startsWith("config/")) {
-            sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getMinecraftServer(), path);
+            sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getServer(), path);
         } else {
             sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);
         }
@@ -630,7 +634,7 @@ public class StructureSaver {
                 getTemplateNBTData(srcStructurePath, worldServer),
                 destStructureName,
                 templateManager,
-                worldServer.getMinecraftServer(),
+                worldServer.getServer(),
                 true,
                 outExcluded
         );
@@ -638,14 +642,14 @@ public class StructureSaver {
         // try to cleanup previous template to save disk space on the long run
         if (destCapsule.getTag() != null && destCapsule.getTag().contains("prevStructureName")) {
             if (templateManager != null)
-                templateManager.deleteTemplate(worldServer.getMinecraftServer(), new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
+                templateManager.deleteTemplate(worldServer.getServer(), new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
         }
 
         if (!created && playerIn != null) {
-            playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintCreationError"));
+            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintCreationError"));
         }
         if (outExcluded.size() > 0 && playerIn != null) {
-            playerIn.sendMessage(new TextComponentTranslation("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)));
+            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)));
         }
         return destStructureName;
     }

@@ -7,7 +7,7 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.PlayerEntitySP;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -21,9 +21,8 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class CapsulePreviewHandler {
      */
     @SubscribeEvent
     public void onWorldRenderLast(RenderWorldLastEvent event) {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = Minecraft.getInstance();
 
         if (mc.player != null) {
             tryPreviewRecall(mc.player.getHeldItemMainhand());
@@ -60,22 +59,21 @@ public class CapsulePreviewHandler {
      * set captureBlock data (clientside only ) when capsule is in hand.
      */
     @SubscribeEvent
-    public void onLivingUpdateEvent(PlayerTickEvent event) {
+    public void onLivingUpdateEvent(TickEvent.PlayerTickEvent event) {
 
         // do something to player every update tick:
-        if (event.player instanceof PlayerEntitySP && event.phase.equals(Phase.START)) {
-            PlayerEntitySP player = (PlayerEntitySP) event.player;
+        if (event.player instanceof ClientPlayerEntity && event.phase.equals(TickEvent.Phase.START)) {
+            ClientPlayerEntity player = (ClientPlayerEntity) event.player;
             tryPreviewCapture(player, player.getHeldItemMainhand());
         }
     }
 
-    private boolean tryPreviewCapture(PlayerEntitySP player, ItemStack heldItem) {
+    private boolean tryPreviewCapture(ClientPlayerEntity player, ItemStack heldItem) {
         // an item is in hand
         if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
             if (heldItemItem instanceof CapsuleItem && (heldItem.getDamage() == CapsuleItem.STATE_EMPTY || heldItem.getDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
-                CapsuleItem capsule = (CapsuleItem) heldItem.getItem();
                 //noinspection ConstantConditions
                 if (heldItem.hasTag() && heldItem.getTag().contains("size")) {
                     setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
@@ -94,7 +92,7 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private void tryPreviewDeploy(PlayerEntitySP thePlayer, float partialTicks, ItemStack heldItemMainhand) {
+    private void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
 
         if (heldItemMainhand.getItem() instanceof CapsuleItem
@@ -106,9 +104,9 @@ public class CapsulePreviewHandler {
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
             BlockRayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
-            if (rtc != null && rtc.typeOfHit == RayTraceResult.Type.BLOCK) {
+            if (rtc != null && rtc.getType() == RayTraceResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
-                BlockPos destOriginPos = rtc.getBlockPos().add(rtc.sideHit.getDirectionVec()).add(-extendSize, 0.01, -extendSize);
+                BlockPos destOriginPos = rtc.getPos().add(rtc.getFace().getDirectionVec()).add(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 AxisAlignedBB errorBoundingBox = new AxisAlignedBB(
@@ -127,7 +125,7 @@ public class CapsulePreviewHandler {
                             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
                         } else if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
                             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                            BlockPos pos = rtc.getBlockPos().subtract(destOriginPos);
+                            BlockPos pos = rtc.getPos().subtract(destOriginPos);
                             blockspos.add(new AxisAlignedBB(pos, pos));
                         }
                         if (blockspos.isEmpty()) {
@@ -159,7 +157,7 @@ public class CapsulePreviewHandler {
                                     for (double k = dest.minY; k < dest.maxY; ++k) {
                                         for (double l = dest.minX; l < dest.maxX; ++l) {
                                             BlockPos pos = new BlockPos(l, k, j);
-                                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
+                                            if (!Config.overridableBlocks.get().contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
                                                 GL11.glLineWidth(5.0F);
                                                 bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
                                                 setColor(0xaa0000, 50);
@@ -203,7 +201,7 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private void tryPreviewLinkedInventory(PlayerEntitySP player, ItemStack heldItem) {
+    private void tryPreviewLinkedInventory(ClientPlayerEntity player, ItemStack heldItem) {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
@@ -213,8 +211,8 @@ public class CapsulePreviewHandler {
                 Integer dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
                 if (location != null
                         && dimension != null
-                        && dimension.equals(player.dimension)
-                        && location.distanceSqToCenter(player.posX, player.posY, player.posZ) < 60 * 60) {
+                        && dimension.equals(player.dimension.getId())
+                        && location.distanceSq(player.getPosX(), player.getPosY(), player.getPosZ(), true) < 60 * 60) {
                     previewLinkedInventory(location, heldItem);
                 }
             }
@@ -272,10 +270,11 @@ public class CapsulePreviewHandler {
                 TileEntityCapture tec = te;
                 tec.getTileData().putInt("size", size);
                 tec.getTileData().putInt("color", color);
-                worldIn.markBlockRangeForRenderUpdate(
-                        te.getPos().add(-size / 2, -size / 2, -size / 2),
-                        te.getPos().add(size / 2, size / 2, size / 2)
-                );
+                // FIXME: check if the capture block still displays properly
+//                worldIn.markBlockRangeForRenderUpdate(
+//                        te.getPos().add(-size / 2, -size / 2, -size / 2),
+//                        te.getPos().add(size / 2, size / 2, size / 2)
+//                );
             }
         }
         lastSize = size;

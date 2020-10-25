@@ -1,15 +1,21 @@
 package capsule.blocks;
 
-import net.minecraft.client.renderer.*;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.AxisAlignedBB;
 
 import static capsule.client.RendererUtils.*;
 
-public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
+public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
+
 
     public CaptureTESR() {
+        super(TileEntityRendererDispatcher.instance);
     }
 
     public static void drawCaptureZone(double relativeX, double relativeY, double relativeZ, int size, int extendSize,
@@ -41,12 +47,7 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
     }
 
     @Override
-    public void render(TileEntityCapture tileEntityCapture, double relativeX, double relativeY, double relativeZ,
-                       float partialTicks, int blockDamageProgress, float alpha) {
-
-        if (tileEntityCapture == null)
-            return;
-
+    public void render(TileEntityCapture tileEntityCapture, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
         int size = tileEntityCapture.getSize();
         if (size == 0)
             return;
@@ -56,6 +57,4 @@ public class CaptureTESR extends TileEntitySpecialRenderer<TileEntityCapture> {
         CaptureTESR.drawCaptureZone(tileEntityCapture.getPos().getX(), tileEntityCapture.getPos().getY(), tileEntityCapture.getPos().getZ(), size, extendSize, color);
 
     }
-
-
 }

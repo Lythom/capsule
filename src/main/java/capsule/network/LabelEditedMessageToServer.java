@@ -1,71 +1,54 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import capsule.items.CapsuleItem;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.function.Supplier;
 
 /**
  * This Network Message is sent from the client to the server
  */
-public class LabelEditedMessageToServer implements IMessage {
+public class LabelEditedMessageToServer {
 
     protected static final Logger LOGGER = LogManager.getLogger(LabelEditedMessageToServer.class);
 
     private String label;
-    private boolean messageIsValid;
 
     public LabelEditedMessageToServer(String newLabel) {
         setLabel(newLabel);
-        messageIsValid = true;
     }
 
-    // for use by the message handler only.
-    public LabelEditedMessageToServer() {
-        messageIsValid = false;
-    }
-
-    /**
-     * Called by the network code once it has received the message bytes over
-     * the network. Used to read the ByteBuf contents into your member variables
-     *
-     * @param buf
-     */
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public LabelEditedMessageToServer(PacketBuffer buf) {
         try {
-            this.setLabel(ByteBufUtils.readUTF8String(buf));
-
-            // these methods may also be of use for your code:
-            // for Itemstacks - ByteBufUtils.readItemStack()
-            // for MinecraftNBT tags ByteBufUtils.readTag();
-            // for Strings: ByteBufUtils.readUTF8String();
-
+            this.setLabel(buf.readString());
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleLabelEditedMessageToClient: " + ioe);
-            return;
         }
-        messageIsValid = true;
     }
 
-    /**
-     * Called by the network code. Used to write the contents of your message
-     * member variables into the ByteBuf, ready for transmission over the
-     * network.
-     *
-     * @param buf
-     */
-    @Override
-    public void toBytes(ByteBuf buf) {
-        if (!messageIsValid)
-            return;
-        ByteBufUtils.writeUTF8String(buf, this.getLabel());
+    public void toBytes(PacketBuffer buf) {
+        buf.writeString(this.label);
+    }
 
-        // these methods may also be of use for your code:
-        // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for MinecraftNBT tags ByteBufUtils.writeTag();
-        // for Strings: ByteBufUtils.writeUTF8String();
+    public void onServer(Supplier<NetworkEvent.Context> ctx) {
+        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        if (sendingPlayer == null) {
+            LOGGER.error("ServerPlayerEntity was null when LabelEditedMessageToServer was received");
+            return;
+        }
+        ctx.get().enqueueWork(() -> {
+            ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
+            if (serverStack.getItem() instanceof CapsuleItem) {
+                // of the player didn't swap item during ui opening
+                CapsuleItem.setLabel(serverStack, getLabel());
+            }
+        });
+        ctx.get().setPacketHandled(true);
     }
 
     @Override
@@ -73,14 +56,9 @@ public class LabelEditedMessageToServer implements IMessage {
         return getClass().toString() + "[label=" + getLabel() + "]";
     }
 
-    public boolean isMessageValid() {
-        return messageIsValid;
-    }
-
     public String getLabel() {
         return label;
     }
-
     public void setLabel(String label) {
         this.label = label;
     }

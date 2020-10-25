@@ -27,7 +27,7 @@ public class CapsuleBlocks {
 
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
 
-        blockCapsuleMarker = new BlockCapsuleMarker(CapsuleBlocks.CAPSULE_MARKER_REGISTERY_NAME, Material.ROCK);
+        blockCapsuleMarker = new BlockCapsuleMarker();
         blockCapsuleMarker.setRegistryName(CapsuleBlocks.CAPSULE_MARKER_REGISTERY_NAME);
         blockCapsuleMarker.setCreativeTab(Main.tabCapsule);
 

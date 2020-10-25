@@ -1,15 +1,17 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
+import capsule.helpers.Capsule;
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- * This Network Message is sent from the client to the server
- */
-public class CapsuleUndeployNotifToClient implements IMessage {
+import java.util.function.Supplier;
+
+public class CapsuleUndeployNotifToClient {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleUndeployNotifToClient.class);
 
@@ -23,25 +25,26 @@ public class CapsuleUndeployNotifToClient implements IMessage {
         this.size = size;
     }
 
-    // for use by the message handler only.
-    public CapsuleUndeployNotifToClient() {
+    public void onClient(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            Capsule.showUndeployParticules(Minecraft.getInstance().world, posFrom, posTo, size);
+        });
+        ctx.get().setPacketHandled(true);
     }
 
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public CapsuleUndeployNotifToClient(PacketBuffer buf) {
         try {
-            this.posFrom = BlockPos.fromLong(buf.readLong());
-            this.posTo = BlockPos.fromLong(buf.readLong());
+            this.posFrom = buf.readBlockPos();
+            this.posTo = buf.readBlockPos();
             this.size = buf.readShort();
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleUndeployNotifToClient: " + ioe);
         }
     }
 
-    @Override
-    public void toBytes(ByteBuf buf) {
-        buf.writeLong(posFrom.toLong());
-        buf.writeLong(posTo.toLong());
+    public void toBytes(PacketBuffer buf) {
+        buf.writeBlockPos(posFrom);
+        buf.writeBlockPos(posTo);
         buf.writeShort(size);
     }
 

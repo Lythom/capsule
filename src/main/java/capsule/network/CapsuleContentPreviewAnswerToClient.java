@@ -1,20 +1,23 @@
 package capsule.network;
 
-import io.netty.buffer.ByteBuf;
+
+import capsule.client.CapsulePreviewHandler;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * This Network Message is sent from the client to the server
  */
-public class CapsuleContentPreviewAnswerToClient implements IMessage {
+public class CapsuleContentPreviewAnswerToClient {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewAnswerToClient.class);
 
@@ -27,25 +30,18 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
         this.structureName = structureName;
     }
 
-    // for use by the message handler only.
-    public CapsuleContentPreviewAnswerToClient() {
-
+    public void onClient(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            synchronized (CapsulePreviewHandler.currentPreview) {
+                CapsulePreviewHandler.currentPreview.put(getStructureName(), getBoundingBoxes());
+            }
+        });
+        ctx.get().setPacketHandled(true);
     }
 
-    /**
-     * Called by the network code once it has received the message bytes over
-     * the network. Used to read the ByteBuf contents into your member variables
-     *
-     * @param buf buffer content to read from
-     */
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public CapsuleContentPreviewAnswerToClient(PacketBuffer buf) {
         try {
-            // these methods may also be of use for your code:
-            // for Itemstacks - ByteBufUtils.readItemStack()
-            // for MinecraftNBT tags ByteBufUtils.readTag();
-            // for Strings: ByteBufUtils.readUTF8String();
-            this.structureName = ByteBufUtils.readUTF8String(buf);
+            this.structureName = buf.readString();
             int size = buf.readShort();
             this.boundingBoxes = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -64,21 +60,8 @@ public class CapsuleContentPreviewAnswerToClient implements IMessage {
         }
     }
 
-    /**
-     * Called by the network code. Used to write the contents of your message
-     * member variables into the ByteBuf, ready for transmission over the
-     * network.
-     *
-     * @param buf buffer content to write into
-     */
-    @Override
-    public void toBytes(ByteBuf buf) {
-
-        // these methods may also be of use for your code:
-        // for Itemstacks - ByteBufUtils.writeItemStack()
-        // for MinecraftNBT tags ByteBufUtils.writeTag();
-        // for Strings: ByteBufUtils.writeUTF8String();
-        ByteBufUtils.writeUTF8String(buf, this.structureName);
+    public void toBytes(PacketBuffer buf) {
+        buf.writeString(this.structureName);
         int size = Math.min(this.boundingBoxes.size(), Short.MAX_VALUE);
         buf.writeShort(size);
         for (int i = 0; i < size; i++) {
