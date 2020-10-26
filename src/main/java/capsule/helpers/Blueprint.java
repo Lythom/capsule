@@ -43,9 +43,9 @@ public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
 
     public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo) {
-        final BlockState state = blockInfo.blockState;
+        final BlockState state = blockInfo.state;
         Block block = state.getBlock();
-        CompoundNBT blockNBT = blockInfo.tileentityData;
+        CompoundNBT blockNBT = blockInfo.nbt;
         try {
             // prevent door to beeing counted twice
             if (block instanceof DoorBlock) {
@@ -56,7 +56,7 @@ public class Blueprint {
 
             } else if (block instanceof BedBlock) {
                 if (state.getValue(BedBlock.PART) == BedBlock.EnumPartType.HEAD) {
-                    return new ItemStack(Items.BED, 1, blockInfo.tileentityData.getInt("color"));
+                    return new ItemStack(Items.BED, 1, blockInfo.nbt.getInt("color"));
                 }
                 return ItemStack.EMPTY; // Bed foot is free, only head counts.
 
@@ -135,7 +135,7 @@ public class Blueprint {
             if (itemStack == null) {
                 if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
                 if (player != null)
-                    LOGGER.error("Unknown item during blueprint undo for block " + block.blockState.getBlock().getRegistryName());
+                    LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
                 return null;
             } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
                 Integer currValue = list.get(stackKey);

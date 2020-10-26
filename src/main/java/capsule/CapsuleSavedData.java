@@ -10,11 +10,8 @@ public class CapsuleSavedData extends WorldSavedData {
 
     private int capsuleCounter = 0;
 
-    /**
-     * @param name
-     */
-    public CapsuleSavedData(String name) {
-        super(name);
+    public CapsuleSavedData() {
+        super("capsuleData");
     }
 
     @Override

@@ -481,7 +481,7 @@ public class Capsule {
         blocks.clear();
         entities.clear();
 
-        return templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+        return templatemanager.writeToFile(, new ResourceLocation(capsuleStructureId));
 
     }
 }

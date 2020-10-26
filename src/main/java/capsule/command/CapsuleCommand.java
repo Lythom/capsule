@@ -309,7 +309,7 @@ public class CapsuleCommand {
 
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
-            CapsuleTemplate template = templatemanager.get(player.getServer(), new ResourceLocation(structurePath));
+            CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -348,12 +348,12 @@ public class CapsuleCommand {
                 template.writeToNBT(data);
 
                 // create a destination template
-                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + templateName);
+                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath.get() + "/" + templateName);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
-                CapsuleTemplate destTemplate = destManager.getTemplate(player.getServer(), destinationLocation);
+                CapsuleTemplate destTemplate = destManager.getTemplate(destinationLocation);
                 // write template from source data
                 destTemplate.read(data);
-                destManager.writeTemplate(player.getServer(), destinationLocation);
+                destManager.writeToFile(destinationLocation);
 
                 ItemStack capsule = Capsule.newRewardCapsuleItemStack(
                         destinationLocation.toString(),
@@ -470,7 +470,7 @@ public class CapsuleCommand {
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor(authorName);
-                        templatemanager.writeTemplate(player.getServer(), new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
                     }
 
                 } else {
@@ -482,7 +482,7 @@ public class CapsuleCommand {
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor("?");
-                        templatemanager.writeTemplate(player.getServer(), new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
                     }
                 }
                 return 1;

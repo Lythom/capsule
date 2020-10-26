@@ -88,7 +88,7 @@ public class Spacial {
         blocks.forEach(block -> {
             BlockPos destPos = block.pos;
             BlockPos below = block.pos.add(0, -1, 0);
-            if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).blockState.getBlock() == block.blockState.getBlock()) {
+            if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state.getBlock() == block.state.getBlock()) {
                 // extend the below BB to current
                 StructureBoundingBox bb = bbByPos.get(below);
                 bb.maxY++;

@@ -7,8 +7,11 @@ import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
+import net.minecraft.entity.item.minecart.MinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -47,8 +50,8 @@ public class StructureSaver {
 
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
-            RewardManager = new CapsuleTemplateManager(server.getDataDirectory().getPath(), net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer());
-            File rewardDir = new File(Config.rewardTemplatesPath);
+            RewardManager = new CapsuleTemplateManager(server, server.getDataDirectory(), DataFixesManager.getDataFixer());
+            File rewardDir = new File(Config.rewardTemplatesPath.get());
             if (!rewardDir.exists()) {
                 rewardDir.mkdirs();
             }
@@ -71,7 +74,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return null;
         }
-        CapsuleTemplate template = templatemanager.getTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(capsuleStructureId));
         Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
@@ -79,21 +82,24 @@ public class StructureSaver {
         template.removeOccupiedPositions();
         PlayerEntity player = null;
         if (playerID != null) {
-            template.setAuthor(playerID);
             player = worldserver.getPlayerByUuid(playerID);
+            if (player != null) template.setAuthor(player.getDisplayName().getFormattedText());
         }
-        boolean writingOK = templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+        boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             for (Entity e : outCapturedEntities) {
-                e.setDropItemsWhenDead(false);
-                e.setDead();
+                if (e instanceof ContainerMinecartEntity) {
+                    ContainerMinecartEntity eMinecart = (ContainerMinecartEntity) e;
+                    eMinecart.dropContentsWhenDead(false);
+                }
+                e.remove();
             }
             // check if some remove failed, exclude those blocks from the template.
             if (couldNotBeRemoved != null) {
                 template.removeBlocks(couldNotBeRemoved, startPos);
             }
-            templatemanager.writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+            templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
 
         } else {
             printWriteTemplateError(player, capsuleStructureId);
@@ -140,12 +146,12 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.tileentityData == null || !b.tileentityData.contains("Items") || b.tileentityData.getTagList("Items", Constants.NBT.TAG_COMPOUND).hasNoTags());
+        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt == null || !b.nbt.contains("Items") || b.nbt.getList("Items", Constants.NBT.TAG_COMPOUND).isEmpty());
 
         if (blueprintMatch) {
             blueprintTemplate.removeOccupiedPositions();
             String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
-            boolean written = blueprint.getLeft().writeTemplate(minecraftserver, new ResourceLocation(capsuleStructureId));
+            boolean written = blueprint.getLeft().writeToFile(new ResourceLocation(capsuleStructureId));
             if (written) {
                 List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
                 // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -161,39 +167,39 @@ public class StructureSaver {
     }
 
     public static String serializeComparable(Template.BlockInfo b) {
-        return b.blockState.getBlock().getUnlocalizedName()
+        return b.state.getBlock().getTranslationKey()
                 + "@"
-                + b.blockState.getBlock().damageDropped(b.blockState)
-                + (b.tileentityData == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
+                + b.state.getBlock().getDefaultState()
+                + (b.nbt == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
     }
 
     public static CompoundNBT filterIdentityNBT(Template.BlockInfo b) {
-        CompoundNBT nbt = b.tileentityData.copy();
-        List<String> converted = Config.getBlueprintIdentityNBT(b.blockState.getBlock());
-        nbt.getKeySet().removeIf(key -> converted == null || !converted.contains(key));
+        CompoundNBT nbt = b.nbt.copy();
+        List<String> converted = Config.getBlueprintIdentityNBT(b.state.getBlock());
+        nbt.keySet().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
     }
 
     public static String nbtStringNotEmpty(CompoundNBT nbt) {
-        if (nbt.hasNoTags()) return "";
+        if (nbt.isEmpty()) return "";
         return nbt.toString();
     }
 
     public static boolean isFlowingLiquid(Template.BlockInfo b) {
-        return b.blockState.getBlock() instanceof BlockLiquid && b.blockState.getValue(BlockLiquid.LEVEL) != 0;
+        return b.state.getBlock() instanceof FlowingFluidBlock && b.state.get(FlowingFluidBlock.LEVEL) != 0;
     }
 
 
     @Nullable
-    public static CapsuleTemplateManager getTemplateManager(ServerWorld worldserver) {
-        if (worldserver == null) return null;
-        File directory = worldserver.getSaveHandler().getWorldDirectory();
+    public static CapsuleTemplateManager getTemplateManager(ServerWorld world) {
+        if (world == null) return null;
+        File directory = world.getSaveHandler().getWorldDirectory();
         String directoryPath = directory.getPath();
 
         if (!CapsulesManagers.containsKey(directoryPath)) {
             File capsuleDir = new File(directory, "structures/capsule");
             capsuleDir.mkdirs();
-            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(capsuleDir.toString(), DataFixesManager.getDataFixer()));
+            CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(world.getServer(), capsuleDir, DataFixesManager.getDataFixer()));
         }
         return CapsulesManagers.get(directoryPath);
     }
@@ -246,7 +252,7 @@ public class StructureSaver {
 
 
     public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, UUID thrower, BlockPos
-            dest, List<Block> overridableBlocks, List<String> outEntityBlocking, PlacementSettings placementsettings) {
+            dest, List<Block> overridableBlocks, List<UUID> outEntityBlocking, PlacementSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
@@ -280,7 +286,7 @@ public class StructureSaver {
         CapsuleTemplateManager templateManager = templatepair.getLeft();
         String capsuleStructureId = CapsuleItem.getStructureName(capsule);
         template.saveOccupiedPositions(occupiedPositions);
-        if (!templateManager.writeTemplate(playerWorld.getServer(), new ResourceLocation(capsuleStructureId))) {
+        if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
             printWriteTemplateError(player, capsuleStructureId);
             return false;
         }
@@ -296,12 +302,15 @@ public class StructureSaver {
             // rollback
             removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
             template.removeOccupiedPositions();
-            if (!templateManager.writeTemplate(playerWorld.getServer(), new ResourceLocation(capsuleStructureId))) {
+            if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
-                e.setDropItemsWhenDead(false);
-                e.setDead();
+                if (e instanceof ContainerMinecartEntity) {
+                    ContainerMinecartEntity eMinecart = (ContainerMinecartEntity) e;
+                    eMinecart.dropContentsWhenDead(false);
+                }
+                e.remove();
             }
             return false;
         }
@@ -323,7 +332,7 @@ public class StructureSaver {
         }
     }
 
-    public static void printDeployFailure(List<String> outEntityBlocking, PlayerEntity player) {
+    public static void printDeployFailure(List<UUID> outEntityBlocking, PlayerEntity player) {
         // send a chat message to explain failure
         if (player != null) {
             if (outEntityBlocking.size() > 0) {
@@ -402,7 +411,7 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structureName))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplate(playerWorld.getServer(), new ResourceLocation(structureName));
+        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structureName));
         return Pair.of(templatemanager, template);
     }
 
@@ -412,7 +421,7 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplate(server, new ResourceLocation(structurePath));
+        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structurePath));
         return Pair.of(templatemanager, template);
     }
 
@@ -500,7 +509,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "CExcetion-" + player + "-" + csd.getNextCount();
         }
-        while (templatemanager.get(playerWorld.getServer(), new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
             capsuleID = "C-" + player + "-" + csd.getNextCount();
         }
 
@@ -518,7 +527,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "BException-" + csd.getNextCount();
         }
-        while (templatemanager.get(world.getServer(), new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -540,7 +549,7 @@ public class StructureSaver {
     public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
-        CapsuleTemplate destTemplate = destManager.getTemplate(server, destinationLocation);
+        CapsuleTemplate destTemplate = destManager.getTemplate(destinationLocation);
         // populate template from source data
         destTemplate.read(templateData);
         // empty occupied position, it makes no sense for a new template to copy those situational data
@@ -549,26 +558,26 @@ public class StructureSaver {
         if (onlyWhitelisted) {
             List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream()
                     .filter(b -> {
-                        ResourceLocation registryName = b.blockState.getBlock().getRegistryName();
-                        boolean included = b.tileentityData == null
+                        ResourceLocation registryName = b.state.getBlock().getRegistryName();
+                        boolean included = b.nbt == null
                                 || registryName != null && Config.blueprintWhitelist.keySet().contains(registryName.toString());
-                        if (!included && outExcluded != null) outExcluded.add(b.blockState.toString());
+                        if (!included && outExcluded != null) outExcluded.add(b.state.toString());
                         return included;
                     })
                     .map(b -> {
-                        if (b.tileentityData == null) return b;
+                        if (b.nbt == null) return b;
                         // remove all unlisted nbt data to prevent dupe or cheating
                         CompoundNBT nbt = null;
-                        JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.blockState.getBlock());
+                        JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.state.getBlock());
                         if (allowedNBT != null) {
-                            nbt = b.tileentityData.copy();
-                            nbt.getKeySet().removeIf(key -> !allowedNBT.has(key));
+                            nbt = b.nbt.copy();
+                            nbt.keySet().removeIf(key -> !allowedNBT.has(key));
                         } else {
                             nbt = new CompoundNBT();
                         }
                         return new Template.BlockInfo(
                                 b.pos,
-                                b.blockState,
+                                b.state,
                                 nbt
                         );
                     }).collect(Collectors.toList());
@@ -578,7 +587,7 @@ public class StructureSaver {
             destTemplate.entities.clear();
         }
         // write the new template
-        return destManager.writeTemplate(server, destinationLocation);
+        return destManager.writeToFile(destinationLocation);
     }
 
     /**
@@ -590,7 +599,7 @@ public class StructureSaver {
 
     public static CompoundNBT getTemplateNBTData(String path, ServerWorld worldServer) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
-        if (path.startsWith(Config.rewardTemplatesPath) || path.startsWith("config/")) {
+        if (path.startsWith(Config.rewardTemplatesPath.get()) || path.startsWith("config/")) {
             sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getServer(), path);
         } else {
             sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);
@@ -609,13 +618,7 @@ public class StructureSaver {
      * Get the Capsule saving tool that remembers last capsule id.
      */
     public static CapsuleSavedData getCapsuleSavedData(ServerWorld capsuleWorld) {
-        CapsuleSavedData capsuleSavedData = (CapsuleSavedData) capsuleWorld.loadData(CapsuleSavedData.class, "capsuleData");
-        if (capsuleSavedData == null) {
-            capsuleSavedData = new CapsuleSavedData("capsuleData");
-            capsuleWorld.setData("capsuleData", capsuleSavedData);
-            capsuleSavedData.setDirty(true);
-        }
-        return capsuleSavedData;
+        return capsuleWorld.getSavedData().getOrCreate(CapsuleSavedData::new, "capsuleData");
     }
 
     @Nullable
@@ -680,7 +683,7 @@ public class StructureSaver {
         }
 
         public static String serializeItemStack(ItemStack itemstack) {
-            return itemstack.getItem().getUnlocalizedName()
+            return itemstack.getItem().getTranslationKey()
                     + "@"
                     + itemstack.getDamage();
         }
