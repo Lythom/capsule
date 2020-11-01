@@ -60,7 +60,7 @@ public class CommonProxy {
     }
 
     @SubscribeEvent
-    public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
         event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
         event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
         event.getRegistry().register(CLEAR_CAPSULE_SERIALIZER);
@@ -69,7 +69,8 @@ public class CommonProxy {
         event.getRegistry().register(RECOVERY_CAPSULE_SERIALIZER);
         event.getRegistry().register(UPGRADE_CAPSULE_SERIALIZER);
 
-        // + other recipes in assets.capsule.recipes
+        CapsuleItems.registerRecipes();
+        // + other recipes in data.capsule.capsule.recipes
     }
 
     @SubscribeEvent
@@ -123,6 +124,8 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleContentPreviewAnswerToClient.class, CapsuleContentPreviewAnswerToClient::toBytes, CapsuleContentPreviewAnswerToClient::new, CapsuleContentPreviewAnswerToClient::onClient);
         // server sends to client the data needed to render undeploy
         simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleUndeployNotifToClient.class, CapsuleUndeployNotifToClient::toBytes, CapsuleUndeployNotifToClient::new, CapsuleUndeployNotifToClient::onClient);
+
+        CapsuleItems.registerRecipes();
     }
 
     public void serverStarting(FMLServerStartingEvent e) {

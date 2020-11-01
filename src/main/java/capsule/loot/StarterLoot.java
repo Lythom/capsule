@@ -6,11 +6,9 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.StringUtils;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,13 +23,13 @@ public class StarterLoot {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!event.player.world.isRemote) {
-            if (StringUtils.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
+        if (!event.getPlayer().world.isRemote) {
+            if (StringUtils.isNullOrEmpty(Config.starterMode.get()) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
             }
-            ServerPlayerEntity player = (ServerPlayerEntity) event.player;
-            CompoundNBT playerData = player.getEntityData();
+            ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+            CompoundNBT playerData = player.getPersistentData();
             CompoundNBT data;
             if (!playerData.contains("PlayerPersisted")) {
                 data = new CompoundNBT();
@@ -40,11 +38,11 @@ public class StarterLoot {
             }
             LOGGER.info("playerLogin: " + (data.getBoolean("capsule:receivedStarter") ? "already received starters" : "giving starters now"));
             if (!data.getBoolean("capsule:receivedStarter")) {
-                if ("all".equals(Config.starterMode.toLowerCase())) {
+                if ("all".equals(Config.starterMode.get().toLowerCase())) {
                     giveAllStarters(player, Config.starterTemplatesList);
                     data.putBoolean("capsule:receivedStarter", true);
 
-                } else if ("random".equals(Config.starterMode)) {
+                } else if ("random".equals(Config.starterMode.get())) {
                     giveAllStarters(player, Collections.singletonList(
                             Config.starterTemplatesList.get(
                                     (int) (Math.random() * Config.starterTemplatesList.size())
@@ -52,7 +50,7 @@ public class StarterLoot {
                     ));
                     data.putBoolean("capsule:receivedStarter", true);
                 }
-                playerData.setTag("PlayerPersisted", data);
+                playerData.put("PlayerPersisted", data);
             }
 
         }

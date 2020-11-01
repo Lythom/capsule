@@ -1,10 +1,11 @@
 package capsule.items;
 
 import capsule.recipes.*;
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.nbt.IntNBT;
 import net.minecraftforge.event.RegistryEvent;
@@ -46,38 +47,37 @@ public class CapsuleItems {
         event.getRegistry().register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
     }
 
-    public static void registerRecipes(RegistryEvent.Register<IRecipeSerializer<?>> event, ArrayList<String> prefabsTemplatesList) {
-
+    public static void registerRecipes() {
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
-//        for (IRecipeSerializer<?> recipe : event.getRegistry().getValues()) {
-//            if (recipe.toString().startsWith("capsule:")) {
-//
-//                if (recipe instanceof BlueprintCapsuleRecipe) {
-//                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), recipe));
-//                } else if (recipe instanceof RecoveryCapsuleRecipe) {
-//                    recoveryCapsule = Pair.of(recipe.getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
-//                } else if (recipe instanceof UpgradeCapsuleRecipe) {
-//                    upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
-//                } else if (recipe instanceof BlueprintChangeRecipe) {
-//                    blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
-//                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
-//                    blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), recipe));
-//                } else {
-//                    ItemStack output = recipe.getRecipeOutput();
-//                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
-//                        if (CapsuleItem.isOverpowered(output)) {
-//                            CapsuleItems.opCapsuleList.put(output, recipe);
-//                        } else {
-//                            CapsuleItems.capsuleList.put(output, recipe);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        if (CapsuleItems.capsuleList.size() > 0)
-//            unlabelledCapsule = Pair.of(getUnlabelledCapsule(CapsuleItems.capsuleList.firstKey()), null);
+        for (IRecipe<?> recipe : Minecraft.getInstance().getIntegratedServer().getRecipeManager().getRecipes()) {
+            if (recipe.toString().startsWith("capsule:")) {
+
+                if (recipe instanceof BlueprintCapsuleRecipe) {
+                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), (BlueprintCapsuleRecipe) recipe));
+                } else if (recipe instanceof RecoveryCapsuleRecipe) {
+                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
+                } else if (recipe instanceof UpgradeCapsuleRecipe) {
+                    upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
+                } else if (recipe instanceof BlueprintChangeRecipe) {
+                    blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
+                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
+                    blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) recipe));
+                } else {
+                    ItemStack output = recipe.getRecipeOutput();
+                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
+                        if (CapsuleItem.isOverpowered(output)) {
+                            CapsuleItems.opCapsuleList.put(output, (ShapedRecipe) recipe);
+                        } else {
+                            CapsuleItems.capsuleList.put(output, (ShapedRecipe) recipe);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (CapsuleItems.capsuleList.size() > 0)
+            unlabelledCapsule = Pair.of(getUnlabelledCapsule(CapsuleItems.capsuleList.firstKey()), null);
     }
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {

@@ -2,7 +2,6 @@ package capsule.network;
 
 
 import capsule.client.CapsulePreviewHandler;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;

@@ -14,8 +14,8 @@ import static capsule.client.RendererUtils.*;
 public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
 
 
-    public CaptureTESR() {
-        super(TileEntityRendererDispatcher.instance);
+    public CaptureTESR(TileEntityRendererDispatcher renderDispatcherIn) {
+        super(renderDispatcherIn);
     }
 
     public static void drawCaptureZone(double relativeX, double relativeY, double relativeZ, int size, int extendSize,

@@ -1,14 +1,26 @@
 package capsule.plugins.jei;
 
 import capsule.Config;
+import capsule.Main;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.recipes.BlueprintCapsuleRecipe;
+import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import mezz.jei.api.IModPlugin;
+import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaRecipeCategoryUid;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.registration.IRecipeRegistration;
+import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.ShapelessRecipe;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -18,16 +30,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@JEIPlugin
+@JeiPlugin
 public class CapsulePlugin implements IModPlugin {
 
     @Override
-    public void registerItemSubtypes(ISubtypeRegistry subtypeRegistry) {
+    public void registerItemSubtypes(ISubtypeRegistration subtypeRegistry) {
         subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.capsule, new CapsuleSubtypeInterpreter());
     }
 
     @Override
-    public void register(@Nonnull IModRegistry registry) {
+    public void registerRecipes(@Nonnull IRecipeRegistration registry) {
 
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
@@ -39,10 +51,10 @@ public class CapsulePlugin implements IModPlugin {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
                 NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
                 ingredients.set(0, Ingredient.fromStacks(capsule));
-                recipes.add(new ShapelessRecipes("capsule", capsuleUp, ingredients));
+                recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"), "capsule", capsuleUp, ingredients));
             }
             // clear
-            recipes.add(new ShapelessRecipes("capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
+            recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"), "capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
         }
 
         ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
@@ -57,11 +69,11 @@ public class CapsulePlugin implements IModPlugin {
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
 
         // blueprint
-        for (Pair<ItemStack, IRecipe> r : CapsuleItems.blueprintCapsules) {
+        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
             if (r.getValue() instanceof BlueprintCapsuleRecipe) {
                 recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
-            } else if (r.getValue() instanceof PrefabsBlueprintCapsuleRecipe) {
-                recipes.add(((PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
+            } else if (r.getValue() instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
+                recipes.add((( PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
             } else {
                 recipes.add(r.getValue());
             }
@@ -69,7 +81,7 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
         CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
         CapsuleItem.setLabel(withNewTemplate, "Changed Template");
-        recipes.add(new ShapelessRecipes("capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
+        recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"),"capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
@@ -81,8 +93,13 @@ public class CapsulePlugin implements IModPlugin {
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }
 
+    @Override
+    public ResourceLocation getPluginUid() {
+        return new ResourceLocation(Main.MODID, "main");
+    }
 
-    private static class CapsuleSubtypeInterpreter implements ISubtypeRegistry.ISubtypeInterpreter {
+
+    private static class CapsuleSubtypeInterpreter implements ISubtypeInterpreter {
         @Override
         public String apply(ItemStack itemStack) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
