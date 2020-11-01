@@ -2,27 +2,27 @@ package capsule.enchantments;
 
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
-import com.google.common.base.Strings;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.ServerWorld;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.WorldTickEvent;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RecallEnchant extends Enchantment {
 
     protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnchantmentType enchType) {
         super(rarity, enchType, EquipmentSlotType.values());
-        this.setName("recall");
         this.setRegistryName(enchName);
     }
 
@@ -61,23 +61,26 @@ public class RecallEnchant extends Enchantment {
     }
 
     @SubscribeEvent
-    public void onWorldTickEvent(WorldTickEvent wte) {
-
-        if (wte.side == Side.CLIENT || wte.phase != Phase.END)
+    public void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
+        if (wte.side == LogicalSide.CLIENT || wte.phase != TickEvent.Phase.END)
             return;
 
         ServerWorld world = (ServerWorld) wte.world;
-        @SuppressWarnings("unchecked")
-        List<ItemEntity> recallEntities = world.<ItemEntity>getEntities(ItemEntity.class, Enchantments.hasRecallEnchant::test);
-        for (ItemEntity entity : recallEntities) {
-            if (!Strings.isNullOrEmpty(entity.getThrower()) && (entity.collided || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
+        List<Entity> recallEntities = world.getEntities(EntityType.ITEM, Enchantments.hasRecallEnchant);
+        List<ItemEntity> recallItemEntities = recallEntities.stream()
+                .filter(entity -> entity instanceof ItemEntity)
+                .map(entity -> (ItemEntity)entity)
+                .collect(Collectors.toList());
+
+        for (ItemEntity entity : recallItemEntities) {
+            if (entity.getThrowerId() != null && (entity.collided || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
-                    entity.onUpdate();
+                    entity.tick();
                 }
                 // then recall to inventory
-                if (!entity.isDead) {
-                    this.pickupItemBack(entity, world.getPlayerByUuid(entity.getThrower()));
+                if (entity.isAlive()) {
+                    this.pickupItemBack(entity, world.getPlayerByUuid(entity.getThrowerId()));
                 }
             }
         }

@@ -45,7 +45,7 @@ public class CapsuleThrowQueryToServer {
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
                     if (heldItem.getDamage() == CapsuleItem.STATE_EMPTY) {
-                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getGameProfile().getName(), size, sendingPlayer.getServerWorld(), pos);
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUniqueID(), size, sendingPlayer.getServerWorld(), pos);
                         if (captured) {
                             BlockPos center = pos.add(0, size / 2, 0);
                             CommonProxy.simpleNetworkWrapper.send(
@@ -56,7 +56,7 @@ public class CapsuleThrowQueryToServer {
                     }
                     // instant deployment
                     else {
-                        boolean deployed = Capsule.deployCapsule(heldItem, pos.add(0, -1, 0), sendingPlayer.getGameProfile().getName(), extendLength, world);
+                        boolean deployed = Capsule.deployCapsule(heldItem, pos.add(0, -1, 0), sendingPlayer.getUniqueID(), extendLength, world);
                         if (deployed) {
                             world.playSound(null, pos, SoundEvents.ENTITY_IRON_GOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
                             Capsule.showDeployParticules(world, pos, size);

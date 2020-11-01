@@ -3,32 +3,29 @@ package capsule.helpers;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.StructureSaver.ItemStackKey;
-import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
 import net.minecraft.block.*;
-import net.minecraft.block.DoublePlantBlock.EnumPlantType;
-import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.state.properties.BedPart;
+import net.minecraft.state.properties.DoubleBlockHalf;
+import net.minecraft.state.properties.SlabType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.ServerWorld;
 import net.minecraft.world.gen.feature.template.Template;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.ModList;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,40 +46,27 @@ public class Blueprint {
         try {
             // prevent door to beeing counted twice
             if (block instanceof DoorBlock) {
-                if (state.getValue(DoorBlock.HALF) == DoorBlock.EnumDoorHalf.LOWER) {
-                    return block.getItem(null, null, state);
+                if (state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+                    return new ItemStack(block.asItem(), 1);
                 }
                 return ItemStack.EMPTY; // door upper is free, only lower counts.
 
             } else if (block instanceof BedBlock) {
-                if (state.getValue(BedBlock.PART) == BedBlock.EnumPartType.HEAD) {
-                    return new ItemStack(Items.BED, 1, blockInfo.nbt.getInt("color"));
+                if (state.get(BedBlock.PART) == BedPart.HEAD) {
+                    return new ItemStack(block.asItem(), 1);
                 }
                 return ItemStack.EMPTY; // Bed foot is free, only head counts.
 
-            } else if (block instanceof DoublePlantBlock) {
-                final EnumPlantType type = state.getValue(DoublePlantBlock.VARIANT);
-                if (type == EnumPlantType.FERN) {
-                    return new ItemStack(Blocks.TALLGRASS, 2, TallGrassBlock.EnumType.FERN.getMeta());
-                }
-                if (type == EnumPlantType.GRASS) {
-                    return new ItemStack(Blocks.TALLGRASS, 2, TallGrassBlock.EnumType.GRASS.getMeta());
-                }
-                return ItemStack.EMPTY;
-
-            } else if (block instanceof BlockDoubleStoneSlab
-                    || block instanceof BlockDoubleStoneSlabNew
-                    || block instanceof BlockDoubleWoodSlab) {
-                ItemStack stack = block.getItem(null, null, state);
-                stack.setCount(2);
-                return stack;
+            } else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
+                return new ItemStack(block.asItem(), 2);
 
             } else if (block instanceof FarmlandBlock) {
                 return new ItemStack(Blocks.DIRT);
 
-            } else if (block instanceof BlockLiquid) {
-                if (isLiquidSource(state, block)) {
-                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(FluidRegistry.lookupFluidForBlock(block), Fluid.BUCKET_VOLUME));
+            } else if (block instanceof FlowingFluidBlock) {
+                FlowingFluidBlock fblock = (FlowingFluidBlock) block;
+                if (isLiquidSource(state, fblock)) {
+                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidAttributes.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
                 }
                 return ItemStack.EMPTY; //flowing liquid is free
@@ -91,31 +75,31 @@ public class Blueprint {
                     || block instanceof MovingPistonBlock) {
                 return ItemStack.EMPTY; // Piston extension is free
             }
-            ItemStack item = block.getItem(null, null, state);
+            ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {
-                if (blockNBT.contains("dummy") && blockNBT.getBoolean("dummy"))
-                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
+//                if (blockNBT.contains("dummy") && blockNBT.getBoolean("dummy"))
+//                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
                 CompoundNBT itemNBT = new CompoundNBT();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
-                for (String key : blockNBT.getKeySet()) {
+                for (String key : blockNBT.keySet()) {
                     if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
                         String targetKey = allowedNBT.get(key).getAsString();
-                        itemNBT.setTag(targetKey, blockNBT.getTag(key));
+                        itemNBT.put(targetKey, blockNBT.get(key));
                     }
                 }
-                if (itemNBT.getSize() > 0) {
+                if (itemNBT.size() > 0) {
                     item.setTag(itemNBT);
                 }
             }
             return item;
         } catch (Exception e) {
             // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
-            return new ItemStack(Item.getItemFromBlock(block), 1, block.damageDropped(state));
+            return new ItemStack(Item.getItemFromBlock(block), 1);
         }
     }
 
-    public static boolean isLiquidSource(BlockState state, Block block) {
-        return block instanceof BlockLiquid && state.getValue(BlockLiquid.LEVEL) == 0;
+    public static boolean isLiquidSource(BlockState state, FlowingFluidBlock block) {
+        return block.getFluidState(state).isSource();
     }
 
     @Nullable
@@ -129,7 +113,7 @@ public class Blueprint {
 
     public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
-        for (Template.BlockInfo block : blueprintTemplate.blocks) {// Note: tile entities not supported so nbt data is not used here
+        for (Template.BlockInfo block : blueprintTemplate.blocks.get(0)) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
@@ -151,9 +135,7 @@ public class Blueprint {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
-                ResourceLocation location = new ResourceLocation(templateName);
-                tempManager.readTemplate(location);
-                CapsuleTemplate template = tempManager.get(null, location);
+                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 if (template != null) {
                     Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
                     if (fullList != null) {
@@ -223,13 +205,13 @@ public class Blueprint {
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Config.configDir.toFile().getParentFile().getParentFile().getPath(), DataFixesManager.getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Minecraft.getInstance().getIntegratedServer(), Config.configDir.toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
-                CapsuleTemplate template = tempManager.get(null, new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (jsonRecipe != null && template != null) {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("structureName", templateName);
@@ -245,7 +227,7 @@ public class Blueprint {
     public static List<String> getModEnabledTemplates(ArrayList<String> prefabsTemplatesList) {
         return prefabsTemplatesList.stream().filter(templatePath -> {
             String[] path = templatePath.replaceAll(Config.prefabsTemplatesPath + "/", "").split("/");
-            return path.length == 1 || Loader.isModLoaded(path[0]);
+            return path.length == 1 || ModList.get().isLoaded(path[0]);
         }).collect(Collectors.toList());
     }
 }

@@ -3,7 +3,6 @@ package capsule;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -11,7 +10,6 @@ import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
-import net.minecraft.entity.item.minecart.MinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -83,7 +81,7 @@ public class StructureSaver {
         PlayerEntity player = null;
         if (playerID != null) {
             player = worldserver.getPlayerByUuid(playerID);
-            if (player != null) template.setAuthor(player.getDisplayName().getFormattedText());
+            if (player != null) template.setAuthor(player.getGameProfile().getName());
         }
         boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
         if (writingOK) {
@@ -124,8 +122,8 @@ public class StructureSaver {
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, null);
-        List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
-        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.blocks.stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.get(0).stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.blocks.get(0).stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
         PlayerEntity player = null;
         if (playerID != null) {
@@ -228,7 +226,7 @@ public class StructureSaver {
             try {
                 // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                 if (playerCanRemove(world, pos, player)) {
-                    world.setBlockState(pos, Blocks.AIR.getDefaultState());
+                    world.removeBlock(pos, false);
                 } else {
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                     couldNotBeRemoved.add(pos);
@@ -438,7 +436,7 @@ public class StructureSaver {
 
         BlockState air = Blocks.AIR.getDefaultState();
 
-        List<Template.BlockInfo> srcblocks = template.blocks;
+        List<Template.BlockInfo> srcblocks = template.blocks.get(0);
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
@@ -501,7 +499,7 @@ public class StructureSaver {
     /**
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
      */
-    public static String getUniqueName(ServerWorld playerWorld, UUID player) {
+    public static String getUniqueName(ServerWorld playerWorld, String player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
         String capsuleID = "C-" + player + "-" + csd.getNextCount();
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
@@ -538,15 +536,15 @@ public class StructureSaver {
             destManager, ServerWorld worldServer, boolean onlyBlocks, List<String> outExcluded) {
         CompoundNBT srcTemplateData = getTemplateNBTData(capsule, worldServer);
         if (srcTemplateData == null) return false; // capsule template not found
-        return duplicateTemplate(srcTemplateData, destinationStructureName, destManager, worldServer.getServer(), onlyBlocks, outExcluded);
+        return duplicateTemplate(srcTemplateData, destinationStructureName, destManager, onlyBlocks, outExcluded);
 
     }
 
     public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server) {
-        return duplicateTemplate(templateData, destinationStructureName, destManager, server, false, null);
+        return duplicateTemplate(templateData, destinationStructureName, destManager, false, null);
     }
 
-    public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, MinecraftServer server, boolean onlyWhitelisted, List<String> outExcluded) {
+    public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
         CapsuleTemplate destTemplate = destManager.getTemplate(destinationLocation);
@@ -556,35 +554,7 @@ public class StructureSaver {
         destTemplate.occupiedPositions = null;
         // remove all tile entities
         if (onlyWhitelisted) {
-            List<Template.BlockInfo> newBlockList = destTemplate.blocks.stream()
-                    .filter(b -> {
-                        ResourceLocation registryName = b.state.getBlock().getRegistryName();
-                        boolean included = b.nbt == null
-                                || registryName != null && Config.blueprintWhitelist.keySet().contains(registryName.toString());
-                        if (!included && outExcluded != null) outExcluded.add(b.state.toString());
-                        return included;
-                    })
-                    .map(b -> {
-                        if (b.nbt == null) return b;
-                        // remove all unlisted nbt data to prevent dupe or cheating
-                        CompoundNBT nbt = null;
-                        JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.state.getBlock());
-                        if (allowedNBT != null) {
-                            nbt = b.nbt.copy();
-                            nbt.keySet().removeIf(key -> !allowedNBT.has(key));
-                        } else {
-                            nbt = new CompoundNBT();
-                        }
-                        return new Template.BlockInfo(
-                                b.pos,
-                                b.state,
-                                nbt
-                        );
-                    }).collect(Collectors.toList());
-            destTemplate.blocks.clear();
-            destTemplate.blocks.addAll(newBlockList);
-            // remove all entities
-            destTemplate.entities.clear();
+            destTemplate.filterFromWhitelist(Config.blueprintWhitelist, outExcluded);
         }
         // write the new template
         return destManager.writeToFile(destinationLocation);
@@ -637,7 +607,6 @@ public class StructureSaver {
                 getTemplateNBTData(srcStructurePath, worldServer),
                 destStructureName,
                 templateManager,
-                worldServer.getServer(),
                 true,
                 outExcluded
         );

@@ -4,18 +4,10 @@ import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import capsule.recipes.BlueprintCapsuleRecipeSerializer.BlueprintCapsuleRecipe;
-import capsule.recipes.PrefabsBlueprintCapsuleRecipe;
 import mezz.jei.api.IModPlugin;
-import mezz.jei.api.IModRegistry;
-import mezz.jei.api.ISubtypeRegistry;
-import mezz.jei.api.JEIPlugin;
-import mezz.jei.api.ingredients.VanillaTypes;
-import mezz.jei.api.recipe.VanillaRecipeCategoryUid;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapelessRecipe;
 import net.minecraft.util.NonNullList;
 import org.apache.commons.lang3.tuple.Pair;
 

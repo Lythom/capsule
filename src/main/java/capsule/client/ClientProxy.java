@@ -40,6 +40,7 @@ public class ClientProxy extends CommonProxy {
         super.setup(event);
     }
 
+    @SubscribeEvent
     public void init(FMLClientSetupEvent event) {
         CapsulePreviewHandler cph = new CapsulePreviewHandler();
         // for the undeploy preview
@@ -61,8 +62,6 @@ public class ClientProxy extends CommonProxy {
     }
 
     private static void registerBlockRenderer(String modid) {
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(CapsuleBlocks.blockCapsuleMarker), 0,
-                new ModelResourceLocation(modid + ":capsulemarker", "inventory"));
         ClientRegistry.bindTileEntityRenderer(TileEntityCapture.class, CaptureTESR::new);
     }
 

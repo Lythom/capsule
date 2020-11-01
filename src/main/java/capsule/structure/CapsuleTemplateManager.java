@@ -7,12 +7,13 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
-import net.minecraft.resources.IResourceManagerReloadListener;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FileUtil;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.ResourceLocationException;
 import net.minecraft.util.datafix.DefaultTypeReferences;
+import net.minecraftforge.resource.IResourceType;
+import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,12 +23,13 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Initiated from mc original net.minecraft.world.gen.feature.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
  * Added support to load schematic file as Template.
  */
-public class CapsuleTemplateManager implements IResourceManagerReloadListener {
+public class CapsuleTemplateManager implements ISelectiveResourceReloadListener {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
@@ -63,6 +65,11 @@ public class CapsuleTemplateManager implements IResourceManagerReloadListener {
     }
 
     public void onResourceManagerReload(IResourceManager resourceManager) {
+        this.templates.clear();
+    }
+
+    @Override
+    public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
         this.templates.clear();
     }
 

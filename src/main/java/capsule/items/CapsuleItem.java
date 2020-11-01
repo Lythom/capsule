@@ -714,9 +714,9 @@ public class CapsuleItem extends Item {
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {
-        List<Block> excludedBlocks = Config.excludedBlocks;
+        List<Block> excludedBlocks = Config.excludedBlocks.get();
         if (isOverpowered(stack)) {
-            excludedBlocks = Config.opExcludedBlocks;
+            excludedBlocks = Config.opExcludedBlocks.get();
         }
         return excludedBlocks;
     }

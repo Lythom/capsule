@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -84,7 +85,6 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
             this.recipe = ShapedRecipe.Serializer.CRAFTING_SHAPED.read(id, template);
             buildRecipeFromPattern(template, ingredients);
         }
-
 
         public void buildRecipeFromPattern(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
             JsonArray patternArr = JSONUtils.getJsonArray(template, "pattern");
