@@ -12,7 +12,8 @@ import net.minecraft.block.material.Material;
 import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,7 +23,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@EventBusSubscriber
+@Mod.EventBusSubscriber(modid = Main.MODID, bus = Bus.MOD)
 public class Config {
 
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Config.class);
@@ -58,10 +59,14 @@ public class Config {
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
+    public static List<Block> excludedBlocks;
+    public static List<Block> overridableBlocks;
+    public static List<Block> opExcludedBlocks;
+
     // provided by spec
-    public static ForgeConfigSpec.ConfigValue<List<Block>> excludedBlocks;
-    public static ForgeConfigSpec.ConfigValue<List<Block>> overridableBlocks;
-    public static ForgeConfigSpec.ConfigValue<List<Block>> opExcludedBlocks;
+    public static ForgeConfigSpec.ConfigValue<List<String>> excludedBlocksIds;
+    public static ForgeConfigSpec.ConfigValue<List<String>> overridableBlocksIds;
+    public static ForgeConfigSpec.ConfigValue<List<String>> opExcludedBlocksIds;
     public static ForgeConfigSpec.ConfigValue<List<String>> lootTemplatesPaths;
     public static ForgeConfigSpec.ConfigValue<List<String>> lootTablesList;
     public static ForgeConfigSpec.ConfigValue<String> starterTemplatesPath;
@@ -110,8 +115,10 @@ public class Config {
         Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
         Config.starterTemplatesList = Files.populateStarters(Config.configDir.toFile(), Config.starterTemplatesPath.get());
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir.toFile());
+        Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIds.get());
+        Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIds.get());
+        Config.overridableBlocks = Serialization.deserializeBlockList(overridableBlocksIds.get());
     }
-
 
     public static void initCaptureConfigs() {
 
@@ -138,19 +145,20 @@ public class Config {
                 Serialization.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOPArray
         );
-        excludedBlocks = COMMON_BUILDER.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner")
-                .define("excludedBlocks", Serialization.deserializeBlockList(excludedBlocksStandardArray));
+        excludedBlocksIds = COMMON_BUILDER.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:mob_spawner")
+                .define("excludedBlocks", Arrays.asList(excludedBlocksStandardArray));
 
-        opExcludedBlocks = COMMON_BUILDER.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:mob_spawner")
-                .define("excludedBlocks", Serialization.deserializeBlockList(excludedBlocksOPArray));
+        opExcludedBlocksIds = COMMON_BUILDER.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:mob_spawner")
+                .define("excludedBlocks", Arrays.asList(excludedBlocksOPArray));
 
         // Overridable
         List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.TALL_PLANTS, Material.SNOW);
-        List<Block> overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
+        Block[] overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
                 .filter(block -> overridableMaterials.contains(block.getDefaultState().getMaterial()))
-                .collect(Collectors.toList());
-        overridableBlocks = COMMON_BUILDER.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
-                .define("overridableBlocks", overridableBlocksList);
+                .toArray(Block[]::new);
+
+        overridableBlocksIds = COMMON_BUILDER.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
+                .define("overridableBlocks", Arrays.asList(Serialization.serializeBlockArray(overridableBlocksList)));
     }
 
     public static void initLootConfigs() {

@@ -17,27 +17,30 @@ import net.minecraft.item.crafting.SpecialRecipeSerializer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
+import org.apache.logging.log4j.LogManager;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(value = Dist.DEDICATED_SERVER, modid = Main.MODID, bus = Bus.MOD)
 public class CommonProxy {
+
+    protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(CommonProxy.class);
 
     private static final String PROTOCOL_VERSION = "1";
     public static SimpleChannel simpleNetworkWrapper = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation("capsule", "CapsuleChannel"),
+            new ResourceLocation("capsule", "capsule_channel"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
@@ -52,7 +55,7 @@ public class CommonProxy {
     public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
     public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("recovery_capsule", new UpgradeCapsuleRecipe.Serializer());
 
-    public static final TileEntityType<TileEntityCapture> MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.blockCapsuleMarker);
+    public static final TileEntityType<TileEntityCapture> MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
 
     private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(Main.MODID, name));
@@ -68,9 +71,6 @@ public class CommonProxy {
         event.getRegistry().register(PREFABS_AGGREGATOR_SERIALIZER);
         event.getRegistry().register(RECOVERY_CAPSULE_SERIALIZER);
         event.getRegistry().register(UPGRADE_CAPSULE_SERIALIZER);
-
-        CapsuleItems.registerRecipes();
-        // + other recipes in data.capsule.capsule.recipes
     }
 
     @SubscribeEvent
@@ -84,19 +84,15 @@ public class CommonProxy {
         CapsuleItems.registerItems(event);
     }
 
-    private static final Set<TileEntityType<?>> TILE_ENTITIES = new HashSet<>();
-
-    private static <T extends TileEntity> TileEntityType<T> buildTileEntity(Supplier<T> supplier, String label, Block... blocks) {
+    private static <T extends TileEntity> TileEntityType<T> buildTileEntity(Supplier<T> supplier, ResourceLocation name, Block... blocks) {
         TileEntityType<T> te = TileEntityType.Builder.create(supplier, blocks).build(null);
-        te.setRegistryName(Main.MODID + ":" + label);
-        TILE_ENTITIES.add(te);
+        te.setRegistryName(name);
         return te;
     }
 
     @SubscribeEvent
     public static void registerTileEntities(final RegistryEvent.Register<TileEntityType<?>> event) {
-        TILE_ENTITIES.forEach(te -> event.getRegistry().register(te));
-        TILE_ENTITIES.clear();
+        event.getRegistry().register(MARKER_TE);
     }
 
     @SubscribeEvent
@@ -104,7 +100,8 @@ public class CommonProxy {
         Enchantments.registerEnchantments(event);
     }
 
-    public void setup(FMLCommonSetupEvent event) {
+    @SubscribeEvent
+    public static void setup(FMLCommonSetupEvent event) {
         Config.configDir = FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
@@ -128,7 +125,8 @@ public class CommonProxy {
         CapsuleItems.registerRecipes();
     }
 
-    public void serverStarting(FMLServerStartingEvent e) {
+    @SubscribeEvent
+    public static void serverStarting(FMLServerStartingEvent e) {
         CapsuleCommand.register(e.getCommandDispatcher());
     }
 

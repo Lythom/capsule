@@ -23,7 +23,7 @@ import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.platform.GlStateManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,8 +35,8 @@ import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 public class CapsulePreviewHandler {
     public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
-    private int lastSize = 0;
-    private int lastColor = 0;
+    private static int lastSize = 0;
+    private static int lastColor = 0;
 
     public CapsulePreviewHandler() {
     }
@@ -45,7 +45,7 @@ public class CapsulePreviewHandler {
      * Render recall preview when deployed capsule in hand
      */
     @SubscribeEvent
-    public void onWorldRenderLast(RenderWorldLastEvent event) {
+    public static void onWorldRenderLast(RenderWorldLastEvent event) {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.player != null) {
@@ -68,7 +68,7 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private boolean tryPreviewCapture(ClientPlayerEntity player, ItemStack heldItem) {
+    private static boolean tryPreviewCapture(ClientPlayerEntity player, ItemStack heldItem) {
         // an item is in hand
         if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
@@ -92,7 +92,7 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand) {
+    private static void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand) {
 
 
         if (heldItemMainhand.getItem() instanceof CapsuleItem
@@ -150,15 +150,15 @@ public class CapsulePreviewHandler {
                             int color = 0xDDDDDD;
                             if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
                                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                                GL11.glLineWidth(5.0F);
+                                GlStateManager.lineWidth(5.0F);
                                 color = CapsuleItem.getBaseColor(heldItemMainhand);
                             } else {
                                 for (double j = dest.minZ; j < dest.maxZ; ++j) {
                                     for (double k = dest.minY; k < dest.maxY; ++k) {
                                         for (double l = dest.minX; l < dest.maxX; ++l) {
                                             BlockPos pos = new BlockPos(l, k, j);
-                                            if (!Config.overridableBlocks.get().contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
-                                                GL11.glLineWidth(5.0F);
+                                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
+                                                GlStateManager.lineWidth(5.0F);
                                                 bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
                                                 setColor(0xaa0000, 50);
                                                 drawCapsuleCube(errorBoundingBox.offset(pos), bufferBuilder);
@@ -169,7 +169,7 @@ public class CapsulePreviewHandler {
                                 }
                             }
 
-                            GL11.glLineWidth(1.0F);
+                            GlStateManager.lineWidth(1.0F);
                             bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
                             setColor(color, 50);
                             drawCapsuleCube(dest, bufferBuilder);
@@ -186,7 +186,7 @@ public class CapsulePreviewHandler {
 
     }
 
-    private void tryPreviewRecall(ItemStack heldItem) {
+    private static void tryPreviewRecall(ItemStack heldItem) {
         // an item is in hand
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
@@ -201,7 +201,7 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private void tryPreviewLinkedInventory(ClientPlayerEntity player, ItemStack heldItem) {
+    private static void tryPreviewLinkedInventory(ClientPlayerEntity player, ItemStack heldItem) {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
@@ -219,7 +219,7 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private void previewLinkedInventory(BlockPos location, ItemStack capsule) {
+    private static void previewLinkedInventory(BlockPos location, ItemStack capsule) {
 
         float shrink = 0.05f;
         AxisAlignedBB boundingBox = new AxisAlignedBB(
@@ -245,7 +245,7 @@ public class CapsulePreviewHandler {
         doPositionEpilogue();
     }
 
-    private void previewRecall(ItemStack capsule) {
+    private static void previewRecall(ItemStack capsule) {
         if (capsule.getTag() == null) return;
         CompoundNBT linkPos = capsule.getTag().getCompound("spawnPosition");
 
@@ -260,7 +260,7 @@ public class CapsulePreviewHandler {
                 extendSize, color);
     }
 
-    private void setCaptureTESizeColor(int size, int color, World worldIn) {
+    private static void setCaptureTESizeColor(int size, int color, World worldIn) {
         if (size == lastSize && color == lastColor) return;
 
         // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone

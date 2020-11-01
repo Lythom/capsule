@@ -19,7 +19,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        ItemStack bp = new ItemStack(CapsuleItems.capsule, 1);
+        ItemStack bp = new ItemStack(CapsuleItems.CAPSULE, 1);
         CapsuleItem.setState(bp, CapsuleItem.STATE_DEPLOYED);
         CapsuleItem.setBlueprint(bp);
         CapsuleItem.setBaseColor(bp, 3949738);

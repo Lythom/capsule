@@ -1,6 +1,7 @@
 package capsule.blocks;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Tessellator;
@@ -22,7 +23,6 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
                                        int color) {
         doPositionPrologue();
         doWirePrologue();
-        boolean prevStateEnabled = disableLightmap();
 
         AxisAlignedBB boundingBox = new AxisAlignedBB(
                 -extendSize - 0.01 + relativeX,
@@ -41,7 +41,6 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         tessellator.draw();
         setColor(0xFFFFFF, 255);
 
-        resetLightmap(prevStateEnabled);
         doWireEpilogue();
         doPositionEpilogue();
     }

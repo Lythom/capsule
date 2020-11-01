@@ -102,7 +102,7 @@ public class CapsuleItem extends Item {
      * arr ench:[0:{lvl:1s,id:101s}]
      */
     public CapsuleItem() {
-        super((new Item.Properties())
+        super((new Item.Properties().group(Main.tabCapsule))
         .maxStackSize(1)
         .maxDamage(0));
     }
@@ -714,9 +714,9 @@ public class CapsuleItem extends Item {
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {
-        List<Block> excludedBlocks = Config.excludedBlocks.get();
+        List<Block> excludedBlocks = Config.excludedBlocks;
         if (isOverpowered(stack)) {
-            excludedBlocks = Config.opExcludedBlocks.get();
+            excludedBlocks = Config.opExcludedBlocks;
         }
         return excludedBlocks;
     }

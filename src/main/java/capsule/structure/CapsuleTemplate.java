@@ -733,6 +733,13 @@ public class CapsuleTemplate {
         return list;
     }
 
+    public static AxisAlignedBB transformedAxisAlignedBB(PlacementSettings placementIn, AxisAlignedBB bb) {
+        return new AxisAlignedBB(
+                transformedBlockPos(placementIn, new BlockPos(bb.minX, bb.minY, bb.minZ)),
+                transformedBlockPos(placementIn, new BlockPos(bb.maxX, bb.maxY, bb.maxZ))
+        );
+    }
+
     /**
      * Tweaked version of "addBlocksToWorld" for capsule
      */

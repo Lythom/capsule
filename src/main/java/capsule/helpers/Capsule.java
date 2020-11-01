@@ -139,7 +139,7 @@ public class Capsule {
         // do the transportation
         List<UUID> outEntityBlocking = new ArrayList<>();
 
-        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks.get(), outEntityBlocking, CapsuleItem.getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, outEntityBlocking, CapsuleItem.getPlacement(capsule));
 
         if (result) {
             // register the link in the capsule

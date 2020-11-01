@@ -151,20 +151,4 @@ public class RendererUtils {
 
         RenderSystem.color4f(rf, gf, bf, af);
     }
-
-    public static void resetLightmap(boolean prevStateEnabled) {
-        if (prevStateEnabled) {
-            RenderSystem.activeTexture(33986);
-            RenderSystem.enableTexture();
-            RenderSystem.activeTexture(33984);
-        }
-    }
-
-    public static boolean disableLightmap() {
-        RenderSystem.activeTexture(33986);
-        boolean lightmapState = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
-        RenderSystem.disableTexture();
-        RenderSystem.activeTexture(33984);
-        return lightmapState;
-    }
 }

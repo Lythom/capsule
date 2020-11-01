@@ -35,7 +35,7 @@ public class CapsulePlugin implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration subtypeRegistry) {
-        subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.capsule, new CapsuleSubtypeInterpreter());
+        subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.CAPSULE, new CapsuleSubtypeInterpreter());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class CapsulePlugin implements IModPlugin {
         registry.addIngredientInfo(recoveryCapsule, VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
         registry.addIngredientInfo(Arrays.asList(anyBlueprint.getMatchingStacks()), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.opCapsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
-        registry.addIngredientInfo(new ItemStack(CapsuleBlocks.blockCapsuleMarker), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
+        registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }
 
     @Override

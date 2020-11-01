@@ -1,17 +1,20 @@
 package capsule.blocks;
 
+import capsule.Main;
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 
 import java.util.Map;
 
 public class CapsuleBlocks {
 
-    public static BlockCapsuleMarker blockCapsuleMarker;
-    public final static String CAPSULE_MARKER_REGISTERY_NAME = "capsulemarker";
-    public final static String CAPSULE_MARKER_TE_REGISTERY_NAME = "capsulemarker-te";
+    private final static ResourceLocation CAPSULE_MARKER_REGISTERY_NAME = new ResourceLocation(Main.MODID, "capsulemarker");
+    public final static ResourceLocation CAPSULE_MARKER_TE_REGISTERY_NAME = new ResourceLocation(Main.MODID, "capsulemarker_te");
+
+    public static BlockCapsuleMarker CAPSULE_MARKER = new BlockCapsuleMarker();
 
     // testing blocks
     public static BlockCaptureCrasher blockCaptureCrasher;
@@ -20,12 +23,8 @@ public class CapsuleBlocks {
     public static BlockDeployCrasher blockDeployCrasher;
     public final static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
-
-    public static void registerBlocks(RegistryEvent.Register<Block> event) {
-
-        blockCapsuleMarker = new BlockCapsuleMarker();
-        blockCapsuleMarker.setRegistryName(CapsuleBlocks.CAPSULE_MARKER_REGISTERY_NAME);
-        event.getRegistry().register(blockCapsuleMarker);
+    public static void registerBlocks(final RegistryEvent.Register<Block> event) {
+        event.getRegistry().register(CAPSULE_MARKER.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
 
         // testing blocks
         Map<String, String> env = System.getenv();
@@ -41,14 +40,14 @@ public class CapsuleBlocks {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public static void registerItemBlocks(RegistryEvent.Register<Item> event) {
-        event.getRegistry().register(new BlockItem(blockCapsuleMarker, new Item.Properties()).setRegistryName(blockCapsuleMarker.getRegistryName()));
+    public static void registerItemBlocks(final RegistryEvent.Register<Item> event) {
+        event.getRegistry().register(new BlockItem(CAPSULE_MARKER, new Item.Properties().group(Main.tabCapsule)).setRegistryName(CAPSULE_MARKER.getRegistryName()));
 
         // testing blocks
         Map<String, String> env = System.getenv();
         if ("DEV".equals(env.get("__ENV__"))) {
-            event.getRegistry().register(new BlockItem(blockCaptureCrasher, new Item.Properties()).setRegistryName(blockCaptureCrasher.getRegistryName()));
-            event.getRegistry().register(new BlockItem(blockDeployCrasher, new Item.Properties()).setRegistryName(blockDeployCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockCaptureCrasher, new Item.Properties().group(Main.tabCapsule)).setRegistryName(blockCaptureCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockDeployCrasher, new Item.Properties().group(Main.tabCapsule)).setRegistryName(blockDeployCrasher.getRegistryName()));
         }
     }
 }

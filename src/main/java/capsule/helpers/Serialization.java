@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class Serialization {
     protected static final Logger LOGGER = LogManager.getLogger(Serialization.class);
 
-    public static List<Block> deserializeBlockList(String[] blockIds) {
+    public static List<Block> deserializeBlockList(List<String> blockIds) {
         ArrayList<Block> states = new ArrayList<>();
         ArrayList<String> notfound = new ArrayList<>();
 

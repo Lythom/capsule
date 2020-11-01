@@ -19,15 +19,16 @@ import java.util.TreeMap;
 public class CapsuleItems {
 
     private static final int UPGRADE_STEP = 2;
-    public static CapsuleItem capsule;
+    private static final String CAPSULE_REGISTERY_NAME = "capsule";
+
+    public static CapsuleItem CAPSULE = (CapsuleItem)(new CapsuleItem())
+            .setRegistryName(CAPSULE_REGISTERY_NAME);
 
     public static ItemStack withState(int state) {
-        ItemStack capsule = new ItemStack(CapsuleItems.capsule, 1);
+        ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE, 1);
         CapsuleItem.setState(capsule, state);
         return capsule;
     }
-
-    public static String CAPSULE_REGISTERY_NAME = "capsule";
 
     public static TreeMap<ItemStack, ICraftingRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
     public static TreeMap<ItemStack, ICraftingRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
@@ -42,14 +43,13 @@ public class CapsuleItems {
     }
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
-        capsule = new CapsuleItem();
-
-        event.getRegistry().register(capsule.setRegistryName(CAPSULE_REGISTERY_NAME));
+        event.getRegistry().register(CAPSULE);
     }
 
     public static void registerRecipes() {
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
+        TODO find a way to iterate over recipes
         for (IRecipe<?> recipe : Minecraft.getInstance().getIntegratedServer().getRecipeManager().getRecipes()) {
             if (recipe.toString().startsWith("capsule:")) {
 

@@ -1,6 +1,7 @@
 package capsule.client;
 
 import capsule.CommonProxy;
+import capsule.Main;
 import capsule.blocks.CaptureTESR;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -12,19 +13,14 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
-
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Main.MODID, bus = Bus.MOD)
 public class ClientProxy extends CommonProxy {
 
-    public void setup(FMLCommonSetupEvent event) {
-        super.setup(event);
-    }
-
     @SubscribeEvent
-    public void init(FMLClientSetupEvent event) {
+    public static void init(FMLClientSetupEvent event) {
         CapsulePreviewHandler cph = new CapsulePreviewHandler();
         // for the undeploy preview
         MinecraftForge.EVENT_BUS.register(cph);
@@ -35,7 +31,7 @@ public class ClientProxy extends CommonProxy {
                 return CapsuleItem.getColorFromItemstack(stack, tintIndex);
             }
             return 0xFFFFFF;
-        }, CapsuleItems.capsule);
+        }, CapsuleItems.CAPSULE);
     }
 
     @SubscribeEvent

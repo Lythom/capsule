@@ -1,16 +1,11 @@
 {
-	"forge_marker": 1,
-	"defaults": {
-        "model": "capsule:capsulemarker"
-    },    
+    "forge_marker": 1,
     "variants": {
-        "projecting": {
-         	"true": {  
-         		"textures": {
-         			"up" : "capsule:blocks/capsulemarker_activated"
-         		}
-         	},
-        	"false": {  }
+        "projecting=true": {
+            "model": "capsule:capsulemarker_on"
+        },
+        "projecting=false": {
+            "model": "capsule:capsulemarker"
         }
     }
 }

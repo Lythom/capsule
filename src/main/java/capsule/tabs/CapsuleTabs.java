@@ -14,7 +14,7 @@ public class CapsuleTabs extends ItemGroup {
 
     @Override
     public ItemStack createIcon() {
-        ItemStack stack = new ItemStack(CapsuleItems.capsule, 1);
+        ItemStack stack = new ItemStack(CapsuleItems.CAPSULE, 1);
         stack.setDamage(STATE_LINKED);
         return stack;
     }
