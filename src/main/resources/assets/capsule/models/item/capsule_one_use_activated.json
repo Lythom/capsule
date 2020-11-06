@@ -1,9 +1,9 @@
 {
     "parent":"builtin/generated",
     "textures": {
-        "layer0":"capsule:items/capsule_deployed",
-        "layer1":"capsule:items/capsule_linked_coloredoverlay",
-        "layer2":"capsule:items/capsule_linked_whiteoverlay"
+        "layer0":"capsule:item/capsule_one_use_activated",
+        "layer1":"capsule:item/capsule_linked_coloredoverlay",
+        "layer2":"capsule:item/capsule_linked_whiteoverlay"
     },
     "display": {
         "thirdperson": {

@@ -54,7 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"deprecation", "ConstantConditions"})
+@SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
 
     public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
@@ -104,7 +104,8 @@ public class CapsuleItem extends Item {
     public CapsuleItem() {
         super((new Item.Properties().group(Main.tabCapsule))
         .maxStackSize(1)
-        .maxDamage(0));
+        .maxDamage(0)
+        .setNoRepair());
     }
 
 

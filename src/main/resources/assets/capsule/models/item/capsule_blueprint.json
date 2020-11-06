@@ -1,9 +1,8 @@
 {
     "parent":"builtin/generated",
     "textures": {
-        "layer0":"capsule:items/capsule_one_use",
-        "layer1":"capsule:items/capsule_linked_coloredoverlay",
-        "layer2":"capsule:items/capsule_linked_whiteoverlay"
+        "layer0":"capsule:item/capsule_base",
+        "layer1":"capsule:item/capsule_blueprint_coloredoverlay"
     },
     "display": {
         "thirdperson": {

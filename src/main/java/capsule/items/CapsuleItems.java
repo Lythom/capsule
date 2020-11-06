@@ -9,6 +9,7 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.RecipeManager;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.nbt.IntNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.RegistryEvent;
@@ -23,8 +24,7 @@ public class CapsuleItems {
 
     private static final int UPGRADE_STEP = 2;
 
-    public static CapsuleItem CAPSULE = (CapsuleItem)(new CapsuleItem())
-            .setRegistryName(Main.MODID);
+    public static CapsuleItem CAPSULE;
 
     public static ItemStack withState(int state) {
         ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE, 1);
@@ -45,6 +45,8 @@ public class CapsuleItems {
     }
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
+        CAPSULE = new CapsuleItem();
+        CAPSULE.setRegistryName(new ResourceLocation(Main.MODID, "capsule"));
         event.getRegistry().register(CAPSULE);
     }
 
@@ -54,7 +56,6 @@ public class CapsuleItems {
         // used for creative tab and JEI, disabled recipes should not raise here
         for (IRecipe<?> recipe : manager.getRecipes()) {
             if (recipe.toString().startsWith("capsule:")) {
-
                 if (recipe instanceof BlueprintCapsuleRecipe) {
                     blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), (BlueprintCapsuleRecipe) recipe));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {

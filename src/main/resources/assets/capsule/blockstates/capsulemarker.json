@@ -2,10 +2,10 @@
     "forge_marker": 1,
     "variants": {
         "projecting=true": {
-            "model": "capsule:capsulemarker_on"
+            "model": "capsule:block/capsulemarker_on"
         },
         "projecting=false": {
-            "model": "capsule:capsulemarker"
+            "model": "capsule:block/capsulemarker"
         }
     }
 }

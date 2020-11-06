@@ -1,5 +1,6 @@
 {
   "items.capsule": "胶囊",
+  "items.capsule.name": "胶囊",
   "items.capsule.state_activated": "激活",
   "items.capsule.state_deployed": "已部署",
   "items.capsule.state_one_use": "一次性",

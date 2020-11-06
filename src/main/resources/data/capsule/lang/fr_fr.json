@@ -1,5 +1,6 @@
 {
     "items.capsule": "Capsule",
+    "items.capsule.name": "Capsule",
     "items.capsule.state_activated": "[Active]",
     "items.capsule.state_deployed": "[Déployée]",
     "items.capsule.state_one_use": "[Usage unique]",

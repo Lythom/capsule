@@ -14,7 +14,7 @@ public class CapsuleBlocks {
     private final static ResourceLocation CAPSULE_MARKER_REGISTERY_NAME = new ResourceLocation(Main.MODID, "capsulemarker");
     public final static ResourceLocation CAPSULE_MARKER_TE_REGISTERY_NAME = new ResourceLocation(Main.MODID, "capsulemarker_te");
 
-    public static BlockCapsuleMarker CAPSULE_MARKER = new BlockCapsuleMarker();
+    public static BlockCapsuleMarker CAPSULE_MARKER;
 
     // testing blocks
     public static BlockCaptureCrasher blockCaptureCrasher;
@@ -24,7 +24,9 @@ public class CapsuleBlocks {
     public final static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
     public static void registerBlocks(final RegistryEvent.Register<Block> event) {
-        event.getRegistry().register(CAPSULE_MARKER.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME));
+        CAPSULE_MARKER = new BlockCapsuleMarker();
+        CAPSULE_MARKER.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME);
+        event.getRegistry().register(CAPSULE_MARKER);
 
         // testing blocks
         Map<String, String> env = System.getenv();
@@ -41,7 +43,9 @@ public class CapsuleBlocks {
 
     @SuppressWarnings("ConstantConditions")
     public static void registerItemBlocks(final RegistryEvent.Register<Item> event) {
-        event.getRegistry().register(new BlockItem(CAPSULE_MARKER, new Item.Properties().group(Main.tabCapsule)).setRegistryName(CAPSULE_MARKER.getRegistryName()));
+        BlockItem markerItem = new BlockItem(CAPSULE_MARKER, new Item.Properties().group(Main.tabCapsule));
+        markerItem.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME);
+        event.getRegistry().register(markerItem);
 
         // testing blocks
         Map<String, String> env = System.getenv();

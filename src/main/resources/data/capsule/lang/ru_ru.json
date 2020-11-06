@@ -1,5 +1,6 @@
 {
   "items.capsule": "капсула",
+  "items.capsule.name": "капсула",
   "items.capsule.state_activated": "Активированная",
   "items.capsule.state_deployed": "Открытая",
   "items.capsule.state_one_use": "Одноразовая",

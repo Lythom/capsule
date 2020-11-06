@@ -55,7 +55,7 @@ public class CommonProxy {
     public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
     public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("upgrade_capsule", new UpgradeCapsuleRecipe.Serializer());
 
-    public static final TileEntityType<TileEntityCapture> MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
+    public static TileEntityType<TileEntityCapture> MARKER_TE;
 
     private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(Main.MODID, name));
@@ -92,6 +92,7 @@ public class CommonProxy {
 
     @SubscribeEvent
     public static void registerTileEntities(final RegistryEvent.Register<TileEntityType<?>> event) {
+        MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
         event.getRegistry().register(MARKER_TE);
     }
 
