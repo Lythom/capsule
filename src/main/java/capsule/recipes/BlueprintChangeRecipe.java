@@ -6,7 +6,6 @@ import capsule.items.CapsuleItems;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.item.crafting.SpecialRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -30,11 +29,6 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     @Override
     public IRecipeSerializer<?> getSerializer() {
         return CommonProxy.BLUEPRINT_CHANGE_SERIALIZER;
-    }
-
-    @Override
-    public IRecipeType<?> getType() {
-        return null;
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {

@@ -1,13 +1,16 @@
 package capsule.items;
 
+import capsule.Main;
 import capsule.recipes.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.RecipeManager;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.nbt.IntNBT;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.RegistryEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -19,10 +22,9 @@ import java.util.TreeMap;
 public class CapsuleItems {
 
     private static final int UPGRADE_STEP = 2;
-    private static final String CAPSULE_REGISTERY_NAME = "capsule";
 
     public static CapsuleItem CAPSULE = (CapsuleItem)(new CapsuleItem())
-            .setRegistryName(CAPSULE_REGISTERY_NAME);
+            .setRegistryName(Main.MODID);
 
     public static ItemStack withState(int state) {
         ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE, 1);
@@ -46,11 +48,11 @@ public class CapsuleItems {
         event.getRegistry().register(CAPSULE);
     }
 
-    public static void registerRecipes() {
+    @OnlyIn(Dist.CLIENT)
+    public static void registerRecipesClient(RecipeManager manager) {
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
-        TODO find a way to iterate over recipes
-        for (IRecipe<?> recipe : Minecraft.getInstance().getIntegratedServer().getRecipeManager().getRecipes()) {
+        for (IRecipe<?> recipe : manager.getRecipes()) {
             if (recipe.toString().startsWith("capsule:")) {
 
                 if (recipe instanceof BlueprintCapsuleRecipe) {

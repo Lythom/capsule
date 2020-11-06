@@ -53,7 +53,7 @@ public class CommonProxy {
     public static final SpecialRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
     public static final SpecialRecipeSerializer<PrefabsBlueprintAggregatorRecipe> PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new SpecialRecipeSerializer<>(PrefabsBlueprintAggregatorRecipe::new));
     public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
-    public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("recovery_capsule", new UpgradeCapsuleRecipe.Serializer());
+    public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("upgrade_capsule", new UpgradeCapsuleRecipe.Serializer());
 
     public static final TileEntityType<TileEntityCapture> MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
 
@@ -121,8 +121,6 @@ public class CommonProxy {
         simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleContentPreviewAnswerToClient.class, CapsuleContentPreviewAnswerToClient::toBytes, CapsuleContentPreviewAnswerToClient::new, CapsuleContentPreviewAnswerToClient::onClient);
         // server sends to client the data needed to render undeploy
         simpleNetworkWrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleUndeployNotifToClient.class, CapsuleUndeployNotifToClient::toBytes, CapsuleUndeployNotifToClient::new, CapsuleUndeployNotifToClient::onClient);
-
-        CapsuleItems.registerRecipes();
     }
 
     @SubscribeEvent

@@ -9,7 +9,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
@@ -32,6 +34,11 @@ public class ClientProxy extends CommonProxy {
             }
             return 0xFFFFFF;
         }, CapsuleItems.CAPSULE);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, ClientProxy::registerRecipes);
+    }
+
+    public static void registerRecipes(RecipesUpdatedEvent event) {
+        CapsuleItems.registerRecipesClient(event.getRecipeManager());
     }
 
     @SubscribeEvent

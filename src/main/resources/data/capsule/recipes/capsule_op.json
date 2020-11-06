@@ -24,7 +24,7 @@
       "item": "minecraft:stone_button"
     },
     "e": {
-      "item": "forge:nether_stars"
+      "item": "minecraft:nether_star"
     },
     "i": {
       "tag": "forge:ingots/iron"

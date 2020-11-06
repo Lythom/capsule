@@ -152,11 +152,11 @@ public class CapsuleItem extends Item {
             return "";
 
         if (!hasStructureLink(stack) && stack.getDamage() != STATE_LINKED) {
-            return I18n.format("item.capsule.content_empty");
+            return I18n.format("items.capsule.content_empty");
         } else if (stack.getOrCreateTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
             return "«" + TextFormatting.ITALIC + stack.getTag().getString("label") + TextFormatting.RESET + "»";
         }
-        return I18n.format("item.capsule.content_unlabeled");
+        return I18n.format("items.capsule.content_unlabeled");
     }
 
     public static void setLabel(ItemStack capsule, String label) {
@@ -314,34 +314,34 @@ public class CapsuleItem extends Item {
 
     @Override
     public ITextComponent getDisplayName(ItemStack stack) {
-        String name = I18n.format("item.capsule.name");
+        String name = I18n.format("items.capsule.name");
 
         String state = "";
         switch (stack.getDamage()) {
             case STATE_ACTIVATED:
             case STATE_EMPTY_ACTIVATED:
             case STATE_ONE_USE_ACTIVATED:
-                state = TextFormatting.DARK_GREEN + I18n.format("item.capsule.state_activated") + TextFormatting.RESET;
+                state = TextFormatting.DARK_GREEN + I18n.format("items.capsule.state_activated") + TextFormatting.RESET;
                 break;
             case STATE_LINKED:
                 state = "";
                 break;
             case STATE_DEPLOYED:
                 if (isBlueprint(stack)) {
-                    name = I18n.format("item.capsule.state_blueprint");
+                    name = I18n.format("items.capsule.state_blueprint");
                 } else {
-                    state = I18n.format("item.capsule.state_deployed");
+                    state = I18n.format("items.capsule.state_deployed");
                 }
                 break;
             case STATE_ONE_USE:
                 if (isReward(stack)) {
-                    state = I18n.format("item.capsule.state_one_use");
+                    state = I18n.format("items.capsule.state_one_use");
                 } else {
-                    state = I18n.format("item.capsule.state_recovery");
+                    state = I18n.format("items.capsule.state_recovery");
                 }
                 break;
             case STATE_BLUEPRINT:
-                name = I18n.format("item.capsule.state_blueprint");
+                name = I18n.format("items.capsule.state_blueprint");
                 break;
         }
 
