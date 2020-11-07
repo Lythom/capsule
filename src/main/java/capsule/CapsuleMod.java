@@ -7,7 +7,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
-import capsule.tabs.CapsuleTabs;
+import capsule.itemGroups.CapsuleItemGroups;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
@@ -22,13 +22,10 @@ import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Consumer;
@@ -38,7 +35,7 @@ public class CapsuleMod {
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(CapsuleMod.class);
 
     public static final String MODID = "capsule";
-    public static ItemGroup tabCapsule = new CapsuleTabs(ItemGroup.getGroupCountSafe(), "capsule");
+    public static ItemGroup tabCapsule = new CapsuleItemGroups(ItemGroup.getGroupCountSafe(), "capsule");
 
     public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
 
@@ -77,11 +74,6 @@ final class CapsuleModeEventSubscriber {
     }
 
     @SubscribeEvent
-    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
-        CapsuleRecipes.registerRecipeSerializers(event);
-    }
-
-    @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         CapsuleBlocks.registerBlocks(event);
     }
@@ -100,6 +92,11 @@ final class CapsuleModeEventSubscriber {
     @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
         Enchantments.registerEnchantments(event);
+    }
+
+    @SubscribeEvent
+    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+        CapsuleRecipes.registerRecipeSerializers(event);
     }
 
     @SubscribeEvent

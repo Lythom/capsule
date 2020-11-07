@@ -1,4 +1,4 @@
-package capsule.tabs;
+package capsule.itemGroups;
 
 import capsule.items.CapsuleItems;
 import net.minecraft.item.ItemGroup;
@@ -6,9 +6,9 @@ import net.minecraft.item.ItemStack;
 
 import static capsule.items.CapsuleItem.STATE_LINKED;
 
-public class CapsuleTabs extends ItemGroup {
+public class CapsuleItemGroups extends ItemGroup {
 
-    public CapsuleTabs(int index, String label) {
+    public CapsuleItemGroups(int index, String label) {
         super(index, label);
     }
 

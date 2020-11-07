@@ -55,7 +55,7 @@ public class CapsuleItems {
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
         for (IRecipe<?> recipe : manager.getRecipes()) {
-            if (recipe.toString().startsWith("capsule:")) {
+            if (recipe.getId().getNamespace().equals("capsule")) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
                     blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), (BlueprintCapsuleRecipe) recipe));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
@@ -64,8 +64,11 @@ public class CapsuleItems {
                     upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
                 } else if (recipe instanceof BlueprintChangeRecipe) {
                     blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
-                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(recipe.getRecipeOutput(), (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) recipe));
+                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe) {
+                    PrefabsBlueprintAggregatorRecipe agg = (PrefabsBlueprintAggregatorRecipe) recipe;
+                    for (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe aggregatorRecipe : agg.recipes) {
+                        blueprintCapsules.add(Pair.of(aggregatorRecipe.getRecipeOutput(), aggregatorRecipe));
+                    }
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
                     if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
