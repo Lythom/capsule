@@ -62,8 +62,7 @@ public class CapsulePreviewHandler {
      * set captureBlock data (clientside only ) when capsule is in hand.
      */
     @SubscribeEvent
-    public void onLivingUpdateEvent(TickEvent.PlayerTickEvent event) {
-
+    public static void onLivingUpdateEvent(TickEvent.PlayerTickEvent event) {
         // do something to player every update tick:
         if (event.player instanceof ClientPlayerEntity && event.phase.equals(TickEvent.Phase.START)) {
             ClientPlayerEntity player = (ClientPlayerEntity) event.player;

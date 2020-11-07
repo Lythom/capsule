@@ -25,7 +25,7 @@ public class StarterLoot {
     public static StarterLoot instance = new StarterLoot();
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.getPlayer().world.isRemote) {
             if (StringUtils.isNullOrEmpty(Config.starterMode.get()) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
@@ -59,7 +59,7 @@ public class StarterLoot {
         }
     }
 
-    public void giveAllStarters(ServerPlayerEntity player, List<String> allStartersToGive) {
+    public static void giveAllStarters(ServerPlayerEntity player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
             int stackIdx = player.inventory.getFirstEmptyStack();

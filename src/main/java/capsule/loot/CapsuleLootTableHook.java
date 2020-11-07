@@ -16,7 +16,7 @@ public class CapsuleLootTableHook {
     }
 
     @SubscribeEvent
-    public void hookCapsulesOnLootTable(LootTableLoadEvent event) {
+    public static void hookCapsulesOnLootTable(LootTableLoadEvent event) {
 
         if (!Config.lootTablesList.get().contains(event.getName().toString()))
             return;

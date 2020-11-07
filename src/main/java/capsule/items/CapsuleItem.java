@@ -472,7 +472,7 @@ public class CapsuleItem extends Item {
     }
 
     @SubscribeEvent
-    public void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!event.isCanceled()) {
             ItemStack stack = event.getPlayer().getHeldItemMainhand();
             if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
@@ -491,14 +491,14 @@ public class CapsuleItem extends Item {
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
-    public void heldItemChange(LivingEquipmentChangeEvent event) {
+    public static void heldItemChange(LivingEquipmentChangeEvent event) {
         if (event.getEntity() instanceof PlayerEntity && event.getSlot().equals(EquipmentSlotType.MAINHAND) && isBlueprint(event.getTo())) {
             askPreviewIfNeeded(event.getTo());
         }
     }
 
     @OnlyIn(Dist.CLIENT)
-    public void askPreviewIfNeeded(ItemStack stack) {
+    public static void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             // try to get the preview from server
             CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
@@ -671,12 +671,12 @@ public class CapsuleItem extends Item {
      * Hack: constantly check for player inventory to create a template if not exists.
      */
     @SubscribeEvent
-    public void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
+    public static void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
         if (!event.player.world.isRemote) {
             for (int i = 0; i < event.player.inventory.getSizeInventory(); ++i) {
                 ItemStack itemstack = event.player.inventory.getStackInSlot(i);
                 if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied")) {
-                    this.onCreated(itemstack, event.player.world, event.player);
+                    duplicateBlueprintTemplate(itemstack, event.player.world, event.player);
                 }
             }
         }
@@ -684,6 +684,10 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCreated(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
+        duplicateBlueprintTemplate(capsule, worldIn, playerIn);
+    }
+
+    public static void duplicateBlueprintTemplate(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
         if (!worldIn.isRemote && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
             if (srcStructurePath != null) {

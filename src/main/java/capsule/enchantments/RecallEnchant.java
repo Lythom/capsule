@@ -54,17 +54,15 @@ public class RecallEnchant extends Enchantment {
         return 1;
     }
 
-    public void pickupItemBack(ItemEntity entity, PlayerEntity player) {
-
+    public static void pickupItemBack(ItemEntity entity, PlayerEntity player) {
         if (player != null) {
             entity.setNoPickupDelay();
             entity.onCollideWithPlayer(player);
         }
-
     }
 
     @SubscribeEvent
-    public void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
+    public static void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
         if (wte.side == LogicalSide.CLIENT || wte.phase != TickEvent.Phase.END)
             return;
 
@@ -83,7 +81,7 @@ public class RecallEnchant extends Enchantment {
                 }
                 // then recall to inventory
                 if (entity.isAlive()) {
-                    this.pickupItemBack(entity, world.getPlayerByUuid(entity.getThrowerId()));
+                    pickupItemBack(entity, world.getPlayerByUuid(entity.getThrowerId()));
                 }
             }
         }
