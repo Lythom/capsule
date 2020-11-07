@@ -39,6 +39,10 @@ public class CapsuleMod {
 
     public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
 
+    CapsuleMod() {
+        Config.setup();
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static void openGuiScreenClient(PlayerEntity player) {
         capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);

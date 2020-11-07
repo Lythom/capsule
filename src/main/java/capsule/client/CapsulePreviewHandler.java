@@ -135,7 +135,7 @@ public class CapsulePreviewHandler {
                             blockspos.add(new AxisAlignedBB(pos, pos));
                         }
 
-                        doPositionPrologue();
+                        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
                         doWirePrologue();
                         Tessellator tessellator = Tessellator.getInstance();
                         BufferBuilder bufferBuilder = tessellator.getBuffer();
@@ -222,17 +222,7 @@ public class CapsulePreviewHandler {
     }
 
     private static void previewLinkedInventory(BlockPos location, ItemStack capsule) {
-
-        float shrink = 0.05f;
-        AxisAlignedBB boundingBox = new AxisAlignedBB(
-                +shrink + location.getX(),
-                +shrink + location.getY(),
-                +shrink + location.getZ(),
-                1 - shrink + location.getX(),
-                1 - shrink + location.getY(),
-                1 - shrink + location.getZ());
-
-        doPositionPrologue();
+        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
         doOverlayPrologue();
 
         setColor(0x5B9CFF, 80);
@@ -259,7 +249,7 @@ public class CapsulePreviewHandler {
                 linkPos.getInt("x") + extendSize,
                 linkPos.getInt("y") - 1,
                 linkPos.getInt("z") + extendSize, size,
-                extendSize, color);
+                extendSize, color, Minecraft.getInstance().getRenderManager().info);
     }
 
     private static void setCaptureTESizeColor(int size, int color, World worldIn) {

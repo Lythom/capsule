@@ -341,7 +341,7 @@ public class Capsule {
         }
         playerIn.inventory.setInventorySlotContents(playerIn.inventory.currentItem, ItemStack.EMPTY);
         playerIn.getEntityWorld().playSound(null, ItemEntity.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.1f);
-
+        playerIn.getEntityWorld().addEntity(ItemEntity);
         return ItemEntity;
     }
 

@@ -4,18 +4,17 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.Vec3d;
 
 public class RendererUtils {
-    public static void doPositionPrologue() {
+    public static void doPositionPrologue(ActiveRenderInfo info) {
         RenderSystem.pushMatrix();
-        ActiveRenderInfo renderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
-        double projectedX = renderInfo.getProjectedView().x;
-        double projectedY = renderInfo.getProjectedView().y;
-        double projectedZ = renderInfo.getProjectedView().z;
-        RenderSystem.translated(-projectedX, -projectedY, -projectedZ);
+        RenderSystem.rotatef(info.getPitch(), 1.0F, 0.0F, 0.0F);
+        RenderSystem.rotatef(info.getYaw() + 180, 0.0F, 1.0F, 0.0F);
+        RenderSystem.translated(-info.getProjectedView().x, -info.getProjectedView().y, -info.getProjectedView().z);
     }
 
     public static void doPositionEpilogue() {

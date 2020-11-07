@@ -661,13 +661,14 @@ public class CapsuleTemplate {
 
         List<BlockPos> transferedBlocks = new ArrayList<>();
 
-        if (size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1) {
-            BlockPos blockpos = startPos.add(size).add(-1, -1, -1);
+        if (endPos.getX() >= 1 && endPos.getY() >= 1 && endPos.getZ() >= 1) {
+            BlockPos blockpos = startPos.add(endPos).add(-1, -1, -1);
             List<Template.BlockInfo> list = Lists.newArrayList();
             List<Template.BlockInfo> list1 = Lists.newArrayList();
             List<Template.BlockInfo> list2 = Lists.newArrayList();
             BlockPos blockpos1 = new BlockPos(Math.min(startPos.getX(), blockpos.getX()), Math.min(startPos.getY(), blockpos.getY()), Math.min(startPos.getZ(), blockpos.getZ()));
             BlockPos blockpos2 = new BlockPos(Math.max(startPos.getX(), blockpos.getX()), Math.max(startPos.getY(), blockpos.getY()), Math.max(startPos.getZ(), blockpos.getZ()));
+            this.size = endPos;
 
             for (BlockPos blockpos3 : BlockPos.getAllInBoxMutable(blockpos1, blockpos2)) {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);

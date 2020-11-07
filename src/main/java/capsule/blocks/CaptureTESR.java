@@ -1,6 +1,7 @@
 package capsule.blocks;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Tessellator;
@@ -19,8 +20,8 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
     }
 
     public static void drawCaptureZone(double relativeX, double relativeY, double relativeZ, int size, int extendSize,
-                                       int color) {
-        doPositionPrologue();
+                                       int color, ActiveRenderInfo view) {
+        doPositionPrologue(view);
         doWirePrologue();
 
         AxisAlignedBB boundingBox = new AxisAlignedBB(
@@ -52,7 +53,7 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         int extendSize = (size - 1) / 2;
 
         int color = tileEntityCapture.getColor();
-        CaptureTESR.drawCaptureZone(tileEntityCapture.getPos().getX(), tileEntityCapture.getPos().getY(), tileEntityCapture.getPos().getZ(), size, extendSize, color);
+        drawCaptureZone(tileEntityCapture.getPos().getX(), tileEntityCapture.getPos().getY(), tileEntityCapture.getPos().getZ(), size, extendSize, color, this.renderDispatcher.renderInfo);
 
     }
 }

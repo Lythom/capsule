@@ -84,6 +84,7 @@ public class Config {
     public static Path configDir = null;
 
     public static void setup() {
+        REDO config, see https://github.com/Cadiboo/Example-Mod/blob/4ef1557fdb1ed5ff9ca3af5b9cd06711112363ab/src/main/java/io/github/cadiboo/examplemod/ModEventSubscriber.java
         Config.configDir = FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml");
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
@@ -104,7 +105,7 @@ public class Config {
     }
 
     @SubscribeEvent
-    public static void onLoad(final ModConfig.Loading configEvent) {
+    public static void onLoad(final ModConfig.ModConfigEvent configEvent) {
         // init paths properties from config
         for (int i = 0; i < Config.lootTemplatesPaths.get().size(); i++) {
             String path = Config.lootTemplatesPaths.get().get(i);
@@ -117,11 +118,6 @@ public class Config {
                     .define("lootWeight:" + path, path.endsWith("rare") ? 2 : path.endsWith("uncommon") ? 6 : 10);
         }
 
-
-    }
-
-    @SubscribeEvent
-    public static void onReload(final ModConfig.Reloading configEvent) {
         Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
         Config.starterTemplatesList = Files.populateStarters(Config.configDir.toFile(), Config.starterTemplatesPath.get());
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir.toFile());
