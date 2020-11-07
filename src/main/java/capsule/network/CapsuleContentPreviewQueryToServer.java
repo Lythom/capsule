@@ -1,6 +1,5 @@
 package capsule.network;
 
-import capsule.CapsuleMod;
 import capsule.StructureSaver;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
@@ -64,7 +63,7 @@ public class CapsuleContentPreviewQueryToServer {
 
             if (template != null) {
                 List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.getBlocks());
-                CapsuleNetwork.simpleNetworkWrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
+                CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
                 String structureName = heldItem.getTag().getString("structureName");

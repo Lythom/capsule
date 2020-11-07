@@ -466,7 +466,7 @@ public class CapsuleItem extends Item {
     public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getPlayer().getHeldItemMainhand();
         if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack))) {
-            CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+            CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
     }
@@ -481,7 +481,7 @@ public class CapsuleItem extends Item {
                     if (lastRotationTime + 60 < Util.milliTime()) {
                         lastRotationTime = Util.milliTime();
                         // prevent action to be triggered on server + on client
-                        CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                        CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
                         askPreviewIfNeeded(stack);
                     }
                 }
@@ -501,7 +501,7 @@ public class CapsuleItem extends Item {
     public static void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             // try to get the preview from server
-            CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+            CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
         }
     }
 
@@ -559,7 +559,7 @@ public class CapsuleItem extends Item {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
                 if (dest != null) {
-                    CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
+                    CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
                 }
             }
 
@@ -575,12 +575,12 @@ public class CapsuleItem extends Item {
                     }
                 }
                 if (dest != null) {
-                    CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
+                    CapsuleNetwork.wrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
                 }
             } else if (isActivated(capsule)) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
-                CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
+                CapsuleNetwork.wrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
 

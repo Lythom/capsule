@@ -1,6 +1,5 @@
 package capsule.network;
 
-import capsule.CapsuleMod;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -48,7 +47,7 @@ public class CapsuleThrowQueryToServer {
                         boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUniqueID(), size, sendingPlayer.getServerWorld(), pos);
                         if (captured) {
                             BlockPos center = pos.add(0, size / 2, 0);
-                            CapsuleNetwork.simpleNetworkWrapper.send(
+                            CapsuleNetwork.wrapper.send(
                                     PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, sendingPlayer.dimension)),
                                     new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size)
                             );

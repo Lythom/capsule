@@ -7,6 +7,7 @@ import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootEntry;
+import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
@@ -112,7 +113,7 @@ public class Capsule {
 
     private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size) {
         BlockPos center = startPos.add(size / 2, size / 2, size / 2);
-        CapsuleNetwork.simpleNetworkWrapper.send(
+        CapsuleNetwork.wrapper.send(
                 PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, playerIn.dimension)),
                 new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size)
         );
@@ -411,7 +412,7 @@ public class Capsule {
                 boolean captured = captureContentIntoCapsule(capsule, anchor, ItemEntity.getThrowerId(), size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.add(0, size / 2, 0);
-                    CapsuleNetwork.simpleNetworkWrapper.send(
+                    CapsuleNetwork.wrapper.send(
                             PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, ItemEntity.dimension)),
                             new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size)
                     );

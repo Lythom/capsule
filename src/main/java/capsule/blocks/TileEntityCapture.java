@@ -1,6 +1,5 @@
 package capsule.blocks;
 
-import capsule.CapsuleMod;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -18,7 +17,7 @@ public class TileEntityCapture extends TileEntity {
     public static List<TileEntityCapture> instances = new ArrayList<>();
 
     public TileEntityCapture() {
-        super(CapsuleMod.MARKER_TE);
+        super(CapsuleBlocks.MARKER_TE);
         instances.add(this);
     }
 

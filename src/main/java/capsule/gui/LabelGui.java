@@ -1,6 +1,6 @@
 package capsule.gui;
 
-import capsule.CapsuleMod;
+import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -74,7 +74,7 @@ public class LabelGui extends Screen {
     }
 
     public void setCurrentItemLabel(String label) {
-        CapsuleNetwork.simpleNetworkWrapper.sendToServer(new LabelEditedMessageToServer(label));
+        CapsuleNetwork.wrapper.sendToServer(new LabelEditedMessageToServer(label));
     }
 
     public ItemStack getItemStack() {
