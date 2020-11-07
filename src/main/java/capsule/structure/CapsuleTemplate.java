@@ -49,6 +49,12 @@ public class CapsuleTemplate {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleTemplate.class);
 
     public final List<List<Template.BlockInfo>> blocks = Lists.newArrayList();
+
+    public final List<Template.BlockInfo> getBlocks() {
+        if (blocks.size() <= 0) return Lists.newArrayList();
+        return blocks.get(0);
+    }
+
     public final List<Template.EntityInfo> entities = Lists.newArrayList();
     public Map<BlockPos, Block> occupiedPositions = null;
 
@@ -425,7 +431,7 @@ public class CapsuleTemplate {
             }
 
             ListNBT listnbt1 = new ListNBT();
-            List<Template.BlockInfo> list1 = this.blocks.get(0);
+            List<Template.BlockInfo> list1 = this.getBlocks();
 
             for (int j = 0; j < list1.size(); ++j) {
                 Template.BlockInfo template$blockinfo = list1.get(j);
@@ -572,7 +578,7 @@ public class CapsuleTemplate {
     }
 
     public void filterFromWhitelist(HashMap<String, JsonObject> blueprintWhitelist, List<String> outExcluded) {
-        List<Template.BlockInfo> newBlockList = this.blocks.get(0).stream()
+        List<Template.BlockInfo> newBlockList = this.getBlocks().stream()
                 .filter(b -> {
                     ResourceLocation registryName = b.state.getBlock().getRegistryName();
                     boolean included = b.nbt == null
@@ -597,8 +603,8 @@ public class CapsuleTemplate {
                             nbt
                     );
                 }).collect(Collectors.toList());
-        blocks.get(0).clear();
-        blocks.get(0).addAll(newBlockList);
+        getBlocks().clear();
+        getBlocks().addAll(newBlockList);
         // remove all entities
         entities.clear();
     }
@@ -896,7 +902,7 @@ public class CapsuleTemplate {
 
     public void removeBlocks(List<BlockPos> couldNotBeRemoved, BlockPos startPos) {
         for (BlockPos blockPos : couldNotBeRemoved) {
-            this.blocks.get(0).removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
+            this.getBlocks().removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
         }
     }
 
@@ -932,7 +938,7 @@ public class CapsuleTemplate {
 
     public boolean canRotate() {
         try {
-            for (Template.BlockInfo block : blocks.get(0)) {
+            for (Template.BlockInfo block : getBlocks()) {
                 if (block.nbt != null && !Config.blueprintWhitelist.keySet().contains(block.state.getBlock().getRegistryName().toString())) {
                     return false;
                 }
@@ -1016,7 +1022,7 @@ public class CapsuleTemplate {
                     if (state.getBlock() != Blocks.AIR) {
                         BlockPos pos = new BlockPos(x, y, z);
                         CompoundNBT teNBT = tiles.get(pos);
-                        this.blocks.get(0).add(new Template.BlockInfo(pos, state, teNBT));
+                        this.getBlocks().add(new Template.BlockInfo(pos, state, teNBT));
                         if (pos.getX() > sizeX) sizeX = pos.getX();
                         if (pos.getY() > sizeY) sizeY = pos.getY();
                         if (pos.getZ() > sizeZ) sizeZ = pos.getZ();

@@ -72,7 +72,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return null;
         }
-        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleStructureId));
         Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
@@ -122,8 +122,8 @@ public class StructureSaver {
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, null);
-        List<Template.BlockInfo> worldBlocks = tempTemplate.blocks.get(0).stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
-        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.blocks.get(0).stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> worldBlocks = tempTemplate.getBlocks().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.getBlocks().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
         PlayerEntity player = null;
         if (playerID != null) {
@@ -409,7 +409,7 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structureName))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structureName));
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structureName));
         return Pair.of(templatemanager, template);
     }
 
@@ -419,7 +419,7 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structurePath));
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
         return Pair.of(templatemanager, template);
     }
 
@@ -436,7 +436,7 @@ public class StructureSaver {
 
         BlockState air = Blocks.AIR.getDefaultState();
 
-        List<Template.BlockInfo> srcblocks = template.blocks.get(0);
+        List<Template.BlockInfo> srcblocks = template.getBlocks();
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
@@ -501,14 +501,15 @@ public class StructureSaver {
      */
     public static String getUniqueName(ServerWorld playerWorld, String player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
-        String capsuleID = "C-" + player + "-" + csd.getNextCount();
+        String p = player.toLowerCase();
+        String capsuleID = "c-" + p + "-" + csd.getNextCount();
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
-            return "CExcetion-" + player + "-" + csd.getNextCount();
+            return "cexception-" + p + "-" + csd.getNextCount();
         }
         while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
-            capsuleID = "C-" + player + "-" + csd.getNextCount();
+            capsuleID = "c-" + p + "-" + csd.getNextCount();
         }
 
         return capsuleID;
@@ -525,7 +526,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "BException-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -547,7 +548,7 @@ public class StructureSaver {
     public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
-        CapsuleTemplate destTemplate = destManager.getTemplate(destinationLocation);
+        CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
         // populate template from source data
         destTemplate.read(templateData);
         // empty occupied position, it makes no sense for a new template to copy those situational data

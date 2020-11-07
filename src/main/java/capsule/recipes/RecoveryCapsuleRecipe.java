@@ -1,6 +1,6 @@
 package capsule.recipes;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
@@ -101,7 +101,7 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.RECOVERY_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.RECOVERY_CAPSULE_SERIALIZER;
     }
 
     @Override

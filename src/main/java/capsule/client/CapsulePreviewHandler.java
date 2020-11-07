@@ -1,5 +1,6 @@
 package capsule.client;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
@@ -24,6 +25,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +35,7 @@ import java.util.Map;
 import static capsule.client.RendererUtils.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class CapsulePreviewHandler {
     public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
     private static int lastSize = 0;

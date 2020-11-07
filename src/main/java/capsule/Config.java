@@ -12,9 +12,11 @@ import net.minecraft.block.material.Material;
 import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +25,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = Main.MODID, bus = Bus.MOD)
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Bus.MOD)
 public class Config {
 
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Config.class);
@@ -80,6 +82,14 @@ public class Config {
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
 
     public static Path configDir = null;
+
+    public static void setup() {
+        Config.configDir = FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+        Config.loadConfig(Config.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("capsule-client.toml"));
+        Config.loadConfig(Config.COMMON_CONFIG, FMLPaths.CONFIGDIR.get().resolve("capsule-common.toml"));
+    }
 
     public static void loadConfig(ForgeConfigSpec spec, Path path) {
 

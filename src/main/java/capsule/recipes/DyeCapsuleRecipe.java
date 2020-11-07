@@ -1,6 +1,6 @@
 package capsule.recipes;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.helpers.MinecraftNBT;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -27,7 +27,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.DYE_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.DYE_CAPSULE_SERIALIZER;
     }
 
     /**

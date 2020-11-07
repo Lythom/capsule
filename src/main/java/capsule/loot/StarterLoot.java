@@ -1,5 +1,6 @@
 package capsule.loot;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.helpers.Capsule;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -9,12 +10,14 @@ import net.minecraft.util.StringUtils;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
 
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StarterLoot {
 
     protected static final Logger LOGGER = LogManager.getLogger(StarterLoot.class);

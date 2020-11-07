@@ -1,5 +1,6 @@
 package capsule.enchantments;
 
+import capsule.CapsuleMod;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import net.minecraft.enchantment.Enchantment;
@@ -15,10 +16,12 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class RecallEnchant extends Enchantment {
 
     protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnchantmentType enchType) {

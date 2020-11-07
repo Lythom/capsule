@@ -1,7 +1,7 @@
 package capsule.enchantments;
 
 import capsule.Config;
-import capsule.Main;
+import capsule.CapsuleMod;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -38,7 +38,7 @@ public class Enchantments {
         }
 
         Enchantments.recallEnchant = new RecallEnchant(
-                new ResourceLocation(Main.MODID, "recall"), // name
+                new ResourceLocation(CapsuleMod.MODID, "recall"), // name
                 enchantRarity, // weight (chances to appear)
                 recallEnchantTypeEnumValue // possible targets
         );

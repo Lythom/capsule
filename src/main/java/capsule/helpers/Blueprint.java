@@ -112,7 +112,7 @@ public class Blueprint {
 
     public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
-        for (Template.BlockInfo block : blueprintTemplate.blocks.get(0)) {// Note: tile entities not supported so nbt data is not used here
+        for (Template.BlockInfo block : blueprintTemplate.getBlocks()) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
@@ -134,7 +134,7 @@ public class Blueprint {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
-                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplateDefaulted(new ResourceLocation(templateName));
                 if (template != null) {
                     Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
                     if (fullList != null) {
@@ -210,7 +210,7 @@ public class Blueprint {
             reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
-                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplateDefaulted(new ResourceLocation(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (jsonRecipe != null && template != null) {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("structureName", templateName);

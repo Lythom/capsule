@@ -1,8 +1,7 @@
 package capsule.items;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.Config;
-import capsule.Main;
 import capsule.StructureSaver;
 import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Capsule;
@@ -10,6 +9,7 @@ import capsule.helpers.MinecraftNBT;
 import capsule.helpers.Spacial;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
+import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleThrowQueryToServer;
 import net.minecraft.block.Block;
 import net.minecraft.client.resources.I18n;
@@ -43,6 +43,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import org.apache.commons.lang3.tuple.Pair;
@@ -54,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
 
@@ -102,7 +104,7 @@ public class CapsuleItem extends Item {
      * arr ench:[0:{lvl:1s,id:101s}]
      */
     public CapsuleItem() {
-        super((new Item.Properties().group(Main.tabCapsule))
+        super((new Item.Properties().group(CapsuleMod.tabCapsule))
         .maxStackSize(1)
         .maxDamage(0)
         .setNoRepair());
@@ -464,7 +466,7 @@ public class CapsuleItem extends Item {
     public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getPlayer().getHeldItemMainhand();
         if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack))) {
-            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+            CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
     }
@@ -479,7 +481,7 @@ public class CapsuleItem extends Item {
                     if (lastRotationTime + 60 < Util.milliTime()) {
                         lastRotationTime = Util.milliTime();
                         // prevent action to be triggered on server + on client
-                        CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                        CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleLeftClickQueryToServer());
                         askPreviewIfNeeded(stack);
                     }
                 }
@@ -499,7 +501,7 @@ public class CapsuleItem extends Item {
     public void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             // try to get the preview from server
-            CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+            CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
         }
     }
 
@@ -543,7 +545,7 @@ public class CapsuleItem extends Item {
         }
 
         if (playerIn.isSneaking() && (capsule.getDamage() == STATE_LINKED || capsule.getDamage() == STATE_DEPLOYED || capsule.getDamage() == STATE_ONE_USE || capsule.getDamage() == STATE_BLUEPRINT)) {
-            Main.proxy.openGuiScreen(playerIn);
+            CapsuleMod.openGuiScreenCommon.accept(playerIn);
 
         } else if (!worldIn.isRemote) {
             // a capsule is activated on right click, except instant that are deployed immediatly
@@ -557,7 +559,7 @@ public class CapsuleItem extends Item {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
                 if (dest != null) {
-                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
+                    CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
                 }
             }
 
@@ -573,12 +575,12 @@ public class CapsuleItem extends Item {
                     }
                 }
                 if (dest != null) {
-                    CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
+                    CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, true));
                 }
             } else if (isActivated(capsule)) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
-                CommonProxy.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
+                CapsuleNetwork.simpleNetworkWrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
 

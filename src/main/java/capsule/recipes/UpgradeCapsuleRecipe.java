@@ -1,7 +1,7 @@
 package capsule.recipes;
 
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -105,7 +105,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.UPGRADE_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.UPGRADE_CAPSULE_SERIALIZER;
     }
 
     @Override

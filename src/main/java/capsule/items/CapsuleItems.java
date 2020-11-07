@@ -1,6 +1,6 @@
 package capsule.items;
 
-import capsule.Main;
+import capsule.CapsuleMod;
 import capsule.recipes.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -46,7 +46,7 @@ public class CapsuleItems {
 
     public static void registerItems(RegistryEvent.Register<Item> event) {
         CAPSULE = new CapsuleItem();
-        CAPSULE.setRegistryName(new ResourceLocation(Main.MODID, "capsule"));
+        CAPSULE.setRegistryName(new ResourceLocation(CapsuleMod.MODID, "capsule"));
         event.getRegistry().register(CAPSULE);
     }
 

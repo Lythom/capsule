@@ -1,6 +1,6 @@
 package capsule.helpers;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
@@ -112,7 +112,7 @@ public class Capsule {
 
     private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size) {
         BlockPos center = startPos.add(size / 2, size / 2, size / 2);
-        CommonProxy.simpleNetworkWrapper.send(
+        CapsuleNetwork.simpleNetworkWrapper.send(
                 PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, playerIn.dimension)),
                 new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size)
         );
@@ -411,7 +411,7 @@ public class Capsule {
                 boolean captured = captureContentIntoCapsule(capsule, anchor, ItemEntity.getThrowerId(), size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.add(0, size / 2, 0);
-                    CommonProxy.simpleNetworkWrapper.send(
+                    CapsuleNetwork.simpleNetworkWrapper.send(
                             PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, ItemEntity.dimension)),
                             new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size)
                     );
@@ -464,7 +464,7 @@ public class Capsule {
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
-        return srcTemplatemanager.getTemplate(new ResourceLocation(structurePath));
+        return srcTemplatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
     }
 
     public static boolean clearTemplate(ServerWorld worldserver, String capsuleStructureId) {
@@ -473,10 +473,10 @@ public class Capsule {
             LOGGER.error("getTemplateManager returned null");
             return false;
         }
-        CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleStructureId));
         if (template == null) return false;
 
-        List<Template.BlockInfo> blocks = template.blocks.get(0);
+        List<Template.BlockInfo> blocks = template.getBlocks();
         List<Template.EntityInfo> entities = template.entities;
 
         blocks.clear();

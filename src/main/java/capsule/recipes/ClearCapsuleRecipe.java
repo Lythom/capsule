@@ -1,7 +1,7 @@
 
 package capsule.recipes;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.inventory.CraftingInventory;
@@ -21,7 +21,7 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.CLEAR_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.CLEAR_CAPSULE_SERIALIZER;
     }
 
     /**

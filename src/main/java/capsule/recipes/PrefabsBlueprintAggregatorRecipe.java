@@ -1,6 +1,6 @@
 package capsule.recipes;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Blueprint;
@@ -37,7 +37,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.PREFABS_AGGREGATOR_SERIALIZER;
+        return CapsuleRecipes.PREFABS_AGGREGATOR_SERIALIZER;
     }
 
     /**

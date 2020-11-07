@@ -39,7 +39,7 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
     public CapsuleTemplateManager(MinecraftServer server, File templateFolder, DataFixer fixerIn) {
         this.minecraftServer = server;
         this.fixer = fixerIn;
-        this.pathGenerated = templateFolder.toPath().resolve("generated").normalize();
+        this.pathGenerated = templateFolder.toPath().normalize();
         server.getResourceManager().addReloadListener(this);
     }
 

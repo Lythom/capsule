@@ -1,6 +1,6 @@
 package capsule.recipes;
 
-import capsule.CommonProxy;
+import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.inventory.CraftingInventory;
@@ -28,7 +28,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
 
     @Override
     public IRecipeSerializer<?> getSerializer() {
-        return CommonProxy.BLUEPRINT_CHANGE_SERIALIZER;
+        return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER;
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {

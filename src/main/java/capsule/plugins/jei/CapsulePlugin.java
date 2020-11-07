@@ -1,6 +1,6 @@
 package capsule.plugins.jei;
 
-import capsule.Main;
+import capsule.CapsuleMod;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -89,7 +89,7 @@ public class CapsulePlugin implements IModPlugin {
 
     @Override
     public ResourceLocation getPluginUid() {
-        return new ResourceLocation(Main.MODID, "main");
+        return new ResourceLocation(CapsuleMod.MODID, "main");
     }
 
 

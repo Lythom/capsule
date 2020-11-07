@@ -219,6 +219,8 @@ public class CapsuleCommand {
                         )
                 )
         ;
+
+        dispatcher.register(capsuleCommand);
     }
 
     private static int executeGiveEmpty(ServerPlayerEntity player, int size, boolean overpowered) {
@@ -309,7 +311,7 @@ public class CapsuleCommand {
 
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
-            CapsuleTemplate template = templatemanager.getTemplate(new ResourceLocation(structurePath));
+            CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -350,7 +352,7 @@ public class CapsuleCommand {
                 // create a destination template
                 ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath.get() + "/" + templateName);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
-                CapsuleTemplate destTemplate = destManager.getTemplate(destinationLocation);
+                CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
                 // write template from source data
                 destTemplate.read(data);
                 destManager.writeToFile(destinationLocation);
