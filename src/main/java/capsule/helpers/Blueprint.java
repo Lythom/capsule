@@ -197,14 +197,14 @@ public class Blueprint {
     }
 
     public static void createDynamicPrefabRecipes(ArrayList<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
-        JsonObject referenceRecipe = Files.readJSON(new File(Config.configDir.toString(), "prefabs/prefab_blueprint_recipe.json"));
+        JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefabs/prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
             List<String> enabledPrefabsTemplatesList;
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Minecraft.getInstance().getIntegratedServer(), Config.configDir.toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(Minecraft.getInstance().getIntegratedServer(), Config.getCapsuleConfigDir().toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);

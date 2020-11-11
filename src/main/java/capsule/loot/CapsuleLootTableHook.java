@@ -27,8 +27,8 @@ public class CapsuleLootTableHook {
                     .bonusRolls(0, 0)
                     .name("capsulePool")
                     .rolls(ConstantRange.of(1));
-            for (String path : Config.lootTemplatesPaths.get()) {
-                capsulePoolBuilder.addEntry(CapsuleLootEntry.builder(path));
+            for (Config.LootPathData data : Config.lootTemplatesData.values()) {
+                capsulePoolBuilder.addEntry(CapsuleLootEntry.builder(data.path));
             }
             capsulePool = capsulePoolBuilder.build();
         }

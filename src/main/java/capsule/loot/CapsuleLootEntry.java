@@ -40,7 +40,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
     public static int findConfiguredWeight(String path) {
         int weight = DEFAULT_WEIGHT;
         if (Config.lootTemplatesData.containsKey(path)) {
-            weight = Config.lootTemplatesData.get(path).weigth.get();
+            weight = Config.lootTemplatesData.get(path).weight;
         }
         return weight;
     }
@@ -109,9 +109,9 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
 
     @Nullable
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
-        LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
+        Config.LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
+            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;

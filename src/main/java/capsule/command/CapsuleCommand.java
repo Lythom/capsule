@@ -185,16 +185,16 @@ public class CapsuleCommand {
                 // reloadLootList
                 .then(Commands.literal("reloadLootList")
                         .executes(ctx -> {
-                            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
+                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
                             return 1;
                         })
                 )
                 // reloadWhitelist
                 .then(Commands.literal("reloadWhitelist")
                         .executes(ctx -> {
-                            Files.populateAndLoadLootList(Config.configDir.toFile(), Config.lootTemplatesPaths.get(), Config.lootTemplatesData);
-                            Config.starterTemplatesList = Files.populateStarters(Config.configDir.toFile(), Config.starterTemplatesPath.get());
-                            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir.toFile());
+                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
+                            Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath.get());
+                            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
                             return 1;
                         })
                 )

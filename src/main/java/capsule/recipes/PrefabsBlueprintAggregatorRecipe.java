@@ -1,6 +1,5 @@
 package capsule.recipes;
 
-import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Blueprint;
@@ -28,10 +27,10 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
     public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn) {
         super(idIn);
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.configDir.toFile(), Config.prefabsTemplatesPath.get());
-        Blueprint.createDynamicPrefabRecipes(prefabsTemplatesList, (id, recipe, ingredients) -> {
-            recipes.add(new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients));
-        });
+        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath.get());
+        Blueprint.createDynamicPrefabRecipes(prefabsTemplatesList, (id, recipe, ingredients) ->
+                recipes.add(new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients))
+        );
     }
 
 
@@ -68,7 +67,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
         if (recipe.isPresent()) return recipe.get().getRemainingItems(inv);
-        return NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        return NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
     }
 
     public static class PrefabsBlueprintCapsuleRecipe implements ICraftingRecipe {

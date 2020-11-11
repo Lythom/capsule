@@ -22,7 +22,9 @@ import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
@@ -39,8 +41,8 @@ public class CapsuleMod {
 
     public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
 
-    CapsuleMod() {
-        Config.setup();
+    public CapsuleMod() {
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -54,11 +56,10 @@ public class CapsuleMod {
 }
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
-final class CapsuleModeEventSubscriber {
+final class CapsuleModEventSubscriber {
 
     @SubscribeEvent
     public static void setup(FMLCommonSetupEvent event) {
-        Config.setup();
         CapsuleNetwork.setup();
     }
 
@@ -74,7 +75,19 @@ final class CapsuleModeEventSubscriber {
             }
             return 0xFFFFFF;
         }, CapsuleItems.CAPSULE);
-        // TODO remove me if not needed: MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, Main::registerRecipes);
+    }
+
+    /**
+     * This method will be called by Forge when a config changes.
+     */
+    @SubscribeEvent
+    public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
+        final ModConfig config = event.getConfig();
+        // Rebake the configs when they change
+        if (config.getSpec() == Config.COMMON_CONFIG) {
+            Config.bakeConfig(config);
+            CapsuleMod.LOGGER.debug("Baked COMMON_CONFIG");
+        }
     }
 
     @SubscribeEvent

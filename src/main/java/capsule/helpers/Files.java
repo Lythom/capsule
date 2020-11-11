@@ -1,6 +1,6 @@
 package capsule.helpers;
 
-import capsule.loot.LootPathData;
+import capsule.Config;
 import com.google.gson.*;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.StringUtils;
@@ -91,33 +91,28 @@ public class Files {
             Files.populateFolder(startersFolder, "data/capsule/starters");
         }
         ArrayList<String> starterTemplatesList = new ArrayList<>();
-        iterateTemplates(startersFolder, templateName -> {
-            starterTemplatesList.add(starterTemplatesPath + "/" + templateName);
-        });
+        iterateTemplates(startersFolder, templateName -> starterTemplatesList.add(starterTemplatesPath + "/" + templateName));
         return starterTemplatesList;
     }
 
-    public static void populateAndLoadLootList(File capsuleConfigDir, List<String> lootTemplatesPaths, Map<String, LootPathData> outLootTemplatesData) {
+    public static void populateAndLoadLootList(File capsuleConfigDir, Map<String, Config.LootPathData> lootTemplatesData) {
         // Init the manager for reward Lists
-        for (String path : lootTemplatesPaths) {
-            LootPathData data = outLootTemplatesData.get(path);
-
-            File templateFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), path);
+        for (Config.LootPathData data : lootTemplatesData.values()) {
+            File templateFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), data.path);
 
             if (!templateFolder.exists()) {
                 templateFolder.mkdirs();
                 // initial with example capsule the first time
-                LOGGER.info("First load: initializing the loots in " + path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
-                String assetPath = "data/capsule/loot/common";
+                LOGGER.info("First load: initializing the loots in " + data.path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
+                String assetPath = null;
                 if (templateFolder.getPath().contains("uncommon")) assetPath = "data/capsule/loot/uncommon";
                 if (templateFolder.getPath().contains("rare")) assetPath = "data/capsule/loot/rare";
-                populateFolder(templateFolder, assetPath);
+                if (templateFolder.getPath().contains("common")) assetPath = "data/capsule/loot/common";
+                if (assetPath != null) populateFolder(templateFolder, assetPath);
             }
 
             data.files = new ArrayList<>();
-            iterateTemplates(templateFolder, templateName -> {
-                data.files.add(templateName);
-            });
+            iterateTemplates(templateFolder, templateName -> data.files.add(templateName));
         }
     }
 
@@ -131,9 +126,7 @@ public class Files {
             Files.populateFolder(prefabsFolder, "data/capsule/prefabs");
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
-        iterateTemplates(prefabsFolder, templateName -> {
-            prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName);
-        });
+        iterateTemplates(prefabsFolder, templateName -> prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName));
         return prefabsTemplatesList;
     }
 
