@@ -190,9 +190,13 @@ You may want to check if the template are correctly added to the loot table are 
 
 ## Submit your templates !
 
-If you followed "Create a Template to be used as Loot" and came up with great Loot templates, you can ask me to include them as a default reward in the mod ! If I believe the structure is not breaking the game and have a place into the mod, it'll be included in the next version of capsule ;). If the author is set, he/she will be credited in the capsule description when looted by the player.
+If you followed "Create a Template to be used as Loot" and came up with great Loot templates, you can ask me to include them as a default reward in the mod ! If I believe the structure is not breaking the game and have a place into the mod, it'll be included in the next version of capsule. If the author is set, he/she will be credited in the capsule description when looted by the player.
 
-Submit your template .nbt file at https://github.com/Lythom/capsule/issues/new?title=[Submission] with a description of the content. It might be included with the next version of capsule ;)
+2 ways to submit your template .nbt file :
+- on the Discord (https://discord.com/invite/wZpBVdr), please provide a textual description of the content with the file,
+- at https://github.com/Lythom/capsule/issues/new?title=[Submission] with a description of the content. 
+
+The see you on the next version of capsule ;)
 
 ## Other tools
 
