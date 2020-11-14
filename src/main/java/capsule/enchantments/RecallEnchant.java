@@ -36,7 +36,8 @@ public class RecallEnchant extends Enchantment {
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack) {
-        return stack.getItem() instanceof CapsuleItem || this.type != null && super.canApplyAtEnchantingTable(stack);
+        return (stack.getItem() instanceof CapsuleItem && !CapsuleItem.isBlueprint(stack) && !CapsuleItem.isOneUse(stack))
+                || (this.type != null && super.canApplyAtEnchantingTable(stack));
     }
 
     @Override
@@ -70,7 +71,7 @@ public class RecallEnchant extends Enchantment {
         List<Entity> recallEntities = world.getEntities(EntityType.ITEM, Enchantments.hasRecallEnchant);
         List<ItemEntity> recallItemEntities = recallEntities.stream()
                 .filter(entity -> entity instanceof ItemEntity)
-                .map(entity -> (ItemEntity)entity)
+                .map(entity -> (ItemEntity) entity)
                 .collect(Collectors.toList());
 
         for (ItemEntity entity : recallItemEntities) {
