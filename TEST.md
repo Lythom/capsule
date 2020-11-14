@@ -270,30 +270,28 @@ Create a reward: https://github.com/Lythom/capsule/wiki/Modpack-making#create-a-
 - ☐ The capsule is deployed over the sea level
 
 #### automated
-
+1. Setup a dispenser to point vertically, put a button on it
+2. Do quickly: activate a starter capsule, put the capsule inside the dispenser, click the button to trigger the dispenser
+- ☐ The capsule is thrown and deployed on top of the dispenser
 
 ### initial capture 
-#### instant
-#### from capture base
+1. place a capture block
+2. craft an empty iron capsule
+- ☐ While the empty capsule is in hand, a white wireframe appear on top of the capture block
+3. place an iron block and a gold block in the capture area
+4. activate (r-click) and throw (r-click again) the capsule near the capture base
+- ☐ The content disappear and a linked capsule is drop on the floor
+
 #### excludedBlocks
-#### excludedOpBlocks
-#### transdimentional
-#### underwater
-
-### undeploy
-#### instant
-#### excludedBlocks
-#### excludedOpBlocks
-#### transdimentional
-#### underwater
-
-### whitelist
-
-### opWhitelist
-
-### Blueprints
-
-### throw from machine
+1. in creative, put end portal frame block and a bedrock on top of a capture base
+2. try to capture it with an empty iron capsule
+- ☐ The end portal frame block stays in place
+- ☐ The bedrock block stays in place
+- ☐ the linked capsule contains nothing
+3. try to capture it with an op capsule
+- ☐ The end portal frame block disappear
+- ☐ The bedrock block stays in place
+- ☐ the linked op capsule contains the end portal frame block
 
 ### Relabeling
 
