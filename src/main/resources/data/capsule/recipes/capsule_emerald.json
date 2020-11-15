@@ -17,7 +17,7 @@
   ],
   "key": {
     "#": {
-      "tag": "forge:ores/emerald"
+      "tag": "forge:gems/emerald"
     },
     "b": {
       "item": "minecraft:stone_button"

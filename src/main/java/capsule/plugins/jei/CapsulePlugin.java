@@ -1,23 +1,34 @@
 package capsule.plugins.jei;
 
 import capsule.CapsuleMod;
+import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.recipes.BlueprintCapsuleRecipe;
+import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaRecipeCategoryUid;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.ShapelessRecipe;
 import net.minecraft.nbt.ByteNBT;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @JeiPlugin
@@ -35,48 +46,45 @@ public class CapsulePlugin implements IModPlugin {
         // and apply to many vanilla and modded items
         List<IRecipe> recipes = new ArrayList<>();
 
+        Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
+        for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
+            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit.get()); upLevel++) {
+                ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
+                NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
+                ingredients.set(0, Ingredient.fromStacks(capsule));
+                recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsuleUp, ingredients));
+            }
+            // clear
+            recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
+        }
 
-// TODO re-add upgrade recipes
-//        Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
-//        for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
-//            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit.get()); upLevel++) {
-//                ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
-//                NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
-//                ingredients.set(0, Ingredient.fromStacks(capsule));
-//                recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"), "capsule", capsuleUp, ingredients));
-//            }
-//            // clear
-//            recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"), "capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
-//        }
+        ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
+        ItemStack unlabelled = CapsuleItems.unlabelledCapsule.getKey();
+        ItemStack unlabelledDeployed = unlabelled.copy();
+        CapsuleItem.setState(unlabelledDeployed, CapsuleItem.STATE_DEPLOYED);
+        List<ItemStack> blueprintCapsules = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).collect(Collectors.toList());
+        blueprintCapsules.add(CapsuleItems.blueprintChangedCapsule.getKey());
+        Ingredient anyBlueprint = Ingredient.fromStacks(blueprintCapsules.toArray(new ItemStack[0]));
+        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule)));
+        // recovery
+        recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
 
-//        ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
-//        ItemStack unlabelled = CapsuleItems.unlabelledCapsule.getKey();
-//        ItemStack unlabelledDeployed = unlabelled.copy();
-//        CapsuleItem.setState(unlabelledDeployed, CapsuleItem.STATE_DEPLOYED);
-//        List<ItemStack> blueprintCapsules = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).collect(Collectors.toList());
-//        blueprintCapsules.add(CapsuleItems.blueprintChangedCapsule.getKey());
-//        Ingredient anyBlueprint = Ingredient.fromStacks(blueprintCapsules.toArray(new ItemStack[0]));
-//        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule)));
-//        // recovery
-//        recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
+        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
+            if (r.getValue() instanceof BlueprintCapsuleRecipe) {
+                recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
+            } else if (r.getValue() instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
+                recipes.add((( PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
+            } else {
+                recipes.add(r.getValue());
+            }
+        }
+        ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
+        CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
+        CapsuleItem.setLabel(withNewTemplate, "Changed Template");
+        recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"),"capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
 
-        // blueprint
-//        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
-//            if (r.getValue() instanceof BlueprintCapsuleRecipe) {
-//                recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
-//            } else if (r.getValue() instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
-//                recipes.add((( PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
-//            } else {
-//                recipes.add(r.getValue());
-//            }
-//        }
-//        ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
-//        CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
-//        CapsuleItem.setLabel(withNewTemplate, "Changed Template");
-//        recipes.add(new ShapelessRecipe(new ResourceLocation(Main.MODID, "capsule"),"capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
-
-        // registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
-        // registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
+         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
+         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
         registry.addIngredientInfo(CapsuleItems.withState(CapsuleItem.STATE_LINKED), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.withState(CapsuleItem.STATE_DEPLOYED), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.withState(CapsuleItem.STATE_ONE_USE), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");

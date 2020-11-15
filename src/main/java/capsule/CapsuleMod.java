@@ -3,11 +3,11 @@ package capsule;
 import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.Enchantments;
+import capsule.itemGroups.CapsuleItemGroups;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
-import capsule.itemGroups.CapsuleItemGroups;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
@@ -19,6 +19,7 @@ import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
@@ -43,6 +44,11 @@ public class CapsuleMod {
 
     public CapsuleMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+        MinecraftForge.EVENT_BUS.addListener(CapsuleMod::serverStarting);
+    }
+
+    public static void serverStarting(final FMLServerStartingEvent e) {
+        CapsuleCommand.register(e.getCommandDispatcher());
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -114,11 +120,6 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
         CapsuleRecipes.registerRecipeSerializers(event);
-    }
-
-    @SubscribeEvent
-    public static void serverStarting(FMLServerStartingEvent e) {
-        CapsuleCommand.register(e.getCommandDispatcher());
     }
 }
 

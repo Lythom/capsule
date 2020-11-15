@@ -17,7 +17,7 @@
   ],
   "key": {
     "#": {
-      "tag": "forge:ores/diamond"
+      "tag": "forge:gems/diamond"
     },
     "b": {
       "item": "minecraft:stone_button"

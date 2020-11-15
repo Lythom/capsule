@@ -15,12 +15,14 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
@@ -82,12 +84,28 @@ public class CapsuleCommand {
             "setMaterialColor"
     };
 
-    public static String[] getStructuresList(ServerPlayerEntity player) {
-        return (new File(player.getServerWorld().getSaveHandler().getWorldDirectory(), "structures")).list();
+    public static String[] getStructuresList(ServerWorld world) {
+        return (new File(world.getSaveHandler().getWorldDirectory(), "structures")).list();
     }
 
-    public static String[] getRewardsList(ServerPlayerEntity player) {
+    public static String[] getRewardsList() {
         return (new File(Config.rewardTemplatesPath.get())).list();
+    }
+
+    private static SuggestionProvider<CommandSource> SUGGEST_REWARD() {
+        return (__, builder) -> {
+            String[] rewards = getRewardsList();
+            if (rewards == null) rewards = new String[0];
+            return ISuggestionProvider.suggest(rewards, builder);
+        };
+    }
+
+    private static SuggestionProvider<CommandSource> SUGGEST_TEMPLATE() {
+        return (context, builder) -> {
+            String[] tpls = getStructuresList(context.getSource().getWorld());
+            if (tpls == null) tpls = new String[0];
+            return ISuggestionProvider.suggest(tpls, builder);
+        };
     }
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
@@ -106,7 +124,7 @@ public class CapsuleCommand {
                                 sentUsageURL.add(ctx.getSource().asPlayer());
                                 count++;
                             }
-                            Map<CommandNode<CommandSource>, String> map = dispatcher.getSmartUsage(capsuleCommand.getRedirect(), ctx.getSource());
+                            Map<CommandNode<CommandSource>, String> map = dispatcher.getSmartUsage(ctx.getRootNode().getChild("capsule"), ctx.getSource());
 
                             for (String s : map.values()) {
                                 ctx.getSource().sendFeedback(new StringTextComponent("/" + s), false);
@@ -118,7 +136,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("giveEmpty")
                         .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), 3, false))
                         .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
-                                .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
+                                .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), false))
                                 .then(Commands.argument("overpowered", BoolArgumentType.bool())
                                         .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
                                 )
@@ -126,8 +144,8 @@ public class CapsuleCommand {
                 )
                 // giveLinked <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveLinked")
-                        // TODO templates suggestions from folder
                         .then(Commands.argument("rewardTemplateName", string())
+                                .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveLinked(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
@@ -137,6 +155,7 @@ public class CapsuleCommand {
                 // giveBlueprint <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveBlueprint")
                         .then(Commands.argument("rewardTemplateName", string())
+                                .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveBlueprint(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeGiveBlueprint(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
@@ -148,12 +167,13 @@ public class CapsuleCommand {
                         .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
                 )
                 // exportSeenBlock
-                .then(Commands.literal("exportHeldItem")
+                .then(Commands.literal("exportSeenBlock")
                         .executes(ctx -> executeExportSeenBlock(ctx.getSource().asPlayer()))
                 )
                 // fromExistingReward <rewardTemplateName> [playerName]
                 .then(Commands.literal("fromExistingReward")
                         .then(Commands.argument("rewardTemplateName", string())
+                                .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeFromExistingReward(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
@@ -163,6 +183,7 @@ public class CapsuleCommand {
                 // fromStructure <structureTemplateName> [playerName]
                 .then(Commands.literal("fromStructure")
                         .then(Commands.argument("rewardTemplateName", string())
+                                .suggests(SUGGEST_TEMPLATE())
                                 .executes(ctx -> executeFromStructure(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
@@ -350,6 +371,7 @@ public class CapsuleCommand {
                 template.writeToNBT(data);
 
                 // create a destination template
+//                TODO:  how to manage ResourceLocations and Paths?
                 ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath.get() + "/" + templateName);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
                 CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);

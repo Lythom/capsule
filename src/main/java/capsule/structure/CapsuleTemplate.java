@@ -691,7 +691,7 @@ public class CapsuleTemplate {
                         list.add(new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null));
                     }
                     // save a copy
-                    transferedBlocks.add(new BlockPos(blockpos4.getX(), blockpos4.getY(), blockpos4.getZ()));
+                    transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
                 }
             }
 
