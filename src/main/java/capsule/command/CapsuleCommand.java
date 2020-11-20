@@ -44,10 +44,12 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootParameterSets;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -67,29 +69,15 @@ public class CapsuleCommand {
 
     public static List<ServerPlayerEntity> sentUsageURL = new ArrayList<>();
 
-    public static final String[] COMMAND_LIST = new String[]{
-            "giveEmpty",
-            "giveLinked",
-            "giveBlueprint",
-            "exportHeldItem",
-            "exportSeenBlock",
-            "fromExistingReward",
-            "fromHeldCapsule",
-            "fromStructure",
-            "giveRandomLoot",
-            "reloadLootList",
-            "reloadWhitelist",
-            "setAuthor",
-            "setBaseColor",
-            "setMaterialColor"
-    };
-
     public static String[] getStructuresList(ServerWorld world) {
-        return (new File(world.getSaveHandler().getWorldDirectory(), "structures")).list();
+        return ArrayUtils.addAll(
+                (new File(world.getSaveHandler().getWorldDirectory(), "generated/minecraft/structures")).list(),
+                (new File(world.getSaveHandler().getWorldDirectory(), "generated/capsule/structures")).list()
+        );
     }
 
     public static String[] getRewardsList() {
-        return (new File(Config.rewardTemplatesPath.get())).list();
+        return (new File(Config.rewardTemplatesPath)).list();
     }
 
     private static SuggestionProvider<CommandSource> SUGGEST_REWARD() {
@@ -106,6 +94,10 @@ public class CapsuleCommand {
             if (tpls == null) tpls = new String[0];
             return ISuggestionProvider.suggest(tpls, builder);
         };
+    }
+
+    private static SuggestionProvider<CommandSource> SUGGEST_COLORS() {
+        return (context, builder) -> ISuggestionProvider.suggest(CapsuleLootEntry.COLOR_PALETTE, builder);
     }
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
@@ -186,7 +178,7 @@ public class CapsuleCommand {
                                 .suggests(SUGGEST_TEMPLATE())
                                 .executes(ctx -> executeFromStructure(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
-                                        .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                        .executes(ctx -> executeFromStructure(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
                                 )
                         )
                 )
@@ -214,7 +206,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("reloadWhitelist")
                         .executes(ctx -> {
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
-                            Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath.get());
+                            Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath);
                             Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
                             return 1;
                         })
@@ -227,16 +219,16 @@ public class CapsuleCommand {
                 )
                 // setBaseColor <color>
                 .then(Commands.literal("setBaseColor")
-                        .then(Commands.argument("color", color())
-                                        .executes(ctx -> executeSetBaseColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
-                                // TODO color suggestions and examples
+                        .then(Commands.argument("color", string())
+                                .suggests(SUGGEST_COLORS())
+                                .executes(ctx -> executeSetBaseColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
                         )
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("setMaterialColor")
-                        .then(Commands.argument("color", color())
-                                        .executes(ctx -> executeSetMaterialColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
-                                // TODO color suggestions and examples
+                        .then(Commands.argument("color", string())
+                                .suggests(SUGGEST_COLORS())
+                                .executes(ctx -> executeSetMaterialColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
                         )
                 )
         ;
@@ -358,21 +350,31 @@ public class CapsuleCommand {
 
     private static int executeFromStructure(ServerPlayerEntity player, String templateName) throws CommandException {
         if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+            CompoundNBT data = new CompoundNBT();
+            int size = -1;
+            String author = null;
+
             // template
             TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
-            Template template = templatemanager.getTemplate(new ResourceLocation(templateName));
+            String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
+            Template template = templatemanager.getTemplate(new ResourceLocation(path));
             if (template != null) {
-                int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
+                size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
+                author = template.getAuthor();
+                template.writeToNBT(data);
+            } else {
+                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getServerWorld());
+                CapsuleTemplate ctemplate = capsuletemplatemanager.getTemplateDefaulted(new ResourceLocation(path));
+                size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
+                author = ctemplate.getAuthor();
+                ctemplate.writeToNBT(data);
+            }
+
+            if (size > -1) {
                 if (size % 2 == 0)
                     size++;
-
-                // get source template data
-                CompoundNBT data = new CompoundNBT();
-                template.writeToNBT(data);
-
                 // create a destination template
-//                TODO:  how to manage ResourceLocations and Paths?
-                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath.get() + "/" + templateName);
+                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + path);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
                 CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
                 // write template from source data
@@ -384,13 +386,13 @@ public class CapsuleCommand {
                         CapsuleLootEntry.getRandomColor(),
                         CapsuleLootEntry.getRandomColor(),
                         size,
-                        templateName,
-                        template.getAuthor());
+                        path,
+                        author);
                 CapsuleItem.setCanRotate(capsule, destTemplate.canRotate());
                 giveCapsule(capsule, player);
                 return 1;
             } else {
-                throw new CommandException(new StringTextComponent("Structure \"" + templateName + "\" not found "));
+                throw new CommandException(new StringTextComponent("Structure \"" + path + "\" not found "));
             }
         }
         return 0;

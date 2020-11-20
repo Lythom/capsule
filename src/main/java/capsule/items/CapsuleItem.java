@@ -12,6 +12,7 @@ import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleThrowQueryToServer;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
@@ -105,9 +106,9 @@ public class CapsuleItem extends Item {
      */
     public CapsuleItem() {
         super((new Item.Properties().group(CapsuleMod.tabCapsule))
-        .maxStackSize(1)
-        .maxDamage(0)
-        .setNoRepair());
+                .maxStackSize(1)
+                .maxDamage(0)
+                .setNoRepair());
     }
 
 
@@ -500,8 +501,9 @@ public class CapsuleItem extends Item {
     @OnlyIn(Dist.CLIENT)
     public static void askPreviewIfNeeded(ItemStack stack) {
         if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
-            // try to get the preview from server
-            CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+            if (Minecraft.getInstance().getConnection() != null)
+                // try to get the preview from server
+                CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
         }
     }
 

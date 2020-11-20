@@ -27,7 +27,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
     public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn) {
         super(idIn);
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath.get());
+        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath);
         Blueprint.createDynamicPrefabRecipes(prefabsTemplatesList, (id, recipe, ingredients) ->
                 recipes.add(new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients))
         );

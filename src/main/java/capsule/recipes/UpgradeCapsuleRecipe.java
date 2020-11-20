@@ -48,7 +48,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
                     && itemstack.getDamage() == CapsuleItem.STATE_EMPTY
-                    && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit.get()) {
+                    && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                 sourceCapsule = itemstack;
             } else if (upgradeIngredient.test(itemstack)) {
                 material++;
@@ -58,7 +58,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
         }
 
-        return sourceCapsule != ItemStack.EMPTY && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit.get();
+        return sourceCapsule != ItemStack.EMPTY && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit;
     }
 
     /**
@@ -73,7 +73,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
                     && itemstack.getDamage() == CapsuleItem.STATE_EMPTY
-                    && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit.get()) {
+                    && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                 input = itemstack;
             } else if (upgradeIngredient.test(itemstack)) {
                 material++;
@@ -90,7 +90,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         int newUpgraded = CapsuleItem.getUpgradeLevel(input) + material;
 
         if (newSize > CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE) newSize = CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE;
-        if (newUpgraded > Config.upgradeLimit.get()) newUpgraded = Config.upgradeLimit.get();
+        if (newUpgraded > Config.upgradeLimit) newUpgraded = Config.upgradeLimit;
 
         CapsuleItem.setSize(copy, newSize);
         CapsuleItem.setUpgradeLevel(copy, newUpgraded);

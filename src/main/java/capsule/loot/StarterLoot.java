@@ -27,7 +27,7 @@ public class StarterLoot {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.getPlayer().world.isRemote) {
-            if (StringUtils.isNullOrEmpty(Config.starterMode.get()) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
+            if (StringUtils.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
             }
@@ -41,11 +41,11 @@ public class StarterLoot {
             }
             LOGGER.info("playerLogin: " + (data.getBoolean("capsule:receivedStarter") ? "already received starters" : "giving starters now"));
             if (!data.getBoolean("capsule:receivedStarter")) {
-                if ("all".equals(Config.starterMode.get().toLowerCase())) {
+                if ("all".equals(Config.starterMode.toLowerCase())) {
                     giveAllStarters(player, Config.starterTemplatesList);
                     data.putBoolean("capsule:receivedStarter", true);
 
-                } else if ("random".equals(Config.starterMode.get())) {
+                } else if ("random".equals(Config.starterMode)) {
                     giveAllStarters(player, Collections.singletonList(
                             Config.starterTemplatesList.get(
                                     (int) (Math.random() * Config.starterTemplatesList.size())

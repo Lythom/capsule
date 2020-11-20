@@ -69,21 +69,30 @@ public class Config {
     public static List<Block> overridableBlocks;
     public static List<Block> opExcludedBlocks;
 
-    // provided by spec
-    public static ForgeConfigSpec.ConfigValue<List<String>> excludedBlocksIds;
-    public static ForgeConfigSpec.ConfigValue<List<String>> overridableBlocksIds;
-    public static ForgeConfigSpec.ConfigValue<List<String>> opExcludedBlocksIds;
-    public static ForgeConfigSpec.ConfigValue<List<CommentedConfig>> lootTemplatesPaths;
-    public static ForgeConfigSpec.ConfigValue<List<String>> lootTablesList;
-    public static ForgeConfigSpec.ConfigValue<String> starterTemplatesPath;
-    public static ForgeConfigSpec.ConfigValue<String> prefabsTemplatesPath;
-    public static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPath;
-    public static ForgeConfigSpec.IntValue upgradeLimit;
-    public static ForgeConfigSpec.BooleanValue allowBlueprintReward;
-    public static ForgeConfigSpec.ConfigValue<String> starterMode;
+    public static String starterTemplatesPath;
+    public static String prefabsTemplatesPath;
+    public static String rewardTemplatesPath;
+    public static List<String> lootTablesList;
+    public static int upgradeLimit;
+    public static boolean allowBlueprintReward;
+    public static String starterMode;
 
     public static ForgeConfigSpec.ConfigValue<String> enchantRarity;
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
+
+    // provided by spec
+    private static ForgeConfigSpec.ConfigValue<List<String>> excludedBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<String>> overridableBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<String>> opExcludedBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<CommentedConfig>> lootTemplatesPathsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<String>> lootTablesListCfg;
+    private static ForgeConfigSpec.ConfigValue<String> starterTemplatesPathCfg;
+    private static ForgeConfigSpec.ConfigValue<String> prefabsTemplatesPathCfg;
+    private static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPathCfg;
+    private static ForgeConfigSpec.IntValue upgradeLimitCfg;
+    private static ForgeConfigSpec.BooleanValue allowBlueprintRewardCfg;
+    private static ForgeConfigSpec.ConfigValue<String> starterModeCfg;
+
 
     public static Path getCapsuleConfigDir() {
         return FMLPaths.CONFIGDIR.get().resolve("capsule");
@@ -91,7 +100,7 @@ public class Config {
 
     public static void bakeConfig(final ModConfig config) {
         // init paths properties from config
-        List<CommentedConfig> templatesPaths = Config.lootTemplatesPaths.get();
+        List<CommentedConfig> templatesPaths = Config.lootTemplatesPathsCfg.get();
         for (CommentedConfig rawData : templatesPaths) {
             LootPathData data = new LootPathData(rawData.get("path"), rawData.get("weight"));
             if (!Config.lootTemplatesData.containsKey(data.path)) {
@@ -99,18 +108,26 @@ public class Config {
             }
         }
 
+        Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIdsCfg.get());
+        Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIdsCfg.get());
+        Config.overridableBlocks = Serialization.deserializeBlockList(overridableBlocksIdsCfg.get());
+        Config.lootTablesList = lootTablesListCfg.get();
+        Config.starterTemplatesPath = starterTemplatesPathCfg.get();
+        Config.prefabsTemplatesPath = prefabsTemplatesPathCfg.get();
+        Config.rewardTemplatesPath = rewardTemplatesPathCfg.get();
+        Config.upgradeLimit = upgradeLimitCfg.get();
+        Config.allowBlueprintReward = allowBlueprintRewardCfg.get();
+        Config.starterMode = starterModeCfg.get();
+
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
-        Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath.get());
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
-        Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIds.get());
-        Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIds.get());
-        Config.overridableBlocks = Serialization.deserializeBlockList(overridableBlocksIds.get());
+        Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath);
     }
 
     public static void configureCapture(ForgeConfigSpec.Builder configBuild) {
 
         // upgrade limits
-        upgradeLimit = configBuild.comment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.")
+        upgradeLimitCfg = configBuild.comment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.")
                 .defineInRange("capsuleUpgradesLimit", 10, 0, Integer.MAX_VALUE);
 
         // Excluded
@@ -132,10 +149,10 @@ public class Config {
                 Serialization.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOPArray
         );
-        excludedBlocksIds = configBuild.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:spawner")
+        excludedBlocksIdsCfg = configBuild.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:spawner")
                 .define("excludedBlocks", Arrays.asList(excludedBlocksStandardArray));
 
-        opExcludedBlocksIds = configBuild.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
+        opExcludedBlocksIdsCfg = configBuild.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
                 .define("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray));
 
         // Overridable
@@ -144,7 +161,7 @@ public class Config {
                 .filter(block -> overridableMaterials.contains(block.getDefaultState().getMaterial()))
                 .toArray(Block[]::new);
 
-        overridableBlocksIds = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
+        overridableBlocksIdsCfg = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
                 .define("overridableBlocks", Arrays.asList(Serialization.serializeBlockArray(overridableBlocksList)));
     }
 
@@ -173,7 +190,7 @@ public class Config {
                 LootTables.CHESTS_UNDERWATER_RUIN_SMALL.toString(),
                 LootTables.CHESTS_WOODLAND_MANSION.toString());
 
-        Config.lootTablesList = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
+        Config.lootTablesListCfg = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
                 .define("lootTablesList", defaultLootTablesList);
 
         SimpleCommentedConfig common = new SimpleCommentedConfig(null);
@@ -189,22 +206,22 @@ public class Config {
         list.add(common);
         list.add(uncommon);
         list.add(rare);
-        Config.lootTemplatesPaths = configBuild.comment("List of paths and weights where the mod will look for structureBlock files. Each .nbt or .schematic in those folders have a chance to appear as a reward capsule in a dungeon chest.\nHigher weight means more common. Default weights : 2 (rare), 6 (uncommon) or 10 (common)\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly.")
+        Config.lootTemplatesPathsCfg = configBuild.comment("List of paths and weights where the mod will look for structureBlock files. Each .nbt or .schematic in those folders have a chance to appear as a reward capsule in a dungeon chest.\nHigher weight means more common. Default weights : 2 (rare), 6 (uncommon) or 10 (common)\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly.")
                 .define("lootTemplatesPaths", list, o -> o instanceof ArrayList);
 
-        Config.starterMode = configBuild.comment("Players can be given one or several starter structures on their first arrival.\nThose structures nbt files can be placed in the folder defined at starterTemplatesPath below.\nPossible values : \"all\", \"random\", or \"none\".\nDefault value: \"random\"")
+        Config.starterModeCfg = configBuild.comment("Players can be given one or several starter structures on their first arrival.\nThose structures nbt files can be placed in the folder defined at starterTemplatesPath below.\nPossible values : \"all\", \"random\", or \"none\".\nDefault value: \"random\"")
                 .define("starterMode", "random");
 
-        Config.starterTemplatesPath = configBuild.comment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"")
+        Config.starterTemplatesPathCfg = configBuild.comment("Each structure in this folder will be given to the player as standard reusable capsule on game start.\nEmpty the folder or the value to disable starter capsules.\nDefault value: \"config/capsule/starters\"")
                 .define("starterTemplatesPath", "config/capsule/starters");
 
-        Config.prefabsTemplatesPath = configBuild.comment("Each structure in this folder will auto-generate a blueprint recipe that player will be able to craft.\nRemove/Add structure in the folder to disable/enable the recipe.\nDefault value: \"config/capsule/prefabs\"")
+        Config.prefabsTemplatesPathCfg = configBuild.comment("Each structure in this folder will auto-generate a blueprint recipe that player will be able to craft.\nRemove/Add structure in the folder to disable/enable the recipe.\nDefault value: \"config/capsule/prefabs\"")
                 .define("prefabsTemplatesPath", "config/capsule/prefabs");
 
-        Config.rewardTemplatesPath = configBuild.comment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].")
+        Config.rewardTemplatesPathCfg = configBuild.comment("Paths where the mod will look for structureBlock files when invoking command /capsule fromExistingRewards <structureName> [playerName].")
                 .define("rewardTemplatesPath", "config/capsule/rewards");
 
-        Config.allowBlueprintReward = configBuild.comment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true")
+        Config.allowBlueprintRewardCfg = configBuild.comment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true")
                 .define("allowBlueprintReward", true);
     }
 

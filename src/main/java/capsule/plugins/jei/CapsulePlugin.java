@@ -48,7 +48,7 @@ public class CapsulePlugin implements IModPlugin {
 
         Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
-            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit.get()); upLevel++) {
+            for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
                 NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
                 ingredients.set(0, Ingredient.fromStacks(capsule));

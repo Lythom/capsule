@@ -49,7 +49,7 @@ public class StructureSaver {
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
             RewardManager = new CapsuleTemplateManager(server, server.getDataDirectory(), DataFixesManager.getDataFixer());
-            File rewardDir = new File(Config.rewardTemplatesPath.get());
+            File rewardDir = new File(Config.rewardTemplatesPath);
             if (!rewardDir.exists()) {
                 rewardDir.mkdirs();
             }
@@ -195,7 +195,7 @@ public class StructureSaver {
         String directoryPath = directory.getPath();
 
         if (!CapsulesManagers.containsKey(directoryPath)) {
-            File capsuleDir = new File(directory, "structures/capsule");
+            File capsuleDir = new File(directory, "generated/capsules/structures");
             capsuleDir.mkdirs();
             CapsulesManagers.put(directoryPath, new CapsuleTemplateManager(world.getServer(), capsuleDir, DataFixesManager.getDataFixer()));
         }
@@ -570,7 +570,7 @@ public class StructureSaver {
 
     public static CompoundNBT getTemplateNBTData(String path, ServerWorld worldServer) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
-        if (path.startsWith(Config.rewardTemplatesPath.get()) || path.startsWith("config/")) {
+        if (path.startsWith(Config.rewardTemplatesPath) || path.startsWith("config/")) {
             sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getServer(), path);
         } else {
             sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);

@@ -1,5 +1,6 @@
 package capsule.structure;
 
+import capsule.CapsuleMod;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.nbt.CompoundNBT;
@@ -20,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -43,19 +43,21 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         server.getResourceManager().addReloadListener(this);
     }
 
-    public CapsuleTemplate getTemplateDefaulted(ResourceLocation p_200220_1_) {
-        CapsuleTemplate template = this.getTemplate(p_200220_1_);
+    public CapsuleTemplate getTemplateDefaulted(ResourceLocation templateLocation) {
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        CapsuleTemplate template = this.getTemplate(capsuleTemplateLocation);
         if (template == null) {
             template = new CapsuleTemplate();
-            this.templates.put(p_200220_1_, template);
+            this.templates.put(capsuleTemplateLocation, template);
         }
 
         return template;
     }
 
     @Nullable
-    public CapsuleTemplate getTemplate(ResourceLocation p_200219_1_) {
-        return this.templates.computeIfAbsent(p_200219_1_, (p_209204_1_) -> {
+    public CapsuleTemplate getTemplate(ResourceLocation templateLocation) {
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        return this.templates.computeIfAbsent(capsuleTemplateLocation, (p_209204_1_) -> {
             CapsuleTemplate template = this.loadTemplateFile(p_209204_1_, ".schematics");
             if (template == null) template = this.loadTemplateFile(p_209204_1_, ".nbt");
             if (template == null) template = this.loadTemplateResource(p_209204_1_, ".schematics");
@@ -75,22 +77,21 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
 
     @Nullable
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
-        ResourceLocation resourcelocation = new ResourceLocation(p_209201_1_.getNamespace(), "structures/" + p_209201_1_.getPath() + extension);
-
-        try (IResource iresource = this.minecraftServer.getResourceManager().getResource(resourcelocation)) {
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
+        try (IResource iresource = this.minecraftServer.getResourceManager().getResource(capsuleTemplateLocation)) {
             CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension));
             return template;
         } catch (FileNotFoundException var18) {
             return null;
         } catch (Throwable throwable) {
-            LOGGER.error("Couldn't load structure {}: {}", p_209201_1_, throwable.toString());
+            LOGGER.error("Couldn't load structure {}: {}", capsuleTemplateLocation, throwable.toString());
             return null;
         }
     }
 
     @Nullable
     private CapsuleTemplate loadTemplateFile(ResourceLocation locationIn, String extension) {
-        if (!this.pathGenerated.toFile().isDirectory()) {
+        if (!this.pathGenerated.toAbsolutePath().toFile().isDirectory()) {
             return null;
         } else {
             Path path = this.resolvePath(locationIn, extension);
@@ -126,11 +127,12 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
     }
 
     public boolean writeToFile(ResourceLocation templateName) {
-        CapsuleTemplate template = this.templates.get(templateName);
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateName.getPath());
+        CapsuleTemplate template = this.templates.get(capsuleTemplateLocation);
         if (template == null) {
             return false;
         } else {
-            Path path = this.resolvePath(templateName, ".nbt");
+            Path path = this.resolvePath(capsuleTemplateLocation, ".nbt");
             Path path1 = path.getParent();
             if (path1 == null) {
                 return false;
@@ -154,31 +156,23 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         }
     }
 
-    public Path resolvePathStructures(ResourceLocation locationIn, String extIn) {
-        try {
-            Path path = this.pathGenerated.resolve(locationIn.getNamespace());
-            Path path1 = path.resolve("structures");
-            return FileUtil.func_214993_b(path1, locationIn.getPath(), extIn);
-        } catch (InvalidPathException invalidpathexception) {
-            throw new ResourceLocationException("Invalid resource path: " + locationIn, invalidpathexception);
-        }
-    }
-
     private Path resolvePath(ResourceLocation locationIn, String extIn) {
         if (locationIn.getPath().contains("//")) {
             throw new ResourceLocationException("Invalid resource path: " + locationIn);
         } else {
-            Path path = this.resolvePathStructures(locationIn, extIn);
-            if (path.startsWith(this.pathGenerated) && FileUtil.func_214995_a(path) && FileUtil.func_214994_b(path)) {
-                return path;
+            String ext = locationIn.getPath().endsWith(extIn) ? "" : extIn;
+            Path p = this.pathGenerated.resolve(locationIn.getPath() + ext);
+            if (FileUtil.func_214995_a(p) && FileUtil.func_214994_b(p)) {
+                return p;
             } else {
-                throw new ResourceLocationException("Invalid resource path: " + path);
+                throw new ResourceLocationException("Invalid resource path: " + p);
             }
         }
     }
 
-    public void remove(ResourceLocation templatePath) {
-        this.templates.remove(templatePath);
+    public void remove(ResourceLocation templateLocation) {
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        this.templates.remove(capsuleTemplateLocation);
     }
 
     public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream) {
@@ -195,13 +189,14 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         }
     }
 
-    public boolean deleteTemplate(@Nullable MinecraftServer server, ResourceLocation id) {
-        if (server != null && this.templates.containsKey(id)) {
-            File file = this.resolvePath(id, ".nbt").toFile();
+    public boolean deleteTemplate(@Nullable MinecraftServer server, ResourceLocation templateLocation) {
+        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        if (server != null && this.templates.containsKey(capsuleTemplateLocation)) {
+            File file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
 
             boolean deleted = file.delete();
             if (deleted) {
-                remove(id);
+                remove(capsuleTemplateLocation);
             }
             return deleted;
         }

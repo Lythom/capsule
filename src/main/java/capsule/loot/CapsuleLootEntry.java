@@ -74,7 +74,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
                 String templatePath = templatePair.getLeft();
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
 
-                if (template.entities.isEmpty() && Config.allowBlueprintReward.get()) {
+                if (template.entities.isEmpty() && Config.allowBlueprintReward) {
                     // blueprint if there is no entities in the capsule
                     ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
                             templatePath,

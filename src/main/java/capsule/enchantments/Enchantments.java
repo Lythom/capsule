@@ -28,7 +28,7 @@ public class Enchantments {
         try {
             enchantRarity = Rarity.valueOf(Config.enchantRarity.get());
         } catch (Exception e) {
-            LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity + ". Using RARE instead.");
+            LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity.get() + ". Using RARE instead.");
         }
 
         EnchantmentType recallEnchantTypeEnumValue = null;
