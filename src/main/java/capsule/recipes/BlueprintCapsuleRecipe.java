@@ -1,6 +1,5 @@
 package capsule.recipes;
 
-import capsule.CapsuleMod;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
@@ -14,7 +13,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
-import static capsule.items.CapsuleItem.STATE_DEPLOYED;
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     public final ShapedRecipe recipe;
@@ -81,7 +80,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
             if (blueprintItem.getTag() != null) {
                 blueprintItem.getTag().putBoolean("templateShouldBeCopied", true);
             }
-            CapsuleItem.setState(blueprintItem, STATE_DEPLOYED);
+            CapsuleItem.setState(blueprintItem, DEPLOYED);
             return blueprintItem;
         } catch (Exception e) {
             e.printStackTrace();

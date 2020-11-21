@@ -3,7 +3,7 @@
   "result": {
     "item": "capsule:capsule",
     "nbt": {
-      "Damage": 3,
+      "state": 3,
       "display": {
         "color": 3949738
       },

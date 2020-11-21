@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+
 public class CapsuleLeftClickQueryToServer {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewQueryToServer.class);
@@ -38,7 +40,7 @@ public class CapsuleLeftClickQueryToServer {
         ctx.get().enqueueWork(() -> {
             // read the content of the template and send it back to the client
             ItemStack stack = sendingPlayer.getHeldItemMainhand();
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && stack.getDamage() == CapsuleItem.STATE_DEPLOYED) {
+            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && CapsuleItem.hasState(stack, DEPLOYED)) {
                 // Reload if no missing materials
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {

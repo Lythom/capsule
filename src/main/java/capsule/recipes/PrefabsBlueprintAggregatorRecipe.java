@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
+
 public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
     public List<PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe> recipes = new ArrayList<>();
@@ -61,7 +63,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return CapsuleItems.withState(CapsuleItem.STATE_BLUEPRINT);
+        return CapsuleItems.withState(BLUEPRINT);
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
@@ -71,7 +73,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
     }
 
     public static class PrefabsBlueprintCapsuleRecipe implements ICraftingRecipe {
-        private ResourceLocation id;
+        private final ResourceLocation id;
 
         public final ShapedRecipe recipe;
         private int ingredientOneIndex = 4;

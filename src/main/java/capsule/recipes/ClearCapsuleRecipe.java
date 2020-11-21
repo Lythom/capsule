@@ -1,7 +1,5 @@
-
 package capsule.recipes;
 
-import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.inventory.CraftingInventory;
@@ -11,6 +9,9 @@ import net.minecraft.item.crafting.SpecialRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class ClearCapsuleRecipe extends SpecialRecipe {
 
@@ -65,7 +66,7 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
 
     public boolean canBeEmptyCapsule(ItemStack itemstack) {
         if (!(itemstack.getItem() instanceof CapsuleItem)) return false;
-        return CapsuleItem.isLinkedStateCapsule(itemstack) || (itemstack.getDamage() == CapsuleItem.STATE_DEPLOYED && !CapsuleItem.isBlueprint(itemstack));
+        return CapsuleItem.isLinkedStateCapsule(itemstack) || (CapsuleItem.hasState(itemstack, DEPLOYED) && !CapsuleItem.isBlueprint(itemstack));
     }
 
     @Override
@@ -74,16 +75,16 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return CapsuleItems.withState(CapsuleItem.STATE_EMPTY);
+        return CapsuleItems.withState(EMPTY);
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getStackInSlot(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
-            if (itemstack.getItem() instanceof CapsuleItem && itemstack.getDamage() != CapsuleItem.STATE_DEPLOYED) {
+            if (itemstack.getItem() instanceof CapsuleItem && !CapsuleItem.hasState(itemstack, DEPLOYED)) {
                 // Copy the capsule and give back a recovery capsule of the previous content
                 ItemStack copy = itemstack.copy();
                 CapsuleItem.setOneUse(copy);

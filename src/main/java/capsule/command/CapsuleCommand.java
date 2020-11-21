@@ -49,16 +49,15 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
-import static net.minecraft.command.arguments.ColorArgument.color;
 import static net.minecraft.command.arguments.EntityArgument.getPlayer;
 import static net.minecraft.command.arguments.EntityArgument.player;
 
@@ -284,7 +283,7 @@ public class CapsuleCommand {
                         Capsule.labelFromPath(templateName),
                         0
                 );
-                CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
+                CapsuleItem.setState(capsule, DEPLOYED);
                 CapsuleItem.setBlueprint(capsule);
 
                 String destTemplate = StructureSaver.createBlueprintTemplate(
@@ -552,7 +551,7 @@ public class CapsuleCommand {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (!heldItem.isEmpty()) {
 
-                String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 " + heldItem.getDamage();
+                String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 ";
                 if (heldItem.hasTag()) {
                     //noinspection ConstantConditions
                     command += " " + heldItem.getTag().toString();

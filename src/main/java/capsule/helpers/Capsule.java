@@ -1,10 +1,10 @@
 package capsule.helpers;
 
-import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;
+import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
@@ -89,7 +89,7 @@ public class Capsule {
         if (CapsuleItem.isBlueprint(capsule)) {
             boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getUniqueID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
             if (blueprintMatch) {
-                CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
+                CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 notifyUndeploy(playerIn, startPos, size);
             } else {
@@ -99,7 +99,7 @@ public class Capsule {
             CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getUniqueID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
-                CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
+                CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 CapsuleItem.setPlacement(capsule, new PlacementSettings());
@@ -146,7 +146,7 @@ public class Capsule {
             // register the link in the capsule
             if (!CapsuleItem.isReward(capsule)) {
                 CapsuleItem.saveSpawnPosition(capsule, dest, world.getDimension().getType().getId());
-                CapsuleItem.setState(capsule, CapsuleItem.STATE_DEPLOYED);
+                CapsuleItem.setState(capsule, CapsuleState.DEPLOYED);
                 if (!CapsuleItem.isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
                     clearTemplate(world, structureName);
@@ -198,7 +198,7 @@ public class Capsule {
         boolean storageOK = template != null;
         if (storageOK) {
             // register the link in the capsule
-            CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
+            CapsuleItem.setState(capsule, CapsuleState.LINKED);
             CapsuleItem.setStructureName(capsule, capsuleID);
             CapsuleItem.setCanRotate(capsule, template.canRotate());
             CapsuleItem.setPlacement(capsule, new PlacementSettings());
@@ -262,10 +262,10 @@ public class Capsule {
         if (missingMaterials.size() == 0) {
             if (inv != null) inv1SlotQuantityProvisions.forEach((slot, qty) -> extractItemOrFluid(inv, slot, qty));
             if (inv2 != null) inv2SlotQuantityProvisions.forEach((slot, qty) -> extractItemOrFluid(inv2, slot, qty));
-            CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
+            CapsuleItem.setState(blueprint, CapsuleState.BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
         } else if (player != null && player.isCreative()) {
-            CapsuleItem.setState(blueprint, CapsuleItem.STATE_BLUEPRINT);
+            CapsuleItem.setState(blueprint, CapsuleState.BLUEPRINT);
             CapsuleItem.cleanDeploymentTags(blueprint);
             missingMaterials.clear();
         }
@@ -357,12 +357,12 @@ public class Capsule {
     public static ItemStack newLinkedCapsuleItemStack(String structureName, int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
         ItemStack capsule = newEmptyCapsuleItemStack(baseColor, materialColor, size, overpowered, label, upgraded);
         CapsuleItem.setStructureName(capsule, structureName);
-        CapsuleItem.setState(capsule, CapsuleItem.STATE_LINKED);
+        CapsuleItem.setState(capsule, CapsuleState.LINKED);
         return capsule;
     }
 
     public static ItemStack newEmptyCapsuleItemStack(int baseColor, int materialColor, int size, boolean overpowered, @Nullable String label, @Nullable Integer upgraded) {
-        ItemStack capsule =CapsuleItems.withState(CapsuleItem.STATE_EMPTY);
+        ItemStack capsule = CapsuleItems.withState(CapsuleState.EMPTY);
         MinecraftNBT.setColor(capsule, baseColor); // standard dye is for baseColor
         capsule.setTagInfo("color", IntNBT.valueOf(materialColor)); // "color" is for materialColor
         capsule.setTagInfo("size", IntNBT.valueOf(size));

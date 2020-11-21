@@ -89,11 +89,6 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         }
     }
 
-
-//    TODO
-//    Fix block rendering
-//    Fix capsule item rendering from state
-
     @Nullable
     private CapsuleTemplate loadTemplateFile(ResourceLocation locationIn, String extension) {
         if (!this.pathGenerated.toAbsolutePath().toFile().isDirectory()) {
@@ -145,7 +140,7 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
                 try {
                     Files.createDirectories(Files.exists(path1) ? path1.toRealPath() : path1);
                 } catch (IOException var19) {
-                    LOGGER.error("Failed to create parent directory: {}", (Object) path1);
+                    LOGGER.error("Failed to create parent directory: {}", path1);
                     return false;
                 }
 

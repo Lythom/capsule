@@ -5,7 +5,7 @@
     "type": "minecraft:item_nbt",
     "item": "capsule:capsule",
     "nbt": {
-      "Damage": 0,
+      "state": 0,
       "color": 12359778,
       "size": 1,
       "display": {

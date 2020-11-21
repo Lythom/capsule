@@ -16,6 +16,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.function.Supplier;
 
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
+
 public class CapsuleThrowQueryToServer {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleThrowQueryToServer.class);
@@ -43,7 +45,7 @@ public class CapsuleThrowQueryToServer {
                     int size = CapsuleItem.getSize(heldItem);
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
-                    if (heldItem.getDamage() == CapsuleItem.STATE_EMPTY) {
+                    if (CapsuleItem.hasState(heldItem, EMPTY)) {
                         boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUniqueID(), size, sendingPlayer.getServerWorld(), pos);
                         if (captured) {
                             BlockPos center = pos.add(0, size / 2, 0);

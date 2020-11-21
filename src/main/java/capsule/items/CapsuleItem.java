@@ -56,19 +56,47 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
+import static capsule.items.CapsuleItem.CapsuleState.LINKED;
+
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
 
     public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
-    public final static int STATE_EMPTY = 0;
-    public final static int STATE_EMPTY_ACTIVATED = 4;
-    public final static int STATE_ACTIVATED = 1;
-    public final static int STATE_LINKED = 2;
-    public final static int STATE_DEPLOYED = 3;
-    public final static int STATE_ONE_USE = 5;
-    public final static int STATE_ONE_USE_ACTIVATED = 6;
-    public final static int STATE_BLUEPRINT = 7;
+
+    public enum CapsuleState {
+        EMPTY(0),
+        EMPTY_ACTIVATED(4),
+        ACTIVATED(1),
+        LINKED(2),
+        DEPLOYED(3),
+        ONE_USE(5),
+        ONE_USE_ACTIVATED(6),
+        BLUEPRINT(7);
+
+        private final int value;
+        private static final Map<Integer, CapsuleState> map = new HashMap<>();
+
+        CapsuleState(int value) {
+            this.value = value;
+        }
+
+        static {
+            for (CapsuleState state : CapsuleState.values()) {
+                map.put(state.value, state);
+            }
+        }
+
+        public static CapsuleState valueOf(int state) {
+            return map.get(state);
+        }
+
+        public int getValue() {
+            return value;
+        }
+    }
+
     public static final int CAPSULE_MAX_CAPTURE_SIZE = 255;
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);// = 180 / PI
     public static final float TO_RAD = 0.017453292F;
@@ -79,11 +107,8 @@ public class CapsuleItem extends Item {
 
     /**
      * Capsule Mod main item. Used to store region data to be deployed and undeployed.
-     * <p>
-     * Damage values :
-     * see STATE_<state> constants.
-     * <p>
      * NBTData reference:
+     * int state                                                  // see CapsuleState enum values : EMPTY(0), EMPTY_ACTIVATED(4), ACTIVATED(1), LINKED(2), DEPLOYED(3), ONE_USE(5), ONE_USE_ACTIVATED(6), BLUEPRINT(7);
      * int color                                                  // material color
      * tag display : {int color}                                  // base color
      * int size                                                   // odd number, size of the square side the capsule can hold
@@ -112,7 +137,7 @@ public class CapsuleItem extends Item {
 
         this.addPropertyOverride(
                 new ResourceLocation(CapsuleMod.MODID, "state"),
-                (stack, world, entity) -> stack.getDamage()
+                (stack, world, entity) -> CapsuleItem.getState(stack).getValue()
         );
     }
 
@@ -122,7 +147,7 @@ public class CapsuleItem extends Item {
     }
 
     public static void setOneUse(ItemStack capsule) {
-        capsule.setDamage(STATE_ONE_USE);
+        CapsuleItem.setState(capsule, CapsuleState.ONE_USE);
         capsule.getOrCreateTag().putBoolean("oneUse", true);
     }
 
@@ -144,7 +169,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isInstantAndUndeployed(ItemStack capsule) {
-        return capsule.getDamage() == STATE_BLUEPRINT || (getSize(capsule) == 1 && capsule.getDamage() != STATE_DEPLOYED);
+        return CapsuleItem.hasState(capsule, BLUEPRINT) || (getSize(capsule) == 1 && !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED));
     }
 
     public static boolean hasStructureLink(ItemStack stack) {
@@ -152,7 +177,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isLinkedStateCapsule(ItemStack itemstack) {
-        return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.STATE_LINKED == itemstack.getDamage());
+        return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.hasState(itemstack, LINKED));
     }
 
     public static String getLabel(ItemStack stack) {
@@ -160,7 +185,7 @@ public class CapsuleItem extends Item {
         if (stack.isEmpty())
             return "";
 
-        if (!hasStructureLink(stack) && stack.getDamage() != STATE_LINKED) {
+        if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
             return I18n.format("items.capsule.content_empty");
         } else if (stack.getOrCreateTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
             return "«" + TextFormatting.ITALIC + stack.getTag().getString("label") + TextFormatting.RESET + "»";
@@ -282,8 +307,8 @@ public class CapsuleItem extends Item {
         return dim;
     }
 
-    public static void setState(ItemStack stack, int state) {
-        stack.setDamage(state);
+    public static void setState(ItemStack stack, CapsuleState state) {
+        stack.getOrCreateTag().putInt("state", state.getValue());
     }
 
     public static boolean isOverpowered(ItemStack stack) {
@@ -291,8 +316,8 @@ public class CapsuleItem extends Item {
     }
 
     private static boolean isActivated(ItemStack capsule) {
-        return capsule.getDamage() == STATE_ACTIVATED || capsule.getDamage() == STATE_EMPTY_ACTIVATED
-                || capsule.getDamage() == STATE_ONE_USE_ACTIVATED;
+        return CapsuleItem.hasState(capsule, CapsuleState.ACTIVATED) || CapsuleItem.hasState(capsule, CapsuleState.EMPTY_ACTIVATED)
+                || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE_ACTIVATED);
     }
 
     public static void setCanRotate(ItemStack capsule, boolean canRotate) {
@@ -303,22 +328,33 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean canRotate(ItemStack capsule) {
-        return isBlueprint(capsule) || capsule.getDamage() != STATE_DEPLOYED && capsule.hasTag() && capsule.getTag().contains("canRotate") && capsule.getTag().getBoolean("canRotate");
+        return isBlueprint(capsule) || !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && capsule.hasTag() && capsule.getTag().contains("canRotate") && capsule.getTag().getBoolean("canRotate");
     }
 
     public static void revertStateFromActivated(ItemStack capsule) {
         if (isBlueprint(capsule)) {
-            setState(capsule, STATE_BLUEPRINT);
+            setState(capsule, BLUEPRINT);
         } else if (isOneUse(capsule)) {
-            setState(capsule, STATE_ONE_USE);
+            setState(capsule, CapsuleState.ONE_USE);
         } else if (hasStructureLink(capsule)) {
-            setState(capsule, STATE_LINKED);
+            setState(capsule, CapsuleState.LINKED);
         } else {
-            setState(capsule, STATE_EMPTY);
+            setState(capsule, CapsuleState.EMPTY);
         }
         if (capsule.hasTag()) {
             capsule.getTag().remove("activetimer");
         }
+    }
+
+    public static CapsuleState getState(ItemStack stack) {
+        if (!stack.hasTag()) return CapsuleState.valueOf(0);
+        if (stack.getTag().contains("state")) return CapsuleState.valueOf(stack.getTag().getInt("state"));
+        // compatibility fallback
+        return CapsuleState.valueOf(stack.getTag().getInt("Damage"));
+    }
+
+    public static boolean hasState(ItemStack stack, CapsuleState state) {
+        return stack.hasTag() && stack.getTag().getInt("state") == state.getValue();
     }
 
     @Override
@@ -326,30 +362,30 @@ public class CapsuleItem extends Item {
         String name = I18n.format("items.capsule.name");
 
         String state = "";
-        switch (stack.getDamage()) {
-            case STATE_ACTIVATED:
-            case STATE_EMPTY_ACTIVATED:
-            case STATE_ONE_USE_ACTIVATED:
+        switch (CapsuleItem.getState(stack)) {
+            case ACTIVATED:
+            case EMPTY_ACTIVATED:
+            case ONE_USE_ACTIVATED:
                 state = TextFormatting.DARK_GREEN + I18n.format("items.capsule.state_activated") + TextFormatting.RESET;
                 break;
-            case STATE_LINKED:
+            case LINKED:
                 state = "";
                 break;
-            case STATE_DEPLOYED:
+            case DEPLOYED:
                 if (isBlueprint(stack)) {
                     name = I18n.format("items.capsule.state_blueprint");
                 } else {
                     state = I18n.format("items.capsule.state_deployed");
                 }
                 break;
-            case STATE_ONE_USE:
+            case ONE_USE:
                 if (isReward(stack)) {
                     state = I18n.format("items.capsule.state_one_use");
                 } else {
                     state = I18n.format("items.capsule.state_recovery");
                 }
                 break;
-            case STATE_BLUEPRINT:
+            case BLUEPRINT:
                 name = I18n.format("items.capsule.state_blueprint");
                 break;
         }
@@ -377,7 +413,7 @@ public class CapsuleItem extends Item {
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
-        return stack.getDamage() != STATE_ONE_USE;
+        return !CapsuleItem.hasState(stack, CapsuleState.ONE_USE);
     }
 
     @Override
@@ -394,7 +430,7 @@ public class CapsuleItem extends Item {
             tooltip.add(new StringTextComponent(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.format("capsule.tooltip.author") + " " + author + TextFormatting.RESET));
         }
 
-        if (capsule.getDamage() == STATE_ONE_USE) {
+        if (CapsuleItem.hasState(capsule, CapsuleState.ONE_USE)) {
             tooltip.add(new StringTextComponent(I18n.format("capsule.tooltip.one_use").trim()));
         }
 
@@ -415,7 +451,7 @@ public class CapsuleItem extends Item {
 
 
         if (isBlueprint(capsule)) {
-            if (capsule.getDamage() == STATE_DEPLOYED) {
+            if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED)) {
                 tooltipAddMultiline(tooltip, "capsule.tooltip.blueprintUseUncharged", TextFormatting.WHITE);
             } else {
                 tooltipAddMultiline(tooltip, "capsule.tooltip.canRotate", TextFormatting.WHITE);
@@ -551,7 +587,7 @@ public class CapsuleItem extends Item {
             return new ActionResult<>(ActionResultType.FAIL, capsule);
         }
 
-        if (playerIn.isSneaking() && (capsule.getDamage() == STATE_LINKED || capsule.getDamage() == STATE_DEPLOYED || capsule.getDamage() == STATE_ONE_USE || capsule.getDamage() == STATE_BLUEPRINT)) {
+        if (playerIn.isSneaking() && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE) || CapsuleItem.hasState(capsule, BLUEPRINT))) {
             CapsuleMod.openGuiScreenCommon.accept(playerIn);
 
         } else if (!worldIn.isRemote) {
@@ -562,7 +598,7 @@ public class CapsuleItem extends Item {
         } else if (worldIn.isRemote) {
             // client side, if is going to get activated, ask for server preview
             if (!isInstantAndUndeployed(capsule)
-                    && (capsule.getDamage() == STATE_LINKED || capsule.getDamage() == STATE_ONE_USE)) {
+                    && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE))) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
                 if (dest != null) {
@@ -575,7 +611,7 @@ public class CapsuleItem extends Item {
                 BlockRayTraceResult rtr = Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule));
                 BlockPos dest = null;
                 if (rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK) {
-                    if (capsule.getDamage() == STATE_EMPTY) {
+                    if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
                         dest = rtr.getPos();
                     } else {
                         dest = rtr.getPos().add(rtr.getFace().getDirectionVec());
@@ -595,18 +631,18 @@ public class CapsuleItem extends Item {
     }
 
     public void activateCapsule(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
-        if (capsule.getDamage() == STATE_EMPTY) {
-            setState(capsule, STATE_EMPTY_ACTIVATED);
+        if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
+            setState(capsule, CapsuleState.EMPTY_ACTIVATED);
             startTimer(worldIn, playerIn, capsule);
-        } else if (capsule.getDamage() == STATE_LINKED) {
-            setState(capsule, STATE_ACTIVATED);
+        } else if (CapsuleItem.hasState(capsule, CapsuleState.LINKED)) {
+            setState(capsule, CapsuleState.ACTIVATED);
             startTimer(worldIn, playerIn, capsule);
-        } else if (capsule.getDamage() == STATE_ONE_USE) {
-            setState(capsule, STATE_ONE_USE_ACTIVATED);
+        } else if (CapsuleItem.hasState(capsule, CapsuleState.ONE_USE)) {
+            setState(capsule, CapsuleState.ONE_USE_ACTIVATED);
             startTimer(worldIn, playerIn, capsule);
         }
         // an open capsule undeploy content on right click
-        else if (capsule.getDamage() == STATE_DEPLOYED) {
+        else if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED)) {
             try {
                 Capsule.resentToCapsule(capsule, playerIn);
                 worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
@@ -746,7 +782,7 @@ public class CapsuleItem extends Item {
             color = MinecraftNBT.getColor(stack);
 
         } else if (renderPass == 1) {
-            if (isBlueprint(stack) && stack.getDamage() == STATE_DEPLOYED) {
+            if (isBlueprint(stack) && CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
                 color = 0x7CC4EA; // trick for blueprint to reuse the "deployed" item model and get okish label color
             } else {
                 if (stack.getOrCreateTag().contains("color")) {
@@ -860,7 +896,7 @@ public class CapsuleItem extends Item {
     }
 
     public static void clearCapsule(ItemStack capsule) {
-        setState(capsule, STATE_EMPTY);
+        setState(capsule, CapsuleState.EMPTY);
         if (!capsule.hasTag()) return;
         capsule.getTag().remove("structureName");
         capsule.getTag().remove("sourceInventory");

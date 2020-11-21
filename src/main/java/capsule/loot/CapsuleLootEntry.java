@@ -18,6 +18,8 @@ import javax.annotation.Nullable;
 import java.util.Random;
 import java.util.function.Consumer;
 
+import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
+
 /**
  * @author Lythom
  */
@@ -85,7 +87,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
                             Capsule.labelFromPath(templatePath),
                             0);
                     CapsuleItem.setAuthor(capsule, template.getAuthor());
-                    CapsuleItem.setState(capsule, CapsuleItem.STATE_BLUEPRINT);
+                    CapsuleItem.setState(capsule, BLUEPRINT);
                     CapsuleItem.setBlueprint(capsule);
                     CapsuleItem.setCanRotate(capsule, template.canRotate());
                     stacks.accept(capsule);

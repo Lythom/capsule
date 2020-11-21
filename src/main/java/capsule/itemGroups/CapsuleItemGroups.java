@@ -1,10 +1,11 @@
 package capsule.itemGroups;
 
+import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 
-import static capsule.items.CapsuleItem.STATE_LINKED;
+import static capsule.items.CapsuleItem.CapsuleState.LINKED;
 
 public class CapsuleItemGroups extends ItemGroup {
 
@@ -15,7 +16,7 @@ public class CapsuleItemGroups extends ItemGroup {
     @Override
     public ItemStack createIcon() {
         ItemStack stack = new ItemStack(CapsuleItems.CAPSULE, 1);
-        stack.setDamage(STATE_LINKED);
+        CapsuleItem.setState(stack, LINKED);
         return stack;
     }
 

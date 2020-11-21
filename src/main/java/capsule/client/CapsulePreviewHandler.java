@@ -7,6 +7,7 @@ import capsule.blocks.TileEntityCapture;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -24,7 +25,6 @@ import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static capsule.client.RendererUtils.*;
+import static capsule.items.CapsuleItem.CapsuleState.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -75,7 +76,7 @@ public class CapsulePreviewHandler {
         if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
-            if (heldItemItem instanceof CapsuleItem && (heldItem.getDamage() == CapsuleItem.STATE_EMPTY || heldItem.getDamage() == CapsuleItem.STATE_EMPTY_ACTIVATED)) {
+            if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
                 //noinspection ConstantConditions
                 if (heldItem.hasTag() && heldItem.getTag().contains("size")) {
                     setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
@@ -95,14 +96,9 @@ public class CapsulePreviewHandler {
 
     @SuppressWarnings("ConstantConditions")
     private static void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand) {
-
-
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTag()
-                && (heldItemMainhand.getDamage() == CapsuleItem.STATE_ACTIVATED
-                || heldItemMainhand.getDamage() == CapsuleItem.STATE_ONE_USE_ACTIVATED
-                || heldItemMainhand.getDamage() == CapsuleItem.STATE_BLUEPRINT
-                || CapsuleItem.getSize(heldItemMainhand) == 1 && heldItemMainhand.getDamage() != CapsuleItem.STATE_DEPLOYED)
+                && isDeployable(heldItemMainhand)
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
             BlockRayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
@@ -125,7 +121,7 @@ public class CapsulePreviewHandler {
                         List<AxisAlignedBB> blockspos = new ArrayList<>();
                         if (size > 1) {
                             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-                        } else if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
+                        } else if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
                             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
                             BlockPos pos = rtc.getPos().subtract(destOriginPos);
                             blockspos.add(new AxisAlignedBB(pos, pos));
@@ -150,7 +146,7 @@ public class CapsulePreviewHandler {
                                     .expand(1, 1, 1);
 
                             int color = 0xDDDDDD;
-                            if (heldItemMainhand.getDamage() == CapsuleItem.STATE_EMPTY) {
+                            if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
                                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
                                 GlStateManager.lineWidth(5.0F);
                                 color = CapsuleItem.getBaseColor(heldItemMainhand);
@@ -188,6 +184,13 @@ public class CapsulePreviewHandler {
 
     }
 
+    private static boolean isDeployable(ItemStack heldItemMainhand) {
+        return CapsuleItem.hasState(heldItemMainhand, ACTIVATED)
+                || CapsuleItem.hasState(heldItemMainhand, ONE_USE_ACTIVATED)
+                || CapsuleItem.hasState(heldItemMainhand, BLUEPRINT)
+                || CapsuleItem.getSize(heldItemMainhand) == 1 && !CapsuleItem.hasState(heldItemMainhand, DEPLOYED);
+    }
+
     private static void tryPreviewRecall(ItemStack heldItem) {
         // an item is in hand
         if (heldItem != null) {
@@ -195,7 +198,7 @@ public class CapsulePreviewHandler {
             // it's an empty capsule : show capture zones
             //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
-                    && (heldItem.getDamage() == CapsuleItem.STATE_DEPLOYED || heldItem.getDamage() == CapsuleItem.STATE_BLUEPRINT)
+                    && (CapsuleItem.hasState(heldItem, DEPLOYED) || CapsuleItem.hasState(heldItem, BLUEPRINT))
                     && heldItem.hasTag()
                     && heldItem.getTag().contains("spawnPosition")) {
                 previewRecall(heldItem);

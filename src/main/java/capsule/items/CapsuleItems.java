@@ -1,6 +1,7 @@
 package capsule.items;
 
 import capsule.CapsuleMod;
+import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -26,7 +27,7 @@ public class CapsuleItems {
 
     public static CapsuleItem CAPSULE;
 
-    public static ItemStack withState(int state) {
+    public static ItemStack withState(CapsuleState state) {
         ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE, 1);
         CapsuleItem.setState(capsule, state);
         return capsule;
@@ -88,7 +89,7 @@ public class CapsuleItems {
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
-        unlabelledCapsule.setDamage(CapsuleItem.STATE_LINKED);
+        CapsuleItem.setState(unlabelledCapsule, CapsuleState.LINKED);
         CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
         return unlabelledCapsule;
     }

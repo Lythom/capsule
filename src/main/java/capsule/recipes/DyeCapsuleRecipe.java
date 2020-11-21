@@ -1,6 +1,5 @@
 package capsule.recipes;
 
-import capsule.CapsuleMod;
 import capsule.helpers.MinecraftNBT;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -17,6 +16,8 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class DyeCapsuleRecipe extends SpecialRecipe {
 
@@ -35,7 +36,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
      */
     public boolean matches(CraftingInventory inv, World worldIn) {
         ItemStack itemstack = ItemStack.EMPTY;
-        ArrayList<ItemStack> arraylist = Lists.<ItemStack>newArrayList();
+        ArrayList<ItemStack> arraylist = Lists.newArrayList();
 
         for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack itemstack1 = inv.getStackInSlot(i);
@@ -63,7 +64,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
         List<DyeItem> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
-        for(int i = 0; i < inv.getSizeInventory(); ++i) {
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack itemstack1 = inv.getStackInSlot(i);
             if (!itemstack1.isEmpty()) {
                 Item item = itemstack1.getItem();
@@ -78,7 +79,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
                         return ItemStack.EMPTY;
                     }
 
-                    dyes.add((DyeItem)item);
+                    dyes.add((DyeItem) item);
                 }
             }
         }
@@ -94,26 +95,26 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
         CapsuleItem idyeablearmoritem = null;
         Item item = stack.getItem();
         if (item instanceof CapsuleItem) {
-            idyeablearmoritem = (CapsuleItem)item;
+            idyeablearmoritem = (CapsuleItem) item;
             itemstack = stack.copy();
             itemstack.setCount(1);
             if (MinecraftNBT.hasColor(stack)) {
                 int k = MinecraftNBT.getColor(itemstack);
-                float f = (float)(k >> 16 & 255) / 255.0F;
-                float f1 = (float)(k >> 8 & 255) / 255.0F;
-                float f2 = (float)(k & 255) / 255.0F;
-                i = (int)((float)i + Math.max(f, Math.max(f1, f2)) * 255.0F);
-                aint[0] = (int)((float)aint[0] + f * 255.0F);
-                aint[1] = (int)((float)aint[1] + f1 * 255.0F);
-                aint[2] = (int)((float)aint[2] + f2 * 255.0F);
+                float f = (float) (k >> 16 & 255) / 255.0F;
+                float f1 = (float) (k >> 8 & 255) / 255.0F;
+                float f2 = (float) (k & 255) / 255.0F;
+                i = (int) ((float) i + Math.max(f, Math.max(f1, f2)) * 255.0F);
+                aint[0] = (int) ((float) aint[0] + f * 255.0F);
+                aint[1] = (int) ((float) aint[1] + f1 * 255.0F);
+                aint[2] = (int) ((float) aint[2] + f2 * 255.0F);
                 ++j;
             }
 
-            for(DyeItem dyeitem : dyes) {
+            for (DyeItem dyeitem : dyes) {
                 float[] afloat = dyeitem.getDyeColor().getColorComponentValues();
-                int i2 = (int)(afloat[0] * 255.0F);
-                int l = (int)(afloat[1] * 255.0F);
-                int i1 = (int)(afloat[2] * 255.0F);
+                int i2 = (int) (afloat[0] * 255.0F);
+                int l = (int) (afloat[1] * 255.0F);
+                int i1 = (int) (afloat[2] * 255.0F);
                 i += Math.max(i2, Math.max(l, i1));
                 aint[0] += i2;
                 aint[1] += l;
@@ -128,11 +129,11 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
             int j1 = aint[0] / j;
             int k1 = aint[1] / j;
             int l1 = aint[2] / j;
-            float f3 = (float)i / (float)j;
-            float f4 = (float)Math.max(j1, Math.max(k1, l1));
-            j1 = (int)((float)j1 * f3 / f4);
-            k1 = (int)((float)k1 * f3 / f4);
-            l1 = (int)((float)l1 * f3 / f4);
+            float f3 = (float) i / (float) j;
+            float f4 = (float) Math.max(j1, Math.max(k1, l1));
+            j1 = (int) ((float) j1 * f3 / f4);
+            k1 = (int) ((float) k1 * f3 / f4);
+            l1 = (int) ((float) l1 * f3 / f4);
             int j2 = (j1 << 8) + k1;
             j2 = (j2 << 8) + l1;
             MinecraftNBT.setColor(itemstack, j2);
@@ -146,11 +147,11 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return CapsuleItems.withState(CapsuleItem.STATE_EMPTY);
+        return CapsuleItems.withState(EMPTY);
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getStackInSlot(i);

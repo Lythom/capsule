@@ -15,8 +15,7 @@ import net.minecraftforge.common.ToolType;
 public class BlockCapsuleMarker extends Block implements ITileEntityProvider {
 //
 //    TODO lighten block when empty capsle in hand
-//    TODO TESR should have depth
-//    TODO Test item rendering override
+//    TODO already there positions ignored :(
 //
     /**
      * Whether this fence connects in the northern direction

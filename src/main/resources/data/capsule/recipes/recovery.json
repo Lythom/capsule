@@ -3,7 +3,7 @@
   "result": {
     "item": "capsule:capsule",
     "nbt": {
-      "Damage": 5,
+      "state": 5,
       "isReward": true,
       "oneUse": true
     }
@@ -12,7 +12,7 @@
     {
       "item": "capsule:capsule",
       "nbt": {
-        "Damage": 2
+        "state": 2
       }
     },
     {

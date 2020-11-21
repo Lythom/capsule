@@ -1,7 +1,6 @@
 package capsule.recipes;
 
 
-import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -19,6 +18,8 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
+
 public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     /**
      * Is the ItemStack that you repair.
@@ -32,7 +33,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     }
 
     public ItemStack getRecipeOutput() {
-        return CapsuleItems.getUpgradedCapsule(CapsuleItems.withState(CapsuleItem.STATE_EMPTY), 1);
+        return CapsuleItems.getUpgradedCapsule(CapsuleItems.withState(EMPTY), 1);
     }
 
     /**
@@ -47,7 +48,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
-                    && itemstack.getDamage() == CapsuleItem.STATE_EMPTY
+                    && CapsuleItem.hasState(itemstack, EMPTY)
                     && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                 sourceCapsule = itemstack;
             } else if (upgradeIngredient.test(itemstack)) {
@@ -72,7 +73,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
-                    && itemstack.getDamage() == CapsuleItem.STATE_EMPTY
+                    && CapsuleItem.hasState(itemstack, EMPTY)
                     && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                 input = itemstack;
             } else if (upgradeIngredient.test(itemstack)) {

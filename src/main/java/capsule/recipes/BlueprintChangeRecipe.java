@@ -1,6 +1,5 @@
 package capsule.recipes;
 
-import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.inventory.CraftingInventory;
@@ -11,6 +10,8 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+
 public class BlueprintChangeRecipe extends SpecialRecipe {
 
     public BlueprintChangeRecipe(ResourceLocation id) {
@@ -19,7 +20,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
 
     public ItemStack getRecipeOutput() {
         ItemStack bp = new ItemStack(CapsuleItems.CAPSULE, 1);
-        CapsuleItem.setState(bp, CapsuleItem.STATE_DEPLOYED);
+        CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
         CapsuleItem.setBaseColor(bp, 3949738);
         CapsuleItem.setStructureName(bp, "blueprintExampleStructureName");
@@ -65,7 +66,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
                 blueprint++;
 
                 // Any capsule having a template is valid except Deployed capsules (empty template) unless it is a blueprint (template never empty)
-            } else if (CapsuleItem.hasStructureLink(itemstack) && (CapsuleItem.STATE_DEPLOYED != itemstack.getDamage() || CapsuleItem.isBlueprint(itemstack))) {
+            } else if (CapsuleItem.hasStructureLink(itemstack) && (DEPLOYED != CapsuleItem.getState(itemstack) || CapsuleItem.isBlueprint(itemstack))) {
                 sourceCapsule++;
             } else if (!itemstack.isEmpty()) {
                 return false;
@@ -98,7 +99,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
                 blueprintCapsule.getTag().putString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
             }
             CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
-            CapsuleItem.setState(blueprintCapsule, CapsuleItem.STATE_DEPLOYED);
+            CapsuleItem.setState(blueprintCapsule, DEPLOYED);
             CapsuleItem.setSize(blueprintCapsule, templateSize);
             CapsuleItem.cleanDeploymentTags(blueprintCapsule);
             return blueprintCapsule;
