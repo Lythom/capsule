@@ -1,10 +1,8 @@
 package capsule.blocks;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.Tessellator;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -45,15 +43,37 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         doPositionEpilogue();
     }
 
+
+    @Override
+    public boolean isGlobalRenderer(TileEntityCapture te) {
+        return true;
+    }
+
     @Override
     public void render(TileEntityCapture tileEntityCapture, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
         int size = tileEntityCapture.getSize();
         if (size == 0)
             return;
         int extendSize = (size - 1) / 2;
-
         int color = tileEntityCapture.getColor();
-        drawCaptureZone(tileEntityCapture.getPos().getX(), tileEntityCapture.getPos().getY(), tileEntityCapture.getPos().getZ(), size, extendSize, color, this.renderDispatcher.renderInfo);
+        AxisAlignedBB boundingBox = new AxisAlignedBB(
+                -extendSize - 0.01,
+                1.01,
+                -extendSize - 0.01,
+                extendSize + 1.01,
+                size + 1.01,
+                extendSize + 1.01);
 
+        final int r = (color >> 16) & 0xFF;
+        final int g = (color >> 8) & 0xFF;
+        final int b = color & 0xFF;
+
+        final float af = 200 / 255f;
+        final float rf = r / 255f;
+        final float gf = g / 255f;
+        final float bf = b / 255f;
+
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getLines());
+        WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
     }
 }

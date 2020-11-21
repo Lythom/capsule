@@ -262,7 +262,7 @@ public class CapsulePreviewHandler {
                 TileEntityCapture tec = te;
                 tec.getTileData().putInt("size", size);
                 tec.getTileData().putInt("color", color);
-                // FIXME: check if the capture block still displays properly
+//                // FIXME: check if the capture block still displays properly
 //                worldIn.markBlockRangeForRenderUpdate(
 //                        te.getPos().add(-size / 2, -size / 2, -size / 2),
 //                        te.getPos().add(size / 2, size / 2, size / 2)
