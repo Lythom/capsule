@@ -98,9 +98,9 @@ public class CapsuleTemplate {
                         compoundnbt.remove("z");
                         list1.add(new Template.BlockInfo(blockpos4, blockstate, compoundnbt));
                     } else if (!blockstate.isOpaqueCube(worldIn, blockpos3) && !blockstate.isCollisionShapeOpaque(worldIn, blockpos3)) {
-                        list2.add(new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null));
+                        list2.add(new Template.BlockInfo(blockpos4, blockstate, null));
                     } else {
-                        list.add(new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null));
+                        list.add(new Template.BlockInfo(blockpos4, blockstate, null));
                     }
                 }
             }
@@ -238,7 +238,7 @@ public class CapsuleTemplate {
             if (boundsIn == null || boundsIn.isVecInside(blockpos)) {
                 CompoundNBT compoundnbt = template$entityinfo.nbt;
                 Vec3d vec3d = getTransformedPos(template$entityinfo.pos, mirrorIn, rotationIn, centerOffset);
-                vec3d = vec3d.add((double) offsetPos.getX(), (double) offsetPos.getY(), (double) offsetPos.getZ());
+                vec3d = vec3d.add(offsetPos.getX(), offsetPos.getY(), offsetPos.getZ());
                 Vec3d vec3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListNBT listnbt = new ListNBT();
                 listnbt.add(DoubleNBT.valueOf(vec3d1.x));
@@ -493,6 +493,18 @@ public class CapsuleTemplate {
         nbt.put("entities", listnbt);
         nbt.put("size", this.writeInts(this.size.getX(), this.size.getY(), this.size.getZ()));
         nbt.putInt("DataVersion", SharedConstants.getVersion().getWorldVersion());
+
+        // CAPSULE save already occupied positions when deployed
+        ListNBT occupiedSpawnPositionstaglist = new ListNBT();
+        if (this.occupiedPositions != null) {
+            for (Map.Entry<BlockPos, Block> entry : occupiedPositions.entrySet()) {
+                CompoundNBT nbtEntry = new CompoundNBT();
+                nbtEntry.putLong("pos", entry.getKey().toLong());
+                nbtEntry.putInt("blockId", Block.getStateId(entry.getValue().getDefaultState()));
+                occupiedSpawnPositionstaglist.add(nbtEntry);
+            }
+            nbt.put("capsule_occupiedSources", occupiedSpawnPositionstaglist);
+        }
         return nbt;
     }
 
@@ -526,6 +538,16 @@ public class CapsuleTemplate {
             }
         }
 
+        // CAPSULE read already occupied positions when deployed
+        if (compound.contains("capsule_occupiedSources")) {
+            Map<BlockPos, Block> occupiedSources = new HashMap<>();
+            ListNBT list = compound.getList("capsule_occupiedSources", 10);
+            for (int i = 0; i < list.size(); i++) {
+                CompoundNBT entry = list.getCompound(i);
+                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getStateById(entry.getInt("blockId")).getBlock());
+            }
+            this.occupiedPositions = occupiedSources;
+        }
     }
 
     private void readPalletesAndBlocks(ListNBT palletesNBT, ListNBT blocksNBT) {
@@ -582,7 +604,7 @@ public class CapsuleTemplate {
                 .filter(b -> {
                     ResourceLocation registryName = b.state.getBlock().getRegistryName();
                     boolean included = b.nbt == null
-                            || registryName != null && Config.blueprintWhitelist.keySet().contains(registryName.toString());
+                            || registryName != null && Config.blueprintWhitelist.containsKey(registryName.toString());
                     if (!included && outExcluded != null) outExcluded.add(b.state.toString());
                     return included;
                 })
@@ -675,8 +697,8 @@ public class CapsuleTemplate {
                 BlockState blockstate = worldIn.getBlockState(blockpos3);
                 if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
                         && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
-                        || !(occupiedPositionsToIgnore.keySet().contains(blockpos4)
-                        && occupiedPositionsToIgnore.get(blockpos4).equals(blockstate.getBlock())))) {
+                        || !(occupiedPositionsToIgnore.containsKey(blockpos3)
+                        && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
 
                     TileEntity tileentity = worldIn.getTileEntity(blockpos3);
                     if (tileentity != null) {
@@ -686,9 +708,9 @@ public class CapsuleTemplate {
                         compoundnbt.remove("z");
                         list1.add(new Template.BlockInfo(blockpos4, blockstate, compoundnbt));
                     } else if (!blockstate.isOpaqueCube(worldIn, blockpos3) && !blockstate.isCollisionShapeOpaque(worldIn, blockpos3)) {
-                        list2.add(new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null));
+                        list2.add(new Template.BlockInfo(blockpos4, blockstate, null));
                     } else {
-                        list.add(new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null));
+                        list.add(new Template.BlockInfo(blockpos4, blockstate, null));
                     }
                     // save a copy
                     transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
@@ -940,7 +962,7 @@ public class CapsuleTemplate {
     public boolean canRotate() {
         try {
             for (Template.BlockInfo block : getBlocks()) {
-                if (block.nbt != null && !Config.blueprintWhitelist.keySet().contains(block.state.getBlock().getRegistryName().toString())) {
+                if (block.nbt != null && !Config.blueprintWhitelist.containsKey(block.state.getBlock().getRegistryName().toString())) {
                     return false;
                 }
             }

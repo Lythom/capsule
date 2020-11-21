@@ -234,7 +234,7 @@ public class StructureSaver {
                     TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
                     // content of TE have been snapshoted, remove the content
                     if (tileentity instanceof IClearable) {
-                        ((IClearable)tileentity).clear();
+                        ((IClearable) tileentity).clear();
                     }
                     world.removeBlock(pos, false);
                 } else {
@@ -470,12 +470,12 @@ public class StructureSaver {
                     if (!destWorld.isBlockLoaded(destPos)) return false;
                     BlockState worldDestState = destWorld.getBlockState(destPos);
 
-                    boolean worldDestOccupied = (worldDestState != air && !overridable.contains(worldDestState.getBlock()));
-                    if (worldDestState != air && outOccupiedPositions != null) {
+                    boolean worldDestOccupied = (!worldDestState.isAir(destWorld, destPos) && !overridable.contains(worldDestState.getBlock()));
+                    if (!worldDestState.isAir(destWorld, destPos) && outOccupiedPositions != null) {
                         outOccupiedPositions.put(destPos, worldDestState.getBlock());
                     }
 
-                    boolean srcOccupied = (templateBlockState != air && !overridable.contains(templateBlockState.getBlock()));
+                    boolean srcOccupied = (!templateBlockState.isAir(destWorld, destPos) && !overridable.contains(templateBlockState.getBlock()));
 
                     List<LivingEntity> entities = destWorld.getEntitiesWithinAABB(
                             LivingEntity.class,
