@@ -17,6 +17,9 @@ def jei_version = "6.0.3.15"
 
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
+apply plugin: 'java'
+
+compileJava.options.encoding = 'UTF-8'
 
 version = minecraft_version + "-" + capsule_version + "." + build_version
 group = "fr.samuelbouchet.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html

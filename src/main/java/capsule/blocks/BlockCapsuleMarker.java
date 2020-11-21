@@ -1,9 +1,6 @@
 package capsule.blocks;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ContainerBlock;
-import net.minecraft.block.SoundType;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.state.BooleanProperty;
@@ -14,7 +11,11 @@ import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.ToolType;
 
 public class BlockCapsuleMarker extends ContainerBlock {
-
+//
+//    TODO lighten block when empty capsle in hand
+//    TODO TESR should have depth
+//    TODO Test item rendering override
+//
     /**
      * Whether this fence connects in the northern direction
      */
@@ -29,6 +30,10 @@ public class BlockCapsuleMarker extends ContainerBlock {
 
         this.setDefaultState(this.stateContainer.getBaseState()
                 .with(PROJECTING, Boolean.FALSE));
+    }
+
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
     }
 
     @Override

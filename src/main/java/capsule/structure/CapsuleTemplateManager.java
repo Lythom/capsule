@@ -89,6 +89,11 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         }
     }
 
+
+//    TODO
+//    Fix block rendering
+//    Fix capsule item rendering from state
+
     @Nullable
     private CapsuleTemplate loadTemplateFile(ResourceLocation locationIn, String extension) {
         if (!this.pathGenerated.toAbsolutePath().toFile().isDirectory()) {

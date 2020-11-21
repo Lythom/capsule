@@ -109,6 +109,11 @@ public class CapsuleItem extends Item {
                 .maxStackSize(1)
                 .maxDamage(0)
                 .setNoRepair());
+
+        this.addPropertyOverride(
+                new ResourceLocation(CapsuleMod.MODID, "state"),
+                (stack, world, entity) -> stack.getDamage()
+        );
     }
 
 

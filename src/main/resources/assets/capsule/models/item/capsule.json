@@ -15,5 +15,15 @@
             "translation": [ 0, 4, 2 ],
             "scale": [ 0.8, 0.8, 0.8 ]
         }
-    }
+    },
+    "overrides": [
+        { "predicate": { "state": 0 }, "model": "capsule_empty" },
+        { "predicate": { "state": 1 }, "model": "capsule_activated" },
+        { "predicate": { "state": 2 }, "model": "capsule_linked" },
+        { "predicate": { "state": 3 }, "model": "capsule_deployed" },
+        { "predicate": { "state": 4 }, "model": "capsule_empty_activated" },
+        { "predicate": { "state": 5 }, "model": "capsule_one_use" },
+        { "predicate": { "state": 6 }, "model": "capsule_one_use_activated" },
+        { "predicate": { "state": 7 }, "model": "capsule_blueprint" }
+    ]
 }
