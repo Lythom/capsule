@@ -11,9 +11,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.IClearable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -44,7 +46,7 @@ public class StructureSaver {
     public static final String BLUEPRINT_PREFIX = "B-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
-    private static List<String> outExcluded = new ArrayList<>();
+    private static final List<String> outExcluded = new ArrayList<>();
 
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
@@ -215,9 +217,12 @@ public class StructureSaver {
         // disable tileDrop during the operation so that broken block are not
         // itemized on the ground.
         GameRules.BooleanValue entityDropsGameRule = world.getGameRules().get(GameRules.DO_ENTITY_DROPS);
+        GameRules.BooleanValue tileDropsGameRule = world.getGameRules().get(GameRules.DO_TILE_DROPS);
 
-        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS);
+        boolean flagdoEntityDrops = world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS);
+        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS);
         entityDropsGameRule.set(false, world.getServer());
+        tileDropsGameRule.set(false, world.getServer());
         world.restoringBlockSnapshots = true;
 
         // delete everything that as been saved in the capsule
@@ -226,6 +231,11 @@ public class StructureSaver {
             try {
                 // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                 if (playerCanRemove(world, pos, player)) {
+                    TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
+                    // content of TE have been snapshoted, remove the content
+                    if (tileentity instanceof IClearable) {
+                        ((IClearable)tileentity).clear();
+                    }
                     world.removeBlock(pos, false);
                 } else {
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
@@ -244,7 +254,8 @@ public class StructureSaver {
 
         // revert rule to previous value even in case of crash
         world.restoringBlockSnapshots = false;
-        entityDropsGameRule.set(flagdoTileDrops, world.getServer());
+        entityDropsGameRule.set(flagdoEntityDrops, world.getServer());
+        tileDropsGameRule.set(flagdoTileDrops, world.getServer());
         return couldNotBeRemoved;
     }
 
@@ -641,7 +652,7 @@ public class StructureSaver {
         }
 
         public int hashCode() {
-            int val = itemStack.getItem().hashCode() * 29 + itemStack.getDamage();
+            int val = itemStack.getItem().hashCode() * 29 + CapsuleItem.getState(itemStack).getValue();
             return val;
         }
 
@@ -655,7 +666,7 @@ public class StructureSaver {
         public static String serializeItemStack(ItemStack itemstack) {
             return itemstack.getItem().getTranslationKey()
                     + "@"
-                    + itemstack.getDamage();
+                    + CapsuleItem.getState(itemstack);
         }
     }
 
