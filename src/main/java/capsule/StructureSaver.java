@@ -29,7 +29,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.world.BlockEvent;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -233,10 +232,12 @@ public class StructureSaver {
                 if (playerCanRemove(world, pos, player)) {
                     TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
                     // content of TE have been snapshoted, remove the content
-                    if (tileentity instanceof IClearable) {
-                        ((IClearable) tileentity).clear();
+                    if (tileentity != null) {
+                        IClearable.clearObj(tileentity);
+                        world.setBlockState(pos, Blocks.BARRIER.getDefaultState(), 20); // from Template.addBlocksToWorld
                     }
-                    world.removeBlock(pos, false);
+
+                    world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
                 } else {
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                     couldNotBeRemoved.add(pos);
@@ -278,7 +279,7 @@ public class StructureSaver {
         // check if the destination is valid : no unoverwritable block and no entities in the way.
         boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
         if (!destValid) {
-            printDeployFailure(outEntityBlocking, player);
+            printDeployFailure(playerWorld, outEntityBlocking.size() > 0 ? outEntityBlocking.get(0) : null, player);
             return false;
         }
 
@@ -341,13 +342,15 @@ public class StructureSaver {
         }
     }
 
-    public static void printDeployFailure(List<UUID> outEntityBlocking, PlayerEntity player) {
+    public static void printDeployFailure(ServerWorld playerWorld, UUID outEntityBlocking, PlayerEntity player) {
         // send a chat message to explain failure
         if (player != null) {
-            if (outEntityBlocking.size() > 0) {
+            if (outEntityBlocking != null) {
+                Entity entity = playerWorld.getEntityByUuid(outEntityBlocking);
+
                 player.sendMessage(
                         new TranslationTextComponent("capsule.error.cantMergeWithDestinationEntity",
-                                StringUtils.join(outEntityBlocking, ", ")));
+                                entity == null ? null : entity.getDisplayName()));
             } else {
                 player.sendMessage(new TranslationTextComponent("capsule.error.cantMergeWithDestination"));
             }
