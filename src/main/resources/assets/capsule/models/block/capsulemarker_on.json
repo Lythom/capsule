@@ -2,7 +2,7 @@
     "parent": "block/orientable",
     "textures": {
         "top": "capsule:block/capsulemarker_activated",
-        "front": "block/furnace_front",
+        "front": "block/furnace_side",
         "side": "block/furnace_side"
     }
 }

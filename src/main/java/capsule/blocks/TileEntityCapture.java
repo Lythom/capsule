@@ -14,11 +14,17 @@ import java.util.List;
 
 public class TileEntityCapture extends TileEntity {
 
-    public static List<TileEntityCapture> instances = new ArrayList<>();
+    public static final List<TileEntityCapture> instances = new ArrayList<>();
 
     public TileEntityCapture() {
         super(CapsuleBlocks.MARKER_TE);
         instances.add(this);
+    }
+
+    @Override
+    public void remove() {
+        super.remove();
+        instances.remove(this);
     }
 
     /**

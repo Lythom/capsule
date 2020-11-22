@@ -261,7 +261,7 @@ public class CapsulePreviewHandler {
 
         // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone
         // remember it's client side only
-        for (TileEntityCapture te : TileEntityCapture.instances) {
+        for (TileEntityCapture te : new ArrayList<>(TileEntityCapture.instances)) {
             if (te.getWorld() == worldIn) {
                 TileEntityCapture tec = te;
                 CompoundNBT teData = tec.getTileData();
