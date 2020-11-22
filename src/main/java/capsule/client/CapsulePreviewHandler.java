@@ -2,6 +2,7 @@ package capsule.client;
 
 import capsule.CapsuleMod;
 import capsule.Config;
+import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.helpers.Spacial;
@@ -263,13 +264,12 @@ public class CapsulePreviewHandler {
         for (TileEntityCapture te : TileEntityCapture.instances) {
             if (te.getWorld() == worldIn) {
                 TileEntityCapture tec = te;
-                tec.getTileData().putInt("size", size);
-                tec.getTileData().putInt("color", color);
-//                // FIXME: check if the capture block still displays properly
-//                worldIn.markBlockRangeForRenderUpdate(
-//                        te.getPos().add(-size / 2, -size / 2, -size / 2),
-//                        te.getPos().add(size / 2, size / 2, size / 2)
-//                );
+                CompoundNBT teData = tec.getTileData();
+                if (teData.getInt("size") != size || teData.getInt("color") != color) {
+                    tec.getTileData().putInt("size", size);
+                    tec.getTileData().putInt("color", color);
+                    worldIn.setBlockState(te.getPos(), te.getBlockState().with(BlockCapsuleMarker.PROJECTING, size > 0));
+                }
             }
         }
         lastSize = size;
