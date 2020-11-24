@@ -2,21 +2,22 @@ package capsule.helpers;
 
 import capsule.Config;
 import com.google.gson.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.IResource;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.JSONUtils;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class Files {
 
@@ -53,7 +54,7 @@ public class Files {
             File whitelistFile = new File(capsuleConfigDir, "blueprint_whitelist.json");
             if (!whitelistFile.exists()) {
                 LOGGER.info("First load: initializing the configs in " + capsuleConfigDir.getPath() + ".");
-                Files.populateFolder(capsuleConfigDir, "data/capsule/config");
+                Files.populateFolder(capsuleConfigDir, "initialconfig/root");
             }
             if (whitelistFile.exists()) {
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
@@ -88,7 +89,7 @@ public class Files {
             startersFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the starters in " + starterTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
-            Files.populateFolder(startersFolder, "data/capsule/starters");
+            Files.populateFolder(startersFolder, "initialconfig/starters");
         }
         ArrayList<String> starterTemplatesList = new ArrayList<>();
         iterateTemplates(startersFolder, templateName -> starterTemplatesList.add(starterTemplatesPath + "/" + templateName));
@@ -105,9 +106,9 @@ public class Files {
                 // initial with example capsule the first time
                 LOGGER.info("First load: initializing the loots in " + data.path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
                 String assetPath = null;
-                if (templateFolder.getPath().contains("uncommon")) assetPath = "data/capsule/loot/uncommon";
-                if (templateFolder.getPath().contains("rare")) assetPath = "data/capsule/loot/rare";
-                if (templateFolder.getPath().contains("common")) assetPath = "data/capsule/loot/common";
+                if (templateFolder.getPath().contains("uncommon")) assetPath = "initialconfig/loot/uncommon";
+                if (templateFolder.getPath().contains("rare")) assetPath = "initialconfig/loot/rare";
+                if (templateFolder.getPath().contains("common")) assetPath = "initialconfig/loot/common";
                 if (assetPath != null) populateFolder(templateFolder, assetPath);
             }
 
@@ -123,7 +124,7 @@ public class Files {
             prefabsFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the prefabs in " + prefabsTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no blueprint prefabs recipes.");
-            Files.populateFolder(prefabsFolder, "data/capsule/prefabs");
+            Files.populateFolder(prefabsFolder, "initialconfig/prefabs");
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
         iterateTemplates(prefabsFolder, templateName -> prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName));
@@ -132,38 +133,31 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath) {
         try {
-            // source path
-            String[] resources = getResourceListing(Files.class, assetPath);
-            for (String ressource : resources) {
-                if (!ressource.isEmpty()) {
-                    InputStream sourceTemplate = Files.class.getClassLoader().getResourceAsStream(assetPath + "/" + ressource);
-                    if (sourceTemplate == null) {
-                        LOGGER.error("asset " + assetPath + "/" + ressource + "couldn't be loaded");
-                        break;
+            IResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+            for (ResourceLocation ressourceLoc : resourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
+                IResource ressource = resourceManager.getResource(ressourceLoc);
+                // source path
+                InputStream sourceTemplate = ressource.getInputStream();
+                String sourcePath = ressource.getLocation().getPath();
+                String fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
+                Path assetFile = templateFolder.toPath().resolve(fileName);
+                LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
+                try {
+                    File assetAsFile = assetFile.toFile();
+                    if (assetAsFile.isDirectory()) {
+                        if (!assetAsFile.exists()) assetAsFile.mkdirs();
+                        populateFolder(assetAsFile, assetPath + "/" + fileName);
+                    } else {
+                        java.nio.file.Files.copy(sourceTemplate, assetFile);
                     }
-                    Path assetFile = templateFolder.toPath().resolve(ressource.toLowerCase());
-                    LOGGER.debug("copying asset " + assetPath + "/" + ressource + " to " + assetFile.toString());
-                    try {
-                        if (ressource.contains(".")) {
-                            // assume file
-                            java.nio.file.Files.copy(sourceTemplate, assetFile);
-                        } else {
-                            // assume directory
-                            File assetFileDirectory = assetFile.toFile();
-                            if (!assetFileDirectory.exists()) assetFileDirectory.mkdirs();
-                            populateFolder(assetFileDirectory, assetPath + "/" + ressource);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error(e);
-                    }
+                } catch (Exception e) {
+                    LOGGER.error(e);
                 }
             }
-
-        } catch (Exception e) {
-            LOGGER.error("Error while copying initial capsule templates, there will be no loots!", e);
+        } catch (IOException e) {
+            LOGGER.error("Error while copying initial capsule templates, there will be no loots, prefabs or starters!", e);
         }
     }
-
 
     public static void iterateTemplates(File templateFolder, Consumer<String> onTemplateFound) {
         if (templateFolder.exists() && templateFolder.isDirectory()) {
@@ -182,76 +176,5 @@ public class Files {
                 e.printStackTrace();
             }
         }
-
     }
-
-    /**
-     * List directory contents for a resource folder. Not recursive.
-     * This is basically a brute-force implementation.
-     * Works for regular files and also JARs.
-     *
-     * @param clazz Any java class that lives in the same place as the resources you want.
-     * @param path  Should end with "/", but not start with one.
-     * @return Just the name of each member item, not the full paths.
-     * @author Greg Briggs
-     */
-    public static String[] getResourceListing(Class<?> clazz, String path) throws
-            URISyntaxException, IOException {
-        URL dirURL = clazz.getClassLoader().getResource(path);
-
-        if (dirURL != null && dirURL.getProtocol().equals("file")) {
-            /* A file path: easy enough */
-            return new File(dirURL.toURI()).list();
-        }
-
-        if (dirURL == null) {
-            /*
-             * In case of a jar file, we can't actually find a directory. Have
-             * to assume the same jar as clazz.
-             */
-            String me = clazz.getName().replace(".", "/") + ".class";
-            dirURL = clazz.getClassLoader().getResource(me);
-        }
-
-        if (dirURL != null && dirURL.getProtocol().equals("jar")) {
-            /* A JAR path */
-            String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
-            JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
-
-            LOGGER.debug("Listing files in " + jarPath);
-
-            Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-            Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
-            while (entries.hasMoreElements()) {
-                String name = entries.nextElement().getName();
-                if (name.startsWith(path)) { //filter according to the path
-                    LOGGER.debug("Found in jar " + name);
-                    String entry = name.replace(path + "/", "");
-                    LOGGER.debug("Keeping " + entry);
-                    result.add(entry);
-                }
-            }
-            jar.close();
-            return result.toArray(new String[0]);
-
-        } else {
-
-            InputStream inputstream = clazz.getResourceAsStream("/" + path);
-            if (inputstream != null) {
-                final InputStreamReader isr = new InputStreamReader(inputstream, StandardCharsets.UTF_8);
-                final BufferedReader br = new BufferedReader(isr);
-
-                Set<String> result = new HashSet<>(); //avoid duplicates in case it is a subdirectory
-                String filename = null;
-                while ((filename = br.readLine()) != null) {
-                    result.add(filename);
-                }
-                return result.toArray(new String[0]);
-            }
-
-        }
-
-        throw new UnsupportedOperationException("Cannot list files for URL " + dirURL);
-    }
-
 }
