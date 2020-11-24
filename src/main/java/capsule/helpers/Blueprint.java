@@ -196,7 +196,7 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(ArrayList<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+    public static void createDynamicPrefabRecipes(List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
         JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
@@ -223,7 +223,7 @@ public class Blueprint {
         }
     }
 
-    public static List<String> getModEnabledTemplates(ArrayList<String> prefabsTemplatesList) {
+    public static List<String> getModEnabledTemplates(List<String> prefabsTemplatesList) {
         return prefabsTemplatesList.stream().filter(templatePath -> {
             String[] path = templatePath.replaceAll(Config.prefabsTemplatesPath + "/", "").split("/");
             return path.length == 1 || ModList.get().isLoaded(path[0]);

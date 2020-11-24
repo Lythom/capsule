@@ -3,7 +3,6 @@ package capsule.recipes;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Blueprint;
-import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonArray;
@@ -29,7 +28,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
     public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn) {
         super(idIn);
-        ArrayList<String> prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath);
+        List<String> prefabsTemplatesList = Config.prefabsTemplatesList;
         Blueprint.createDynamicPrefabRecipes(prefabsTemplatesList, (id, recipe, ingredients) ->
                 recipes.add(new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients))
         );

@@ -1,8 +1,10 @@
 package capsule;
 
 import capsule.config.SimpleCommentedConfig;
+import capsule.helpers.Blueprint;
 import capsule.helpers.Files;
 import capsule.helpers.Serialization;
+import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
@@ -64,6 +66,7 @@ public class Config {
 
     public static Map<String, LootPathData> lootTemplatesData = new HashMap<>();
     public static List<String> starterTemplatesList = new ArrayList<>();
+    public static List<String> prefabsTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
     public static List<Block> excludedBlocks;
     public static List<Block> overridableBlocks;
@@ -122,6 +125,7 @@ public class Config {
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath);
+        Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath);
     }
 
     public static void configureCapture(ForgeConfigSpec.Builder configBuild) {
