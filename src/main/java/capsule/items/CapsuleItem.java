@@ -505,7 +505,7 @@ public class CapsuleItem extends Item {
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
-    public void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
+    public static void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getPlayer().getHeldItemMainhand();
         if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack))) {
             CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
@@ -642,7 +642,7 @@ public class CapsuleItem extends Item {
             startTimer(worldIn, playerIn, capsule);
         }
         // an open capsule undeploy content on right click
-        else if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED)) {
+        else if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {
                 Capsule.resentToCapsule(capsule, playerIn);
                 worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);

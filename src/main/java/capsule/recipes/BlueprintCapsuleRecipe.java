@@ -13,6 +13,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 public class BlueprintCapsuleRecipe implements ICraftingRecipe {
@@ -43,21 +44,38 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
         return nonnulllist;
     }
 
+    private boolean IsCopyable(ItemStack itemstack) {
+        return CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.hasState(itemstack, BLUEPRINT) || CapsuleItem.isReward(itemstack);
+    }
+
     /**
      * Used to check if a recipe matches current crafting inventory
      */
     public boolean matches(CraftingInventory inv, World worldIn) {
-        return recipe.matches(inv, worldIn);
+        if (!recipe.matches(inv, worldIn)) return false;
+
+        ItemStack referenceCapsule = null;
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            if (IsCopyable(itemstack)) {
+                // This blueprint will take the source structure name by copying it here
+                // a new dedicated template is created later.
+                // @see CapsuleItem.onCreated
+                referenceCapsule = itemstack;
+            }
+        }
+        return referenceCapsule != null;
     }
+
 
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack getCraftingResult(CraftingInventory invC) {
-        ItemStack referenceCapsule = recipe.getRecipeOutput();
-        for (int i = 0; i < invC.getSizeInventory(); ++i) {
-            ItemStack itemstack = invC.getStackInSlot(i);
-            if (CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.isReward(itemstack)) {
+    public ItemStack getCraftingResult(CraftingInventory inv) {
+        ItemStack referenceCapsule = null;
+        for (int i = 0; i < inv.getSizeInventory(); ++i) {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            if (IsCopyable(itemstack)) {
                 // This blueprint will take the source structure name by copying it here
                 // a new dedicated template is created later.
                 // @see CapsuleItem.onCreated

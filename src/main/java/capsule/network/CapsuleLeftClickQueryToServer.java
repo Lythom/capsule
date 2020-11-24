@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -44,13 +45,12 @@ public class CapsuleLeftClickQueryToServer {
                 // Reload if no missing materials
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
-                    String missingListText = missing.entrySet().stream()
-
-                            .map((entry) -> (entry.getValue() + " " + entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack)))
-                            .collect(Collectors.joining("\n* "));
-                    sendingPlayer.sendMessage(new TranslationTextComponent(
-                            "Missing : \n* " + missingListText
-                    ));
+                    StringTextComponent message = new StringTextComponent("Missing :");
+                    for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
+                        message.appendText("\n* " + entry.getValue() + " ");
+                        message.appendSibling(entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack));
+                    }
+                    sendingPlayer.sendMessage(message);
                 }
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);

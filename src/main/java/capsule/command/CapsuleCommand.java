@@ -44,6 +44,7 @@ import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootParameterSets;
+import net.minecraft.world.storage.loot.LootParameters;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -189,7 +190,7 @@ public class CapsuleCommand {
                 )
                 // giveRandomLoot [playerName]
                 .then(Commands.literal("giveRandomLoot")
-                        .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
+                        .executes(ctx -> executeGiveRandomLoot(ctx.getSource().asPlayer()))
                         .then(Commands.argument("target", player())
                                 .executes(ctx -> executeGiveRandomLoot(getPlayer(ctx, "target")))
                         )
@@ -303,7 +304,7 @@ public class CapsuleCommand {
 
     private static int executeGiveRandomLoot(ServerPlayerEntity player) throws CommandException {
         if (player != null) {
-            LootContext.Builder lootcontext$builder = new LootContext.Builder(player.getServerWorld());
+            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getServerWorld())).withParameter(LootParameters.POSITION, player.getPosition()).withNullableParameter(LootParameters.THIS_ENTITY, player.getEntity());
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool.generate(loots::add, lootcontext$builder.build(LootParameterSets.COMMAND));
             if (loots.size() <= 0) {

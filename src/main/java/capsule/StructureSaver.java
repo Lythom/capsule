@@ -42,7 +42,7 @@ import java.util.stream.IntStream;
 public class StructureSaver {
 
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
-    public static final String BLUEPRINT_PREFIX = "B-";
+    public static final String BLUEPRINT_PREFIX = "b-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
     private static final List<String> outExcluded = new ArrayList<>();
@@ -418,12 +418,13 @@ public class StructureSaver {
     }
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForCapsule(ServerWorld
-                                                                                              playerWorld, String structureName) {
+                                                                                              playerWorld, String structurePath) {
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
-        if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structureName))
+        if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structureName));
+        String path = structurePath.toLowerCase();
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -433,7 +434,8 @@ public class StructureSaver {
         if (templatemanager == null || net.minecraft.util.StringUtils.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
+        String path = structurePath.toLowerCase();
+        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -538,9 +540,9 @@ public class StructureSaver {
         CapsuleTemplateManager templatemanager = getTemplateManager(world);
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
-            return "BException-" + csd.getNextCount();
+            return "bexception-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -561,7 +563,8 @@ public class StructureSaver {
 
     public static boolean duplicateTemplate(CompoundNBT templateData, String destinationStructureName, CapsuleTemplateManager destManager, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
-        ResourceLocation destinationLocation = new ResourceLocation(destinationStructureName);
+        String sanitized = destinationStructureName.toLowerCase();
+        ResourceLocation destinationLocation = new ResourceLocation(sanitized);
         CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
         // populate template from source data
         destTemplate.read(templateData);

@@ -163,11 +163,11 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
                     int k = i - p_77573_2_;
                     int l = j - p_77573_3_;
                     Ingredient ingredient = Ingredient.EMPTY;
-                    if (k >= 0 && l >= 0 && k < this.recipe.getWidth() && l < this.recipe.getHeight()) {
+                    if (k >= 0 && l >= 0 && k < recipe.getWidth() && l < recipe.getHeight()) {
                         if (p_77573_4_) {
-                            ingredient = recipe.getIngredients().get(this.recipe.getWidth() - k - 1 + l * this.recipe.getWidth());
+                            ingredient = recipe.getIngredients().get(recipe.getWidth() - k - 1 + l * this.recipe.getWidth());
                         } else {
-                            ingredient = recipe.getIngredients().get(k + l * this.recipe.getWidth());
+                            ingredient = recipe.getIngredients().get(k + l * recipe.getWidth());
                         }
                     }
 
