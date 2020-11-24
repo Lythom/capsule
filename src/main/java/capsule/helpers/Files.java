@@ -2,6 +2,7 @@ package capsule.helpers;
 
 import capsule.Config;
 import com.google.gson.*;
+import joptsimple.internal.Strings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
@@ -124,7 +125,17 @@ public class Files {
             prefabsFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the prefabs in " + prefabsTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no blueprint prefabs recipes.");
+            IResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+            for (ResourceLocation subFolder : resourceManager.getAllResourceLocations("initialconfig/prefabs", s -> !s.contains("."))) {
+                String path = subFolder.getPath().replace("initialconfig/prefabs/", "");
+                if (!Strings.isNullOrEmpty(path)) {
+                    File folder = prefabsFolder.toPath().resolve(path).toFile();
+                    folder.mkdir();
+                    Files.populateFolder(folder, "initialconfig/prefabs/" + path);
+                }
+            }
             Files.populateFolder(prefabsFolder, "initialconfig/prefabs");
+
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
         iterateTemplates(prefabsFolder, templateName -> prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName));
@@ -135,23 +146,25 @@ public class Files {
         try {
             IResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
             for (ResourceLocation ressourceLoc : resourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
-                IResource ressource = resourceManager.getResource(ressourceLoc);
-                // source path
-                InputStream sourceTemplate = ressource.getInputStream();
-                String sourcePath = ressource.getLocation().getPath();
-                String fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
-                Path assetFile = templateFolder.toPath().resolve(fileName);
-                LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
-                try {
-                    File assetAsFile = assetFile.toFile();
-                    if (assetAsFile.isDirectory()) {
-                        if (!assetAsFile.exists()) assetAsFile.mkdirs();
-                        populateFolder(assetAsFile, assetPath + "/" + fileName);
-                    } else {
-                        java.nio.file.Files.copy(sourceTemplate, assetFile);
+                if (!ressourceLoc.getPath().replace(assetPath + "/", "").contains("/")) {
+                    IResource ressource = resourceManager.getResource(ressourceLoc);
+                    // source path
+                    InputStream sourceTemplate = ressource.getInputStream();
+                    String sourcePath = ressource.getLocation().getPath();
+                    String fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
+                    Path assetFile = templateFolder.toPath().resolve(fileName);
+                    LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
+                    try {
+                        File assetAsFile = assetFile.toFile();
+                        if (assetAsFile.isDirectory()) {
+                            if (!assetAsFile.exists()) assetAsFile.mkdirs();
+                            populateFolder(assetAsFile, assetPath + "/" + fileName);
+                        } else {
+                            java.nio.file.Files.copy(sourceTemplate, assetFile);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error(e);
                     }
-                } catch (Exception e) {
-                    LOGGER.error(e);
                 }
             }
         } catch (IOException e) {
