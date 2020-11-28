@@ -20,6 +20,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -277,9 +279,10 @@ public class StructureSaver {
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
         int size = CapsuleItem.getSize(capsule);
         // check if the destination is valid : no unoverwritable block and no entities in the way.
-        boolean destValid = isDestinationValid(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outEntityBlocking);
-        if (!destValid) {
-            printDeployFailure(playerWorld, outEntityBlocking.size() > 0 ? outEntityBlocking.get(0) : null, player);
+        List<ITextComponent> outErrors = new ArrayList<>();
+        checkDestination(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outErrors);
+        if (outErrors.size() > 0) {
+            printDeployFailure(player, outErrors);
             return false;
         }
 
@@ -326,6 +329,16 @@ public class StructureSaver {
         }
     }
 
+    private static void printDeployFailure(PlayerEntity player, List<ITextComponent> outErrors) {
+        StringTextComponent msg = new StringTextComponent("");
+        for (int i = 0, outErrorsSize = outErrors.size(); i < outErrorsSize; i++) {
+            ITextComponent outError = outErrors.get(i);
+            msg.appendSibling(outError);
+            if (i < outErrors.size() - 1) msg.appendText("\n");
+        }
+        player.sendMessage(msg);
+    }
+
     public static void placePlayerOnTop(ServerWorld playerWorld, BlockPos dest, int size) {
         // Players don't block deployment, instead they are pushed up if they would suffocate
         List<LivingEntity> players = playerWorld.getEntitiesWithinAABB(
@@ -338,21 +351,6 @@ public class StructureSaver {
                 if (playerWorld.checkBlockCollision(p.getBoundingBox())) {
                     p.setPositionAndUpdate(p.getPosX(), p.getPosY() + 1, p.getPosZ());
                 }
-            }
-        }
-    }
-
-    public static void printDeployFailure(ServerWorld playerWorld, UUID outEntityBlocking, PlayerEntity player) {
-        // send a chat message to explain failure
-        if (player != null) {
-            if (outEntityBlocking != null) {
-                Entity entity = playerWorld.getEntityByUuid(outEntityBlocking);
-
-                player.sendMessage(
-                        new TranslationTextComponent("capsule.error.cantMergeWithDestinationEntity",
-                                entity == null ? null : entity.getDisplayName()));
-            } else {
-                player.sendMessage(new TranslationTextComponent("capsule.error.cantMergeWithDestination"));
             }
         }
     }
@@ -446,9 +444,9 @@ public class StructureSaver {
      *                             have to be ignored on
      * @return List<BlockPos> occupied but not blocking positions
      */
-    public static boolean isDestinationValid(CapsuleTemplate template, PlacementSettings placementIn, ServerWorld
+    public static void checkDestination(CapsuleTemplate template, PlacementSettings placementIn, ServerWorld
             destWorld, BlockPos destOriginPos, int size,
-                                             List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<UUID> outEntityBlocking) {
+                                        List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<ITextComponent> outErrors) {
 
         BlockState air = Blocks.AIR.getDefaultState();
 
@@ -472,7 +470,10 @@ public class StructureSaver {
                         templateBlockState = srcInfo.state;
                     }
 
-                    if (!destWorld.isBlockLoaded(destPos)) return false;
+                    if (!destWorld.isBlockLoaded(destPos)) {
+                        outErrors.add(new TranslationTextComponent("capsule.error.areaNotLoaded"));
+                        return;
+                    }
                     BlockState worldDestState = destWorld.getBlockState(destPos);
 
                     boolean worldDestOccupied = (!worldDestState.isAir(destWorld, destPos) && !overridable.contains(worldDestState.getBlock()));
@@ -492,23 +493,29 @@ public class StructureSaver {
                     // if destination is occupied, and source is neither
                     // excluded from transportation, nor can't be overriden by
                     // destination, then the merge can't be done.
-                    if ((entities.size() > 0 && srcOccupied) || (worldDestOccupied && !overridable.contains(templateBlockState.getBlock()))) {
-                        if (entities.size() > 0 && outEntityBlocking != null) {
-                            for (Object e : entities) {
-                                Entity entity = (Entity) e;
-                                if (entity != null) {
-                                    outEntityBlocking.add(entity.getUniqueID());
-                                }
+                    if (entities.size() > 0 && srcOccupied) {
+                        boolean found = false;
+                        for (Object e : entities) {
+                            Entity entity = (Entity) e;
+                            if (entity != null) {
+                                outErrors.add(new TranslationTextComponent("capsule.error.cantMergeWithDestinationEntity", entity.getDisplayName()));
+                                found = true;
                             }
-
                         }
-                        return false;
+                        if (!found)
+                            outErrors.add(new TranslationTextComponent("capsule.error.cantMergeWithDestinationEntity", "???"));
+
+                        return;
+                    }
+                    if (worldDestOccupied && !overridable.contains(templateBlockState.getBlock())) {
+                        outErrors.add(new TranslationTextComponent("capsule.error.cantMergeWithDestination", destPos.toString()));
+                        return;
                     }
                 }
             }
         }
 
-        return true;
+        return;
     }
 
 
