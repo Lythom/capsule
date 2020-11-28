@@ -61,7 +61,7 @@ public class CapsulePlugin implements IModPlugin {
 
         ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
         ItemStack unlabelled = CapsuleItems.unlabelledCapsule.getKey();
-        ItemStack unlabelledDeployed = unlabelled.copy();
+        ItemStack unlabelledDeployed = CapsuleItems.deployedCapsule.getKey();
         CapsuleItem.setState(unlabelledDeployed, DEPLOYED);
         List<ItemStack> blueprintCapsules = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).collect(Collectors.toList());
         blueprintCapsules.add(CapsuleItems.blueprintChangedCapsule.getKey());
@@ -86,10 +86,12 @@ public class CapsulePlugin implements IModPlugin {
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
-        registry.addIngredientInfo(CapsuleItems.withState(LINKED), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
-        registry.addIngredientInfo(CapsuleItems.withState(DEPLOYED), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
-        registry.addIngredientInfo(CapsuleItems.withState(ONE_USE), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
-        registry.addIngredientInfo(CapsuleItems.withState(BLUEPRINT), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+        registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
+        registry.addIngredientInfo(CapsuleItems.deployedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
+        registry.addIngredientInfo(CapsuleItems.recoveryCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
+        for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+        }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);
         opCapsule.setTagInfo("overpowered", ByteNBT.valueOf(true));
         registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");

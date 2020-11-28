@@ -1,6 +1,5 @@
 package capsule.recipes;
 
-import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
 import net.minecraft.inventory.CraftingInventory;
@@ -12,8 +11,6 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-
-import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     public final ShapelessRecipe recipe;
@@ -54,38 +51,16 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
      * Returns a copy built from the original capsule.
      */
     public ItemStack getCraftingResult(CraftingInventory invC) {
-        ItemStack referenceCapsule = recipe.getRecipeOutput();
         for (int i = 0; i < invC.getSizeInventory(); ++i) {
             ItemStack itemstack = invC.getStackInSlot(i);
-            if (CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.isReward(itemstack)) {
-                // This blueprint will take the source structure name by copying it here
-                // a new dedicated template is created later.
-                // @see CapsuleItem.onCreated
-                referenceCapsule = itemstack;
-            }
 
-        }
-        try {
-            ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
-                    CapsuleItem.getStructureName(referenceCapsule),
-                    CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
-                    0xFFFFFF,
-                    CapsuleItem.getSize(referenceCapsule),
-                    CapsuleItem.isOverpowered(referenceCapsule),
-                    referenceCapsule.getTag() != null ? referenceCapsule.getTag().getString("label") : null,
-                    0
-            );
-            CapsuleItem.setBlueprint(blueprintItem);
-            // hack to force a tempalte copy if it's not done after craft
-            if (blueprintItem.getTag() != null) {
-                blueprintItem.getTag().putBoolean("templateShouldBeCopied", true);
+            if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
+                ItemStack copy = itemstack.copy();
+                CapsuleItem.setOneUse(copy);
+                return copy;
             }
-            CapsuleItem.setState(blueprintItem, DEPLOYED);
-            return blueprintItem;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ItemStack.EMPTY;
         }
+        return ItemStack.EMPTY;
     }
 
     @Override

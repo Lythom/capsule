@@ -498,6 +498,7 @@ public class CapsuleItem extends Item {
                 subItems.add(blueprintCapsule.getKey());
             }
             if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());
+            if (CapsuleItems.deployedCapsule != null) subItems.add(CapsuleItems.deployedCapsule.getKey());
             if (CapsuleItems.recoveryCapsule != null) subItems.add(CapsuleItems.recoveryCapsule.getKey());
         }
     }

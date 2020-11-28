@@ -37,6 +37,7 @@ public class CapsuleItems {
     public static TreeMap<ItemStack, ICraftingRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
     public static List<Pair<ItemStack, ICraftingRecipe>> blueprintCapsules = new ArrayList<>();
     public static Pair<ItemStack, ICraftingRecipe> unlabelledCapsule = null;
+    public static Pair<ItemStack, ICraftingRecipe> deployedCapsule = null;
     public static Pair<ItemStack, RecoveryCapsuleRecipe> recoveryCapsule = null;
     public static Pair<ItemStack, BlueprintChangeRecipe> blueprintChangedCapsule = null;
     public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
@@ -83,13 +84,22 @@ public class CapsuleItems {
             }
         }
 
-        if (CapsuleItems.capsuleList.size() > 0)
+        if (CapsuleItems.capsuleList.size() > 0) {
             unlabelledCapsule = Pair.of(getUnlabelledCapsule(CapsuleItems.capsuleList.firstKey()), null);
+            deployedCapsule = Pair.of(getDeployedCapsule(CapsuleItems.capsuleList.firstKey()), null);
+        }
     }
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         CapsuleItem.setState(unlabelledCapsule, CapsuleState.LINKED);
+        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
+        return unlabelledCapsule;
+    }
+
+    public static ItemStack getDeployedCapsule(ItemStack capsule) {
+        ItemStack unlabelledCapsule = capsule.copy();
+        CapsuleItem.setState(unlabelledCapsule, CapsuleState.DEPLOYED);
         CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
         return unlabelledCapsule;
     }
