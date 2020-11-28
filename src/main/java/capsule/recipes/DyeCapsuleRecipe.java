@@ -45,7 +45,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
                 if (itemstack1.getItem() instanceof CapsuleItem) {
                     itemstack = itemstack1;
                 } else {
-                    if (itemstack1.getItem() instanceof DyeItem) {
+                    if (!(itemstack1.getItem() instanceof DyeItem)) {
                         return false;
                     }
 
