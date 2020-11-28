@@ -29,6 +29,10 @@ public class LabelGui extends Screen {
         this.player = player;
     }
 
+    public void tick() {
+        this.textInput.tick();
+    }
+
     public void init() {
         super.init();
         buttons.clear();
@@ -62,8 +66,18 @@ public class LabelGui extends Screen {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER) {
             this.onClose();
         }
-        this.textInput.keyPressed(keyCode, scanCode, modifiers);
-        setCurrentItemLabel(this.textInput.getText());
+        if (this.textInput.keyPressed(keyCode, scanCode, modifiers)) {
+            setCurrentItemLabel(this.textInput.getText());
+        }
+        return true;
+    }
+
+    @Override
+    public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
+        super.charTyped(p_charTyped_1_, p_charTyped_2_);
+        if (this.textInput.charTyped(p_charTyped_1_, p_charTyped_2_)) {
+            setCurrentItemLabel(this.textInput.getText());
+        }
         return true;
     }
 
