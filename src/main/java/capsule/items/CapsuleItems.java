@@ -93,14 +93,14 @@ public class CapsuleItems {
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         CapsuleItem.setState(unlabelledCapsule, CapsuleState.LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
+        CapsuleItem.setStructureName(unlabelledCapsule, "structure_name_example");
         return unlabelledCapsule;
     }
 
     public static ItemStack getDeployedCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         CapsuleItem.setState(unlabelledCapsule, CapsuleState.DEPLOYED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "StructureNameExample");
+        CapsuleItem.setStructureName(unlabelledCapsule, "structure_name_example");
         return unlabelledCapsule;
     }
 

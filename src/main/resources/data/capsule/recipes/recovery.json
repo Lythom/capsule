@@ -5,7 +5,8 @@
     "nbt": {
       "state": 5,
       "isReward": true,
-      "oneUse": true
+      "oneUse": true,
+      "structureName": "blueprint_example_structure_name"
     }
   },
   "ingredients": [
