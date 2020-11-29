@@ -528,13 +528,10 @@ public class CapsuleCommand {
                     BlockState state = player.getServerWorld().getBlockState(position);
                     TileEntity tileentity = player.getServerWorld().getTileEntity(position);
 
-                    String command = "/give @p " + state.getBlock().getRegistryName().toString() + " 1 ";
-                    if (tileentity != null) {
-                        command += " {BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
-                    }
+                    String BlockEntityTag = tileentity == null ? "" : "{BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
+                    String command = "/give @p " + state.getBlock().getRegistryName() + BlockEntityTag + " 1 ";
                     StringTextComponent msg = new StringTextComponent(command);
-                    msg.getStyle()
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
+                    msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
                     msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
                     player.sendMessage(msg);
@@ -552,11 +549,9 @@ public class CapsuleCommand {
             ItemStack heldItem = player.getHeldItemMainhand();
             if (!heldItem.isEmpty()) {
 
-                String command = "/give @p " + heldItem.getItem().getRegistryName().toString() + " 1 ";
-                if (heldItem.hasTag()) {
-                    //noinspection ConstantConditions
-                    command += " " + heldItem.getTag().toString();
-                }
+                String tag = heldItem.hasTag() ? String.valueOf(heldItem.getTag()) : "";
+
+                String command = "/give @p " + heldItem.getItem().getRegistryName() + tag + " 1 ";
                 StringTextComponent msg = new StringTextComponent(command);
                 msg.getStyle()
                         .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
