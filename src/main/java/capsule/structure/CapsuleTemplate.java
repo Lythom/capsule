@@ -876,31 +876,8 @@ public class CapsuleTemplate {
                 }
 
                 if (i <= l) {
-                    if (!placementIn.func_215218_i()) {
-                        VoxelShapePart voxelshapepart = new BitSetVoxelShapePart(l - i + 1, i1 - j + 1, j1 - k + 1);
-                        int l1 = i;
-                        int i2 = j;
-                        int j2 = k;
-
-                        for (Pair<BlockPos, CompoundNBT> pair1 : list2) {
-                            BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.setFilled(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
-                        }
-
-                        func_222857_a(worldIn, flags, voxelshapepart, l1, i2, j2);
-                    }
-
                     for (Pair<BlockPos, CompoundNBT> pair : list2) {
                         BlockPos blockpos4 = pair.getFirst();
-                        if (!placementIn.func_215218_i()) {
-                            BlockState blockstate1 = worldIn.getBlockState(blockpos4);
-                            BlockState blockstate3 = Block.getValidBlockForPosition(blockstate1, worldIn, blockpos4);
-                            if (blockstate1 != blockstate3) {
-                                worldIn.setBlockState(blockpos4, blockstate3, flags & -2 | 16);
-                            }
-
-                            worldIn.notifyNeighbors(blockpos4, blockstate3.getBlock());
-                        }
 
                         if (pair.getSecond() != null) {
                             TileEntity tileentity2 = worldIn.getTileEntity(blockpos4);
