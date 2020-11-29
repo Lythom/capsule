@@ -1,12 +1,11 @@
 package capsule.recipes;
 
 import capsule.CapsuleMod;
-import capsule.blocks.TileEntityCapture;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.item.crafting.SpecialRecipeSerializer;
-import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.event.RegistryEvent;
 
 public class CapsuleRecipes {
@@ -25,6 +24,7 @@ public class CapsuleRecipes {
     }
 
     public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+        CraftingHelper.register(new ResourceLocation("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE);
         event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
         event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
         event.getRegistry().register(CLEAR_CAPSULE_SERIALIZER);

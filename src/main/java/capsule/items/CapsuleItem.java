@@ -34,6 +34,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -494,12 +495,16 @@ public class CapsuleItem extends Item {
             // Add capsuleList items, loaded from json files
             subItems.addAll(CapsuleItems.capsuleList.keySet());
             subItems.addAll(CapsuleItems.opCapsuleList.keySet());
-            for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
-                subItems.add(blueprintCapsule.getKey());
-            }
             if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());
             if (CapsuleItems.deployedCapsule != null) subItems.add(CapsuleItems.deployedCapsule.getKey());
             if (CapsuleItems.recoveryCapsule != null) subItems.add(CapsuleItems.recoveryCapsule.getKey());
+            if (CapsuleItems.blueprintChangedCapsule != null) subItems.add(CapsuleItems.blueprintChangedCapsule.getKey());
+            for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+                subItems.add(blueprintCapsule.getKey());
+            }
+            for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
+                subItems.add(blueprintCapsule.getKey());
+            }
         }
     }
 
@@ -518,14 +523,18 @@ public class CapsuleItem extends Item {
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!event.isCanceled()) {
             ItemStack stack = event.getPlayer().getHeldItemMainhand();
-            if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
+            if (stack.getItem() instanceof CapsuleItem) {
                 event.setCanceled(true);
                 if (event.getWorld().isRemote) {
-                    if (lastRotationTime + 60 < Util.milliTime()) {
-                        lastRotationTime = Util.milliTime();
-                        // prevent action to be triggered on server + on client
-                        CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
-                        askPreviewIfNeeded(stack);
+                    if (CapsuleItem.canRotate(stack)) {
+                        if (lastRotationTime + 60 < Util.milliTime()) {
+                            lastRotationTime = Util.milliTime();
+                            // prevent action to be triggered on server + on client
+                            CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
+                            askPreviewIfNeeded(stack);
+                        }
+                    } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
+                        event.getPlayer().sendMessage(new TranslationTextComponent("capsule.tooltip.cannotRotate"));
                     }
                 }
             }

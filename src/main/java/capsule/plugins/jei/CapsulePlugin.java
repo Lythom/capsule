@@ -6,7 +6,6 @@ import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.recipes.BlueprintCapsuleRecipe;
-import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaRecipeCategoryUid;
@@ -30,7 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static capsule.items.CapsuleItem.CapsuleState.*;
+import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 @JeiPlugin
 public class CapsulePlugin implements IModPlugin {
@@ -63,21 +63,15 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack unlabelled = CapsuleItems.unlabelledCapsule.getKey();
         ItemStack unlabelledDeployed = CapsuleItems.deployedCapsule.getKey();
         CapsuleItem.setState(unlabelledDeployed, DEPLOYED);
-        List<ItemStack> blueprintCapsules = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).collect(Collectors.toList());
-        blueprintCapsules.add(CapsuleItems.blueprintChangedCapsule.getKey());
-        Ingredient anyBlueprint = Ingredient.fromStacks(blueprintCapsules.toArray(new ItemStack[0]));
+        Ingredient anyBlueprint = Ingredient.fromStacks(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
         Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule)));
         // recovery
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
-
         for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
-            if (r.getValue() instanceof BlueprintCapsuleRecipe) {
-                recipes.add(((BlueprintCapsuleRecipe) r.getValue()).recipe);
-            } else if (r.getValue() instanceof PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) {
-                recipes.add(((PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe) r.getValue()).recipe);
-            } else {
-                recipes.add(r.getValue());
-            }
+            recipes.add(r.getValue());
+        }
+        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintPrefabs) {
+            recipes.add(r.getValue());
         }
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
         CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
@@ -86,10 +80,14 @@ public class CapsulePlugin implements IModPlugin {
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
+        registry.addIngredientInfo(CapsuleItems.blueprintChangedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.deployedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.recoveryCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
         for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+        }
+        for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
             registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);

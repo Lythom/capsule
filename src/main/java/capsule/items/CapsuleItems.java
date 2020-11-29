@@ -36,6 +36,7 @@ public class CapsuleItems {
     public static TreeMap<ItemStack, ICraftingRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
     public static TreeMap<ItemStack, ICraftingRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
     public static List<Pair<ItemStack, ICraftingRecipe>> blueprintCapsules = new ArrayList<>();
+    public static List<Pair<ItemStack, ICraftingRecipe>> blueprintPrefabs = new ArrayList<>();
     public static Pair<ItemStack, ICraftingRecipe> unlabelledCapsule = null;
     public static Pair<ItemStack, ICraftingRecipe> deployedCapsule = null;
     public static Pair<ItemStack, RecoveryCapsuleRecipe> recoveryCapsule = null;
@@ -54,12 +55,15 @@ public class CapsuleItems {
 
     @OnlyIn(Dist.CLIENT)
     public static void registerRecipesClient(RecipeManager manager) {
+        blueprintCapsules.clear();
+        blueprintPrefabs.clear();
+
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
         for (IRecipe<?> recipe : manager.getRecipes()) {
             if (recipe.getId().getNamespace().equals("capsule")) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), (BlueprintCapsuleRecipe) recipe));
+                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), ((BlueprintCapsuleRecipe) recipe)));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
                     recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {
@@ -69,7 +73,7 @@ public class CapsuleItems {
                 } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe) {
                     PrefabsBlueprintAggregatorRecipe agg = (PrefabsBlueprintAggregatorRecipe) recipe;
                     for (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe aggregatorRecipe : agg.recipes) {
-                        blueprintCapsules.add(Pair.of(aggregatorRecipe.getRecipeOutput(), aggregatorRecipe));
+                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getRecipeOutput(), aggregatorRecipe.recipe));
                     }
                 } else {
                     ItemStack output = recipe.getRecipeOutput();
@@ -93,14 +97,14 @@ public class CapsuleItems {
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         CapsuleItem.setState(unlabelledCapsule, CapsuleState.LINKED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "structure_name_example");
+        CapsuleItem.setStructureName(unlabelledCapsule, "config/capsule/rewards/example");
         return unlabelledCapsule;
     }
 
     public static ItemStack getDeployedCapsule(ItemStack capsule) {
         ItemStack unlabelledCapsule = capsule.copy();
         CapsuleItem.setState(unlabelledCapsule, CapsuleState.DEPLOYED);
-        CapsuleItem.setStructureName(unlabelledCapsule, "structure_name_example");
+        CapsuleItem.setStructureName(unlabelledCapsule, "config/capsule/rewards/example");
         return unlabelledCapsule;
     }
 

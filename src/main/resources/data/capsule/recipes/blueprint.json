@@ -8,7 +8,9 @@
         "color": 3949738
       },
       "sourceInventory": {},
-      "structureName": "blueprint_example_structure_name"
+      "structureName": "blueprint_example_structure_name",
+      "label": "Copy Any Capsule",
+      "size": 1
     }
   },
   "pattern": [
@@ -20,18 +22,38 @@
     "c": [
       {
         "item": "capsule:capsule",
+        "type": "capsule:ingredient",
         "nbt": {
-          "state": 2,
-          "structureName": ""
+          "state": 2
         }
       },
       {
         "item": "capsule:capsule",
+        "type": "capsule:ingredient",
         "nbt": {
-          "state": 5,
-          "structureName": "",
-          "oneUse": true,
-          "isReward": true
+          "state": 5
+        }
+      },
+      {
+        "item": "capsule:capsule",
+        "type": "capsule:ingredient",
+        "nbt": {
+          "state": 3,
+          "sourceInventory": {},
+          "display": {
+            "color": 3949738
+          }
+        }
+      },
+      {
+        "item": "capsule:capsule",
+        "type": "capsule:ingredient",
+        "nbt": {
+          "state": 7,
+          "sourceInventory": {},
+          "display": {
+            "color": 3949738
+          }
         }
       }
     ],

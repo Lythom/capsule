@@ -23,7 +23,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
         CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
         CapsuleItem.setBaseColor(bp, 3949738);
-        CapsuleItem.setStructureName(bp, "blueprint_example_structure_name");
+        CapsuleItem.setStructureName(bp, "config/capsule/rewards/example");
         return bp;
     }
 

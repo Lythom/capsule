@@ -6,12 +6,14 @@
       "state": 5,
       "isReward": true,
       "oneUse": true,
-      "structureName": "blueprint_example_structure_name"
+      "structureName": "config/capsule/rewards/example",
+      "size": 3
     }
   },
   "ingredients": [
     {
       "item": "capsule:capsule",
+      "type": "capsule:ingredient",
       "nbt": {
         "state": 2
       }

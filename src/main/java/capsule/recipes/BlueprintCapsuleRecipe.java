@@ -7,6 +7,7 @@ import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.ICraftingRecipe;
 import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.NonNullList;
@@ -16,6 +17,11 @@ import net.minecraft.world.World;
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
+/**
+ * Handle 2 cases :
+ * crafting a blueprint from a source capsule, in this case the structureName to create template is taken from the source capsule
+ * crafting a prefab, in this case the structureName to create template is taken from the recipe output
+ */
 public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     public final ShapedRecipe recipe;
 
@@ -25,6 +31,12 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
 
     public ItemStack getRecipeOutput() {
         return recipe.getRecipeOutput();
+    }
+
+    @Override
+    public NonNullList<Ingredient> getIngredients() {
+        NonNullList<Ingredient> ingredients = recipe.getIngredients();
+        return ingredients;
     }
 
     /**
@@ -52,19 +64,18 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
      * Used to check if a recipe matches current crafting inventory
      */
     public boolean matches(CraftingInventory inv, World worldIn) {
-        if (!recipe.matches(inv, worldIn)) return false;
+        if (!recipe.matches(inv, worldIn)) {
+            return false;
+        }
 
-        ItemStack referenceCapsule = null;
+        // in case it's not a prefab but a copy template recipe
         for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack itemstack = inv.getStackInSlot(i);
-            if (IsCopyable(itemstack)) {
-                // This blueprint will take the source structure name by copying it here
-                // a new dedicated template is created later.
-                // @see CapsuleItem.onCreated
-                referenceCapsule = itemstack;
+            if (itemstack.getItem() instanceof CapsuleItem && !IsCopyable(itemstack)) {
+                return false;
             }
         }
-        return referenceCapsule != null;
+        return true;
     }
 
 
@@ -72,7 +83,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
      * Returns a copy built from the original capsule.
      */
     public ItemStack getCraftingResult(CraftingInventory inv) {
-        ItemStack referenceCapsule = null;
+        ItemStack referenceCapsule = recipe.getRecipeOutput();
         for (int i = 0; i < inv.getSizeInventory(); ++i) {
             ItemStack itemstack = inv.getStackInSlot(i);
             if (IsCopyable(itemstack)) {
