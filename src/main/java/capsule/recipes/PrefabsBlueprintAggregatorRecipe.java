@@ -10,6 +10,8 @@ import com.google.gson.JsonObject;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -24,13 +26,31 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 
 public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
+    public static PrefabsBlueprintAggregatorRecipe instance;
+
     public List<PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe> recipes = new ArrayList<>();
 
     public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn) {
         super(idIn);
+        instance = this;
+    }
+
+    /**
+     * Must be called
+     * > after server start (providing a server is required) and
+     * < before RecipesUpdatedEvent (so that the recupies are registered by JEI)
+     * @param server
+     */
+    public void populateRecipes(MinecraftServer server) {
+        if (server == null) return;
         List<String> prefabsTemplatesList = Config.prefabsTemplatesList;
-        Blueprint.createDynamicPrefabRecipes(prefabsTemplatesList, (id, recipe, ingredients) ->
-                recipes.add(new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients))
+        recipes.clear();
+        Blueprint.createDynamicPrefabRecipes(
+                server,
+                prefabsTemplatesList,
+                (id, recipe, ingredients) -> recipes.add(
+                        new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients)
+                )
         );
     }
 
@@ -83,6 +103,11 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
             this.id = id;
             this.recipe = ShapedRecipe.Serializer.CRAFTING_SHAPED.read(id, template);
             buildRecipeFromPattern(template, ingredients);
+        }
+
+        public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, ShapedRecipe serializedRecipe) {
+            this.id = id;
+            this.recipe = serializedRecipe;
         }
 
         public void buildRecipeFromPattern(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
@@ -186,6 +211,43 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         @Override
         public boolean canFit(int width, int height) {
             return recipe.canFit(width, height);
+        }
+    }
+
+
+    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
+
+        @Override
+        public PrefabsBlueprintAggregatorRecipe read(ResourceLocation recipeId, JsonObject json) {
+            return instance != null ? instance : new PrefabsBlueprintAggregatorRecipe(recipeId);
+        }
+
+        @Override
+        public PrefabsBlueprintAggregatorRecipe read(ResourceLocation recipeId, PacketBuffer buffer) {
+            if (instance == null) {
+                instance = new PrefabsBlueprintAggregatorRecipe(recipeId);
+            }
+            instance.recipes.clear();
+
+            IRecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.CRAFTING_SHAPED;
+            int size = buffer.readInt();
+            for (int i = 0; i < size; i++) {
+                ResourceLocation id = new ResourceLocation(buffer.readString());
+                ShapedRecipe recipe = serializer.read(id, buffer);
+                instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe));
+            }
+
+            return instance;
+        }
+
+        @Override
+        public void write(PacketBuffer buffer, PrefabsBlueprintAggregatorRecipe recipe) {
+            IRecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.CRAFTING_SHAPED;
+            buffer.writeInt(recipe.recipes.size());
+            for (PrefabsBlueprintCapsuleRecipe subRecipe : recipe.recipes) {
+                buffer.writeString(subRecipe.id.toString());
+                serializer.write(buffer, subRecipe.recipe);
+            }
         }
     }
 }
