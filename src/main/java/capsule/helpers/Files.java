@@ -2,8 +2,8 @@ package capsule.helpers;
 
 import capsule.Config;
 import com.google.gson.*;
-import joptsimple.internal.Strings;
-import net.minecraft.resources.*;
+import net.minecraft.resources.IResource;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class Files {
 
     protected static final Logger LOGGER = LogManager.getLogger(Files.class);
@@ -105,9 +106,9 @@ public class Files {
                 // initial with example capsule the first time
                 LOGGER.info("First load: initializing the loots in " + data.path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
                 String assetPath = null;
-                if (templateFolder.getPath().contains("uncommon")) assetPath = "initialconfig/loot/uncommon";
-                if (templateFolder.getPath().contains("rare")) assetPath = "initialconfig/loot/rare";
-                if (templateFolder.getPath().contains("common")) assetPath = "initialconfig/loot/common";
+                if (templateFolder.getPath().contains(File.separatorChar + "uncommon")) assetPath = "initialconfig/loot/uncommon";
+                if (templateFolder.getPath().contains(File.separatorChar + "rare")) assetPath = "initialconfig/loot/rare";
+                if (templateFolder.getPath().contains(File.separatorChar + "common")) assetPath = "initialconfig/loot/common";
                 if (assetPath != null) populateFolder(templateFolder, assetPath, ressourceManager);
             }
 
@@ -123,16 +124,7 @@ public class Files {
             prefabsFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the prefabs in " + prefabsTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no blueprint prefabs recipes.");
-            for (ResourceLocation subFolder : ressourceManager.getAllResourceLocations("initialconfig/prefabs", s -> !s.contains("."))) {
-                String path = subFolder.getPath().replace("initialconfig/prefabs/", "");
-                if (!Strings.isNullOrEmpty(path)) {
-                    File folder = prefabsFolder.toPath().resolve(path).toFile();
-                    folder.mkdir();
-                    Files.populateFolder(folder, "initialconfig/prefabs/" + path, ressourceManager);
-                }
-            }
             Files.populateFolder(prefabsFolder, "initialconfig/prefabs", ressourceManager);
-
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
         iterateTemplates(prefabsFolder, templateName -> prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName));
@@ -142,26 +134,27 @@ public class Files {
     public static void populateFolder(File templateFolder, String assetPath, IResourceManager ressourceManager) {
         try {
             for (ResourceLocation ressourceLoc : ressourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
-                if (!ressourceLoc.getPath().replace(assetPath + "/", "").contains("/")) {
-                    IResource ressource = ressourceManager.getResource(ressourceLoc);
-                    // source path
-                    InputStream sourceTemplate = ressource.getInputStream();
-                    String sourcePath = ressourceLoc.getPath();
-                    String fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
-                    Path assetFile = templateFolder.toPath().resolve(fileName);
-                    LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
-                    try {
-                        File assetAsFile = assetFile.toFile();
-                        if (assetAsFile.isDirectory()) {
-                            if (!assetAsFile.exists()) assetAsFile.mkdirs();
-                            populateFolder(assetAsFile, assetPath + "/" + fileName, ressourceManager);
-                        } else {
-                            java.nio.file.Files.copy(sourceTemplate, assetFile);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error(e);
+                IResource ressource = ressourceManager.getResource(ressourceLoc);
+                // source path
+                InputStream sourceTemplate = ressource.getInputStream();
+                String sourcePath = ressourceLoc.getPath();
+                String fileName = sourcePath.replace(assetPath + "/", "");
+                Path assetFile = templateFolder.toPath().resolve(fileName);
+                LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
+                try {
+                    File assetAsFile = assetFile.toFile();
+                    if (assetAsFile.isDirectory()) {
+                        if (!assetAsFile.exists()) assetAsFile.mkdirs();
+                        populateFolder(assetAsFile, assetPath + "/" + fileName, ressourceManager);
+                    } else {
+                        File parentFolder = assetFile.getParent().toFile();
+                        if (!parentFolder.exists()) parentFolder.mkdirs();
+                        java.nio.file.Files.copy(sourceTemplate, assetFile);
                     }
+                } catch (Exception e) {
+                    LOGGER.error(e);
                 }
+
             }
         } catch (IOException e) {
             LOGGER.error("Error while copying initial capsule templates, there will be no loots, prefabs or starters!", e);
