@@ -1,7 +1,5 @@
 package capsule.network;
 
-
-import capsule.client.CapsulePreviewHandler;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -31,8 +29,8 @@ public class CapsuleContentPreviewAnswerToClient {
 
     public void onClient(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            synchronized (CapsulePreviewHandler.currentPreview) {
-                CapsulePreviewHandler.currentPreview.put(getStructureName(), getBoundingBoxes());
+            synchronized (capsule.client.CapsulePreviewHandler.currentPreview) {
+                capsule.client.CapsulePreviewHandler.currentPreview.put(getStructureName(), getBoundingBoxes());
             }
         });
         ctx.get().setPacketHandled(true);
@@ -40,7 +38,7 @@ public class CapsuleContentPreviewAnswerToClient {
 
     public CapsuleContentPreviewAnswerToClient(PacketBuffer buf) {
         try {
-            this.structureName = buf.readString();
+            this.structureName = buf.readString(32767);
             int size = buf.readShort();
             this.boundingBoxes = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {

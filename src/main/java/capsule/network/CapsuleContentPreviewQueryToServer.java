@@ -31,7 +31,7 @@ public class CapsuleContentPreviewQueryToServer {
 
     public CapsuleContentPreviewQueryToServer(PacketBuffer buf) {
         try {
-            this.setStructureName(buf.readString());
+            this.setStructureName(buf.readString(32767));
 
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);

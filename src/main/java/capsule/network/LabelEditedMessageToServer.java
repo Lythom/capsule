@@ -25,7 +25,7 @@ public class LabelEditedMessageToServer {
 
     public LabelEditedMessageToServer(PacketBuffer buf) {
         try {
-            this.setLabel(buf.readString());
+            this.setLabel(buf.readString(32767));
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleLabelEditedMessageToClient: " + ioe);
         }

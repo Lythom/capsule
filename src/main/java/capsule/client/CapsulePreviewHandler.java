@@ -23,6 +23,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,7 +38,7 @@ import static capsule.client.RendererUtils.*;
 import static capsule.items.CapsuleItem.CapsuleState.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
     public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
     private static int lastSize = 0;

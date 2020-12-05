@@ -28,6 +28,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
@@ -198,16 +199,18 @@ public class CapsuleCommand {
                 // reloadLootList
                 .then(Commands.literal("reloadLootList")
                         .executes(ctx -> {
-                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
+                            IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
+                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
                             return 1;
                         })
                 )
                 // reloadWhitelist
                 .then(Commands.literal("reloadWhitelist")
                         .executes(ctx -> {
-                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
-                            Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath);
-                            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
+                            IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
+                            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
+                            Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, resourceManager);
+                            Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), resourceManager);
                             return 1;
                         })
                 )

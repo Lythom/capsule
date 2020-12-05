@@ -8,6 +8,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
+import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
@@ -15,12 +16,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -29,6 +32,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Consumer;
@@ -41,14 +45,23 @@ public class CapsuleMod {
     public static ItemGroup tabCapsule = new CapsuleItemGroups(ItemGroup.getGroupCountSafe(), "capsule");
 
     public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static MinecraftServer server = null;
 
     public CapsuleMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
-        MinecraftForge.EVENT_BUS.addListener(CapsuleMod::serverStarting);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
     }
 
     public static void serverStarting(final FMLServerStartingEvent e) {
         CapsuleCommand.register(e.getCommandDispatcher());
+        server = e.getServer();
+        Config.populateConfigFolders(server);
+        if (PrefabsBlueprintAggregatorRecipe.instance != null) PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server);
+    }
+
+    public static void serverStopped(final FMLServerStoppedEvent e) {
+        server = null;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -123,7 +136,7 @@ final class CapsuleModEventSubscriber {
     }
 }
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 final class CapsuleForgeSubscriber {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)

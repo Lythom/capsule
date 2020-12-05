@@ -189,9 +189,9 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         }
     }
 
-    public boolean deleteTemplate(@Nullable MinecraftServer server, ResourceLocation templateLocation) {
+    public boolean deleteTemplate(ResourceLocation templateLocation) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
-        if (server != null && this.templates.containsKey(capsuleTemplateLocation)) {
+        if (this.templates.containsKey(capsuleTemplateLocation)) {
             File file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
 
             boolean deleted = file.delete();

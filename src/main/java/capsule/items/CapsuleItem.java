@@ -3,7 +3,6 @@ package capsule.items;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
-import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
 import capsule.helpers.Spacial;
@@ -551,7 +550,7 @@ public class CapsuleItem extends Item {
 
     @OnlyIn(Dist.CLIENT)
     public static void askPreviewIfNeeded(ItemStack stack) {
-        if (!CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
+        if (!capsule.client.CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             if (Minecraft.getInstance().getConnection() != null)
                 // try to get the preview from server
                 CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));

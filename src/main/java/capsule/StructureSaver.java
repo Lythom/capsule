@@ -273,7 +273,7 @@ public class StructureSaver {
 
         PlayerEntity player = null;
         if (thrower != null) {
-            player = playerWorld.getPlayerByUuid(thrower);
+            player = playerWorld.getServer().getPlayerList().getPlayerByUUID(thrower);
         }
 
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
@@ -282,7 +282,7 @@ public class StructureSaver {
         List<ITextComponent> outErrors = new ArrayList<>();
         checkDestination(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outErrors);
         if (outErrors.size() > 0) {
-            printDeployFailure(player, outErrors);
+            if (player != null) printDeployFailure(player, outErrors);
             return false;
         }
 
@@ -639,7 +639,7 @@ public class StructureSaver {
         // try to cleanup previous template to save disk space on the long run
         if (destCapsule.getTag() != null && destCapsule.getTag().contains("prevStructureName")) {
             if (templateManager != null)
-                templateManager.deleteTemplate(worldServer.getServer(), new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
+                templateManager.deleteTemplate(new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
         }
 
         if (!created && playerIn != null) {

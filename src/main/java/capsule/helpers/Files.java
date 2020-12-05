@@ -3,9 +3,7 @@ package capsule.helpers;
 import capsule.Config;
 import com.google.gson.*;
 import joptsimple.internal.Strings;
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.resources.*;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
@@ -46,7 +44,7 @@ public class Files {
         }
     }
 
-    public static HashMap<String, JsonObject> populateWhitelistConfig(File capsuleConfigDir) {
+    public static HashMap<String, JsonObject> populateWhitelistConfig(File capsuleConfigDir, IResourceManager ressourceManager) {
         if (!capsuleConfigDir.exists()) {
             capsuleConfigDir.mkdirs();
         }
@@ -55,7 +53,7 @@ public class Files {
             File whitelistFile = new File(capsuleConfigDir, "blueprint_whitelist.json");
             if (!whitelistFile.exists()) {
                 LOGGER.info("First load: initializing the configs in " + capsuleConfigDir.getPath() + ".");
-                Files.populateFolder(capsuleConfigDir, "initialconfig/root");
+                Files.populateFolder(capsuleConfigDir, "initialconfig/root", ressourceManager);
             }
             if (whitelistFile.exists()) {
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
@@ -82,7 +80,7 @@ public class Files {
         return blueprintWhitelist;
     }
 
-    public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath) {
+    public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath, IResourceManager ressourceManager) {
         if (StringUtils.isNullOrEmpty(starterTemplatesPath)) return new ArrayList<>();
         File startersFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), starterTemplatesPath);
 
@@ -90,14 +88,14 @@ public class Files {
             startersFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the starters in " + starterTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no starter capsule.");
-            Files.populateFolder(startersFolder, "initialconfig/starters");
+            Files.populateFolder(startersFolder, "initialconfig/starters", ressourceManager);
         }
         ArrayList<String> starterTemplatesList = new ArrayList<>();
         iterateTemplates(startersFolder, templateName -> starterTemplatesList.add(starterTemplatesPath + "/" + templateName));
         return starterTemplatesList;
     }
 
-    public static void populateAndLoadLootList(File capsuleConfigDir, Map<String, Config.LootPathData> lootTemplatesData) {
+    public static void populateAndLoadLootList(File capsuleConfigDir, Map<String, Config.LootPathData> lootTemplatesData, IResourceManager ressourceManager) {
         // Init the manager for reward Lists
         for (Config.LootPathData data : lootTemplatesData.values()) {
             File templateFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), data.path);
@@ -110,7 +108,7 @@ public class Files {
                 if (templateFolder.getPath().contains("uncommon")) assetPath = "initialconfig/loot/uncommon";
                 if (templateFolder.getPath().contains("rare")) assetPath = "initialconfig/loot/rare";
                 if (templateFolder.getPath().contains("common")) assetPath = "initialconfig/loot/common";
-                if (assetPath != null) populateFolder(templateFolder, assetPath);
+                if (assetPath != null) populateFolder(templateFolder, assetPath, ressourceManager);
             }
 
             data.files = new ArrayList<>();
@@ -118,23 +116,22 @@ public class Files {
         }
     }
 
-    public static ArrayList<String> populatePrefabs(File capsuleConfigDir, String prefabsTemplatesPath) {
+    public static ArrayList<String> populatePrefabs(File capsuleConfigDir, String prefabsTemplatesPath, IResourceManager ressourceManager) {
         File prefabsFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), prefabsTemplatesPath);
 
         if (!prefabsFolder.exists()) {
             prefabsFolder.mkdirs();
             // initial with example capsule the first time
             LOGGER.info("First load: initializing the prefabs in " + prefabsTemplatesPath + ". You can change the content of folder with any nbt structure block, schematic or capsule file, or empty it for no blueprint prefabs recipes.");
-            IResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-            for (ResourceLocation subFolder : resourceManager.getAllResourceLocations("initialconfig/prefabs", s -> !s.contains("."))) {
+            for (ResourceLocation subFolder : ressourceManager.getAllResourceLocations("initialconfig/prefabs", s -> !s.contains("."))) {
                 String path = subFolder.getPath().replace("initialconfig/prefabs/", "");
                 if (!Strings.isNullOrEmpty(path)) {
                     File folder = prefabsFolder.toPath().resolve(path).toFile();
                     folder.mkdir();
-                    Files.populateFolder(folder, "initialconfig/prefabs/" + path);
+                    Files.populateFolder(folder, "initialconfig/prefabs/" + path, ressourceManager);
                 }
             }
-            Files.populateFolder(prefabsFolder, "initialconfig/prefabs");
+            Files.populateFolder(prefabsFolder, "initialconfig/prefabs", ressourceManager);
 
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
@@ -142,15 +139,14 @@ public class Files {
         return prefabsTemplatesList;
     }
 
-    public static void populateFolder(File templateFolder, String assetPath) {
+    public static void populateFolder(File templateFolder, String assetPath, IResourceManager ressourceManager) {
         try {
-            IResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-            for (ResourceLocation ressourceLoc : resourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
+            for (ResourceLocation ressourceLoc : ressourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
                 if (!ressourceLoc.getPath().replace(assetPath + "/", "").contains("/")) {
-                    IResource ressource = resourceManager.getResource(ressourceLoc);
+                    IResource ressource = ressourceManager.getResource(ressourceLoc);
                     // source path
                     InputStream sourceTemplate = ressource.getInputStream();
-                    String sourcePath = ressource.getLocation().getPath();
+                    String sourcePath = ressourceLoc.getPath();
                     String fileName = sourcePath.substring(sourcePath.lastIndexOf("/") + 1);
                     Path assetFile = templateFolder.toPath().resolve(fileName);
                     LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
@@ -158,7 +154,7 @@ public class Files {
                         File assetAsFile = assetFile.toFile();
                         if (assetAsFile.isDirectory()) {
                             if (!assetAsFile.exists()) assetAsFile.mkdirs();
-                            populateFolder(assetAsFile, assetPath + "/" + fileName);
+                            populateFolder(assetAsFile, assetPath + "/" + fileName, ressourceManager);
                         } else {
                             java.nio.file.Files.copy(sourceTemplate, assetFile);
                         }

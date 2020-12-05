@@ -1,15 +1,15 @@
 package capsule;
 
 import capsule.config.SimpleCommentedConfig;
-import capsule.helpers.Blueprint;
 import capsule.helpers.Files;
 import capsule.helpers.Serialization;
-import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
@@ -122,10 +122,17 @@ public class Config {
         Config.allowBlueprintReward = allowBlueprintRewardCfg.get();
         Config.starterMode = starterModeCfg.get();
 
-        Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData);
-        Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile());
-        Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath);
-        Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath);
+        if (CapsuleMod.server != null) {
+            populateConfigFolders(CapsuleMod.server);
+        }
+    }
+
+    public static void populateConfigFolders(MinecraftServer server) {
+        IResourceManager ressourceManager = server.getResourceManager();
+        Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
+        Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
+        Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
+        Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath, ressourceManager);
     }
 
     public static void configureCapture(ForgeConfigSpec.Builder configBuild) {
