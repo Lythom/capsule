@@ -57,7 +57,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     }
 
     private boolean IsCopyable(ItemStack itemstack) {
-        return CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.hasState(itemstack, BLUEPRINT) || CapsuleItem.isReward(itemstack);
+        return CapsuleItem.isLinkedStateCapsule(itemstack) || CapsuleItem.isBlueprint(itemstack) || CapsuleItem.isOneUse(itemstack);
     }
 
     /**
