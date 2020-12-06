@@ -212,7 +212,10 @@ public class Blueprint {
             reduced.forEach((ingredients, templateName) -> {
                 CapsuleTemplate template = tempManager.getTemplateDefaulted(new ResourceLocation(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
-                if (jsonRecipe != null && template != null) {
+                if (ingredients.getLeft() == null && ingredients.getMiddle() == null && ingredients.getRight() == null) {
+                    LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");
+                }
+                else if (jsonRecipe != null && template != null) {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("structureName", templateName);
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
