@@ -269,7 +269,9 @@ public class CapsulePreviewHandler {
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {
                     tec.getTileData().putInt("size", size);
                     tec.getTileData().putInt("color", color);
-                    worldIn.setBlockState(te.getPos(), te.getBlockState().with(BlockCapsuleMarker.PROJECTING, size > 0));
+                    if (te.getBlockState().has(BlockCapsuleMarker.PROJECTING)) {
+                        worldIn.setBlockState(te.getPos(), te.getBlockState().with(BlockCapsuleMarker.PROJECTING, size > 0));
+                    }
                 }
             }
         }
