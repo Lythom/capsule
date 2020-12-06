@@ -12,10 +12,38 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.15.2-4.0.40 : The 1.15 Update**
+
+Template from previous versions might (or might not) work ! There are some holes in the minecraft datafixer when upgrading structures 1.12 → 1.15 so rememeber to do backups before you try =) 
+
+- Port capsule from 1.12 to 1.15, it was awfully long and painfull and I hope minecraft team calm down with breaking changes xD
+- New FX for capture zone display
+- Thank you [Zerus (on Discord)](https://discord.gg/pgfCwW9) for the help with testing!
+- 1.15 Update details :
+    - Update the TemplateManager storing logic to ensure vanilla structure blocks compatibility
+    - Update config to match new system (from cfg to toml), the new `capsule-common.toml` config file should be even better and documented enough to be understood.
+    - Update recipe registration, recipes should now be overridable using datapacks
+    - Udpate recipes logic to match new interfaces and Serializer system
+    - Update capsule item registration, rendering and logic for empty cpasules, linked capsule, blueprints, one-use and reward capsules
+    - Update the prefab dynamic recipes system, it remains the same: put nbts in `config/capsule/prefabs` and enjoy the blueprint recipes being dynamically generated for you with matching template associated. Recipe template configurable in `config/capsule/prefab_blueprint_recipe.json`.
+    - Update block registration, rendering and block-properties logic.
+    - Update networking code
+    - Update the command system to match reworked vanilla system
+    - Update client/server logic
+    - Update GUI code for relabelling capsules
+    - Update rendering code to work with vanilla refactors
+    - Update lang files to match new format
+    - Update projet structure to match forge new expectations
+    - Rename all variables that were renamed from forge and minecraft
+- Some starters and reward templates broke so I updated them, tell me if some of them are still to be fixed! ([→ Discord](https://discord.gg/pgfCwW9))
+    - Remove 3rd party blueprints (immersive ingeneering and addons) because they are not compatible anymore and most be redone
+- Add licence.md, stating from the repository the project in licenced under MIT License terms (it was already stated in curseforge, no change here).
+- Wrote (and went through) a full test campaign to ensure mod quality : https://github.com/Lythom/capsule/issues/33
+
 **1.12.2-3.3.7 : Fix deployment can create network overflow**
 
--  [Community report] Fix: deploying was flooding item nbt with occupiedPositions informations if a big capsule was deployed in dense non-air environment (ie. under water). This fix saves occupiedPositions in the template files instead of nbt data to prevent any network transmission of this data. [Thanks to Kazahm on Discord](https://discord.gg/pgfCwW9).
--  [Community report] Allow whitelisted tile entities to be rotated in standard capsules. It uses the blueprint whitelist: `config/capsule/blueprint_whitelist.json`. See docmentation at https://github.com/Lythom/capsule/wiki/Modpack-making#whitelist). [Thanks to MFWalter on Discord](https://discord.gg/pgfCwW9).
+- [Community report] Fix: deploying was flooding item nbt with occupiedPositions informations if a big capsule was deployed in dense non-air environment (ie. under water). This fix saves occupiedPositions in the template files instead of nbt data to prevent any network transmission of this data. [Thanks to Kazahm on Discord](https://discord.gg/pgfCwW9).
+- [Community report] Allow whitelisted tile entities to be rotated in standard capsules. It uses the blueprint whitelist: `config/capsule/blueprint_whitelist.json`. See docmentation at https://github.com/Lythom/capsule/wiki/Modpack-making#whitelist). [Thanks to MFWalter on Discord](https://discord.gg/pgfCwW9).
 
 
 **1.12.2-3.3.5 : Disable starters config**
