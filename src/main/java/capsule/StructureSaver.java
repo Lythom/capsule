@@ -1,6 +1,7 @@
 package capsule;
 
 import capsule.items.CapsuleItem;
+import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
@@ -385,7 +386,8 @@ public class StructureSaver {
      */
     private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player) {
         if (player != null) {
-            return isEntityPlaceEventAllowed(worldserver, blockPos, player);
+            return isEntityPlaceEventAllowed(worldserver, blockPos, player)
+                    && SecurityCraftOwnerCheck.canTakeBlock(worldserver, blockPos, player);
         }
         return true;
     }

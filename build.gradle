@@ -95,6 +95,9 @@ repositories {
     maven {
         url = "http://dvs1.progwml6.com/files/maven"
     }
+    maven {
+        url "https://www.cursemaven.com"
+    }
 }
 
 dependencies {
@@ -125,6 +128,8 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}:api")
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}")
+    implementation fg.deobf("curse.maven:security-craft-64760:3109601")
+
 }
 
 jar {
