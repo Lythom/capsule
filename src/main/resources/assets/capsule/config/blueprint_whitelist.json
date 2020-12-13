@@ -234,7 +234,9 @@
       "dummy": null,
       "facing": null,
       "orientation": null,
-      "rotation": null
+      "rotation": null,
+      "offset": null,
+      "prevRotation": null
     }
   },
   "betterboiler:controller",
