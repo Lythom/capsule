@@ -46,7 +46,7 @@ public class CapsuleMod {
     public static final String MODID = "capsule";
     public static ItemGroup tabCapsule = new CapsuleItemGroups(ItemGroup.getGroupCountSafe(), "capsule");
 
-    public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.safeRunForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
     public static MinecraftServer server = null;
 
     public CapsuleMod() {
