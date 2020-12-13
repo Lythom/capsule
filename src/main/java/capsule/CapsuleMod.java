@@ -2,6 +2,7 @@ package capsule;
 
 import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
+import capsule.dispenser.DispenseCapsuleBehavior;
 import capsule.enchantments.Enchantments;
 import capsule.itemGroups.CapsuleItemGroups;
 import capsule.items.CapsuleItem;
@@ -10,6 +11,7 @@ import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import net.minecraft.block.Block;
+import net.minecraft.block.DispenserBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
@@ -44,7 +46,7 @@ public class CapsuleMod {
     public static final String MODID = "capsule";
     public static ItemGroup tabCapsule = new CapsuleItemGroups(ItemGroup.getGroupCountSafe(), "capsule");
 
-    public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.safeRunForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
     public static MinecraftServer server = null;
 
     public CapsuleMod() {
@@ -80,6 +82,7 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     public static void setup(FMLCommonSetupEvent event) {
         CapsuleNetwork.setup();
+        DispenserBlock.registerDispenseBehavior(CapsuleItems.CAPSULE, new DispenseCapsuleBehavior());
     }
 
     @SubscribeEvent

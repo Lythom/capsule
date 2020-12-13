@@ -70,14 +70,11 @@ public class Capsule {
         return "0";
     }
 
-    public static void resentToCapsule(final ItemStack capsule, final PlayerEntity playerIn) {
+    public static void resentToCapsule(final ItemStack capsule, final ServerWorld world, @Nullable final PlayerEntity playerIn) {
         // store again
         Integer dimensionId = CapsuleItem.getDimension(capsule);
         DimensionType dimType = DimensionType.getById(dimensionId);
         if (dimType == null) return;
-        MinecraftServer server = playerIn.getServer();
-        if (server == null) return;
-        final ServerWorld world = server.getWorld(dimType);
 
         if (capsule.getTag() == null) return;
         CompoundNBT spawnPos = capsule.getTag().getCompound("spawnPosition");
@@ -87,26 +84,26 @@ public class Capsule {
 
         // do the transportation
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn.getUniqueID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn == null ? null : playerIn.getUniqueID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
-                notifyUndeploy(playerIn, startPos, size);
-            } else {
+                if (playerIn != null) notifyUndeploy(playerIn, startPos, size);
+            } else if (playerIn != null) {
                 playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"));
             }
         } else {
-            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn.getUniqueID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn == null ? null : playerIn.getUniqueID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 CapsuleItem.setPlacement(capsule, new PlacementSettings());
-                notifyUndeploy(playerIn, startPos, size);
+                if (playerIn != null) notifyUndeploy(playerIn, startPos, size);
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
-                playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
+                if (playerIn != null) playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
             }
         }
     }
@@ -140,7 +137,7 @@ public class Capsule {
         // do the transportation
         List<UUID> outEntityBlocking = new ArrayList<>();
 
-        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, outEntityBlocking, CapsuleItem.getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, CapsuleItem.getPlacement(capsule));
 
         if (result) {
             // register the link in the capsule
@@ -396,7 +393,7 @@ public class Capsule {
             BlockPos throwPos = Spacial.findBottomBlock(ItemEntity);
             boolean deployed = deployCapsule(capsule, throwPos, ItemEntity.getThrowerId(), extendLength, itemWorld);
             if (deployed) {
-                itemWorld.playSound(null, ItemEntity.getPosition(), SoundEvents.ENTITY_IRON_GOLEM_HURT, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                itemWorld.playSound(null, ItemEntity.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
                 showDeployParticules(itemWorld, ItemEntity.getPosition(), size);
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {

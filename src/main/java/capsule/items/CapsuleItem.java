@@ -56,8 +56,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
-import static capsule.items.CapsuleItem.CapsuleState.LINKED;
+import static capsule.items.CapsuleItem.CapsuleState.*;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @SuppressWarnings({"ConstantConditions"})
@@ -512,7 +511,7 @@ public class CapsuleItem extends Item {
     @OnlyIn(Dist.CLIENT)
     public static void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getPlayer().getHeldItemMainhand();
-        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack))) {
+        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
             CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -602,7 +601,7 @@ public class CapsuleItem extends Item {
         } else if (!worldIn.isRemote) {
             // a capsule is activated on right click, except instant that are deployed immediatly
             if (!isInstantAndUndeployed(capsule)) {
-                activateCapsule(capsule, worldIn, playerIn);
+                activateCapsule(capsule, (ServerWorld) worldIn, playerIn);
             }
         } else if (worldIn.isRemote) {
             // client side, if is going to get activated, ask for server preview
@@ -639,7 +638,7 @@ public class CapsuleItem extends Item {
         return new ActionResult<>(ActionResultType.SUCCESS, capsule);
     }
 
-    public void activateCapsule(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
+    public void activateCapsule(ItemStack capsule, ServerWorld worldIn, PlayerEntity playerIn) {
         if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
             setState(capsule, CapsuleState.EMPTY_ACTIVATED);
             startTimer(worldIn, playerIn, capsule);
@@ -653,7 +652,7 @@ public class CapsuleItem extends Item {
         // an open capsule undeploy content on right click
         else if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {
-                Capsule.resentToCapsule(capsule, playerIn);
+                Capsule.resentToCapsule(capsule, worldIn, playerIn);
                 worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             } catch (Exception e) {
                 LOGGER.error("Couldn't resend the content into the capsule", e);
@@ -909,5 +908,6 @@ public class CapsuleItem extends Item {
         if (!capsule.hasTag()) return;
         capsule.getTag().remove("structureName");
         capsule.getTag().remove("sourceInventory");
+        capsule.getTag().remove("canRotate");
     }
 }

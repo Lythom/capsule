@@ -59,7 +59,7 @@ public class CapsuleThrowQueryToServer {
                     else {
                         boolean deployed = Capsule.deployCapsule(heldItem, pos.add(0, -1, 0), sendingPlayer.getUniqueID(), extendLength, world);
                         if (deployed) {
-                            world.playSound(null, pos, SoundEvents.ENTITY_IRON_GOLEM_ATTACK, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                            world.playSound(null, pos, SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
                             Capsule.showDeployParticules(world, pos, size);
                         }
                         if (deployed && CapsuleItem.isOneUse(heldItem)) {

@@ -60,7 +60,7 @@ public class StructureSaver {
         return RewardManager;
     }
 
-    public static CapsuleTemplate undeploy(ServerWorld worldserver, UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+    public static CapsuleTemplate undeploy(ServerWorld worldserver, @Nullable UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
                                            Map<BlockPos, Block> legacyItemOccupied) {
 
         MinecraftServer minecraftserver = worldserver.getServer();
@@ -111,10 +111,6 @@ public class StructureSaver {
     }
 
     public static boolean undeployBlueprint(ServerWorld worldserver, UUID playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
-
-        MinecraftServer minecraftserver = worldserver.getServer();
-        if (minecraftserver == null) return false;
-
         Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
         CapsuleTemplate blueprintTemplate = blueprint.getRight();
         if (blueprintTemplate == null) return false;
@@ -211,7 +207,7 @@ public class StructureSaver {
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerWorld
-            world, PlayerEntity player) {
+            world, @Nullable PlayerEntity player) {
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -263,8 +259,8 @@ public class StructureSaver {
     }
 
 
-    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, UUID thrower, BlockPos
-            dest, List<Block> overridableBlocks, List<UUID> outEntityBlocking, PlacementSettings placementsettings) {
+    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, @Nullable UUID thrower, BlockPos
+            dest, List<Block> overridableBlocks, PlacementSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
@@ -355,14 +351,14 @@ public class StructureSaver {
         }
     }
 
-    public static void printDeployError(PlayerEntity player, Exception err, String s) {
+    public static void printDeployError(@Nullable PlayerEntity player, Exception err, String s) {
         LOGGER.error(s, err);
         if (player != null) {
             player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
         }
     }
 
-    public static void printWriteTemplateError(PlayerEntity player, String capsuleStructureId) {
+    public static void printWriteTemplateError(@Nullable PlayerEntity player, String capsuleStructureId) {
         LOGGER.error("Couldn't write template " + capsuleStructureId);
         if (player != null) {
             player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
@@ -387,14 +383,14 @@ public class StructureSaver {
     /**
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
      */
-    private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
+    private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player) {
         if (player != null) {
             return isEntityPlaceEventAllowed(worldserver, blockPos, player);
         }
         return true;
     }
 
-    private static boolean isEntityPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
+    private static boolean isEntityPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player) {
         BlockSnapshot blocksnapshot = new BlockSnapshot(worldserver, blockPos, Blocks.AIR.getDefaultState());
         BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player);
         MinecraftForge.EVENT_BUS.post(event);

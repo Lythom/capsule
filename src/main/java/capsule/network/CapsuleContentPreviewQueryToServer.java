@@ -35,12 +35,14 @@ public class CapsuleContentPreviewQueryToServer {
 
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
-            return;
         }
     }
 
     public void toBytes(PacketBuffer buf) {
-        buf.writeString(this.getStructureName());
+        if (buf == null) return;
+        String name = this.getStructureName();
+        if (name == null) name = "";
+        buf.writeString(name);
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
