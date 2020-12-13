@@ -103,9 +103,14 @@ In this example, the conveyor block will be allowed in blueprints,
 
 `keepNBT` is a key/value object where almost every property value is `null` except `"conveyorBeltSubtype": "conveyorType"`, it means than the item required to charge this blueprint MUST have the `conveyorType` nbt data in the item, and the value of the item `conveyorType` must match the value of the block nbt `conveyorBeltSubtype` to be a valid material. `null` value means the material item don't requires a specific NBT to be a valid material. In this example it forces the type of conveyor belt in the inventory to match the type of conveyor belt built in the blueprint, not any conveyor belt could be used as item input.
 
-Tips : 
+Tips: 
 - You can use the [`/capsule exportSeenBlock`](https://github.com/Lythom/capsule/wiki/Commands#exportseenblock) when looking at a block to display its nbt data and know what values should be added
 - x, y, z, Inventory and id properties should not be listed under "keepNBT", indeed you don't want to keep location information (you want them to be forgotten and reset when blueprint is placed) neither inventory information (because it could lead to dupe bugs), and finally id is not actually nbt data.
+
+Tutorial video: that demonstrate some capsule blueprint configuration using exportSeenBlock command.
+
+[![Capsule Mod - Configuring blueprint whitelist for tile entities](https://img.youtube.com/vi/6MpXay8rGFw/0.jpg)](https://youtu.be/6MpXay8rGFw)
+
 
 ## How to
 
