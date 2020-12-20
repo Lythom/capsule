@@ -8,31 +8,46 @@ import capsule.blocks.TileEntityCapture;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 import static capsule.client.RendererUtils.*;
 import static capsule.items.CapsuleItem.CapsuleState.*;
@@ -40,7 +55,10 @@ import static capsule.structure.CapsuleTemplate.recenterRotation;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
+    public static final Map<String, CapsuleTemplate> currentFullPreview = new HashMap<>();
     private static int lastSize = 0;
     private static int lastColor = 0;
 
@@ -56,9 +74,39 @@ public class CapsulePreviewHandler {
 
         if (mc.player != null) {
             tryPreviewRecall(mc.player.getHeldItemMainhand());
-            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand());
+            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand(), event.getMatrixStack());
             tryPreviewLinkedInventory(mc.player, mc.player.getHeldItemMainhand());
         }
+    }
+
+    /**
+     * try to spot a templateDownload command for client
+     */
+    @SubscribeEvent
+    public static void OnClientChatEvent(ClientChatEvent event) {
+        if ("/capsule downloadTemplate".equals(event.getMessage())) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                String structureName = CapsuleItem.getStructureName(mc.player.getHeldItemMainhand());
+                CapsuleTemplate template = currentFullPreview.get(structureName);
+                Path path = new File("capsule_exports").toPath();
+                try {
+                    Files.createDirectories(Files.exists(path) ? path.toRealPath() : path);
+                } catch (IOException var19) {
+                    LOGGER.error("Failed to create parent directory: {}", path);
+                }
+
+                CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
+
+                try (OutputStream outputstream = new FileOutputStream(path.toFile())) {
+                    CompressedStreamTools.writeCompressed(compoundnbt, outputstream);
+                } catch (Throwable var21) {
+                    LOGGER.error(var21);
+                }
+            }
+        }
+
+
     }
 
     /**
@@ -97,7 +145,7 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private static void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand) {
+    private static void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand, MatrixStack matrixStack) {
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTag()
                 && isDeployable(heldItemMainhand)
@@ -118,72 +166,119 @@ public class CapsulePreviewHandler {
                         1.01);
 
                 synchronized (CapsulePreviewHandler.currentPreview) {
-                    if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
-
-                        List<AxisAlignedBB> blockspos = new ArrayList<>();
-                        if (size > 1) {
-                            blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
-                        } else if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
-                            // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                            BlockPos pos = rtc.getPos().subtract(destOriginPos);
-                            blockspos.add(new AxisAlignedBB(pos, pos));
-                        }
-                        if (blockspos.isEmpty()) {
-                            BlockPos pos = new BlockPos(extendSize, 0, extendSize);
-                            blockspos.add(new AxisAlignedBB(pos, pos));
+                    synchronized (CapsulePreviewHandler.currentFullPreview) {
+                        boolean haveFullPreview = CapsulePreviewHandler.currentFullPreview.containsKey(structureName);
+                        if (haveFullPreview) {
+                            DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.world);
                         }
 
-                        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
-                        doWirePrologue();
-                        Tessellator tessellator = Tessellator.getInstance();
-                        BufferBuilder bufferBuilder = tessellator.getBuffer();
-
-                        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
-
-                        for (AxisAlignedBB bb : blockspos) {
-                            BlockPos recenter = recenterRotation(extendSize, placement);
-                            AxisAlignedBB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
-                                    .offset(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
-                                    .offset(recenter.getX(), recenter.getY(), recenter.getZ())
-                                    .expand(1, 1, 1);
-
-                            int color = 0xDDDDDD;
-                            if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
-                                // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                                GlStateManager.lineWidth(5.0F);
-                                color = CapsuleItem.getBaseColor(heldItemMainhand);
-                            } else {
-                                for (double j = dest.minZ; j < dest.maxZ; ++j) {
-                                    for (double k = dest.minY; k < dest.maxY; ++k) {
-                                        for (double l = dest.minX; l < dest.maxX; ++l) {
-                                            BlockPos pos = new BlockPos(l, k, j);
-                                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
-                                                GlStateManager.lineWidth(5.0F);
-                                                bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
-                                                setColor(0xaa0000, 50);
-                                                drawCapsuleCube(errorBoundingBox.offset(pos), bufferBuilder);
-                                                tessellator.draw();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            GlStateManager.lineWidth(1.0F);
-                            bufferBuilder.begin(2, DefaultVertexFormats.POSITION);
-                            setColor(color, 50);
-                            drawCapsuleCube(dest, bufferBuilder);
-                            tessellator.draw();
+                        if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
+                            DisplayWireframePreview(thePlayer, heldItemMainhand, size, rtc, extendSize, destOriginPos, structureName, errorBoundingBox, haveFullPreview);
                         }
-
-                        setColor(0xFFFFFF, 255);
-                        doWireEpilogue();
-                        doPositionEpilogue();
                     }
                 }
             }
         }
+    }
 
+    public static List<RenderType> getBlockRenderTypes() {
+        return ImmutableList.of(RenderType.getTranslucent(), RenderType.getCutout(), RenderType.getCutoutMipped(), RenderType.getSolid());
+    }
+
+    private static void DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, ILightReader world) {
+        ActiveRenderInfo info = Minecraft.getInstance().getRenderManager().info;
+        CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
+        BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
+
+        template.getBlocks().forEach(blockInfo -> {
+            BlockState state = blockInfo.state;
+            BlockPos blockpos = blockInfo.pos.add(destOriginPos);
+
+            if (state.getRenderType() != BlockRenderType.INVISIBLE) {
+                Minecraft.getInstance().getTextureManager().bindTexture(PlayerContainer.LOCATION_BLOCKS_TEXTURE);
+                RenderSystem.disableLighting();
+                if (state.getRenderType() == BlockRenderType.MODEL) {
+                    matrixStack.push();
+                    matrixStack.translate(blockpos.getX() - info.getProjectedView().getX(), blockpos.getY() - info.getProjectedView().getY(), blockpos.getZ() - info.getProjectedView().getZ());
+
+                    for (net.minecraft.client.renderer.RenderType type : getBlockRenderTypes()) {
+                        if (RenderTypeLookup.canRenderInLayer(state, type)) {
+                            net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
+                            IVertexBuilder buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource().getBuffer(type).color(255, 255, 255, 150);
+                            blockrendererdispatcher.getBlockModelRenderer().renderModel(world, blockrendererdispatcher.getModelForState(state), state, destOriginPos, matrixStack, buffer, true, new Random(), 42, OverlayTexture.NO_OVERLAY);
+                        }
+                    }
+                    net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+                    matrixStack.pop();
+                }
+                RenderSystem.enableLighting();
+            }
+        });
+    }
+
+    private static void DisplayWireframePreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, int size, BlockRayTraceResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AxisAlignedBB errorBoundingBox, boolean haveFullPreview) {
+        List<AxisAlignedBB> blockspos = new ArrayList<>();
+        if (size > 1) {
+            blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
+        } else if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
+            // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
+            BlockPos pos = rtc.getPos().subtract(destOriginPos);
+            blockspos.add(new AxisAlignedBB(pos, pos));
+        }
+        if (blockspos.isEmpty()) {
+            BlockPos pos = new BlockPos(extendSize, 0, extendSize);
+            blockspos.add(new AxisAlignedBB(pos, pos));
+        }
+
+        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
+        doWirePrologue();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferBuilder = tessellator.getBuffer();
+
+        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+
+        for (AxisAlignedBB bb : blockspos) {
+            BlockPos recenter = recenterRotation(extendSize, placement);
+            AxisAlignedBB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
+                    .offset(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
+                    .offset(recenter.getX(), recenter.getY(), recenter.getZ())
+                    .expand(1, 1, 1);
+
+            int color = 0xDDDDDD;
+            if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
+                // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
+                GlStateManager.lineWidth(haveFullPreview ? 2.0F : 5.0F);
+                color = CapsuleItem.getBaseColor(heldItemMainhand);
+            } else {
+                for (double j = dest.minZ; j < dest.maxZ; ++j) {
+                    for (double k = dest.minY; k < dest.maxY; ++k) {
+                        for (double l = dest.minX; l < dest.maxX; ++l) {
+                            BlockPos pos = new BlockPos(l, k, j);
+                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
+                                GlStateManager.lineWidth(5.0F);
+                                bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
+                                setColor(0xaa0000, 255);
+                                drawCapsuleCube(errorBoundingBox.offset(pos), bufferBuilder);
+                                tessellator.draw();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!haveFullPreview) {
+                GlStateManager.lineWidth(1);
+                RenderSystem.enableBlend();
+                bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
+                setColor(color, 160);
+                drawCapsuleCube(dest, bufferBuilder);
+                tessellator.draw();
+            }
+        }
+
+        setColor(0xFFFFFF, 255);
+        doWireEpilogue();
+        doPositionEpilogue();
     }
 
     private static boolean isDeployable(ItemStack heldItemMainhand) {
@@ -230,13 +325,12 @@ public class CapsulePreviewHandler {
         doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
         doOverlayPrologue();
 
-        setColor(0x5B9CFF, 80);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
         bufferBuilder.begin(7, DefaultVertexFormats.POSITION);
+        setColor(0x5B9CFF, 80);
         drawCube(location, 0, bufferBuilder);
         tessellator.draw();
-        setColor(0xFFFFFF, 255);
 
         doOverlayEpilogue();
         doPositionEpilogue();

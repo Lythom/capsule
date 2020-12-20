@@ -542,7 +542,7 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void heldItemChange(LivingEquipmentChangeEvent event) {
-        if (event.getEntity() instanceof PlayerEntity && event.getSlot().equals(EquipmentSlotType.MAINHAND) && isBlueprint(event.getTo())) {
+        if (event.getEntity() instanceof PlayerEntity && event.getSlot().equals(EquipmentSlotType.MAINHAND) && isInstantAndUndeployed(event.getTo())) {
             askPreviewIfNeeded(event.getTo());
         }
     }

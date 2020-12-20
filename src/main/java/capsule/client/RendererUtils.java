@@ -1,6 +1,7 @@
 package capsule.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -106,9 +107,12 @@ public class RendererUtils {
     }
 
     public static void drawCapsuleCube(AxisAlignedBB boundingBox, BufferBuilder bufferBuilder) {
-        drawCubeBottom(boundingBox, bufferBuilder);
-        drawCubeTop(boundingBox, bufferBuilder);
-        drawCubeSides(boundingBox, bufferBuilder);
+        drawPlaneNegX(boundingBox.minX, boundingBox.minY, boundingBox.maxY, boundingBox.minZ, boundingBox.maxZ, bufferBuilder);
+        drawPlanePosX(boundingBox.maxX, boundingBox.minY, boundingBox.maxY, boundingBox.minZ, boundingBox.maxZ, bufferBuilder);
+        drawPlaneNegY(boundingBox.minY, boundingBox.minX, boundingBox.maxX, boundingBox.minZ, boundingBox.maxZ, bufferBuilder);
+        drawPlanePosY(boundingBox.maxY, boundingBox.minX, boundingBox.maxX, boundingBox.minZ, boundingBox.maxZ, bufferBuilder);
+        drawPlaneNegZ(boundingBox.minZ, boundingBox.minX, boundingBox.maxX, boundingBox.minY, boundingBox.maxY, bufferBuilder);
+        drawPlanePosZ(boundingBox.maxZ, boundingBox.minX, boundingBox.maxX, boundingBox.minY, boundingBox.maxY, bufferBuilder);
     }
 
     public static void drawCubeBottom(AxisAlignedBB boundingBox, BufferBuilder bufferBuilder) {

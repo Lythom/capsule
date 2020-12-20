@@ -103,7 +103,7 @@ public class CapsuleCommand {
 
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
 
-        final LiteralArgumentBuilder<CommandSource> capsuleCommand = Commands.literal("capsule").requires((player) -> player.hasPermissionLevel(2));
+        final LiteralArgumentBuilder<CommandSource> capsuleCommand = Commands.literal("capsule");
 
         capsuleCommand
                 .then(Commands.literal("help")
@@ -127,6 +127,7 @@ public class CapsuleCommand {
                         }))
                 // giveEmpty [size] [overpowered]
                 .then(Commands.literal("giveEmpty")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), 3, false))
                         .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
                                 .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), false))
@@ -137,6 +138,7 @@ public class CapsuleCommand {
                 )
                 // giveLinked <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveLinked")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveLinked(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
@@ -147,6 +149,7 @@ public class CapsuleCommand {
                 )
                 // giveBlueprint <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveBlueprint")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveBlueprint(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
@@ -157,14 +160,17 @@ public class CapsuleCommand {
                 )
                 // exportHeldItem
                 .then(Commands.literal("exportHeldItem")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
                 )
                 // exportSeenBlock
                 .then(Commands.literal("exportSeenBlock")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> executeExportSeenBlock(ctx.getSource().asPlayer()))
                 )
                 // fromExistingReward <rewardTemplateName> [playerName]
                 .then(Commands.literal("fromExistingReward")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeFromExistingReward(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
@@ -175,6 +181,7 @@ public class CapsuleCommand {
                 )
                 // fromStructure <structureTemplateName> [playerName]
                 .then(Commands.literal("fromStructure")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_TEMPLATE())
                                 .executes(ctx -> executeFromStructure(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
@@ -185,12 +192,14 @@ public class CapsuleCommand {
                 )
                 // fromHeldCapsule [outputTemplateName]
                 .then(Commands.literal("fromHeldCapsule")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("outputTemplateName", string())
                                 .executes(ctx -> executeFromHeldCapsule(ctx.getSource().asPlayer(), getString(ctx, "outputTemplateName")))
                         )
                 )
                 // giveRandomLoot [playerName]
                 .then(Commands.literal("giveRandomLoot")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> executeGiveRandomLoot(ctx.getSource().asPlayer()))
                         .then(Commands.argument("target", player())
                                 .executes(ctx -> executeGiveRandomLoot(getPlayer(ctx, "target")))
@@ -198,6 +207,7 @@ public class CapsuleCommand {
                 )
                 // reloadLootList
                 .then(Commands.literal("reloadLootList")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> {
                             IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -206,6 +216,7 @@ public class CapsuleCommand {
                 )
                 // reloadWhitelist
                 .then(Commands.literal("reloadWhitelist")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> {
                             IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -216,12 +227,14 @@ public class CapsuleCommand {
                 )
                 // setAuthor <authorName>
                 .then(Commands.literal("setAuthor")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("authorName", string())
                                 .executes(ctx -> executeSetAuthor(ctx.getSource().asPlayer(), getString(ctx, "authorName")))
                         )
                 )
                 // setBaseColor <color>
                 .then(Commands.literal("setBaseColor")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
                                 .executes(ctx -> executeSetBaseColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
@@ -229,14 +242,24 @@ public class CapsuleCommand {
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("setMaterialColor")
+                        .requires((player) -> player.hasPermissionLevel(2))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
                                 .executes(ctx -> executeSetMaterialColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
                         )
                 )
+                // setMaterialColor <color>
+                .then(Commands.literal("downloadTemplate")
+                        .requires((player) -> player.hasPermissionLevel(0))
+                        .executes(ctx -> executeDownloadTemplate(ctx.getSource().asPlayer()))
+                )
         ;
 
         dispatcher.register(capsuleCommand);
+    }
+
+    private static int executeDownloadTemplate(ServerPlayerEntity asPlayer) {
+        return 0;
     }
 
     private static int executeGiveEmpty(ServerPlayerEntity player, int size, boolean overpowered) {

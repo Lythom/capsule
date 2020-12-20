@@ -7,6 +7,7 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -66,6 +67,7 @@ public class CapsuleContentPreviewQueryToServer {
             if (template != null) {
                 List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.getBlocks());
                 CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
+                CapsuleNetwork.wrapper.reply(new CapsuleFullContentAnswerToClient(template, this.getStructureName()), ctx.get());
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
                 String structureName = heldItem.getTag().getString("structureName");

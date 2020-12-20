@@ -28,6 +28,8 @@ public class CapsuleNetwork {
         wrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleContentPreviewAnswerToClient.class, CapsuleContentPreviewAnswerToClient::toBytes, CapsuleContentPreviewAnswerToClient::new, CapsuleContentPreviewAnswerToClient::onClient);
         // server sends to client the data needed to render undeploy
         wrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleUndeployNotifToClient.class, CapsuleUndeployNotifToClient::toBytes, CapsuleUndeployNotifToClient::new, CapsuleUndeployNotifToClient::onClient);
+        // server sends to client the full NBT for display
+        wrapper.registerMessage(CAPSULE_CHANNEL_MESSAGE_ID++, CapsuleFullContentAnswerToClient.class, CapsuleFullContentAnswerToClient::toBytes, CapsuleFullContentAnswerToClient::new, CapsuleFullContentAnswerToClient::onClient);
 
     }
 }
