@@ -5,10 +5,8 @@ import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.item.Items;
+import net.minecraft.item.crafting.*;
 import net.minecraft.nbt.IntNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,10 +14,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.RegistryEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class CapsuleItems {
 
@@ -57,11 +52,18 @@ public class CapsuleItems {
     public static void registerRecipesClient(RecipeManager manager) {
         blueprintCapsules.clear();
         blueprintPrefabs.clear();
+        capsuleList.clear();
+        opCapsuleList.clear();
+        unlabelledCapsule = null;
+        deployedCapsule = null;
+        recoveryCapsule = null;
+        blueprintChangedCapsule = null;
+        upgradedCapsule = null;
 
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
         for (IRecipe<?> recipe : manager.getRecipes()) {
-            if (recipe.getId().getNamespace().equals("capsule")) {
+            if (recipe.getId().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
                     blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), ((BlueprintCapsuleRecipe) recipe)));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
@@ -92,6 +94,10 @@ public class CapsuleItems {
             unlabelledCapsule = Pair.of(getUnlabelledCapsule(CapsuleItems.capsuleList.firstKey()), null);
             deployedCapsule = Pair.of(getDeployedCapsule(CapsuleItems.capsuleList.firstKey()), null);
         }
+    }
+
+    private static boolean hasNoEmptyTagsIngredient(IRecipe<?> recipe) {
+        return recipe.getIngredients().stream().allMatch(i -> i.hasNoMatchingItems() || Arrays.stream(i.getMatchingStacks()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {

@@ -130,6 +130,11 @@ dependencies {
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}")
     implementation fg.deobf("curse.maven:security-craft-64760:3109601")
 
+//    runtimeOnly fg.deobf("curse.maven:coffcore-69162:3104348")
+//    runtimeOnly fg.deobf("curse.maven:thermalfund-222880:3104349")
+//    runtimeOnly fg.deobf("curse.maven:thermalexp-69163:3104350")
+
+    // runtimeOnly fg.deobf("curse.maven:immersiveengineering-231951:3099023")
 }
 
 jar {

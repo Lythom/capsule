@@ -5,7 +5,6 @@ import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import capsule.recipes.BlueprintCapsuleRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaRecipeCategoryUid;
@@ -22,18 +21,21 @@ import net.minecraft.nbt.ByteNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 @JeiPlugin
 public class CapsulePlugin implements IModPlugin {
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsulePlugin.class);
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration subtypeRegistry) {
@@ -57,6 +59,14 @@ public class CapsulePlugin implements IModPlugin {
             }
             // clear
             recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
+        }
+
+        if (CapsuleItems.recoveryCapsule == null ||
+                CapsuleItems.unlabelledCapsule == null ||
+                CapsuleItems.deployedCapsule == null ||
+                CapsuleItems.blueprintChangedCapsule == null) {
+            LOGGER.error("Some required capsule recipe is missing (recovery, regular capsules or blueprintChanged recipe). The datapack might be corrupted for capsule or the recipe have been remove. JEI won't display the items and capsule might break at some points.");
+            return;
         }
 
         ItemStack recoveryCapsule = CapsuleItems.recoveryCapsule.getKey();
