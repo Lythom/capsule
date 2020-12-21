@@ -1,5 +1,6 @@
 package capsule.network;
 
+import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Capsule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
@@ -27,6 +28,7 @@ public class CapsuleUndeployNotifToClient {
     public void onClient(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             Capsule.showUndeployParticules(Minecraft.getInstance().world, posFrom, posTo, size);
+            // CapsulePreviewHandler.currentFullPreview TODO SET DIRTY TO FETCH AGAIN NEXT TIME, TODO TEST SERVERS
         });
         ctx.get().setPacketHandled(true);
     }

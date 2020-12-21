@@ -12,19 +12,19 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -32,6 +32,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
+import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -40,6 +41,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.opengl.GL14;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,11 +49,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static capsule.client.RendererUtils.*;
 import static capsule.items.CapsuleItem.CapsuleState.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
+import static net.minecraft.client.renderer.RenderType.*;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
@@ -62,6 +66,8 @@ public class CapsulePreviewHandler {
     private static int lastSize = 0;
     private static int lastColor = 0;
 
+    static double time = 0;
+
     public CapsulePreviewHandler() {
     }
 
@@ -71,6 +77,7 @@ public class CapsulePreviewHandler {
     @SubscribeEvent
     public static void onWorldRenderLast(RenderWorldLastEvent event) {
         Minecraft mc = Minecraft.getInstance();
+        time += 1;
 
         if (mc.player != null) {
             tryPreviewRecall(mc.player.getHeldItemMainhand());
@@ -98,8 +105,9 @@ public class CapsulePreviewHandler {
 
                 CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
 
-                try (OutputStream outputstream = new FileOutputStream(path.toFile())) {
-                    CompressedStreamTools.writeCompressed(compoundnbt, outputstream);
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+                try {
+                    CompressedStreamTools.write(compoundnbt, path.resolve(df.format(new Date()) + "-" + structureName + ".nbt").toFile());
                 } catch (Throwable var21) {
                     LOGGER.error(var21);
                 }
@@ -182,30 +190,58 @@ public class CapsulePreviewHandler {
     }
 
     public static List<RenderType> getBlockRenderTypes() {
-        return ImmutableList.of(RenderType.getTranslucent(), RenderType.getCutout(), RenderType.getCutoutMipped(), RenderType.getSolid());
+        return ImmutableList.of(getSolid(), getCutoutMipped(), getCutout(), getTranslucent());
     }
 
     private static void DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, ILightReader world) {
         ActiveRenderInfo info = Minecraft.getInstance().getRenderManager().info;
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
+        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-        template.getBlocks().forEach(blockInfo -> {
-            BlockState state = blockInfo.state;
-            BlockPos blockpos = blockInfo.pos.add(destOriginPos);
+        for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.getBlocks())) {
+            BlockPos blockpos = blockInfo.pos.add(recenterRotation(extendSize, placement));
+            BlockState state = blockInfo.state.mirror(placement.getMirror()).rotate(placement.getRotation());
 
             if (state.getRenderType() != BlockRenderType.INVISIBLE) {
-                Minecraft.getInstance().getTextureManager().bindTexture(PlayerContainer.LOCATION_BLOCKS_TEXTURE);
-                RenderSystem.disableLighting();
                 if (state.getRenderType() == BlockRenderType.MODEL) {
                     matrixStack.push();
-                    matrixStack.translate(blockpos.getX() - info.getProjectedView().getX(), blockpos.getY() - info.getProjectedView().getY(), blockpos.getZ() - info.getProjectedView().getZ());
-
+                    float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.08f) * Math.cos(time * 0.12f)) - 0.3f;
+                    glitchIntensity = (float) Math.min(0.04, Math.max(0, glitchIntensity));
+                    float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.09f) * Math.cos(time * 0.14f))) * glitchIntensity;
+                    float glitchValue = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.5)));
+                    float glitchValuey = (float) Math.min(0.3, Math.max(0, Math.tan(time * 0.2)));
+                    float glitchValuez = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.8)));
+                    float rot = 0;
+                    if (placement.getRotation() == Rotation.CLOCKWISE_90) rot = 90;
+                    if (placement.getRotation() == Rotation.CLOCKWISE_180) rot = 180;
+                    if (placement.getRotation() == Rotation.COUNTERCLOCKWISE_90) rot = 270;
+                    matrixStack.translate(
+                            blockpos.getX() - info.getProjectedView().getX() + glitchIntensity2 * glitchValue,
+                            blockpos.getY() - info.getProjectedView().getY() + glitchIntensity * glitchValuey,
+                            blockpos.getZ() - info.getProjectedView().getZ() + glitchIntensity2 * glitchValuez);
+                    matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
+//
                     for (net.minecraft.client.renderer.RenderType type : getBlockRenderTypes()) {
                         if (RenderTypeLookup.canRenderInLayer(state, type)) {
                             net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
-                            IVertexBuilder buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource().getBuffer(type).color(255, 255, 255, 150);
-                            blockrendererdispatcher.getBlockModelRenderer().renderModel(world, blockrendererdispatcher.getModelForState(state), state, destOriginPos, matrixStack, buffer, true, new Random(), 42, OverlayTexture.NO_OVERLAY);
+                            type.setupRenderState();
+                            RenderSystem.enableBlend();
+                            GL14.glBlendColor(0, 0, 0, 0.9f - glitchIntensity * 2);
+                            RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
+
+                            Tessellator tessellator = Tessellator.getInstance();
+                            BufferBuilder buffer = tessellator.getBuffer();
+                            buffer.begin(7, DefaultVertexFormats.BLOCK);
+
+                            IBakedModel model = blockrendererdispatcher.getModelForState(state);
+                            blockrendererdispatcher.getBlockModelRenderer().renderModel(world, model, state, destOriginPos, matrixStack, buffer, false, new Random(), 42, OverlayTexture.NO_OVERLAY);
+                            tessellator.draw();
+
+                            RenderSystem.disableBlend();
+                            RenderSystem.defaultBlendFunc();
+                            type.clearRenderState();
                         }
                     }
                     net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
@@ -213,7 +249,7 @@ public class CapsulePreviewHandler {
                 }
                 RenderSystem.enableLighting();
             }
-        });
+        }
     }
 
     private static void DisplayWireframePreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, int size, BlockRayTraceResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AxisAlignedBB errorBoundingBox, boolean haveFullPreview) {
