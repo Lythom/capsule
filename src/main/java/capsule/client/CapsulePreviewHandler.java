@@ -19,12 +19,14 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.fluid.IFluidState;
+import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -44,9 +46,7 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL14;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -200,56 +200,88 @@ public class CapsulePreviewHandler {
 
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
+        float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.08f) * Math.cos(time * 0.12f)) - 0.3f;
+        glitchIntensity = (float) Math.min(0.04, Math.max(0, glitchIntensity));
+        float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.09f) * Math.cos(time * 0.14f))) * glitchIntensity;
+        float glitchValue = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.5)));
+        float glitchValuey = (float) Math.min(0.3, Math.max(0, Math.tan(time * 0.2)));
+        float glitchValuez = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.8)));
+
+        matrixStack.push();
+        matrixStack.translate(
+                glitchIntensity2 * glitchValue,
+                glitchIntensity * glitchValuey,
+                glitchIntensity2 * glitchValuez);
+        matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
+
         for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.getBlocks())) {
             BlockPos blockpos = blockInfo.pos.add(recenterRotation(extendSize, placement));
             BlockState state = blockInfo.state.mirror(placement.getMirror()).rotate(placement.getRotation());
 
-            if (state.getRenderType() != BlockRenderType.INVISIBLE) {
-                if (state.getRenderType() == BlockRenderType.MODEL) {
-                    matrixStack.push();
-                    float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.08f) * Math.cos(time * 0.12f)) - 0.3f;
-                    glitchIntensity = (float) Math.min(0.04, Math.max(0, glitchIntensity));
-                    float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.09f) * Math.cos(time * 0.14f))) * glitchIntensity;
-                    float glitchValue = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.5)));
-                    float glitchValuey = (float) Math.min(0.3, Math.max(0, Math.tan(time * 0.2)));
-                    float glitchValuez = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.8)));
-                    float rot = 0;
-                    if (placement.getRotation() == Rotation.CLOCKWISE_90) rot = 90;
-                    if (placement.getRotation() == Rotation.CLOCKWISE_180) rot = 180;
-                    if (placement.getRotation() == Rotation.COUNTERCLOCKWISE_90) rot = 270;
-                    matrixStack.translate(
-                            blockpos.getX() - info.getProjectedView().getX() + glitchIntensity2 * glitchValue,
-                            blockpos.getY() - info.getProjectedView().getY() + glitchIntensity * glitchValuey,
-                            blockpos.getZ() - info.getProjectedView().getZ() + glitchIntensity2 * glitchValuez);
-                    matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
+            if (!state.isAir()) {
+                matrixStack.push();
+                matrixStack.translate(
+                        blockpos.getX() - info.getProjectedView().getX(),
+                        blockpos.getY() - info.getProjectedView().getY(),
+                        blockpos.getZ() - info.getProjectedView().getZ()
+                );
 //
-                    for (net.minecraft.client.renderer.RenderType type : getBlockRenderTypes()) {
-                        if (RenderTypeLookup.canRenderInLayer(state, type)) {
-                            net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
-                            type.setupRenderState();
-                            RenderSystem.enableBlend();
-                            GL14.glBlendColor(0, 0, 0, 0.9f - glitchIntensity * 2);
-                            RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
+                for (net.minecraft.client.renderer.RenderType type : getBlockRenderTypes()) {
+                    if (RenderTypeLookup.canRenderInLayer(state, type)) {
+                        net.minecraftforge.client.ForgeHooksClient.setRenderLayer(type);
+                        type.setupRenderState();
+                        RenderSystem.enableBlend();
+                        GL14.glBlendColor(0, 0, 0, 0.9f - glitchIntensity * 2);
+                        RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
 
-                            Tessellator tessellator = Tessellator.getInstance();
-                            BufferBuilder buffer = tessellator.getBuffer();
-                            buffer.begin(7, DefaultVertexFormats.BLOCK);
+                        Tessellator tessellator = Tessellator.getInstance();
+                        BufferBuilder buffer = tessellator.getBuffer();
+                        buffer.begin(7, DefaultVertexFormats.BLOCK);
 
+                        if (state.getRenderType() == BlockRenderType.MODEL) {
                             IBakedModel model = blockrendererdispatcher.getModelForState(state);
                             blockrendererdispatcher.getBlockModelRenderer().renderModel(world, model, state, destOriginPos, matrixStack, buffer, false, new Random(), 42, OverlayTexture.NO_OVERLAY);
-                            tessellator.draw();
-
-                            RenderSystem.disableBlend();
-                            RenderSystem.defaultBlendFunc();
-                            type.clearRenderState();
+                        } else {
+                            IFluidState ifluidstate = state.getFluidState();
+                            if (!ifluidstate.isEmpty()) {
+                                renderFluid(matrixStack, destOriginPos, world, buffer, ifluidstate);
+                            }
                         }
+
+                        tessellator.draw();
+
+                        RenderSystem.disableBlend();
+                        RenderSystem.defaultBlendFunc();
+                        type.clearRenderState();
                     }
-                    net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
-                    matrixStack.pop();
                 }
-                RenderSystem.enableLighting();
+                net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+                matrixStack.pop();
             }
+            RenderSystem.enableLighting();
         }
+
+        matrixStack.pop();
+    }
+
+    private static void renderFluid(MatrixStack matrixStack, BlockPos destOriginPos, ILightReader world, BufferBuilder buffer, IFluidState ifluidstate) {
+        TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasSpriteGetter(PlayerContainer.LOCATION_BLOCKS_TEXTURE).apply(ifluidstate.getFluid().getAttributes().getStillTexture());
+
+        float minU = sprite.getMinU();
+        float maxU = Math.min(minU + (sprite.getMaxU() - minU) * 1, sprite.getMaxU());
+        float minV = sprite.getMinV();
+        float maxV = Math.min(minV + (sprite.getMaxV() - minV) * 1, sprite.getMaxV());
+        int waterColor = ifluidstate.getFluid().getAttributes().getColor(world, destOriginPos);
+        float red = (float) (waterColor >> 16 & 255) / 255.0F;
+        float green = (float) (waterColor >> 8 & 255) / 255.0F;
+        float blue = (float) (waterColor & 255) / 255.0F;
+
+        Matrix4f matrix = matrixStack.getLast().getMatrix();
+
+        buffer.pos(matrix, 0, 1, 0).color(red, green, blue, 1.0F).tex(maxU, minV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.pos(matrix, 0, 1, 1).color(red, green, blue, 1.0F).tex(minU, minV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.pos(matrix, 1, 1, 1).color(red, green, blue, 1.0F).tex(minU, maxV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.pos(matrix, 1, 1, 0).color(red, green, blue, 1.0F).tex(maxU, maxV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
 
     private static void DisplayWireframePreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, int size, BlockRayTraceResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AxisAlignedBB errorBoundingBox, boolean haveFullPreview) {
