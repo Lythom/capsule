@@ -200,12 +200,12 @@ public class CapsulePreviewHandler {
 
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-        float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.08f) * Math.cos(time * 0.12f)) - 0.3f;
-        glitchIntensity = (float) Math.min(0.04, Math.max(0, glitchIntensity));
-        float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.09f) * Math.cos(time * 0.14f))) * glitchIntensity;
-        float glitchValue = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.5)));
-        float glitchValuey = (float) Math.min(0.3, Math.max(0, Math.tan(time * 0.2)));
-        float glitchValuez = (float) Math.min(0.15, Math.max(0, Math.tan(time * 0.8)));
+        float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.14f) * Math.cos(time * 0.12f)) - 0.3f;
+        glitchIntensity = (float) Math.min(0.05, Math.max(0, glitchIntensity));
+        float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.15f) * Math.cos(time * 0.14f))) * glitchIntensity;
+        float glitchValue = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.5)));
+        float glitchValuey = (float) Math.min(0.32, Math.max(0, Math.tan(time * 0.2)));
+        float glitchValuez = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.8)));
 
         matrixStack.push();
         matrixStack.translate(
