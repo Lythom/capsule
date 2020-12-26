@@ -220,9 +220,10 @@ public class CapsuleTemplate {
     // FORGE: Add processing for entities
     public static List<Template.EntityInfo> processEntityInfos(@Nullable CapsuleTemplate template, IWorld worldIn, BlockPos offsetPos, PlacementSettings placementSettingsIn, List<Template.EntityInfo> blockInfos) {
         List<Template.EntityInfo> list = Lists.newArrayList();
+        BlockPos recenterOffset = template == null ? BlockPos.ZERO : recenterRotation((template.size.getX() - 1) / 2, placementSettingsIn);
 
         for (Template.EntityInfo entityInfo : blockInfos) {
-            Vec3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(new Vec3d(offsetPos));
+            Vec3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(new Vec3d(offsetPos)).add(new Vec3d(recenterOffset));
             BlockPos blockpos = transformedBlockPos(placementSettingsIn, entityInfo.blockPos).add(offsetPos);
             Template.EntityInfo info = new Template.EntityInfo(pos, blockpos, entityInfo.nbt);
             list.add(info);
@@ -233,12 +234,9 @@ public class CapsuleTemplate {
 
     private void addEntitiesToWorld(IWorld worldIn, BlockPos offsetPos, PlacementSettings placementIn, Mirror mirrorIn, Rotation rotationIn, BlockPos centerOffset, @Nullable MutableBoundingBox boundsIn, List<Entity> spawnedEntities) {
         for (Template.EntityInfo template$entityinfo : processEntityInfos(this, worldIn, offsetPos, placementIn, this.entities)) {
-            BlockPos blockpos = getTransformedPos(template$entityinfo.blockPos, mirrorIn, rotationIn, centerOffset).add(offsetPos);
-            blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
+            BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
             if (boundsIn == null || boundsIn.isVecInside(blockpos)) {
                 CompoundNBT compoundnbt = template$entityinfo.nbt;
-                Vec3d vec3d = getTransformedPos(template$entityinfo.pos, mirrorIn, rotationIn, centerOffset);
-                vec3d = vec3d.add(offsetPos.getX(), offsetPos.getY(), offsetPos.getZ());
                 Vec3d vec3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListNBT listnbt = new ListNBT();
                 listnbt.add(DoubleNBT.valueOf(vec3d1.x));
@@ -784,7 +782,7 @@ public class CapsuleTemplate {
             return false;
         } else {
             List<Template.BlockInfo> list = placementIn.func_227459_a_(this.blocks, pos);
-            if ((!list.isEmpty() || !placementIn.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
+            if (!list.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
                 MutableBoundingBox mutableboundingbox = placementIn.getBoundingBox();
                 List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.func_204763_l() ? list.size() : 0);
                 List<Pair<BlockPos, CompoundNBT>> list2 = Lists.newArrayListWithCapacity(list.size());
