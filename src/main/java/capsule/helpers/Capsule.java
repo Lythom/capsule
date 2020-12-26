@@ -88,7 +88,7 @@ public class Capsule {
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
-                if (playerIn != null) notifyUndeploy(playerIn, startPos, size);
+                if (playerIn != null) notifyUndeploy(playerIn, startPos, size, CapsuleItem.getStructureName(capsule));
             } else if (playerIn != null) {
                 playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"));
             }
@@ -100,19 +100,20 @@ public class Capsule {
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 CapsuleItem.setPlacement(capsule, new PlacementSettings());
-                if (playerIn != null) notifyUndeploy(playerIn, startPos, size);
+                if (playerIn != null) notifyUndeploy(playerIn, startPos, size, CapsuleItem.getStructureName(capsule));
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
-                if (playerIn != null) playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
+                if (playerIn != null)
+                    playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
             }
         }
     }
 
-    private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size) {
+    private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size, String templateName) {
         BlockPos center = startPos.add(size / 2, size / 2, size / 2);
         CapsuleNetwork.wrapper.send(
                 PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, playerIn.dimension)),
-                new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size)
+                new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size, templateName)
         );
     }
 
@@ -411,7 +412,7 @@ public class Capsule {
                     BlockPos center = anchor.add(0, size / 2, 0);
                     CapsuleNetwork.wrapper.send(
                             PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, ItemEntity.dimension)),
-                            new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size)
+                            new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size, CapsuleItem.getStructureName(capsule))
                     );
                 }
             } catch (Exception e) {

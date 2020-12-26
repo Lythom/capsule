@@ -51,7 +51,7 @@ public class CapsuleThrowQueryToServer {
                             BlockPos center = pos.add(0, size / 2, 0);
                             CapsuleNetwork.wrapper.send(
                                     PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, sendingPlayer.dimension)),
-                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size)
+                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size, CapsuleItem.getStructureName(heldItem))
                             );
                         }
                     }

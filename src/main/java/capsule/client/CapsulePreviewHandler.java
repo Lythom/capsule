@@ -31,6 +31,8 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -45,7 +47,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL14;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,22 +98,28 @@ public class CapsulePreviewHandler {
         if ("/capsule downloadTemplate".equals(event.getMessage())) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                String structureName = CapsuleItem.getStructureName(mc.player.getHeldItemMainhand());
-                CapsuleTemplate template = currentFullPreview.get(structureName);
-                Path path = new File("capsule_exports").toPath();
-                try {
-                    Files.createDirectories(Files.exists(path) ? path.toRealPath() : path);
-                } catch (IOException var19) {
-                    LOGGER.error("Failed to create parent directory: {}", path);
-                }
-
-                CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
-
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
-                try {
-                    CompressedStreamTools.write(compoundnbt, path.resolve(df.format(new Date()) + "-" + structureName + ".nbt").toFile());
-                } catch (Throwable var21) {
-                    LOGGER.error(var21);
+                ItemStack heldItem = mc.player.getHeldItemMainhand();
+                String structureName = CapsuleItem.getStructureName(heldItem);
+                if (heldItem.getItem() instanceof CapsuleItem && structureName != null) {
+                    CapsuleTemplate template = currentFullPreview.get(structureName);
+                    Path path = new File("capsule_exports").toPath();
+                    try {
+                        Files.createDirectories(Files.exists(path) ? path.toRealPath() : path);
+                    } catch (IOException var19) {
+                        LOGGER.error("Failed to create parent directory: {}", path);
+                    }
+                    try {
+                        CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
+                        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+                        Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
+                        CompressedStreamTools.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
+                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")));
+                    } catch (Throwable var21) {
+                        LOGGER.error(var21);
+                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"));
+                    }
+                } else {
+                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"));
                 }
             }
         }

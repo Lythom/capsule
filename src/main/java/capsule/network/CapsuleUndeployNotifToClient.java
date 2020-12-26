@@ -15,20 +15,22 @@ public class CapsuleUndeployNotifToClient {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleUndeployNotifToClient.class);
 
+    public String templateName = null;
     public BlockPos posFrom = null;
     public BlockPos posTo = null;
     public int size = 0;
 
-    public CapsuleUndeployNotifToClient(BlockPos posFrom, BlockPos posTo, int size) {
+    public CapsuleUndeployNotifToClient(BlockPos posFrom, BlockPos posTo, int size, String templateName) {
         this.posFrom = posFrom;
         this.posTo = posTo;
         this.size = size;
+        this.templateName = templateName;
     }
 
     public void onClient(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             Capsule.showUndeployParticules(Minecraft.getInstance().world, posFrom, posTo, size);
-            // CapsulePreviewHandler.currentFullPreview TODO SET DIRTY TO FETCH AGAIN NEXT TIME, TODO TEST SERVERS
+            CapsulePreviewHandler.currentFullPreview.remove(templateName);
         });
         ctx.get().setPacketHandled(true);
     }
@@ -38,6 +40,7 @@ public class CapsuleUndeployNotifToClient {
             this.posFrom = buf.readBlockPos();
             this.posTo = buf.readBlockPos();
             this.size = buf.readShort();
+            this.templateName = buf.readString();
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleUndeployNotifToClient: " + ioe);
         }
@@ -47,6 +50,7 @@ public class CapsuleUndeployNotifToClient {
         buf.writeBlockPos(posFrom);
         buf.writeBlockPos(posTo);
         buf.writeShort(size);
+        buf.writeString(templateName);
     }
 
     @Override
