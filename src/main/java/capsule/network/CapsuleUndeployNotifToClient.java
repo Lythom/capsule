@@ -30,6 +30,7 @@ public class CapsuleUndeployNotifToClient {
     public void onClient(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             Capsule.showUndeployParticules(Minecraft.getInstance().world, posFrom, posTo, size);
+            CapsulePreviewHandler.currentPreview.remove(templateName);
             CapsulePreviewHandler.currentFullPreview.remove(templateName);
         });
         ctx.get().setPacketHandled(true);

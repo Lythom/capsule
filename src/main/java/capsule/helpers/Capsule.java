@@ -88,7 +88,7 @@ public class Capsule {
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
-                if (playerIn != null) notifyUndeploy(playerIn, startPos, size, CapsuleItem.getStructureName(capsule));
+                if (playerIn != null) notifyUndeploy(playerIn, startPos, size, null); // no cache clean for blueprints
             } else if (playerIn != null) {
                 playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"));
             }
