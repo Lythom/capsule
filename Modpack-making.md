@@ -41,6 +41,12 @@ Apart from the player crafting it's own capsule, there are 2 ways to give player
 - [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#givelinked).
 - [since 3.2.95] As starter capsule, given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
 
+#### About rotation
+
+Standard capsules can be rotated and mirrored by players using left click / shift+left click while previewing deloyment. All vanilla blocks, tileEntities and non-living entities (minecarts,etc) are supported but modded tileEntities will prevent a rotation by default. This is to prevent messing with modded tileEntities that have specific considerations with their orientation that capsule cannot know.
+
+If you want capsule to still try to rotate some specific block, you can whitelist them for blueprints, it will allow the block both to rotate in regular capsules and be used in blueprints. Checkout the [Blueprint whitelist section](#whitelist).
+
 ### Rewards
 
 Reward capsules are what you would be doing most. They are prepared by modpack maker, and stored in the config/capsule/rewards folder by default.
