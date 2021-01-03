@@ -59,7 +59,6 @@ import java.util.*;
 import static capsule.client.RendererUtils.*;
 import static capsule.items.CapsuleItem.CapsuleState.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
-import static net.minecraft.client.renderer.RenderType.*;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
@@ -67,8 +66,13 @@ public class CapsulePreviewHandler {
 
     public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
     public static final Map<String, CapsuleTemplate> currentFullPreview = new HashMap<>();
+    public static final double NS_TO_MS = 0.000001d;
     private static int lastSize = 0;
     private static int lastColor = 0;
+
+    private static int uncompletePreviewsCount = 0;
+    private static int completePreviewsCount = 0;
+    private static String uncompletePreviewsCountStructure = null;
 
     static double time = 0;
 
@@ -175,6 +179,12 @@ public class CapsulePreviewHandler {
                 BlockPos destOriginPos = rtc.getPos().add(rtc.getFace().getDirectionVec()).add(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
+                if (!structureName.equals(uncompletePreviewsCountStructure)) {
+                    uncompletePreviewsCountStructure = structureName;
+                    uncompletePreviewsCount = 0;
+                    completePreviewsCount = 0;
+                }
+
                 AxisAlignedBB errorBoundingBox = new AxisAlignedBB(
                         0,
                         +0.01,
@@ -186,12 +196,22 @@ public class CapsulePreviewHandler {
                 synchronized (CapsulePreviewHandler.currentPreview) {
                     synchronized (CapsulePreviewHandler.currentFullPreview) {
                         boolean haveFullPreview = CapsulePreviewHandler.currentFullPreview.containsKey(structureName);
+                        boolean isRenderComplete = false;
+                        if (haveFullPreview && completePreviewsCount + uncompletePreviewsCount > 60) {
+                            // switch off full preview if it cannot render properly over 60 frames
+                            haveFullPreview = completePreviewsCount > uncompletePreviewsCount;
+                        }
                         if (haveFullPreview) {
-                            DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.world);
+                            isRenderComplete = DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.world);
+                            if (isRenderComplete) {
+                                completePreviewsCount++;
+                            } else {
+                                uncompletePreviewsCount++;
+                            }
                         }
 
                         if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
-                            DisplayWireframePreview(thePlayer, heldItemMainhand, size, rtc, extendSize, destOriginPos, structureName, errorBoundingBox, haveFullPreview);
+                            DisplayWireframePreview(thePlayer, heldItemMainhand, size, rtc, extendSize, destOriginPos, structureName, errorBoundingBox, haveFullPreview && isRenderComplete);
                         }
                     }
                 }
@@ -200,10 +220,11 @@ public class CapsulePreviewHandler {
     }
 
     public static List<RenderType> getBlockRenderTypes() {
-        return ImmutableList.of(getSolid(), getCutoutMipped(), getCutout(), getTranslucent());
+        return ImmutableList.of(RenderType.getTranslucent(), RenderType.getCutout(), RenderType.getCutoutMipped(), RenderType.getSolid());
     }
 
-    private static void DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, ILightReader world) {
+    private static boolean DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, ILightReader world) {
+        boolean isRenderComplete = true;
         ActiveRenderInfo info = Minecraft.getInstance().getRenderManager().info;
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
@@ -216,6 +237,8 @@ public class CapsulePreviewHandler {
         float glitchValue = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.5)));
         float glitchValuey = (float) Math.min(0.32, Math.max(0, Math.tan(time * 0.2)));
         float glitchValuez = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.8)));
+
+        long start = System.nanoTime();
 
         matrixStack.push();
         matrixStack.translate(
@@ -269,9 +292,19 @@ public class CapsulePreviewHandler {
                 matrixStack.pop();
             }
             RenderSystem.enableLighting();
+
+            // limit to 8ms render during profiling
+            if (completePreviewsCount + uncompletePreviewsCount <= 60) {
+                long elapsedTime = System.nanoTime() - start;
+                if (elapsedTime * NS_TO_MS > 8) {
+                    isRenderComplete = false;
+                    break;
+                }
+            }
         }
 
         matrixStack.pop();
+        return isRenderComplete;
     }
 
     private static void renderFluid(MatrixStack matrixStack, BlockPos destOriginPos, ILightReader world, BufferBuilder buffer, IFluidState ifluidstate) {
