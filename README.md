@@ -12,6 +12,17 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.15.2-4.0.52 : Preview performance improvement**
+
+- Added a time budget limit to render the full preview. If the full preview cannot be consistantly rendered it will auto-switch to wireframe render which is a lot faster.
+
+**1.15.2-4.0.51 : Improved preview and client-side download of template**
+
+- Improved rendering: the full blocks are rendered in the preview and not only the wireframes
+- New command ! /capsule downloadTemplate allows you download the template of the capsule you are holding in hand locally in <instance_folder>/capsule_exports. No permission is required to download template from a server as long as you have the capsule in hand and have previewed it once without deploying.
+- Add new empty capsule recipes for some common modded ores (based on the one supported by thermal fundation). So you now get copper, invar, lumium, enderium and more recipes to craft empty capsules.
+- Fix entities rotation we deploying (minecarts, items frames, armor stands, etc.)
+
 **1.15.2-4.0.40 : The 1.15 Update**
 
 Template from previous versions might (or might not) work ! There are some holes in the minecraft datafixer when upgrading structures 1.12 → 1.15 so rememeber to do backups before you try =) 
