@@ -4,7 +4,7 @@ import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.state.BooleanProperty;
-import net.minecraft.state.IProperty;
+import net.minecraft.state.Property;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockReader;
@@ -14,7 +14,7 @@ public class BlockCapsuleMarker extends Block implements ITileEntityProvider {
     /**
      * Whether this fence connects in the northern direction
      */
-    public static final IProperty<Boolean> PROJECTING = BooleanProperty.create("projecting");
+    public static final Property<Boolean> PROJECTING = BooleanProperty.create("projecting");
 
     public BlockCapsuleMarker() {
         super(Block.Properties.create(Material.ROCK, MaterialColor.STONE)

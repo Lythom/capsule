@@ -75,7 +75,7 @@ public class RecallEnchant extends Enchantment {
                 .collect(Collectors.toList());
 
         for (ItemEntity entity : recallItemEntities) {
-            if (entity.getThrowerId() != null && (entity.collided || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
+            if (entity.getThrowerId() != null && (entity.collidedHorizontally || entity.collidedVertically || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.tick();

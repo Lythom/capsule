@@ -7,8 +7,8 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.server.ServerWorld;
@@ -71,7 +71,7 @@ public class CapsuleContentPreviewQueryToServer {
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
                 String structureName = heldItem.getTag().getString("structureName");
-                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName));
+                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName), Util.DUMMY_UUID);
             }
         });
         ctx.get().setPacketHandled(true);

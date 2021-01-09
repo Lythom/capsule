@@ -1,18 +1,16 @@
 package capsule.recipes;
 
-import java.util.stream.Stream;
-
-import javax.annotation.Nullable;
-
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
+
+import javax.annotation.Nullable;
+import java.util.stream.Stream;
 
 public class CapsuleIngredient extends Ingredient
 {

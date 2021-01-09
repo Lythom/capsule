@@ -7,11 +7,9 @@ import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootEntry;
-import net.minecraft.world.storage.loot.StandaloneLootEntry;
-import net.minecraft.world.storage.loot.conditions.ILootCondition;
-import net.minecraft.world.storage.loot.functions.ILootFunction;
+import net.minecraft.loot.*;
+import net.minecraft.loot.conditions.ILootCondition;
+import net.minecraft.loot.functions.ILootFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -113,7 +111,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         Config.LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getWorld().getServer().getResourceManager());
+            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getWorld().getServer().getDataPackRegistries().getResourceManager());
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;
@@ -128,5 +126,10 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
             if (template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
         }
         return null;
+    }
+
+    @Override
+    public LootPoolEntryType func_230420_a_() {
+        return LootEntryManager.LOOT_TABLE;
     }
 }

@@ -8,9 +8,9 @@ import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
+import net.minecraft.loot.LootTables;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.storage.loot.LootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -128,7 +128,7 @@ public class Config {
     }
 
     public static void populateConfigFolders(MinecraftServer server) {
-        IResourceManager ressourceManager = server.getResourceManager();
+        IResourceManager ressourceManager = server.getDataPackRegistries().getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
@@ -213,7 +213,7 @@ public class Config {
         SimpleCommentedConfig rare = new SimpleCommentedConfig(null);
         rare.add("path", "config/capsule/loot/rare");
         rare.add("weight", 2);
-        List<CommentedConfig> list = new ArrayList<CommentedConfig>();
+        List<CommentedConfig> list = new ArrayList<>();
         list.add(common);
         list.add(uncommon);
         list.add(rare);

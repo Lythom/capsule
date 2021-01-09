@@ -22,15 +22,13 @@ import net.minecraft.nbt.IntNBT;
 import net.minecraft.nbt.StringNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.server.ServerWorld;
@@ -42,7 +40,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class Capsule {
 
@@ -72,9 +73,9 @@ public class Capsule {
 
     public static void resentToCapsule(final ItemStack capsule, final ServerWorld world, @Nullable final PlayerEntity playerIn) {
         // store again
-        Integer dimensionId = CapsuleItem.getDimension(capsule);
-        DimensionType dimType = DimensionType.getById(dimensionId);
-        if (dimType == null) return;
+        RegistryKey<World> dimensionId = CapsuleItem.getDimension(capsule);
+        ServerWorld capsuleWorld = world.getServer().getWorld(dimensionId);
+        if (capsuleWorld == null) return;
 
         if (capsule.getTag() == null) return;
         CompoundNBT spawnPos = capsule.getTag().getCompound("spawnPosition");
@@ -84,16 +85,16 @@ public class Capsule {
 
         // do the transportation
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(world, playerIn == null ? null : playerIn.getUniqueID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(capsuleWorld, playerIn == null ? null : playerIn.getUniqueID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 if (playerIn != null) notifyUndeploy(playerIn, startPos, size, null); // no cache clean for blueprints
             } else if (playerIn != null) {
-                playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"));
+                playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"), Util.DUMMY_UUID);
             }
         } else {
-            CapsuleTemplate template = StructureSaver.undeploy(world, playerIn == null ? null : playerIn.getUniqueID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, playerIn == null ? null : playerIn.getUniqueID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
@@ -104,7 +105,7 @@ public class Capsule {
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
                 if (playerIn != null)
-                    playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
+                    playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
             }
         }
     }
@@ -112,7 +113,7 @@ public class Capsule {
     private static void notifyUndeploy(PlayerEntity playerIn, BlockPos startPos, int size, String templateName) {
         BlockPos center = startPos.add(size / 2, size / 2, size / 2);
         CapsuleNetwork.wrapper.send(
-                PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, playerIn.dimension)),
+                PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, playerIn.getEntityWorld().getDimensionKey())),
                 new CapsuleUndeployNotifToClient(center, playerIn.getPosition(), size, templateName)
         );
     }
@@ -136,14 +137,12 @@ public class Capsule {
         String structureName = capsule.getTag().getString("structureName");
 
         // do the transportation
-        List<UUID> outEntityBlocking = new ArrayList<>();
-
         boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, CapsuleItem.getPlacement(capsule));
 
         if (result) {
             // register the link in the capsule
             if (!CapsuleItem.isReward(capsule)) {
-                CapsuleItem.saveSpawnPosition(capsule, dest, world.getDimension().getType().getId());
+                CapsuleItem.saveSpawnPosition(capsule, dest, world.getDimensionKey().getLocation().toString());
                 CapsuleItem.setState(capsule, CapsuleState.DEPLOYED);
                 if (!CapsuleItem.isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
@@ -177,7 +176,7 @@ public class Capsule {
             // send a chat message to explain failure
             PlayerEntity player = playerWorld.getPlayerByUuid(thrower);
             if (player != null) {
-                player.sendMessage(new TranslationTextComponent("capsule.error.noCaptureBase"));
+                player.sendMessage(new TranslationTextComponent("capsule.error.noCaptureBase"), Util.DUMMY_UUID);
             }
         }
 
@@ -214,7 +213,7 @@ public class Capsule {
             double y = (double) posFrom.getY() + Math.random() * size - size * 0.5;
             double z = (double) posFrom.getZ() + 0.5D + Math.random() * size - size * 0.5;
 
-            Vec3d speed = new Vec3d(
+            Vector3d speed = new Vector3d(
                     posTo.getX() - x,
                     posTo.getY() - y,
                     posTo.getZ() - z
@@ -246,7 +245,7 @@ public class Capsule {
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world, player);
         if (missingMaterials == null) {
             if (player != null) {
-                player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
+                player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
             }
             return null;
         }
@@ -326,11 +325,11 @@ public class Capsule {
 
             double diffY = destination.getY() - playerPos.getY() + Math.min(1, flatDistance / 3);
             double yVelocity = (diffY / 10) - (0.5 * 10 * -1 * CapsuleItem.GRAVITY_PER_TICK); // move up then down
-            Vec3d currentMotion = ItemEntity.getMotion();
+            Vector3d currentMotion = ItemEntity.getMotion();
             ItemEntity.setMotion(currentMotion.x, Math.max(0.05, yVelocity), currentMotion.z);
         } else {
             float f = 0.5F;
-            Vec3d playerInMotion = playerIn.getMotion();
+            Vector3d playerInMotion = playerIn.getMotion();
             ItemEntity.setMotion(
                     (double) (-MathHelper.sin(playerIn.rotationYaw * CapsuleItem.TO_RAD) * MathHelper.cos(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f) + playerInMotion.x,
                     (double) (-MathHelper.sin(playerIn.rotationPitch * CapsuleItem.TO_RAD) * f + 0.1F) + playerInMotion.y,
@@ -411,7 +410,7 @@ public class Capsule {
                 if (captured) {
                     BlockPos center = anchor.add(0, size / 2, 0);
                     CapsuleNetwork.wrapper.send(
-                            PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, ItemEntity.dimension)),
+                            PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, itemWorld.getDimensionKey())),
                             new CapsuleUndeployNotifToClient(center, ItemEntity.getPosition(), size, CapsuleItem.getStructureName(capsule))
                     );
                 }
@@ -462,7 +461,7 @@ public class Capsule {
     }
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
-        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server);
+        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server.getDataPackRegistries().getResourceManager());
         return srcTemplatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
     }
 

@@ -12,11 +12,12 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.state.properties.BedPart;
 import net.minecraft.state.properties.DoubleBlockHalf;
 import net.minecraft.state.properties.SlabType;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.datafix.DataFixesManager;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.gen.feature.template.Template;
@@ -116,7 +117,7 @@ public class Blueprint {
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
-                if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"));
+                if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
                 if (player != null)
                     LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
                 return null;
@@ -196,7 +197,7 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(MinecraftServer server, List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+    public static void createDynamicPrefabRecipes(IResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
         JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
@@ -204,7 +205,7 @@ public class Blueprint {
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(server, Config.getCapsuleConfigDir().toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, Config.getCapsuleConfigDir().toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);

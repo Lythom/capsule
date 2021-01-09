@@ -2,10 +2,11 @@ package capsule.gui;
 
 import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -23,6 +24,7 @@ public class LabelGui extends Screen {
 
     private TextFieldWidget textInput;
     private PlayerEntity player;
+    private TranslationTextComponent gui_capsule_name = new TranslationTextComponent("capsule.gui.capsuleName");
 
     public LabelGui(PlayerEntity player) {
         super(new TranslationTextComponent("capsule.gui.capsuleName"));
@@ -37,16 +39,16 @@ public class LabelGui extends Screen {
         super.init();
         buttons.clear();
 
-        textInput = new TextFieldWidget(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, I18n.format("capsule.gui.capsuleName"));
+        textInput = new TextFieldWidget(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
         textInput.setMaxStringLength(32);
         textInput.changeFocus(true);
 
         this.addButton(new Button(
                 textInput.x + textInput.getWidth() - 200,
-                textInput.y + textInput.getHeight() + 10,
+                textInput.y + textInput.getHeightRealms() + 10,
                 200,
                 20,
-                I18n.format("gui.done"),
+                DialogTexts.GUI_DONE,
                 (p_212984_1_) -> {
                     this.onClose();
                 }));
@@ -96,10 +98,10 @@ public class LabelGui extends Screen {
     }
 
     @Override
-    public void render(int p_render_1_, int p_render_2_, float p_render_3_) {
-        this.renderBackground();
-        this.drawCenteredString(this.font, this.title.getFormattedText(), this.width / 2, 70, 16777215);
-        textInput.render(p_render_1_, p_render_2_, p_render_3_);
-        super.render(p_render_1_, p_render_2_, p_render_3_);
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(matrixStack);
+        this.drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 70, 16777215);
+        textInput.render(matrixStack, mouseX, mouseY, partialTicks);
+        super.render(matrixStack, mouseX, mouseY, partialTicks);
     }
 }

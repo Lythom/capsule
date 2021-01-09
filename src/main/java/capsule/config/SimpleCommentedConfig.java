@@ -6,8 +6,6 @@ import com.electronwill.nightconfig.core.UnmodifiableConfig;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**

@@ -21,34 +21,20 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
     }
 
     public static void drawCaptureZone(double relativeX, double relativeY, double relativeZ, int size, int extendSize,
-                                       int color, ActiveRenderInfo view) {
+                                       int color, ActiveRenderInfo view, MatrixStack matrixStack) {
         incTime += 1;
-        doPositionPrologue(view);
-
         AxisAlignedBB boundingBox = getBB(relativeX, relativeY, relativeZ, size, extendSize);
 
         IRenderTypeBuffer.Impl impl = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
         IVertexBuilder ivertexbuilder = impl.getBuffer(RenderType.getLines());
 
-        final float af = 200 / 255f;
-        final float rf = ((color >> 16) & 0xFF) / 255f;
-        final float gf = ((color >> 8) & 0xFF) / 255f;
-        final float bf = (color & 0xFF) / 255f;
-        WorldRenderer.drawBoundingBox(ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af);
-        for (int i = 0; i < 5; i++) {
-            double i1 = getMovingEffectPos(boundingBox, i, incTime, 0.0015f);
-            double i2 = getMovingEffectPos(boundingBox, i, incTime, 0.0017f);
-            double lowI = Math.min(i1, i2);
-            double highI = Math.max(i1, i2);
-            WorldRenderer.drawBoundingBox(ivertexbuilder,
-                    boundingBox.minX, lowI, boundingBox.minZ,
-                    boundingBox.maxX, highI, boundingBox.maxZ,
-                    rf, gf, bf, 0.01f + i * 0.05f);
-        }
+        matrixStack.push();
+        matrixStack.translate(-view.getProjectedView().x, -view.getProjectedView().y, -view.getProjectedView().z);
+
+        drawRecallBox(matrixStack, color, boundingBox, ivertexbuilder, incTime);
 
         impl.finish();
-
-        doPositionEpilogue();
+        matrixStack.pop();
     }
 
 
@@ -66,15 +52,16 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         int extendSize = (size - 1) / 2;
         int color = tileEntityCapture.getColor();
         AxisAlignedBB boundingBox = getBB(0, 0, 0, size, extendSize);
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getLines());
+        drawRecallBox(matrixStackIn, color, boundingBox, ivertexbuilder, time);
+    }
 
+    public static void drawRecallBox(MatrixStack matrixStackIn, int color, AxisAlignedBB boundingBox, IVertexBuilder ivertexbuilder, double time) {
         final float af = 200 / 255f;
         final float rf = ((color >> 16) & 0xFF) / 255f;
         final float gf = ((color >> 8) & 0xFF) / 255f;
         final float bf = (color & 0xFF) / 255f;
-
-        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getLines());
         WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
-
         for (int i = 0; i < 5; i++) {
             double i1 = getMovingEffectPos(boundingBox, i, time, 0.0015f);
             double i2 = getMovingEffectPos(boundingBox, i, time, 0.0017f);

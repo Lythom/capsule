@@ -27,11 +27,15 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootContext;
+import net.minecraft.loot.LootParameterSets;
+import net.minecraft.loot.LootParameters;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -43,13 +47,12 @@ import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.gen.feature.template.TemplateManager;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootParameterSets;
-import net.minecraft.world.storage.loot.LootParameters;
+import net.minecraft.world.storage.FolderName;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,9 +74,11 @@ public class CapsuleCommand {
     public static List<ServerPlayerEntity> sentUsageURL = new ArrayList<>();
 
     public static String[] getStructuresList(ServerWorld world) {
+        Path capsuleStructuresPath = world.getServer().func_240776_a_(new FolderName("generated/capsules/structures"));
+        Path minecraftStructuresPath = world.getServer().func_240776_a_(new FolderName("generated/capsules/structures"));
         return ArrayUtils.addAll(
-                (new File(world.getSaveHandler().getWorldDirectory(), "generated/minecraft/structures")).list(),
-                (new File(world.getSaveHandler().getWorldDirectory(), "generated/capsule/structures")).list()
+                capsuleStructuresPath.toFile().list(),
+                minecraftStructuresPath.toFile().list()
         );
     }
 
@@ -209,7 +214,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("reloadLootList")
                         .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> {
-                            IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
+                            IResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
                             return 1;
                         })
@@ -218,7 +223,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("reloadWhitelist")
                         .requires((player) -> player.hasPermissionLevel(2))
                         .executes(ctx -> {
-                            IResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
+                            IResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
                             Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, resourceManager);
                             Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), resourceManager);
@@ -330,11 +335,11 @@ public class CapsuleCommand {
 
     private static int executeGiveRandomLoot(ServerPlayerEntity player) throws CommandException {
         if (player != null) {
-            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getServerWorld())).withParameter(LootParameters.POSITION, player.getPosition()).withNullableParameter(LootParameters.THIS_ENTITY, player.getEntity());
+            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getServerWorld())).withParameter(LootParameters.THIS_ENTITY, player.getEntity()).withParameter(LootParameters.field_237457_g_, player.getPositionVec()).withRandom(player.getRNG());
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool.generate(loots::add, lootcontext$builder.build(LootParameterSets.COMMAND));
             if (loots.size() <= 0) {
-                player.sendMessage(new StringTextComponent("No loot this time !"));
+                player.sendMessage(new StringTextComponent("No loot this time !"), Util.DUMMY_UUID);
             } else {
                 for (ItemStack loot : loots) {
                     giveCapsule(loot, player);
@@ -349,7 +354,7 @@ public class CapsuleCommand {
         if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
 
             String structurePath = Config.getRewardPathFromName(templateName);
-            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
+            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
             CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
@@ -401,7 +406,7 @@ public class CapsuleCommand {
                     size++;
                 // create a destination template
                 ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + path);
-                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer());
+                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
                 // write template from source data
                 destTemplate.read(data);
@@ -446,14 +451,14 @@ public class CapsuleCommand {
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
-                        StructureSaver.getRewardManager(player.getServer()),
+                        StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager()),
                         player.getServerWorld(),
                         false,
                         null
                 );
 
                 if (!created) {
-                    player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
+                    player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."), Util.DUMMY_UUID);
                     return 0;
                 }
 
@@ -560,11 +565,11 @@ public class CapsuleCommand {
                     msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
                     msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                    player.sendMessage(msg);
+                    player.sendMessage(msg, Util.DUMMY_UUID);
                     return 1;
                 }
             } else {
-                player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"));
+                player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"), Util.DUMMY_UUID);
             }
         }
         return 0;
@@ -583,7 +588,7 @@ public class CapsuleCommand {
                         .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
                 msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                player.sendMessage(msg);
+                player.sendMessage(msg, Util.DUMMY_UUID);
                 return 1;
             }
         }

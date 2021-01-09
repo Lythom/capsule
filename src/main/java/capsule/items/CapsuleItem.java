@@ -30,12 +30,12 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
@@ -133,11 +133,6 @@ public class CapsuleItem extends Item {
                 .maxStackSize(1)
                 .maxDamage(0)
                 .setNoRepair());
-
-        this.addPropertyOverride(
-                new ResourceLocation(CapsuleMod.MODID, "state"),
-                (stack, world, entity) -> CapsuleItem.getState(stack).getValue()
-        );
     }
 
 
@@ -155,7 +150,7 @@ public class CapsuleItem extends Item {
     }
 
     public static void setBlueprint(ItemStack capsule) {
-        saveSourceInventory(capsule, null, 0);
+        saveSourceInventory(capsule, null, null);
     }
 
     public static boolean isReward(ItemStack stack) {
@@ -298,10 +293,12 @@ public class CapsuleItem extends Item {
         capsule.getTag().putInt("upgraded", upgrades);
     }
 
-    public static Integer getDimension(ItemStack capsule) {
-        Integer dim = null;
+    public static RegistryKey<World> getDimension(ItemStack capsule) {
+        RegistryKey<World> dim = null;
         if (capsule != null && capsule.hasTag() && capsule.getTag().contains("spawnPosition")) {
-            dim = capsule.getTag().getCompound("spawnPosition").getInt("dim");
+            dim = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(
+                    capsule.getTag().getCompound("spawnPosition").getString("dim")
+            ));
         }
         return dim;
     }
@@ -496,7 +493,8 @@ public class CapsuleItem extends Item {
             if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());
             if (CapsuleItems.deployedCapsule != null) subItems.add(CapsuleItems.deployedCapsule.getKey());
             if (CapsuleItems.recoveryCapsule != null) subItems.add(CapsuleItems.recoveryCapsule.getKey());
-            if (CapsuleItems.blueprintChangedCapsule != null) subItems.add(CapsuleItems.blueprintChangedCapsule.getKey());
+            if (CapsuleItems.blueprintChangedCapsule != null)
+                subItems.add(CapsuleItems.blueprintChangedCapsule.getKey());
             for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
                 subItems.add(blueprintCapsule.getKey());
             }
@@ -532,7 +530,7 @@ public class CapsuleItem extends Item {
                             askPreviewIfNeeded(stack);
                         }
                     } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
-                        event.getPlayer().sendMessage(new TranslationTextComponent("capsule.tooltip.cannotRotate"));
+                        event.getPlayer().sendMessage(new TranslationTextComponent("capsule.tooltip.cannotRotate"), Util.DUMMY_UUID);
                     }
                 }
             }
@@ -570,12 +568,12 @@ public class CapsuleItem extends Item {
         if (player.isSneaking() && isBlueprint(capsule)) {
             TileEntity te = world.getTileEntity(pos);
             if (te != null && te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).isPresent()) {
-                if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.dimension.getType().getId())) {
+                if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.getDimensionKey())) {
                     // remove if it was the same
-                    saveSourceInventory(capsule, null, 0);
+                    saveSourceInventory(capsule, null, null);
                 } else {
                     // new inventory
-                    saveSourceInventory(capsule, pos, world.dimension.getType().getId());
+                    saveSourceInventory(capsule, pos, world.getDimensionKey());
                 }
                 return ActionResultType.SUCCESS;
             }
@@ -702,7 +700,7 @@ public class CapsuleItem extends Item {
         if (!entity.getEntityWorld().isRemote
                 && entity.ticksExisted > 2 // avoid immediate collision
                 && isActivated(capsule)
-                && (entity.collided || Spacial.ItemEntityShouldAndCollideLiquid(entity))
+                && (entity.collidedVertically || entity.collidedHorizontally || Spacial.ItemEntityShouldAndCollideLiquid(entity))
         ) {
             Capsule.handleItemEntityOnGround(entity, capsule);
         }
@@ -711,7 +709,7 @@ public class CapsuleItem extends Item {
         if (!entity.getEntityWorld().isRemote
                 && isActivated(capsule)
                 && capsule.getOrCreateTag().contains("deployAt")
-                && !entity.collided && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
+                && !entity.collidedVertically || entity.collidedHorizontally && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
             Spacial.moveItemEntityToDeployPos(entity, capsule, true);
         }
 
@@ -814,12 +812,12 @@ public class CapsuleItem extends Item {
      * @param dest    position to save as nbt into the capsule stack
      * @param dimID   dimension where the position is.
      */
-    public static void saveSpawnPosition(ItemStack capsule, BlockPos dest, int dimID) {
+    public static void saveSpawnPosition(ItemStack capsule, BlockPos dest, String dimID) {
         CompoundNBT pos = new CompoundNBT();
         pos.putInt("x", dest.getX());
         pos.putInt("y", dest.getY());
         pos.putInt("z", dest.getZ());
-        pos.putInt("dim", dimID);
+        pos.putString("dim", dimID);
         capsule.getOrCreateTag().put("spawnPosition", pos);
     }
 
@@ -830,13 +828,13 @@ public class CapsuleItem extends Item {
      * @param dest    position to save as nbt into the capsule stack
      * @param dimID   dimension where the position is.
      */
-    public static void saveSourceInventory(ItemStack capsule, BlockPos dest, int dimID) {
+    public static void saveSourceInventory(ItemStack capsule, BlockPos dest, RegistryKey<World> dimID) {
         CompoundNBT pos = new CompoundNBT();
         if (dest != null) {
             pos.putInt("x", dest.getX());
             pos.putInt("y", dest.getY());
             pos.putInt("z", dest.getZ());
-            pos.putInt("dim", dimID);
+            pos.putString("dim", dimID.getLocation().toString());
         }
         capsule.getOrCreateTag().put("sourceInventory", pos);
     }
@@ -855,9 +853,11 @@ public class CapsuleItem extends Item {
     }
 
     @Nullable
-    public static Integer getSourceInventoryDimension(ItemStack capsule) {
+    public static RegistryKey<World> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            return capsule.getTag().getCompound("sourceInventory").getInt("dim");
+            return RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(
+                    capsule.getTag().getCompound("sourceInventory").getString("dim")
+            ));
         }
         return null;
     }
@@ -865,11 +865,11 @@ public class CapsuleItem extends Item {
     @Nullable
     public static IItemHandler getSourceInventory(ItemStack blueprint, ServerWorld w) {
         BlockPos location = CapsuleItem.getSourceInventoryLocation(blueprint);
-        Integer dimension = CapsuleItem.getSourceInventoryDimension(blueprint);
+        RegistryKey<World> dimension = CapsuleItem.getSourceInventoryDimension(blueprint);
         if (location == null || dimension == null) return null;
-        ServerWorld world = w.getServer().getWorld(DimensionType.getById(dimension));
+        ServerWorld inventoryWorld = w.getServer().getWorld(dimension);
 
-        TileEntity te = world.getTileEntity(location);
+        TileEntity te = inventoryWorld.getTileEntity(location);
         if (te != null) {
             return te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
         }

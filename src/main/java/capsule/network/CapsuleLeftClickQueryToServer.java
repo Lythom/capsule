@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -17,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
@@ -47,10 +47,10 @@ public class CapsuleLeftClickQueryToServer {
                 if (missing != null && missing.size() > 0) {
                     StringTextComponent message = new StringTextComponent("Missing :");
                     for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
-                        message.appendText("\n* " + entry.getValue() + " ");
-                        message.appendSibling(entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack));
+                        message.appendString("\n* " + entry.getValue() + " ");
+                        message.append(entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack));
                     }
-                    sendingPlayer.sendMessage(message);
+                    sendingPlayer.sendMessage(message, Util.DUMMY_UUID);
                 }
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);
@@ -66,10 +66,10 @@ public class CapsuleLeftClickQueryToServer {
                             placement.setMirror(Mirror.FRONT_BACK);
                             break;
                     }
-                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.DUMMY_UUID);
                 } else {
                     placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.DUMMY_UUID);
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }

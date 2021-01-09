@@ -1,7 +1,7 @@
 package capsule.enchantments;
 
-import capsule.Config;
 import capsule.CapsuleMod;
+import capsule.Config;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantment.Rarity;
 import net.minecraft.enchantment.EnchantmentHelper;

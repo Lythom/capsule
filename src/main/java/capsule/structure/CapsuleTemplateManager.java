@@ -8,13 +8,10 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.FileUtil;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.ResourceLocationException;
 import net.minecraft.util.datafix.DefaultTypeReferences;
-import net.minecraftforge.resource.IResourceType;
-import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,24 +20,22 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * Initiated from mc original net.minecraft.world.gen.feature.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
  * Added support to load schematic file as Template.
  */
-public class CapsuleTemplateManager implements ISelectiveResourceReloadListener {
+public class CapsuleTemplateManager {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
-    private final MinecraftServer minecraftServer;
+    private IResourceManager resourceManager;
     private final Path pathGenerated;
 
-    public CapsuleTemplateManager(MinecraftServer server, File templateFolder, DataFixer fixerIn) {
-        this.minecraftServer = server;
+    public CapsuleTemplateManager(IResourceManager resourceManager, File templateFolder, DataFixer fixerIn) {
+        this.resourceManager = resourceManager;
         this.fixer = fixerIn;
         this.pathGenerated = templateFolder.toPath().normalize();
-        server.getResourceManager().addReloadListener(this);
     }
 
     public CapsuleTemplate getTemplateDefaulted(ResourceLocation templateLocation) {
@@ -67,18 +62,14 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
     }
 
     public void onResourceManagerReload(IResourceManager resourceManager) {
-        this.templates.clear();
-    }
-
-    @Override
-    public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+        this.resourceManager = resourceManager;
         this.templates.clear();
     }
 
     @Nullable
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
-        try (IResource iresource = this.minecraftServer.getResourceManager().getResource(capsuleTemplateLocation)) {
+        try (IResource iresource = this.resourceManager.getResource(capsuleTemplateLocation)) {
             CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension));
             return template;
         } catch (FileNotFoundException var18) {
@@ -162,7 +153,7 @@ public class CapsuleTemplateManager implements ISelectiveResourceReloadListener 
         } else {
             String ext = locationIn.getPath().endsWith(extIn) ? "" : extIn;
             Path p = this.pathGenerated.resolve(locationIn.getPath() + ext);
-            if (FileUtil.func_214995_a(p) && FileUtil.func_214994_b(p)) {
+            if (FileUtil.isNormalized(p) && FileUtil.containsReservedName(p)) {
                 return p;
             } else {
                 throw new ResourceLocationException("Invalid resource path: " + p);

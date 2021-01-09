@@ -11,7 +11,7 @@ import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -39,14 +39,14 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
      * Must be called
      * > after server start (providing a server is required) and
      * < before RecipesUpdatedEvent (so that the recupies are registered by JEI)
-     * @param server
+     * @param resourceManager
      */
-    public void populateRecipes(MinecraftServer server) {
-        if (server == null) return;
+    public void populateRecipes(IResourceManager resourceManager) {
+        if (resourceManager == null) return;
         List<String> prefabsTemplatesList = Config.prefabsTemplatesList;
         recipes.clear();
         Blueprint.createDynamicPrefabRecipes(
-                server,
+                resourceManager,
                 prefabsTemplatesList,
                 (id, recipe, ingredients) -> recipes.add(
                         new PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe(id, recipe, ingredients)

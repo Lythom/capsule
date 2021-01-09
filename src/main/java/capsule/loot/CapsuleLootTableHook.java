@@ -2,8 +2,8 @@ package capsule.loot;
 
 import capsule.CapsuleMod;
 import capsule.Config;
-import net.minecraft.world.storage.loot.ConstantRange;
-import net.minecraft.world.storage.loot.LootPool;
+import net.minecraft.loot.ConstantRange;
+import net.minecraft.loot.LootPool;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;

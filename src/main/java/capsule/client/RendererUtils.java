@@ -123,4 +123,37 @@ public class RendererUtils {
 
         RenderSystem.color4f(rf, gf, bf, af);
     }
+
+    /**
+     * // from  https://discord.com/channels/313125603924639766/454376090362970122/668151688733130774
+     * final IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().getBufferBuilders().getEntityVertexConsumers();
+     *         for (BlockInfo blockInfo : blockAccess.getBlueprint().getBlockInfoAsList())
+     *         {
+     *             matrixStack.push();
+     *             matrixStack.translate(x-viewPosition.getX(), y-viewPosition.getY(), z-viewPosition.getZ());
+     *             final Matrix4f model = matrixStack.peek().getModel();
+     *             BlockState state = blockInfo.getState();
+     *
+     *             final BlockPos blockPos = blockInfo.getPos();
+     *             matrixStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+     *
+     *             blockrendererdispatcher.renderBlock(state,
+     *               blockPos,
+     *               blockAccess,
+     *               matrixStack,
+     *               buffer.getBuffer(RenderTypeLookup.getEntityBlockLayer(state)),
+     *               true,
+     *               random);
+     *             matrixStack.translate(-blockPos.getX(), -blockPos.getY(), -blockPos.getZ());
+     *             matrixStack.pop();
+     *
+     *             matrixStack.push();
+     *             final IFluidState fluidState = state.getFluidState();
+     *             if (!fluidState.isEmpty())
+     *             {
+     *                 FluidRenderer.render(model, blockAccess, blockPos, buffer.getBuffer(RenderTypeLookup.getFluidLayer(fluidState)), fluidState);
+     *             }
+     *             matrixStack.pop();
+     *         }
+     */
 }

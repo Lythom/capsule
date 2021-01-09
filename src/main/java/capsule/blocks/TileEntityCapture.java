@@ -50,7 +50,7 @@ public class TileEntityCapture extends TileEntity {
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        read(pkt.getNbtCompound());
+        read(this.world.getBlockState(pkt.getPos()), pkt.getNbtCompound());
     }
 
     /**

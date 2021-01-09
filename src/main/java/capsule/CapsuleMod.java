@@ -10,6 +10,7 @@ import capsule.items.CapsuleItems;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
+import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.client.Minecraft;
@@ -17,13 +18,17 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.item.crafting.IRecipeSerializer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -53,13 +58,18 @@ public class CapsuleMod {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
     }
 
     public static void serverStarting(final FMLServerStartingEvent e) {
-        CapsuleCommand.register(e.getCommandDispatcher());
         server = e.getServer();
         Config.populateConfigFolders(server);
-        if (PrefabsBlueprintAggregatorRecipe.instance != null) PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server);
+        if (PrefabsBlueprintAggregatorRecipe.instance != null)
+            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getDataPackRegistries().getResourceManager());
+    }
+
+    public static void RegisterCommands(final RegisterCommandsEvent e) {
+        CapsuleCommand.register(e.getDispatcher());
     }
 
     public static void serverStopped(final FMLServerStoppedEvent e) {
@@ -97,6 +107,12 @@ final class CapsuleModEventSubscriber {
             }
             return 0xFFFFFF;
         }, CapsuleItems.CAPSULE);
+
+        ItemModelsProperties.registerProperty(
+                CapsuleItems.CAPSULE,
+                new ResourceLocation(CapsuleMod.MODID, "state"),
+                (stack, world, entity) -> CapsuleItem.getState(stack).getValue()
+        );
     }
 
     /**
@@ -145,5 +161,14 @@ final class CapsuleForgeSubscriber {
     @OnlyIn(Dist.CLIENT)
     public static void registerRecipes(RecipesUpdatedEvent event) {
         CapsuleItems.registerRecipesClient(event.getRecipeManager());
+    }
+
+    @SubscribeEvent
+    public static void setup(AddReloadListenerEvent event) {
+        StructureSaver.getRewardManager(event.getDataPackRegistries().getResourceManager()).onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+        for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
+            ctm.onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+        }
+
     }
 }

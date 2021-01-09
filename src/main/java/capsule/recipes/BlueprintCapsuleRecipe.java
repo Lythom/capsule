@@ -14,7 +14,6 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
-import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 /**

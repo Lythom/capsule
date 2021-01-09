@@ -21,19 +21,22 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.fluid.IFluidState;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.ILightReader;
+import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.feature.template.Template;
@@ -86,9 +89,8 @@ public class CapsulePreviewHandler {
     public static void onWorldRenderLast(RenderWorldLastEvent event) {
         Minecraft mc = Minecraft.getInstance();
         time += 1;
-
         if (mc.player != null) {
-            tryPreviewRecall(mc.player.getHeldItemMainhand());
+            tryPreviewRecall(mc.player.getHeldItemMainhand(), event.getMatrixStack());
             tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand(), event.getMatrixStack());
             tryPreviewLinkedInventory(mc.player, mc.player.getHeldItemMainhand());
         }
@@ -117,13 +119,13 @@ public class CapsulePreviewHandler {
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
                         CompressedStreamTools.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
-                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")));
+                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.DUMMY_UUID);
                     } catch (Throwable var21) {
                         LOGGER.error(var21);
-                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"));
+                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.DUMMY_UUID);
                     }
                 } else {
-                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"));
+                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.DUMMY_UUID);
                 }
             }
         }
@@ -202,7 +204,7 @@ public class CapsulePreviewHandler {
                             haveFullPreview = completePreviewsCount > uncompletePreviewsCount;
                         }
                         if (haveFullPreview) {
-                            isRenderComplete = DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.world);
+                            isRenderComplete = DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.getEntityWorld());
                             if (isRenderComplete) {
                                 completePreviewsCount++;
                             } else {
@@ -223,7 +225,7 @@ public class CapsulePreviewHandler {
         return ImmutableList.of(RenderType.getTranslucent(), RenderType.getCutout(), RenderType.getCutoutMipped(), RenderType.getSolid());
     }
 
-    private static boolean DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, ILightReader world) {
+    private static boolean DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, IBlockDisplayReader world) {
         boolean isRenderComplete = true;
         ActiveRenderInfo info = Minecraft.getInstance().getRenderManager().info;
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
@@ -247,7 +249,7 @@ public class CapsulePreviewHandler {
                 glitchIntensity2 * glitchValuez);
         matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
 
-        for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.getBlocks())) {
+        for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.blocks.get(0).getBlockInfos())) {
             BlockPos blockpos = blockInfo.pos.add(recenterRotation(extendSize, placement));
             BlockState state = blockInfo.state.mirror(placement.getMirror()).rotate(placement.getRotation());
 
@@ -275,7 +277,7 @@ public class CapsulePreviewHandler {
                             IBakedModel model = blockrendererdispatcher.getModelForState(state);
                             blockrendererdispatcher.getBlockModelRenderer().renderModel(world, model, state, destOriginPos, matrixStack, buffer, false, new Random(), 42, OverlayTexture.NO_OVERLAY);
                         } else {
-                            IFluidState ifluidstate = state.getFluidState();
+                            FluidState ifluidstate = state.getFluidState();
                             if (!ifluidstate.isEmpty()) {
                                 renderFluid(matrixStack, destOriginPos, world, buffer, ifluidstate);
                             }
@@ -307,7 +309,7 @@ public class CapsulePreviewHandler {
         return isRenderComplete;
     }
 
-    private static void renderFluid(MatrixStack matrixStack, BlockPos destOriginPos, ILightReader world, BufferBuilder buffer, IFluidState ifluidstate) {
+    private static void renderFluid(MatrixStack matrixStack, BlockPos destOriginPos, IBlockDisplayReader world, BufferBuilder buffer, FluidState ifluidstate) {
         TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasSpriteGetter(PlayerContainer.LOCATION_BLOCKS_TEXTURE).apply(ifluidstate.getFluid().getAttributes().getStillTexture());
 
         float minU = sprite.getMinU();
@@ -399,7 +401,7 @@ public class CapsulePreviewHandler {
                 || CapsuleItem.getSize(heldItemMainhand) == 1 && !CapsuleItem.hasState(heldItemMainhand, DEPLOYED);
     }
 
-    private static void tryPreviewRecall(ItemStack heldItem) {
+    private static void tryPreviewRecall(ItemStack heldItem, MatrixStack matrixStack) {
         // an item is in hand
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
@@ -409,7 +411,7 @@ public class CapsulePreviewHandler {
                     && (CapsuleItem.hasState(heldItem, DEPLOYED) || CapsuleItem.hasState(heldItem, BLUEPRINT))
                     && heldItem.hasTag()
                     && heldItem.getTag().contains("spawnPosition")) {
-                previewRecall(heldItem);
+                previewRecall(heldItem, matrixStack);
             }
         }
     }
@@ -421,10 +423,10 @@ public class CapsulePreviewHandler {
                     && CapsuleItem.isBlueprint(heldItem)
                     && CapsuleItem.hasSourceInventory(heldItem)) {
                 BlockPos location = CapsuleItem.getSourceInventoryLocation(heldItem);
-                Integer dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
+                RegistryKey<World> dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
                 if (location != null
                         && dimension != null
-                        && dimension.equals(player.dimension.getId())
+                        && dimension.equals(player.getEntityWorld().getDimensionKey())
                         && location.distanceSq(player.getPosX(), player.getPosY(), player.getPosZ(), true) < 60 * 60) {
                     previewLinkedInventory(location, heldItem);
                 }
@@ -447,7 +449,7 @@ public class CapsulePreviewHandler {
         doPositionEpilogue();
     }
 
-    private static void previewRecall(ItemStack capsule) {
+    private static void previewRecall(ItemStack capsule, MatrixStack matrixStack) {
         if (capsule.getTag() == null) return;
         CompoundNBT linkPos = capsule.getTag().getCompound("spawnPosition");
 
@@ -459,7 +461,7 @@ public class CapsulePreviewHandler {
                 linkPos.getInt("x") + extendSize,
                 linkPos.getInt("y") - 1,
                 linkPos.getInt("z") + extendSize, size,
-                extendSize, color, Minecraft.getInstance().getRenderManager().info);
+                extendSize, color, Minecraft.getInstance().getRenderManager().info, matrixStack);
     }
 
     private static void setCaptureTESizeColor(int size, int color, World worldIn) {
@@ -474,7 +476,7 @@ public class CapsulePreviewHandler {
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {
                     tec.getTileData().putInt("size", size);
                     tec.getTileData().putInt("color", color);
-                    if (te.getBlockState().has(BlockCapsuleMarker.PROJECTING)) {
+                    if (te.getBlockState().hasProperty(BlockCapsuleMarker.PROJECTING)) {
                         worldIn.setBlockState(te.getPos(), te.getBlockState().with(BlockCapsuleMarker.PROJECTING, size > 0));
                     }
                 }

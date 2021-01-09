@@ -6,6 +6,7 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.*;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.gen.feature.template.Template;
 
 import javax.annotation.Nullable;
@@ -31,9 +32,9 @@ public class Spacial {
 
     public static BlockRayTraceResult clientRayTracePreview(PlayerEntity thePlayer, float partialTicks, int size) {
         int blockReachDistance = 18 + size;
-        Vec3d vec3d = thePlayer.getEyePosition(partialTicks);
-        Vec3d vec3d1 = thePlayer.getLook(partialTicks);
-        Vec3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
+        Vector3d vec3d = thePlayer.getEyePosition(partialTicks);
+        Vector3d vec3d1 = thePlayer.getLook(partialTicks);
+        Vector3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
         return thePlayer.getEntityWorld().rayTraceBlocks(
                 new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.COLLIDER, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
@@ -167,7 +168,7 @@ public class Spacial {
         double normalizedDiffZ = (diffZ / distance);
 
         // momentum allow to hit side walls
-        Vec3d motion = ItemEntity.getMotion();
+        Vector3d motion = ItemEntity.getMotion();
         ItemEntity.setMotion(
                 keepMomentum ? 0.9 * motion.x + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity,
                 motion.y,
