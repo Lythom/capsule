@@ -1,15 +1,3 @@
-/mods
-/saves
-/crash-reports
-/logs
-/config/splash.properties
-/world
-/eclipse
-/classes
-/*_run.zip
-/public
-node_modules
-
 # eclipse
 bin
 *.launch
