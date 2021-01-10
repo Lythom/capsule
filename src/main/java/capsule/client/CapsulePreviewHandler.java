@@ -3,7 +3,6 @@ package capsule.client;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.blocks.CaptureTESR;
 import capsule.blocks.TileEntityCapture;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
@@ -12,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -233,7 +233,7 @@ public class CapsulePreviewHandler {
 
         BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-        float glitchIntensity = (float) (Math.cos(time * 0.1f) * Math.cos(time * 0.14f) * Math.cos(time * 0.12f)) - 0.3f;
+        float glitchIntensity = (float) (Math.abs(Math.cos(time * 0.1f)) * Math.abs(Math.cos(time * 0.14f)) * Math.abs(Math.cos(time * 0.12f))) - 0.3f;
         glitchIntensity = (float) Math.min(0.05, Math.max(0, glitchIntensity));
         float glitchIntensity2 = ((float) (Math.cos(time * 0.12f) * Math.cos(time * 0.15f) * Math.cos(time * 0.14f))) * glitchIntensity;
         float glitchValue = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.5)));
@@ -457,11 +457,17 @@ public class CapsulePreviewHandler {
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
-        CaptureTESR.drawCaptureZone(
-                linkPos.getInt("x") + extendSize,
-                linkPos.getInt("y") - 1,
-                linkPos.getInt("z") + extendSize, size,
-                extendSize, color, Minecraft.getInstance().getRenderManager().info, matrixStack);
+        ActiveRenderInfo renderInfo = Minecraft.getInstance().getRenderManager().info;
+        AxisAlignedBB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
+        IRenderTypeBuffer.Impl impl = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
+        IVertexBuilder ivertexbuilder = impl.getBuffer(RenderType.getLines());
+        matrixStack.push();
+        matrixStack.translate(-renderInfo.getProjectedView().x, -renderInfo.getProjectedView().y, -renderInfo.getProjectedView().z);
+
+        renderRecallBox(matrixStack, color, boundingBox, ivertexbuilder, time);
+        impl.finish();
+
+        matrixStack.pop();
     }
 
     private static void setCaptureTESizeColor(int size, int color, World worldIn) {
@@ -486,5 +492,25 @@ public class CapsulePreviewHandler {
         lastColor = color;
     }
 
+    public static void renderRecallBox(MatrixStack matrixStackIn, int color, AxisAlignedBB boundingBox, IVertexBuilder ivertexbuilder, double time) {
+        final float af = 200 / 255f;
+        final float rf = ((color >> 16) & 0xFF) / 255f;
+        final float gf = ((color >> 8) & 0xFF) / 255f;
+        final float bf = (color & 0xFF) / 255f;
+        WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
+        for (int i = 0; i < 5; i++) {
+            double i1 = getMovingEffectPos(boundingBox, i, time, 0.0015f);
+            double i2 = getMovingEffectPos(boundingBox, i, time, 0.0017f);
+            double lowI = Math.min(i1, i2);
+            double highI = Math.max(i1, i2);
+            WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder,
+                    boundingBox.minX, lowI, boundingBox.minZ,
+                    boundingBox.maxX, highI, boundingBox.maxZ,
+                    rf, gf, bf, 0.01f + i * 0.05f, rf, gf, bf);
+        }
+    }
 
+    private static double getMovingEffectPos(AxisAlignedBB boundingBox, int t, double incTime, float offset) {
+        return boundingBox.minY + (Math.cos(t * incTime * offset) * 0.5 + 0.5) * (boundingBox.maxY - boundingBox.minY);
+    }
 }

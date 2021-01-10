@@ -117,10 +117,16 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
             ingredientTwoIndex = pattern.indexOf("2");
             ingredientThreeIndex = pattern.indexOf("3");
             this.recipe.getIngredients().set(ingredientOneIndex, Ingredient.fromStacks(ingredients.getLeft().itemStack));
-            if (ingredients.getMiddle() != null)
+            if (ingredients.getMiddle() != null) {
                 this.recipe.getIngredients().set(ingredientTwoIndex, Ingredient.fromStacks(ingredients.getMiddle().itemStack));
-            if (ingredients.getRight() != null)
+            } else {
+                this.recipe.getIngredients().set(ingredientTwoIndex, Ingredient.EMPTY);
+            }
+            if (ingredients.getRight() != null) {
                 this.recipe.getIngredients().set(ingredientThreeIndex, Ingredient.fromStacks(ingredients.getRight().itemStack));
+            } else {
+                this.recipe.getIngredients().set(ingredientThreeIndex, Ingredient.EMPTY);
+            }
         }
 
         public ItemStack getRecipeOutput() {

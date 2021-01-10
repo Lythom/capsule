@@ -5,6 +5,8 @@ import capsule.StructureSaver;
 import capsule.StructureSaver.ItemStackKey;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;

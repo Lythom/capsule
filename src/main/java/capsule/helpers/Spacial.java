@@ -175,4 +175,15 @@ public class Spacial {
                 keepMomentum ? 0.9 * motion.z + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity
         );
     }
+
+    public static AxisAlignedBB getBB(double relativeX, double relativeY, double relativeZ, int size, int extendSize) {
+        AxisAlignedBB boundingBox = new AxisAlignedBB(
+                -extendSize - 0.01 + relativeX,
+                1.01 + relativeY,
+                -extendSize - 0.01 + relativeZ,
+                extendSize + 1.01 + relativeX,
+                size + 1.01 + relativeY,
+                extendSize + 1.01 + relativeZ);
+        return boundingBox;
+    }
 }

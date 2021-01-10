@@ -68,7 +68,7 @@ public class CapsuleItems {
         for (IRecipe<?> recipe : manager.getRecipes()) {
             if (recipe.getId().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), ((BlueprintCapsuleRecipe) recipe)));
+                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), ((BlueprintCapsuleRecipe) recipe).recipe));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
                     recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {

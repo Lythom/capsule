@@ -28,6 +28,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
         this.recipe = recipe;
     }
 
+    @Override
     public ItemStack getRecipeOutput() {
         return recipe.getRecipeOutput();
     }
