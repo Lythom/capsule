@@ -1,3 +1,6 @@
+By design incompatiblities :
+* Corail Tombstone player graves can't be move. Forcing it out of the blacklist results in dupe bugs.
+
 Important incompatibilities:
 * IC2 machines will lose data after being moved and become unusable. (http://bt.industrial-craft.net/view.php?id=1957)
 * Same for Gregtech machines and addons.
