@@ -18,6 +18,7 @@ Those commands are accessible only with the op permissions. They are designed to
   * [setBaseColor](#setbasecolor)
   * [setMaterialColor](#setmaterialcolor)
   * [setAuthor](#setauthor)
+  * [downloadTemplate](#downloadTemplate)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
@@ -173,3 +174,15 @@ Save an author for both the capsule and the associated template. If the [author]
 /capsule setAuthor [author]
 ```
 * **author*** Author name or leave empty to remove.
+
+
+---
+
+## downloadTemplate ##
+
+Copy the .nbt file of the currently held capsule in a "capsule_exports" folder inside minecraft instance directory.
+This might not work if the content is too big or if the content is the fetched yet (use right click to preview and force the download).
+
+```
+/capsule downloadTemplate
+```
