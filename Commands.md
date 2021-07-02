@@ -180,7 +180,7 @@ Save an author for both the capsule and the associated template. If the [author]
 
 ## downloadTemplate ##
 
-[since 4.0]
+[since 4.0 (1.15+)]
 
 Copy the .nbt file of the currently held capsule in a "capsule_exports" folder inside minecraft instance directory.
 This might not work if the content is too big or if the content is the fetched yet (use right click to preview and force the download).
