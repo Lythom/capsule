@@ -22,10 +22,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
     }
 
     public class UpgradeCapsuleRecipe extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
-        /**
-         * Is the ItemStack that you repair.
-         */
-        public final Ingredient upgradeIngredient;
+        private final Ingredient upgradeIngredient;
 
         public UpgradeCapsuleRecipe(Ingredient upgradeIngredient) {
             this.upgradeIngredient = upgradeIngredient;
@@ -48,7 +45,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
                     if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                         sourceCapsule = itemstack;
-                    } else if (upgradeIngredient.apply(itemstack)) {
+                    } else if (getUpgradeIngredient().apply(itemstack)) {
                         material++;
                     } else if (!itemstack.isEmpty()) {
                         return false;
@@ -71,7 +68,7 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
                     if (!itemstack.isEmpty() && itemstack.getItem() == CapsuleItems.capsule && itemstack.getItemDamage() == CapsuleItem.STATE_EMPTY && CapsuleItem.getUpgradeLevel(itemstack) < Config.upgradeLimit) {
                         input = itemstack;
-                    } else if (upgradeIngredient.apply(itemstack)) {
+                    } else if (getUpgradeIngredient().apply(itemstack)) {
                         material++;
                     } else if (!itemstack.isEmpty()) {
                         return ItemStack.EMPTY;
@@ -101,6 +98,13 @@ public class UpgradeCapsuleRecipeFactory implements IRecipeFactory {
 
         public boolean isDynamic() {
             return true;
+        }
+
+        /**
+         * Is the ItemStack that you repair.
+         */
+        public Ingredient getUpgradeIngredient() {
+            return Config.upgradeIngredient != null ? Config.upgradeIngredient : upgradeIngredient;
         }
     }
 }

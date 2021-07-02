@@ -5,6 +5,8 @@ import capsule.loot.LootPathData;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.Item;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraftforge.common.config.Configuration;
@@ -35,6 +37,7 @@ public class Config {
     public static String prefabsTemplatesPath;
     public static String rewardTemplatesPath;
     public static int upgradeLimit;
+    public static Ingredient upgradeIngredient;
     public static HashMap<String, JsonObject> blueprintWhitelist;
     public static boolean allowBlueprintReward;
     public static String starterMode;
@@ -69,6 +72,11 @@ public class Config {
         Property upgradesLimit = Config.config.get("Balancing", "capsuleUpgradesLimit", 10);
         upgradesLimit.setComment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.");
         Config.upgradeLimit = upgradesLimit.getInt();
+
+        Property upgradeItem = Config.config.get("Balancing", "capsuleUpgradeItem", "minecraft:chorus_fruit_popped");
+        upgradeItem.setComment("Item that can upgrade a capsule to extends its size. Default: minecraft:chorus_fruit_popped.");
+        Item i = Item.getByNameOrId(upgradeItem.getString());
+        Config.upgradeIngredient = i == null ? null : Ingredient.fromItem(i);
 
         // Excluded
         Block[] defaultExcludedBlocksOP = new Block[]{Blocks.AIR, Blocks.STRUCTURE_VOID, Blocks.BEDROCK};

@@ -41,7 +41,7 @@ public class CapsulePlugin implements IModPlugin {
         // and apply to many vanilla and modded items
         List<IRecipe> recipes = new ArrayList<>();
 
-        Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
+        Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().getUpgradeIngredient();
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
             for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
