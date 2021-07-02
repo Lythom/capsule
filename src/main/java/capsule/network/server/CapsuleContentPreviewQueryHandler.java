@@ -1,10 +1,12 @@
 package capsule.network.server;
 
+import capsule.CommonProxy;
 import capsule.StructureSaver;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.CapsuleContentPreviewQueryToServer;
+import capsule.network.CapsuleFullContentAnswerToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -75,6 +77,7 @@ public class CapsuleContentPreviewQueryHandler
 
         if (template != null) {
             List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.blocks);
+            CommonProxy.simpleNetworkWrapper.sendTo(new CapsuleFullContentAnswerToClient(template, message.getStructureName()), sendingPlayer);
             return new CapsuleContentPreviewAnswerToClient(blockspos, message.getStructureName());
 
         } else if (heldItem.hasTagCompound()) {

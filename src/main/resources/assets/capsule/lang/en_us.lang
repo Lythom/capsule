@@ -29,6 +29,7 @@ capsule.error.notAllowed=Capsules can't be used here, it might be a protected ar
 capsule.error.blueprintCreationError=An error occured during blueprint template creation. This blueprint might not work.
 capsule.error.blueprintExcluded=Some blocks are not supported in blueprints. Ignored in blueprint: %s
 capsule.error.blueprintDontMatch=Can't undeploy: you may charge the blueprint capsule (left click in air), or ensure the area you want to undeploy matches the blueprint structure (no removed or added blocks, no items in inventories).
+capsule.error.cantDownload=Can't download nbt template: take the capsule item in hand and make sure it is undeployed and not empty. Try to preview deploy (without deploying) before retrying this command.
 capsule.tooltip.size=Size
 enchantment.recall=Recall
 itemGroup.capsule=Capsules

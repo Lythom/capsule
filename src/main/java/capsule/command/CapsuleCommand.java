@@ -64,7 +64,8 @@ public class CapsuleCommand extends CommandBase {
             "reloadWhitelist",
             "setAuthor",
             "setBaseColor",
-            "setMaterialColor"
+            "setMaterialColor",
+            "downloadTemplate"
     };
 
     public static final String[] COMMAND_HELP = new String[]{
@@ -81,7 +82,8 @@ public class CapsuleCommand extends CommandBase {
             "reloadWhitelist",
             "setAuthor <authorName>",
             "setBaseColor <color>",
-            "setMaterialColor <color>"
+            "setMaterialColor <color>",
+            "downloadTemplate",
     };
 
     @Override
@@ -139,6 +141,8 @@ public class CapsuleCommand extends CommandBase {
                         String[] rewardsList = (new File(Config.rewardTemplatesPath)).list();
                         if (rewardsList == null) return new ArrayList<>();
                         return getListOfStringsMatchingLastWord(args, rewardsList);
+                    case "downloadTemplate":
+                        return Collections.emptyList();
                 }
             case 3:
                 switch (args[0]) {
@@ -200,6 +204,8 @@ public class CapsuleCommand extends CommandBase {
             Files.populateAndLoadLootList(Config.configDir, Config.lootTemplatesPaths, Config.lootTemplatesData);
             Config.starterTemplatesList = Files.populateStarters(Config.configDir, Config.starterTemplatesPath);
             Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.configDir);
+        } else if ("downloadTemplate".equalsIgnoreCase(args[0])) {
+            /* @see CapsulePreviewHandler.OnClientChatEvent */
         } else {
             throw new WrongUsageException(getUsage(sender));
         }

@@ -29,6 +29,7 @@ capsule.error.notAllowed=Les capsules ne peuvent pas être utilisées ici. Il s'
 capsule.error.blueprintCreationError=Une erreur est survenue pendant la copie du template. Cette blueprint pourrait ne pas fonctionner.
 capsule.error.blueprintExcluded=Certains blocks ne sont pas supportés dans la blueprint: %s
 capsule.error.blueprintDontMatch=Impossible de recapturer: vous pouvez charger la capsule (clic gauche dans le vide), ou vous assurer que la région a recapturer correspond exactement à la structure du blueprint (aucun bloc enlevé ou ajouté, inventaires vidés).
+capsule.error.cantDownload=Impossible de télécharger le template nbt: la capsule doit être tenue en main, non déployée et non vide. Essayez de prévisualiser le déploiement (sans déployer) avant de réessayer cette commande.
 capsule.tooltip.size=Taille
 enchantment.recall=Rappel
 itemGroup.capsule=Capsules
