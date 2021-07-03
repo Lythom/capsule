@@ -9,11 +9,10 @@ import capsule.structure.CapsuleTemplate;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -225,6 +224,7 @@ public class CapsulePreviewHandler {
     private static boolean DisplayFullPreview(BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, IBlockAccess world) {
         boolean isRenderComplete = true;
         RenderManager info = Minecraft.getMinecraft().getRenderManager();
+        TextureManager textureManager = Minecraft.getMinecraft().getTextureManager();
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
 
@@ -265,10 +265,15 @@ public class CapsulePreviewHandler {
                 );
 
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.depthMask(false);
+                RenderHelper.disableStandardItemLighting();
                 GlStateManager.enableLighting();
-                GlStateManager.enableTexture2D();
-                GlStateManager.enableColorMaterial();
-                GlStateManager.enableBlend();
+                textureManager.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+                if (Minecraft.isAmbientOcclusionEnabled()) {
+                    GlStateManager.shadeModel(GL11.GL_SMOOTH);
+                } else {
+                    GlStateManager.shadeModel(GL11.GL_FLAT);
+                }
 
                 Tessellator tessellator = Tessellator.getInstance();
                 BufferBuilder bufferBuilder = tessellator.getBuffer();
@@ -276,7 +281,9 @@ public class CapsulePreviewHandler {
 
                 blockrendererdispatcher.renderBlock(state, blockpos, fakeWorld, bufferBuilder);
 
-                GlStateManager.disableColorMaterial();
+                GlStateManager.disableLighting();
+                RenderHelper.enableStandardItemLighting();
+                GlStateManager.depthMask(true);
 
                 tessellator.draw();
                 GlStateManager.popMatrix();
