@@ -257,11 +257,18 @@ public class CapsulePreviewHandler {
 
             if (state != Blocks.AIR.getDefaultState() && state.getRenderType() != EnumBlockRenderType.INVISIBLE) {
                 GlStateManager.pushMatrix();
+
                 GlStateManager.translate(
                         -info.viewerPosX,
                         -info.viewerPosY,
                         -info.viewerPosZ
                 );
+
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.enableLighting();
+                GlStateManager.enableTexture2D();
+                GlStateManager.enableColorMaterial();
+                GlStateManager.enableBlend();
 
                 Tessellator tessellator = Tessellator.getInstance();
                 BufferBuilder bufferBuilder = tessellator.getBuffer();
@@ -269,12 +276,12 @@ public class CapsulePreviewHandler {
 
                 blockrendererdispatcher.renderBlock(state, blockpos, fakeWorld, bufferBuilder);
 
+                GlStateManager.disableColorMaterial();
+
                 tessellator.draw();
                 GlStateManager.popMatrix();
             }
             net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
-
-            GlStateManager.enableLighting();
 
             // limit to 8ms render during profiling
             if (completePreviewsCount + uncompletePreviewsCount <= 60) {

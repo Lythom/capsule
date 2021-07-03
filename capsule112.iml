@@ -6,6 +6,8 @@
     <content url="file://$MODULE_DIR$/">
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" isTestSource="false"/>
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false"/>
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" isTestSource="true"/>
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true"/>
       <excludeFolder url="file://$MODULE_DIR$/build"/>
       <excludeFolder url="file://$MODULE_DIR$/.gradle"/>
     </content>
@@ -13,11 +15,11 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/deobfedDeps/deobf/mezz/jei/jei_1.12.2/4.15.0.268/jei_1.12.2-4.15.0.268.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/deobfedDeps/deobf/mezz/jei/jei_1.12.2/4.16.1.302/jei_1.12.2-4.16.1.302.jar!/"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES>
-          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/deobfedDeps/deobf/mezz/jei/jei_1.12.2/4.15.0.268/jei_1.12.2-4.15.0.268-sources.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/deobfedDeps/deobf/mezz/jei/jei_1.12.2/4.16.1.302/jei_1.12.2-4.16.1.302-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>
@@ -753,31 +755,31 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2768/snapshot/20171003/forgeSrc-1.12.2-14.23.5.2768.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2847/snapshot/20171003/forgeSrc-1.12.2-14.23.5.2847.jar!/"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES>
-          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2768/snapshot/20171003/forgeSrc-1.12.2-14.23.5.2768-sources.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2847/snapshot/20171003/forgeSrc-1.12.2-14.23.5.2847-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
-          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.15.0.268/1fd0269994b2721ba110a64d8c0129448f1b985/jei_1.12.2-4.15.0.268.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.16.1.302/3e88d2896ca868c3cedb65e117ad3a1b82488fa8/jei_1.12.2-4.16.1.302.jar!/"/>
         </CLASSES>
         <JAVADOC>
-          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.15.0.268/e4153fbaeb7daff2b37aa98da65a824843a99ee2/jei_1.12.2-4.15.0.268-javadoc.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.16.1.302/b32a84500e79c3ea3ac11362adc2d3d2eae93365/jei_1.12.2-4.16.1.302-javadoc.jar!/"/>
         </JAVADOC>
         <SOURCES>
-          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.15.0.268/3ed8f6a4b23f1711e646dec5a6932b5bc5602773/jei_1.12.2-4.15.0.268-sources.jar!/"/>
+          <root url="jar://C:/Users/samue/.gradle/caches/modules-2/files-2.1/mezz.jei/jei_1.12.2/4.16.1.302/76e2cba4235f9040634d26f66bf88a43f5427f57/jei_1.12.2-4.16.1.302-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
-          <root url="file://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2768/start"/>
+          <root url="file://C:/Users/samue/.gradle/caches/minecraft/net/minecraftforge/forge/1.12.2-14.23.5.2847/start"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES/>
