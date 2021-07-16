@@ -1,7 +1,10 @@
 package capsule.helpers;
 
 import net.minecraft.block.Block;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.Tag;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StringUtils;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,10 +21,9 @@ public class Serialization {
         ArrayList<String> notfound = new ArrayList<>();
 
         for (String blockId : blockIds) {
-            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockId));
-            if (b != null) {
-                states.add(b);
-            } else {
+            ResourceLocation excludedLocation = new ResourceLocation(blockId);
+            // is it a whole registryName to exclude ?
+            if (StringUtils.isNullOrEmpty(excludedLocation.getPath())) {
                 List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
                         .filter(block -> {
                             ResourceLocation registryName = block.getRegistryName();
@@ -33,14 +35,29 @@ public class Serialization {
                 } else {
                     notfound.add(blockId);
                 }
+            } else {
+                // is it a block ?
+                Block b = ForgeRegistries.BLOCKS.getValue(excludedLocation);
+                if (b != null) {
+                    // exclude the block
+                    states.add(b);
+                } else {
+                    // is it a tag ?
+                    Tag<Block> tag = BlockTags.getCollection().get(excludedLocation);
+                    if (tag != null) {
+                        // exclude all blocks from tag
+                        states.addAll(tag.getAllElements());
+                    }
+                }
             }
         }
         if (notfound.size() > 0) {
-            LOGGER.debug(String.format(
+            LOGGER.info(String.format(
                     "Blocks not found from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
                     String.join(", ", notfound.toArray(new CharSequence[0]))
             ));
         }
+
         Block[] output = new Block[states.size()];
         return states;
     }
