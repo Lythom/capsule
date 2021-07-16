@@ -1,6 +1,7 @@
 package capsule.structure;
 
 import capsule.Config;
+import capsule.tags.CapsuleTags;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
@@ -507,6 +508,7 @@ public class CapsuleTemplate {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);
                 BlockState blockstate = worldIn.getBlockState(blockpos3);
                 if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
+                        && !blockstate.isIn(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
                         && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
                         || !(occupiedPositionsToIgnore.containsKey(blockpos3)
                         && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
