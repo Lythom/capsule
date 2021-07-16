@@ -577,7 +577,7 @@ public class StructureSaver {
         destTemplate.occupiedPositions = null;
         // remove all tile entities
         if (onlyWhitelisted) {
-            destTemplate.filterFromWhitelist(Config.blueprintWhitelist, outExcluded);
+            destTemplate.filterFromWhitelist(outExcluded);
         }
         // write the new template
         return destManager.writeToFile(destinationLocation);

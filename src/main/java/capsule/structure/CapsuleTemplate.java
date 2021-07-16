@@ -1,6 +1,7 @@
 package capsule.structure;
 
 import capsule.Config;
+import capsule.tags.CapsuleTags;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
@@ -597,7 +598,7 @@ public class CapsuleTemplate {
         return listnbt;
     }
 
-    public void filterFromWhitelist(HashMap<String, JsonObject> blueprintWhitelist, List<String> outExcluded) {
+    public void filterFromWhitelist(List<String> outExcluded) {
         List<Template.BlockInfo> newBlockList = this.getBlocks().stream()
                 .filter(b -> {
                     ResourceLocation registryName = b.state.getBlock().getRegistryName();
@@ -694,6 +695,7 @@ public class CapsuleTemplate {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);
                 BlockState blockstate = worldIn.getBlockState(blockpos3);
                 if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
+                        && !blockstate.isIn(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
                         && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
                         || !(occupiedPositionsToIgnore.containsKey(blockpos3)
                         && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
