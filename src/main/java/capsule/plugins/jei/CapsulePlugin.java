@@ -116,7 +116,7 @@ public class CapsulePlugin implements IModPlugin {
         @Override
         public String apply(ItemStack itemStack) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
-            String isOP = String.valueOf(itemStack.getOrCreateTag().getBoolean("overpowered"));
+            String isOP = String.valueOf(itemStack.hasTag() && itemStack.getTag().getBoolean("overpowered"));
             String capsuleState = String.valueOf(CapsuleItem.getState(itemStack));
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));

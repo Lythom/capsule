@@ -59,7 +59,8 @@ public class CapsuleMod {
         CapsuleCommand.register(e.getCommandDispatcher());
         server = e.getServer();
         Config.populateConfigFolders(server);
-        if (PrefabsBlueprintAggregatorRecipe.instance != null) PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server);
+        if (PrefabsBlueprintAggregatorRecipe.instance != null)
+            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server);
     }
 
     public static void serverStopped(final FMLServerStoppedEvent e) {
