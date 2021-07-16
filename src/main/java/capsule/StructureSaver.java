@@ -10,6 +10,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.FlowingFluidBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IClearable;
@@ -31,7 +32,11 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,13 +47,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StructureSaver {
-
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
     public static final String BLUEPRINT_PREFIX = "b-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
     private static final List<String> outExcluded = new ArrayList<>();
+
+    // very powerfull high level cut to prevent any drop during capturing phase
+    // it is synchronized so it should not create any side effect
+    private static boolean preventItemDrop = false;
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void handleEntityJoinWorldEvent(final EntityJoinWorldEvent e) {
+        if (preventItemDrop && e.getEntity() instanceof ItemEntity) {
+            e.setCanceled(true);
+        }
+    }
 
     public static CapsuleTemplateManager getRewardManager(MinecraftServer server) {
         if (RewardManager == null) {
@@ -222,40 +238,45 @@ public class StructureSaver {
         entityDropsGameRule.set(false, world.getServer());
         tileDropsGameRule.set(false, world.getServer());
         world.restoringBlockSnapshots = true;
+        StructureSaver.preventItemDrop = true;
 
         // delete everything that as been saved in the capsule
-        for (BlockPos pos : transferedPositions) {
-            BlockState b = world.getBlockState(pos);
-            try {
-                // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
-                if (playerCanRemove(world, pos, player)) {
-                    TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
-                    // content of TE have been snapshoted, remove the content
-                    if (tileentity != null) {
-                        IClearable.clearObj(tileentity);
-                        world.setBlockState(pos, Blocks.BARRIER.getDefaultState(), 20); // from Template.addBlocksToWorld
-                    }
+        try {
+            for (BlockPos pos : transferedPositions) {
+                BlockState b = world.getBlockState(pos);
+                try {
+                    // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
+                    if (playerCanRemove(world, pos, player)) {
+                        TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
+                        // content of TE have been snapshoted, remove the content
+                        if (tileentity != null) {
+                            IClearable.clearObj(tileentity);
+                            world.setBlockState(pos, Blocks.BARRIER.getDefaultState(), 20); // from Template.addBlocksToWorld
+                        }
 
-                    world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
-                } else {
+                        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
+                    } else {
+                        if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
+                        couldNotBeRemoved.add(pos);
+                    }
+                } catch (Exception e) {
+                    printDeployError(player, e, "Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.");
+                    try {
+                        world.setBlockState(pos, b);
+                    } catch (Exception ignored) {
+                    }
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                     couldNotBeRemoved.add(pos);
                 }
-            } catch (Exception e) {
-                printDeployError(player, e, "Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.");
-                try {
-                    world.setBlockState(pos, b);
-                } catch (Exception ignored) {
-                }
-                if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
-                couldNotBeRemoved.add(pos);
             }
+        } finally {
+            // revert rule to previous value even in case of crash
+            StructureSaver.preventItemDrop = false;
+            world.restoringBlockSnapshots = false;
+            entityDropsGameRule.set(flagdoEntityDrops, world.getServer());
+            tileDropsGameRule.set(flagdoTileDrops, world.getServer());
         }
 
-        // revert rule to previous value even in case of crash
-        world.restoringBlockSnapshots = false;
-        entityDropsGameRule.set(flagdoEntityDrops, world.getServer());
-        tileDropsGameRule.set(flagdoTileDrops, world.getServer());
         return couldNotBeRemoved;
     }
 
