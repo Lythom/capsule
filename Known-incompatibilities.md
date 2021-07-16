@@ -1,3 +1,4 @@
+# Known incompatibilities
 By design incompatiblities :
 * Corail Tombstone player graves can't be move. Forcing it out of the blacklist results in dupe bugs.
 
