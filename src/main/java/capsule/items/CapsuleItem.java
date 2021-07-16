@@ -137,7 +137,7 @@ public class CapsuleItem extends Item {
 
 
     public static boolean isOneUse(ItemStack stack) {
-        return !stack.isEmpty() && stack.getOrCreateTag().contains("oneUse") && stack.getTag().getBoolean("oneUse");
+        return !stack.isEmpty() && stack.hasTag() && stack.getTag().contains("oneUse") && stack.getTag().getBoolean("oneUse");
     }
 
     public static void setOneUse(ItemStack capsule) {
@@ -146,7 +146,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isBlueprint(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof CapsuleItem && stack.getOrCreateTag().contains("sourceInventory");
+        return !stack.isEmpty() && stack.getItem() instanceof CapsuleItem && stack.hasTag() && stack.getTag().contains("sourceInventory");
     }
 
     public static void setBlueprint(ItemStack capsule) {
@@ -154,7 +154,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isReward(ItemStack stack) {
-        return !stack.isEmpty() && (stack.getOrCreateTag().contains("isReward") && stack.getTag().getBoolean("isReward") && isOneUse(stack));
+        return !stack.isEmpty() && (stack.hasTag() && stack.getTag().contains("isReward") && stack.getTag().getBoolean("isReward") && isOneUse(stack));
     }
 
     public static void setIsReward(ItemStack capsule) {
@@ -167,7 +167,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean hasStructureLink(ItemStack stack) {
-        return !stack.isEmpty() && stack.getOrCreateTag().contains("structureName");
+        return !stack.isEmpty() && stack.hasTag() && stack.getTag().contains("structureName");
     }
 
     public static boolean isLinkedStateCapsule(ItemStack itemstack) {
@@ -181,7 +181,7 @@ public class CapsuleItem extends Item {
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
             return I18n.format("items.capsule.content_empty");
-        } else if (stack.getOrCreateTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
+        } else if (stack.hasTag() && stack.getTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
             return "«" + TextFormatting.ITALIC + stack.getTag().getString("label") + TextFormatting.RESET + "»";
         }
         return I18n.format("items.capsule.content_unlabeled");
@@ -280,7 +280,7 @@ public class CapsuleItem extends Item {
 
     public static int getUpgradeLevel(ItemStack stack) {
         int upgradeLevel = 0;
-        if (stack.getOrCreateTag().contains("upgraded")) {
+        if (stack.hasTag() && stack.getTag().contains("upgraded")) {
             upgradeLevel = stack.getTag().getInt("upgraded");
         }
         return upgradeLevel;
@@ -308,7 +308,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isOverpowered(ItemStack stack) {
-        return stack.getOrCreateTag().contains("overpowered") && stack.getTag().getByte("overpowered") == (byte) 1;
+        return stack.hasTag() && stack.getTag().contains("overpowered") && stack.getTag().getByte("overpowered") == (byte) 1;
     }
 
     private static boolean isActivated(ItemStack capsule) {
@@ -708,7 +708,7 @@ public class CapsuleItem extends Item {
         // throwing the capsule toward the right place
         if (!entity.getEntityWorld().isRemote
                 && isActivated(capsule)
-                && capsule.getOrCreateTag().contains("deployAt")
+                && capsule.hasTag() && capsule.getTag().contains("deployAt")
                 && !entity.collidedVertically || entity.collidedHorizontally && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
             Spacial.moveItemEntityToDeployPos(entity, capsule, true);
         }
@@ -791,7 +791,7 @@ public class CapsuleItem extends Item {
             if (isBlueprint(stack) && CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
                 color = 0x7CC4EA; // trick for blueprint to reuse the "deployed" item model and get okish label color
             } else {
-                if (stack.getOrCreateTag().contains("color")) {
+                if (stack.hasTag() && stack.getTag().contains("color")) {
                     color = stack.getTag().getInt("color");
                 }
             }
@@ -840,7 +840,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean hasSourceInventory(ItemStack capsule) {
-        return capsule.getOrCreateTag().contains("sourceInventory") && capsule.getTag().getCompound("sourceInventory").contains("x");
+        return capsule.hasTag() && capsule.getTag().contains("sourceInventory") && capsule.getTag().getCompound("sourceInventory").contains("x");
     }
 
     @Nullable
