@@ -16,7 +16,7 @@ If so, it should't take long, follow the steps according to the version you are 
 Add the blocks to exclude to the `capsule:excluded` tag. 
 
 Documentation: https://mcforge.readthedocs.io/en/latest/utilities/tags/.     
-TLDR: there should be a `data/capsule/tags/blocks/excluded.json` file in your mod resources folder that contains something like the exemple below. Be sure that replace is "false" to keep configuration working for other mods.
+TLDR: there should be a `data/capsule/tags/blocks/excluded.json` file in your mod resources folder that contains something like the exemple below. Be sure that replace is "false" to keep configuration working for other mods. The block ids to exclude go into the values array.
 ```
 {
     "replace": false,
