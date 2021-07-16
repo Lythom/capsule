@@ -154,16 +154,17 @@ public class Config {
                 "gtadditions:",
                 "bloodmagic:alchemy_table",
                 "mekanism:machineblock",
-                "mekanism:boundingblock"
+                "mekanism:boundingblock",
+                "tombstone:player_graves"
         );
         String[] excludedBlocksStandardArray = ArrayUtils.addAll(
                 Serialization.serializeBlockArray(defaultExcludedBlocks),
                 excludedBlocksOPArray
         );
-        excludedBlocksIdsCfg = configBuild.comment("List of block ids that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex: minecraft:spawner")
+        excludedBlocksIdsCfg = configBuild.comment("List of block ids or tags that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex block: minecraft:spawner\n Ex tag: minecraft:beds")
                 .define("excludedBlocks", Arrays.asList(excludedBlocksStandardArray));
 
-        opExcludedBlocksIdsCfg = configBuild.comment("List of block ids that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
+        opExcludedBlocksIdsCfg = configBuild.comment("List of block ids or tags that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
                 .define("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray));
 
         // Overridable
