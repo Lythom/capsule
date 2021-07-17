@@ -40,12 +40,12 @@ public class LabelGui extends Screen {
         buttons.clear();
 
         textInput = new TextFieldWidget(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
-        textInput.setMaxStringLength(32);
+        textInput.setMaxLength(32);
         textInput.changeFocus(true);
 
         this.addButton(new Button(
                 textInput.x + textInput.getWidth() - 200,
-                textInput.y + textInput.getHeightRealms() + 10,
+                textInput.y + textInput.getHeight() + 10,
                 200,
                 20,
                 DialogTexts.GUI_DONE,
@@ -59,7 +59,7 @@ public class LabelGui extends Screen {
             //noinspection ConstantConditions
             label = itemStack.getTag().getString("label");
         }
-        textInput.setText(label);
+        textInput.setValue(label);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class LabelGui extends Screen {
             this.onClose();
         }
         if (this.textInput.keyPressed(keyCode, scanCode, modifiers)) {
-            setCurrentItemLabel(this.textInput.getText());
+            setCurrentItemLabel(this.textInput.getValue());
         }
         return true;
     }
@@ -78,7 +78,7 @@ public class LabelGui extends Screen {
     public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
         super.charTyped(p_charTyped_1_, p_charTyped_2_);
         if (this.textInput.charTyped(p_charTyped_1_, p_charTyped_2_)) {
-            setCurrentItemLabel(this.textInput.getText());
+            setCurrentItemLabel(this.textInput.getValue());
         }
         return true;
     }
@@ -94,7 +94,7 @@ public class LabelGui extends Screen {
     }
 
     public ItemStack getItemStack() {
-        return this.player.getHeldItemMainhand();
+        return this.player.getMainHandItem();
     }
 
     @Override

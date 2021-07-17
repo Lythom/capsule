@@ -30,24 +30,24 @@ public class RecallEnchant extends Enchantment {
     }
 
     @Override
-    public boolean canApply(ItemStack stack) {
+    public boolean canEnchant(ItemStack stack) {
         return canApplyAtEnchantingTable(stack);
     }
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack) {
         return (stack.getItem() instanceof CapsuleItem && !CapsuleItem.isBlueprint(stack) && !CapsuleItem.isOneUse(stack))
-                || (this.type != null && super.canApplyAtEnchantingTable(stack));
+                || (this.category != null && super.canApplyAtEnchantingTable(stack));
     }
 
     @Override
-    public int getMinEnchantability(int enchantmentLevel) {
+    public int getMinCost(int enchantmentLevel) {
         return 1;
     }
 
     @Override
-    public int getMaxEnchantability(int enchantmentLevel) {
-        return this.getMinEnchantability(enchantmentLevel) + 40;
+    public int getMaxCost(int enchantmentLevel) {
+        return this.getMinCost(enchantmentLevel) + 40;
     }
 
     @Override
@@ -57,8 +57,8 @@ public class RecallEnchant extends Enchantment {
 
     public static void pickupItemBack(ItemEntity entity, PlayerEntity player) {
         if (player != null) {
-            entity.setNoPickupDelay();
-            entity.onCollideWithPlayer(player);
+            entity.setNoPickUpDelay();
+            entity.playerTouch(player);
         }
     }
 
@@ -75,14 +75,14 @@ public class RecallEnchant extends Enchantment {
                 .collect(Collectors.toList());
 
         for (ItemEntity entity : recallItemEntities) {
-            if (entity.getThrowerId() != null && (entity.collidedHorizontally || entity.collidedVertically || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
+            if (entity.getThrower() != null && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.tick();
                 }
                 // then recall to inventory
                 if (entity.isAlive()) {
-                    pickupItemBack(entity, world.getPlayerByUuid(entity.getThrowerId()));
+                    pickupItemBack(entity, world.getPlayerByUUID(entity.getThrower()));
                 }
             }
         }

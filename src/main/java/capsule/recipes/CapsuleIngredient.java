@@ -45,7 +45,7 @@ public class CapsuleIngredient extends Ingredient
     }
 
     @Override
-    public JsonElement serialize()
+    public JsonElement toJson()
     {
         JsonObject json = new JsonObject();
         json.addProperty("type", CraftingHelper.getID(Serializer.INSTANCE).toString());
@@ -62,7 +62,7 @@ public class CapsuleIngredient extends Ingredient
 
         @Override
         public CapsuleIngredient parse(PacketBuffer buffer) {
-            return new CapsuleIngredient(buffer.readItemStack());
+            return new CapsuleIngredient(buffer.readItem());
         }
 
         @Override
@@ -72,7 +72,7 @@ public class CapsuleIngredient extends Ingredient
 
         @Override
         public void write(PacketBuffer buffer, CapsuleIngredient ingredient) {
-            buffer.writeItemStack(ingredient.referenceStack);
+            buffer.writeItemStack(ingredient.referenceStack, false);
         }
     }
 }

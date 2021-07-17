@@ -17,26 +17,26 @@ public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
 
     public static BlockPos findBottomBlock(ItemEntity ItemEntity) {
-        return findBottomBlock(ItemEntity.getPosX(), ItemEntity.getPosY(), ItemEntity.getPosZ());
+        return findBottomBlock(ItemEntity.getX(), ItemEntity.getY(), ItemEntity.getZ());
     }
 
     public static BlockPos findBottomBlock(double x, double y, double z) {
-        return BlockPos.getAllInBox(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1))
-                .min(Comparator.comparingDouble((BlockPos pos) -> pos.distanceSq(x, y, z, true))).orElse(null);
+        return BlockPos.betweenClosedStream(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1))
+                .min(Comparator.comparingDouble((BlockPos pos) -> pos.distSqr(x, y, z, true))).orElse(null);
     }
 
     public static boolean isImmergedInLiquid(Entity entity) {
         if (entity == null) return false;
-        return !entity.isOffsetPositionInLiquid(0, 1.5, 0);
+        return !entity.isFree(0, 1.5, 0);
     }
 
     public static BlockRayTraceResult clientRayTracePreview(PlayerEntity thePlayer, float partialTicks, int size) {
         int blockReachDistance = 18 + size;
         Vector3d vec3d = thePlayer.getEyePosition(partialTicks);
-        Vector3d vec3d1 = thePlayer.getLook(partialTicks);
+        Vector3d vec3d1 = thePlayer.getViewVector(partialTicks);
         Vector3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
-        return thePlayer.getEntityWorld().rayTraceBlocks(
+        return thePlayer.getCommandSenderWorld().clip(
                 new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.COLLIDER, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
         );
     }
@@ -46,15 +46,15 @@ public class Spacial {
         if (searchedBlock == null)
             return null;
 
-        double i = ItemEntity.getPosX();
-        double j = ItemEntity.getPosY();
-        double k = ItemEntity.getPosZ();
+        double i = ItemEntity.getX();
+        double j = ItemEntity.getY();
+        double k = ItemEntity.getZ();
 
         for (int range = 1; range < maxRange; range++) {
-            Iterable<BlockPos> blockPoss = BlockPos.getAllInBoxMutable(new BlockPos(i - range, j - range, k - range),
+            Iterable<BlockPos> blockPoss = BlockPos.betweenClosed(new BlockPos(i - range, j - range, k - range),
                     new BlockPos(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
-                Block block = ItemEntity.getEntityWorld().isBlockLoaded(pos) ? ItemEntity.getEntityWorld().getBlockState(pos).getBlock() : null;
+                Block block = ItemEntity.getCommandSenderWorld().hasChunkAt(pos) ? ItemEntity.getCommandSenderWorld().getBlockState(pos).getBlock() : null;
                 if (block != null && block.getClass().equals(searchedBlock)) {
                     return new BlockPos(pos.getX(), pos.getY(), pos.getZ()); // return a copy
                 }
@@ -72,11 +72,11 @@ public class Spacial {
 
         blocks.forEach(block -> {
             BlockPos destPos = block.pos;
-            BlockPos below = block.pos.add(0, -1, 0);
+            BlockPos below = block.pos.offset(0, -1, 0);
             if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state.getBlock() == block.state.getBlock()) {
                 // extend the below BB to current
                 MutableBoundingBox bb = bbByPos.get(below);
-                bb.maxY++;
+                bb.y1++;
                 bbByPos.put(destPos, bb);
             } else {
                 // start a new column
@@ -93,7 +93,7 @@ public class Spacial {
                 MutableBoundingBox matchingBB = findMatchingExpandingX(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
-                    bb.expandTo(matchingBB);
+                    bb.expand(matchingBB);
                     matchingBB = findMatchingExpandingX(bb, allBB);
                 }
             }
@@ -107,7 +107,7 @@ public class Spacial {
                 MutableBoundingBox matchingBB = findMatchingExpandingZ(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
-                    bb.expandTo(matchingBB);
+                    bb.expand(matchingBB);
                     matchingBB = findMatchingExpandingZ(bb, allBB);
                 }
             }
@@ -115,35 +115,35 @@ public class Spacial {
         allBB.removeAll(toRemove);
 
         return allBB.stream().map(bb -> new AxisAlignedBB(
-                new BlockPos(bb.minX, bb.minY, bb.minZ),
-                new BlockPos(bb.maxX, bb.maxY, bb.maxZ)
+                new BlockPos(bb.x0, bb.y0, bb.z0),
+                new BlockPos(bb.x1, bb.y1, bb.z1)
         )).collect(Collectors.toList());
     }
 
     private static MutableBoundingBox findMatchingExpandingX(final MutableBoundingBox bb, final List<MutableBoundingBox> allBB) {
         return allBB.stream()
-                .filter(candidate -> candidate != bb && candidate.minY == bb.minY && candidate.maxY == bb.maxY && candidate.minZ == bb.minZ && candidate.maxZ == bb.maxZ && candidate.minX == bb.maxX + 1)
+                .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.z0 == bb.z0 && candidate.z1 == bb.z1 && candidate.x0 == bb.x1 + 1)
                 .findFirst()
                 .orElse(null);
     }
 
     private static MutableBoundingBox findMatchingExpandingZ(final MutableBoundingBox bb, final List<MutableBoundingBox> allBB) {
         return allBB.stream()
-                .filter(candidate -> candidate != bb && candidate.minY == bb.minY && candidate.maxY == bb.maxY && candidate.minX == bb.minX && candidate.maxX == bb.maxX && candidate.minZ == bb.maxZ + 1)
+                .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.x0 == bb.x0 && candidate.x1 == bb.x1 && candidate.z0 == bb.z1 + 1)
                 .findFirst()
                 .orElse(null);
     }
 
     public static boolean isThrowerUnderLiquid(final ItemEntity ItemEntity) {
-        UUID thrower = ItemEntity.getThrowerId();
+        UUID thrower = ItemEntity.getThrower();
         if (thrower == null) return false;
-        PlayerEntity player = ItemEntity.getEntityWorld().getPlayerByUuid(thrower);
+        PlayerEntity player = ItemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
     }
 
     public static boolean isEntityCollidingLiquid(final ItemEntity ItemEntity) {
-        return !ItemEntity.isOffsetPositionInLiquid(0, -0.1, 0);
+        return !ItemEntity.isFree(0, -0.1, 0);
     }
 
     public static boolean ItemEntityShouldAndCollideLiquid(final ItemEntity ItemEntity) {
@@ -154,10 +154,10 @@ public class Spacial {
 
     public static void moveItemEntityToDeployPos(final ItemEntity ItemEntity, final ItemStack capsule, boolean keepMomentum) {
         if (capsule.getTag() == null) return;
-        BlockPos dest = BlockPos.fromLong(capsule.getTag().getLong("deployAt"));
+        BlockPos dest = BlockPos.of(capsule.getTag().getLong("deployAt"));
         // +0.5 to aim the center of the block
-        double diffX = (dest.getX() + 0.5 - ItemEntity.getPosX());
-        double diffZ = (dest.getZ() + 0.5 - ItemEntity.getPosZ());
+        double diffX = (dest.getX() + 0.5 - ItemEntity.getX());
+        double diffZ = (dest.getZ() + 0.5 - ItemEntity.getZ());
 
         double distance = MathHelper.sqrt(diffX * diffX + diffZ * diffZ);
 
@@ -168,8 +168,8 @@ public class Spacial {
         double normalizedDiffZ = (diffZ / distance);
 
         // momentum allow to hit side walls
-        Vector3d motion = ItemEntity.getMotion();
-        ItemEntity.setMotion(
+        Vector3d motion = ItemEntity.getDeltaMovement();
+        ItemEntity.setDeltaMovement(
                 keepMomentum ? 0.9 * motion.x + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity,
                 motion.y,
                 keepMomentum ? 0.9 * motion.z + 0.1 * normalizedDiffZ * velocity : normalizedDiffZ * velocity

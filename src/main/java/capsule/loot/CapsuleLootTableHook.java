@@ -23,12 +23,12 @@ public class CapsuleLootTableHook {
 
         // create a capsule loot entry per folder
         if (capsulePool == null) {
-            LootPool.Builder capsulePoolBuilder = LootPool.builder()
+            LootPool.Builder capsulePoolBuilder = LootPool.lootPool()
                     .bonusRolls(0, 0)
                     .name("capsulePool")
-                    .rolls(ConstantRange.of(1));
+                    .setRolls(ConstantRange.exactly(1));
             for (Config.LootPathData data : Config.lootTemplatesData.values()) {
-                capsulePoolBuilder.addEntry(CapsuleLootEntry.builder(data.path));
+                capsulePoolBuilder.add(CapsuleLootEntry.builder(data.path));
             }
             capsulePool = capsulePoolBuilder.build();
         }

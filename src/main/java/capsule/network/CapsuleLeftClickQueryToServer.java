@@ -40,21 +40,21 @@ public class CapsuleLeftClickQueryToServer {
 
         ctx.get().enqueueWork(() -> {
             // read the content of the template and send it back to the client
-            ItemStack stack = sendingPlayer.getHeldItemMainhand();
+            ItemStack stack = sendingPlayer.getMainHandItem();
             if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && CapsuleItem.hasState(stack, DEPLOYED)) {
                 // Reload if no missing materials
-                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getServerWorld(), sendingPlayer);
+                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getLevel(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
                     StringTextComponent message = new StringTextComponent("Missing :");
                     for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
-                        message.appendString("\n* " + entry.getValue() + " ");
-                        message.append(entry.getKey().itemStack.getItem().getDisplayName(entry.getKey().itemStack));
+                        message.append("\n* " + entry.getValue() + " ");
+                        message.append(entry.getKey().itemStack.getItem().getName(entry.getKey().itemStack));
                     }
-                    sendingPlayer.sendMessage(message, Util.DUMMY_UUID);
+                    sendingPlayer.sendMessage(message, Util.NIL_UUID);
                 }
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);
-                if (sendingPlayer.isSneaking()) {
+                if (sendingPlayer.isShiftKeyDown()) {
                     switch (placement.getMirror()) {
                         case FRONT_BACK:
                             placement.setMirror(Mirror.LEFT_RIGHT);
@@ -66,10 +66,10 @@ public class CapsuleLeftClickQueryToServer {
                             placement.setMirror(Mirror.FRONT_BACK);
                             break;
                     }
-                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.DUMMY_UUID);
+                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
                 } else {
-                    placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.DUMMY_UUID);
+                    placement.setRotation(placement.getRotation().getRotated(Rotation.CLOCKWISE_90));
+                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.NIL_UUID);
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }

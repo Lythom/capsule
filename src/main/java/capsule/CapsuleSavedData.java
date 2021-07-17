@@ -15,19 +15,19 @@ public class CapsuleSavedData extends WorldSavedData {
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         // retrieve lastReservedPosition
         capsuleCounter = nbt.getInt("counter");
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         nbt.putInt("counter", capsuleCounter);
         return nbt;
     }
 
     public int getNextCount() {
-        this.markDirty();
+        this.setDirty();
         return capsuleCounter++;
     }
 

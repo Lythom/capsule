@@ -48,18 +48,18 @@ public class Blueprint {
         try {
             // prevent door to beeing counted twice
             if (block instanceof DoorBlock) {
-                if (state.get(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+                if (state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
                     return new ItemStack(block.asItem(), 1);
                 }
                 return ItemStack.EMPTY; // door upper is free, only lower counts.
 
             } else if (block instanceof BedBlock) {
-                if (state.get(BedBlock.PART) == BedPart.HEAD) {
+                if (state.getValue(BedBlock.PART) == BedPart.HEAD) {
                     return new ItemStack(block.asItem(), 1);
                 }
                 return ItemStack.EMPTY; // Bed foot is free, only head counts.
 
-            } else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
+            } else if (block instanceof SlabBlock && state.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) {
                 return new ItemStack(block.asItem(), 2);
 
             } else if (block instanceof FarmlandBlock) {
@@ -83,7 +83,7 @@ public class Blueprint {
 //                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
                 CompoundNBT itemNBT = new CompoundNBT();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
-                for (String key : blockNBT.keySet()) {
+                for (String key : blockNBT.getAllKeys()) {
                     if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
                         String targetKey = allowedNBT.get(key).getAsString();
                         itemNBT.put(targetKey, blockNBT.get(key));
@@ -96,7 +96,7 @@ public class Blueprint {
             return item;
         } catch (Exception e) {
             // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
-            return new ItemStack(Item.getItemFromBlock(block), 1);
+            return new ItemStack(Item.byBlock(block), 1);
         }
     }
 
@@ -119,7 +119,7 @@ public class Blueprint {
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
-                if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
+                if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
                 if (player != null)
                     LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
                 return null;

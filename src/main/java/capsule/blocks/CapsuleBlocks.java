@@ -31,7 +31,7 @@ public class CapsuleBlocks {
     public final static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
     private static <T extends TileEntity> TileEntityType<T> buildTileEntity(Supplier<T> supplier, ResourceLocation name, Block... blocks) {
-        TileEntityType<T> te = TileEntityType.Builder.create(supplier, blocks).build(null);
+        TileEntityType<T> te = TileEntityType.Builder.of(supplier, blocks).build(null);
         te.setRegistryName(name);
         return te;
     }
@@ -56,15 +56,15 @@ public class CapsuleBlocks {
 
     @SuppressWarnings("ConstantConditions")
     public static void registerItemBlocks(final RegistryEvent.Register<Item> event) {
-        BlockItem markerItem = new BlockItem(CAPSULE_MARKER, new Item.Properties().group(CapsuleMod.tabCapsule));
+        BlockItem markerItem = new BlockItem(CAPSULE_MARKER, new Item.Properties().tab(CapsuleMod.tabCapsule));
         markerItem.setRegistryName(CAPSULE_MARKER_REGISTERY_NAME);
         event.getRegistry().register(markerItem);
 
         // testing blocks
         Map<String, String> env = System.getenv();
         if ("DEV".equals(env.get("__ENV__"))) {
-            event.getRegistry().register(new BlockItem(blockCaptureCrasher, new Item.Properties().group(CapsuleMod.tabCapsule)).setRegistryName(blockCaptureCrasher.getRegistryName()));
-            event.getRegistry().register(new BlockItem(blockDeployCrasher, new Item.Properties().group(CapsuleMod.tabCapsule)).setRegistryName(blockDeployCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockCaptureCrasher, new Item.Properties().tab(CapsuleMod.tabCapsule)).setRegistryName(blockCaptureCrasher.getRegistryName()));
+            event.getRegistry().register(new BlockItem(blockDeployCrasher, new Item.Properties().tab(CapsuleMod.tabCapsule)).setRegistryName(blockDeployCrasher.getRegistryName()));
         }
     }
 

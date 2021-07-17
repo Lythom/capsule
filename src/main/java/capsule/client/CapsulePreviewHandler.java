@@ -43,6 +43,7 @@ import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -90,9 +91,9 @@ public class CapsulePreviewHandler {
         Minecraft mc = Minecraft.getInstance();
         time += 1;
         if (mc.player != null) {
-            tryPreviewRecall(mc.player.getHeldItemMainhand(), event.getMatrixStack());
-            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getHeldItemMainhand(), event.getMatrixStack());
-            tryPreviewLinkedInventory(mc.player, mc.player.getHeldItemMainhand());
+            tryPreviewRecall(mc.player.getMainHandItem(), event.getMatrixStack());
+            tryPreviewDeploy(mc.player, event.getPartialTicks(), mc.player.getMainHandItem(), event.getMatrixStack());
+            tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem());
         }
     }
 
@@ -104,7 +105,7 @@ public class CapsulePreviewHandler {
         if ("/capsule downloadTemplate".equals(event.getMessage())) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                ItemStack heldItem = mc.player.getHeldItemMainhand();
+                ItemStack heldItem = mc.player.getMainHandItem();
                 String structureName = CapsuleItem.getStructureName(heldItem);
                 if (heldItem.getItem() instanceof CapsuleItem && structureName != null) {
                     CapsuleTemplate template = currentFullPreview.get(structureName);
@@ -119,13 +120,13 @@ public class CapsulePreviewHandler {
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
                         CompressedStreamTools.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
-                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.DUMMY_UUID);
+                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.NIL_UUID);
                     } catch (Throwable var21) {
                         LOGGER.error(var21);
-                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.DUMMY_UUID);
+                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.NIL_UUID);
                     }
                 } else {
-                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.DUMMY_UUID);
+                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.NIL_UUID);
                 }
             }
         }
@@ -141,7 +142,7 @@ public class CapsulePreviewHandler {
         // do something to player every update tick:
         if (event.player instanceof ClientPlayerEntity && event.phase.equals(TickEvent.Phase.START)) {
             ClientPlayerEntity player = (ClientPlayerEntity) event.player;
-            tryPreviewCapture(player, player.getHeldItemMainhand());
+            tryPreviewCapture(player, player.getMainHandItem());
         }
     }
 
@@ -153,15 +154,15 @@ public class CapsulePreviewHandler {
             if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
                 //noinspection ConstantConditions
                 if (heldItem.hasTag() && heldItem.getTag().contains("size")) {
-                    setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getEntityWorld());
+                    setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
                     return true;
                 }
 
             } else {
-                setCaptureTESizeColor(0, 0, player.getEntityWorld());
+                setCaptureTESizeColor(0, 0, player.getCommandSenderWorld());
             }
         } else {
-            setCaptureTESizeColor(0, 0, player.getEntityWorld());
+            setCaptureTESizeColor(0, 0, player.getCommandSenderWorld());
         }
 
         return false;
@@ -178,7 +179,7 @@ public class CapsulePreviewHandler {
             BlockRayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == RayTraceResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
-                BlockPos destOriginPos = rtc.getPos().add(rtc.getFace().getDirectionVec()).add(-extendSize, 0.01, -extendSize);
+                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 if (!structureName.equals(uncompletePreviewsCountStructure)) {
@@ -204,7 +205,7 @@ public class CapsulePreviewHandler {
                             haveFullPreview = completePreviewsCount > uncompletePreviewsCount;
                         }
                         if (haveFullPreview) {
-                            isRenderComplete = DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.getEntityWorld());
+                            isRenderComplete = DisplayFullPreview(matrixStack, destOriginPos, structureName, extendSize, heldItemMainhand, thePlayer.getCommandSenderWorld());
                             if (isRenderComplete) {
                                 completePreviewsCount++;
                             } else {
@@ -222,16 +223,16 @@ public class CapsulePreviewHandler {
     }
 
     public static List<RenderType> getBlockRenderTypes() {
-        return ImmutableList.of(RenderType.getTranslucent(), RenderType.getCutout(), RenderType.getCutoutMipped(), RenderType.getSolid());
+        return ImmutableList.of(RenderType.translucent(), RenderType.cutout(), RenderType.cutoutMipped(), RenderType.solid());
     }
 
     private static boolean DisplayFullPreview(MatrixStack matrixStack, BlockPos destOriginPos, String structureName, int extendSize, ItemStack heldItemMainhand, IBlockDisplayReader world) {
         boolean isRenderComplete = true;
-        ActiveRenderInfo info = Minecraft.getInstance().getRenderManager().info;
+        ActiveRenderInfo info = Minecraft.getInstance().getEntityRenderDispatcher().camera;
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
 
-        BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
+        BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRenderer();
 
         float glitchIntensity = (float) (Math.abs(Math.cos(time * 0.1f)) * Math.abs(Math.cos(time * 0.14f)) * Math.abs(Math.cos(time * 0.12f))) - 0.3f;
         glitchIntensity = (float) Math.min(0.05, Math.max(0, glitchIntensity));
@@ -242,7 +243,7 @@ public class CapsulePreviewHandler {
 
         long start = System.nanoTime();
 
-        matrixStack.push();
+        matrixStack.pushPose();
         matrixStack.translate(
                 glitchIntensity2 * glitchValue,
                 glitchIntensity * glitchValuey,
@@ -250,15 +251,15 @@ public class CapsulePreviewHandler {
         matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
 
         for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.blocks.get(0).getBlockInfos())) {
-            BlockPos blockpos = blockInfo.pos.add(recenterRotation(extendSize, placement));
+            BlockPos blockpos = blockInfo.pos.offset(recenterRotation(extendSize, placement));
             BlockState state = blockInfo.state.mirror(placement.getMirror()).rotate(placement.getRotation());
 
             if (!state.isAir()) {
-                matrixStack.push();
+                matrixStack.pushPose();
                 matrixStack.translate(
-                        blockpos.getX() - info.getProjectedView().getX(),
-                        blockpos.getY() - info.getProjectedView().getY(),
-                        blockpos.getZ() - info.getProjectedView().getZ()
+                        blockpos.getX() - info.getPosition().x(),
+                        blockpos.getY() - info.getPosition().y(),
+                        blockpos.getZ() - info.getPosition().z()
                 );
 //
                 for (net.minecraft.client.renderer.RenderType type : getBlockRenderTypes()) {
@@ -270,12 +271,12 @@ public class CapsulePreviewHandler {
                         RenderSystem.blendFunc(GlStateManager.SourceFactor.CONSTANT_ALPHA, GlStateManager.DestFactor.ONE_MINUS_CONSTANT_ALPHA);
 
                         Tessellator tessellator = Tessellator.getInstance();
-                        BufferBuilder buffer = tessellator.getBuffer();
+                        BufferBuilder buffer = tessellator.getBuilder();
                         buffer.begin(7, DefaultVertexFormats.BLOCK);
 
-                        if (state.getRenderType() == BlockRenderType.MODEL) {
-                            IBakedModel model = blockrendererdispatcher.getModelForState(state);
-                            blockrendererdispatcher.getBlockModelRenderer().renderModel(world, model, state, destOriginPos, matrixStack, buffer, false, new Random(), 42, OverlayTexture.NO_OVERLAY);
+                        if (state.getRenderShape() == BlockRenderType.MODEL) {
+                            IBakedModel model = blockrendererdispatcher.getBlockModel(state);
+                            blockrendererdispatcher.getModelRenderer().renderModel(world, model, state, destOriginPos, matrixStack, buffer, false, new Random(), 42, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
                         } else {
                             FluidState ifluidstate = state.getFluidState();
                             if (!ifluidstate.isEmpty()) {
@@ -283,7 +284,7 @@ public class CapsulePreviewHandler {
                             }
                         }
 
-                        tessellator.draw();
+                        tessellator.end();
 
                         RenderSystem.disableBlend();
                         RenderSystem.defaultBlendFunc();
@@ -291,7 +292,7 @@ public class CapsulePreviewHandler {
                     }
                 }
                 net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
-                matrixStack.pop();
+                matrixStack.popPose();
             }
             RenderSystem.enableLighting();
 
@@ -305,28 +306,28 @@ public class CapsulePreviewHandler {
             }
         }
 
-        matrixStack.pop();
+        matrixStack.popPose();
         return isRenderComplete;
     }
 
     private static void renderFluid(MatrixStack matrixStack, BlockPos destOriginPos, IBlockDisplayReader world, BufferBuilder buffer, FluidState ifluidstate) {
-        TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasSpriteGetter(PlayerContainer.LOCATION_BLOCKS_TEXTURE).apply(ifluidstate.getFluid().getAttributes().getStillTexture());
+        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(PlayerContainer.BLOCK_ATLAS).apply(ifluidstate.getFluidState().getType().getAttributes().getStillTexture());
 
-        float minU = sprite.getMinU();
-        float maxU = Math.min(minU + (sprite.getMaxU() - minU) * 1, sprite.getMaxU());
-        float minV = sprite.getMinV();
-        float maxV = Math.min(minV + (sprite.getMaxV() - minV) * 1, sprite.getMaxV());
-        int waterColor = ifluidstate.getFluid().getAttributes().getColor(world, destOriginPos);
+        float minU = sprite.getU0();
+        float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
+        float minV = sprite.getV0();
+        float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
+        int waterColor = ifluidstate.getFluidState().getType().getAttributes().getColor(world, destOriginPos);
         float red = (float) (waterColor >> 16 & 255) / 255.0F;
         float green = (float) (waterColor >> 8 & 255) / 255.0F;
         float blue = (float) (waterColor & 255) / 255.0F;
 
-        Matrix4f matrix = matrixStack.getLast().getMatrix();
+        Matrix4f matrix = matrixStack.last().pose();
 
-        buffer.pos(matrix, 0, 1, 0).color(red, green, blue, 1.0F).tex(maxU, minV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
-        buffer.pos(matrix, 0, 1, 1).color(red, green, blue, 1.0F).tex(minU, minV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
-        buffer.pos(matrix, 1, 1, 1).color(red, green, blue, 1.0F).tex(minU, maxV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
-        buffer.pos(matrix, 1, 1, 0).color(red, green, blue, 1.0F).tex(maxU, maxV).lightmap(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.vertex(matrix, 0, 1, 0).color(red, green, blue, 1.0F).uv(maxU, minV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.vertex(matrix, 0, 1, 1).color(red, green, blue, 1.0F).uv(minU, minV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.vertex(matrix, 1, 1, 1).color(red, green, blue, 1.0F).uv(minU, maxV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.vertex(matrix, 1, 1, 0).color(red, green, blue, 1.0F).uv(maxU, maxV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
 
     private static void DisplayWireframePreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, int size, BlockRayTraceResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AxisAlignedBB errorBoundingBox, boolean haveFullPreview) {
@@ -335,7 +336,7 @@ public class CapsulePreviewHandler {
             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
         } else if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-            BlockPos pos = rtc.getPos().subtract(destOriginPos);
+            BlockPos pos = rtc.getBlockPos().subtract(destOriginPos);
             blockspos.add(new AxisAlignedBB(pos, pos));
         }
         if (blockspos.isEmpty()) {
@@ -343,36 +344,36 @@ public class CapsulePreviewHandler {
             blockspos.add(new AxisAlignedBB(pos, pos));
         }
 
-        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
+        doPositionPrologue(Minecraft.getInstance().getEntityRenderDispatcher().camera);
         doWirePrologue();
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        BufferBuilder bufferBuilder = tessellator.getBuilder();
 
         PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
 
         for (AxisAlignedBB bb : blockspos) {
             BlockPos recenter = recenterRotation(extendSize, placement);
             AxisAlignedBB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
-                    .offset(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
-                    .offset(recenter.getX(), recenter.getY(), recenter.getZ())
-                    .expand(1, 1, 1);
+                    .move(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
+                    .move(recenter.getX(), recenter.getY(), recenter.getZ())
+                    .expandTowards(1, 1, 1);
 
             int color = 0xDDDDDD;
             if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                GlStateManager.lineWidth(haveFullPreview ? 2.0F : 5.0F);
+                GlStateManager._lineWidth(haveFullPreview ? 2.0F : 5.0F);
                 color = CapsuleItem.getBaseColor(heldItemMainhand);
             } else {
                 for (double j = dest.minZ; j < dest.maxZ; ++j) {
                     for (double k = dest.minY; k < dest.maxY; ++k) {
                         for (double l = dest.minX; l < dest.maxX; ++l) {
                             BlockPos pos = new BlockPos(l, k, j);
-                            if (!Config.overridableBlocks.contains(thePlayer.getEntityWorld().getBlockState(pos).getBlock())) {
-                                GlStateManager.lineWidth(5.0F);
+                            if (!Config.overridableBlocks.contains(thePlayer.getCommandSenderWorld().getBlockState(pos).getBlock())) {
+                                GlStateManager._lineWidth(5.0F);
                                 bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
                                 setColor(0xaa0000, 255);
-                                drawCapsuleCube(errorBoundingBox.offset(pos), bufferBuilder);
-                                tessellator.draw();
+                                drawCapsuleCube(errorBoundingBox.move(pos), bufferBuilder);
+                                tessellator.end();
                             }
                         }
                     }
@@ -380,12 +381,12 @@ public class CapsulePreviewHandler {
             }
 
             if (!haveFullPreview) {
-                GlStateManager.lineWidth(1);
+                GlStateManager._lineWidth(1);
                 RenderSystem.enableBlend();
                 bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
                 setColor(color, 160);
                 drawCapsuleCube(dest, bufferBuilder);
-                tessellator.draw();
+                tessellator.end();
             }
         }
 
@@ -426,24 +427,24 @@ public class CapsulePreviewHandler {
                 RegistryKey<World> dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
                 if (location != null
                         && dimension != null
-                        && dimension.equals(player.getEntityWorld().getDimensionKey())
-                        && location.distanceSq(player.getPosX(), player.getPosY(), player.getPosZ(), true) < 60 * 60) {
-                    previewLinkedInventory(location, heldItem);
+                        && dimension.equals(player.getCommandSenderWorld().dimension())
+                        && location.distSqr(player.getX(), player.getY(), player.getZ(), true) < 60 * 60) {
+                    previewLinkedInventory(location);
                 }
             }
         }
     }
 
-    private static void previewLinkedInventory(BlockPos location, ItemStack capsule) {
-        doPositionPrologue(Minecraft.getInstance().getRenderManager().info);
+    private static void previewLinkedInventory(BlockPos location) {
+        doPositionPrologue(Minecraft.getInstance().getEntityRenderDispatcher().camera);
         doOverlayPrologue();
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferBuilder = tessellator.getBuffer();
+        BufferBuilder bufferBuilder = tessellator.getBuilder();
         bufferBuilder.begin(7, DefaultVertexFormats.POSITION);
         setColor(0x5B9CFF, 80);
         drawCube(location, 0, bufferBuilder);
-        tessellator.draw();
+        tessellator.end();
 
         doOverlayEpilogue();
         doPositionEpilogue();
@@ -457,17 +458,17 @@ public class CapsulePreviewHandler {
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
-        ActiveRenderInfo renderInfo = Minecraft.getInstance().getRenderManager().info;
+        ActiveRenderInfo renderInfo = Minecraft.getInstance().getEntityRenderDispatcher().camera;
         AxisAlignedBB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
-        IRenderTypeBuffer.Impl impl = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
-        IVertexBuilder ivertexbuilder = impl.getBuffer(RenderType.getLines());
-        matrixStack.push();
-        matrixStack.translate(-renderInfo.getProjectedView().x, -renderInfo.getProjectedView().y, -renderInfo.getProjectedView().z);
+        IRenderTypeBuffer.Impl impl = IRenderTypeBuffer.immediate(Tessellator.getInstance().getBuilder());
+        IVertexBuilder ivertexbuilder = impl.getBuffer(RenderType.lines());
+        matrixStack.pushPose();
+        matrixStack.translate(-renderInfo.getPosition().x, -renderInfo.getPosition().y, -renderInfo.getPosition().z);
 
         renderRecallBox(matrixStack, color, boundingBox, ivertexbuilder, time);
-        impl.finish();
+        impl.endBatch();
 
-        matrixStack.pop();
+        matrixStack.pushPose();
     }
 
     private static void setCaptureTESizeColor(int size, int color, World worldIn) {
@@ -476,14 +477,14 @@ public class CapsulePreviewHandler {
         // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone
         // remember it's client side only
         for (TileEntityCapture te : new ArrayList<>(TileEntityCapture.instances)) {
-            if (te.getWorld() == worldIn) {
+            if (te.getLevel() == worldIn) {
                 TileEntityCapture tec = te;
                 CompoundNBT teData = tec.getTileData();
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {
                     tec.getTileData().putInt("size", size);
                     tec.getTileData().putInt("color", color);
                     if (te.getBlockState().hasProperty(BlockCapsuleMarker.PROJECTING)) {
-                        worldIn.setBlockState(te.getPos(), te.getBlockState().with(BlockCapsuleMarker.PROJECTING, size > 0));
+                        worldIn.setBlock(te.getBlockPos(), te.getBlockState().setValue(BlockCapsuleMarker.PROJECTING, size > 0), 2);
                     }
                 }
             }
@@ -497,13 +498,13 @@ public class CapsulePreviewHandler {
         final float rf = ((color >> 16) & 0xFF) / 255f;
         final float gf = ((color >> 8) & 0xFF) / 255f;
         final float bf = (color & 0xFF) / 255f;
-        WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
+        WorldRenderer.renderLineBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
         for (int i = 0; i < 5; i++) {
             double i1 = getMovingEffectPos(boundingBox, i, time, 0.0015f);
             double i2 = getMovingEffectPos(boundingBox, i, time, 0.0017f);
             double lowI = Math.min(i1, i2);
             double highI = Math.max(i1, i2);
-            WorldRenderer.drawBoundingBox(matrixStackIn, ivertexbuilder,
+            WorldRenderer.renderLineBox(matrixStackIn, ivertexbuilder,
                     boundingBox.minX, lowI, boundingBox.minZ,
                     boundingBox.maxX, highI, boundingBox.maxZ,
                     rf, gf, bf, 0.01f + i * 0.05f, rf, gf, bf);

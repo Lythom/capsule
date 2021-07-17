@@ -168,9 +168,9 @@ public class Config {
                 .define("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray));
 
         // Overridable
-        List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.TALL_PLANTS, Material.SNOW);
+        List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.REPLACEABLE_PLANT, Material.SNOW);
         Block[] overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
-                .filter(block -> overridableMaterials.contains(block.getDefaultState().getMaterial()))
+                .filter(block -> overridableMaterials.contains(block.defaultBlockState().getMaterial()))
                 .toArray(Block[]::new);
 
         overridableBlocksIdsCfg = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
@@ -181,26 +181,31 @@ public class Config {
 
         // Loot tables that can reward a capsule
         List<String> defaultLootTablesList = Arrays.asList(
-                LootTables.CHESTS_ABANDONED_MINESHAFT.toString(),
-                LootTables.CHESTS_DESERT_PYRAMID.toString(),
-                LootTables.CHESTS_END_CITY_TREASURE.toString(),
-                LootTables.CHESTS_IGLOO_CHEST.toString(),
-                LootTables.CHESTS_JUNGLE_TEMPLE.toString(),
-                LootTables.CHESTS_SIMPLE_DUNGEON.toString(),
-                LootTables.CHESTS_STRONGHOLD_CORRIDOR.toString(),
-                LootTables.CHESTS_STRONGHOLD_CROSSING.toString(),
-                LootTables.CHESTS_STRONGHOLD_LIBRARY.toString(),
-                LootTables.CHESTS_VILLAGE_VILLAGE_TOOLSMITH.toString(),
-                LootTables.CHESTS_VILLAGE_VILLAGE_ARMORER.toString(),
-                LootTables.CHESTS_VILLAGE_VILLAGE_TEMPLE.toString(),
-                LootTables.CHESTS_VILLAGE_VILLAGE_WEAPONSMITH.toString(),
-                LootTables.CHESTS_BURIED_TREASURE.toString(),
-                LootTables.CHESTS_JUNGLE_TEMPLE_DISPENSER.toString(),
-                LootTables.CHESTS_PILLAGER_OUTPOST.toString(),
-                LootTables.CHESTS_SHIPWRECK_TREASURE.toString(),
-                LootTables.CHESTS_UNDERWATER_RUIN_BIG.toString(),
-                LootTables.CHESTS_UNDERWATER_RUIN_SMALL.toString(),
-                LootTables.CHESTS_WOODLAND_MANSION.toString());
+                LootTables.ABANDONED_MINESHAFT.toString(),
+                LootTables.BASTION_BRIDGE.toString(),
+                LootTables.BASTION_HOGLIN_STABLE.toString(),
+                LootTables.BASTION_OTHER.toString(),
+                LootTables.BASTION_TREASURE.toString(),
+                LootTables.SHIPWRECK_TREASURE.toString(),
+                LootTables.DESERT_PYRAMID.toString(),
+                LootTables.END_CITY_TREASURE.toString(),
+                LootTables.IGLOO_CHEST.toString(),
+                LootTables.JUNGLE_TEMPLE.toString(),
+                LootTables.SIMPLE_DUNGEON.toString(),
+                LootTables.STRONGHOLD_CORRIDOR.toString(),
+                LootTables.STRONGHOLD_CROSSING.toString(),
+                LootTables.STRONGHOLD_LIBRARY.toString(),
+                LootTables.VILLAGE_TOOLSMITH.toString(),
+                LootTables.VILLAGE_ARMORER.toString(),
+                LootTables.VILLAGE_TEMPLE.toString(),
+                LootTables.VILLAGE_WEAPONSMITH.toString(),
+                LootTables.BURIED_TREASURE.toString(),
+                LootTables.JUNGLE_TEMPLE_DISPENSER.toString(),
+                LootTables.PILLAGER_OUTPOST.toString(),
+                LootTables.SHIPWRECK_TREASURE.toString(),
+                LootTables.UNDERWATER_RUIN_BIG.toString(),
+                LootTables.UNDERWATER_RUIN_SMALL.toString(),
+                LootTables.WOODLAND_MANSION.toString());
 
         Config.lootTablesListCfg = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
                 .define("lootTablesList", defaultLootTablesList);

@@ -14,6 +14,8 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
+
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 /**
@@ -29,8 +31,8 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public ItemStack getRecipeOutput() {
-        return recipe.getRecipeOutput();
+    public ItemStack getResultItem() {
+        return recipe.getResultItem();
     }
 
     @Override
@@ -43,10 +45,10 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
      * The original capsule remains in the crafting grid
      */
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
             if (itemstack.getItem() instanceof CapsuleItem) {
                 nonnulllist.set(i, itemstack.copy());
@@ -69,8 +71,8 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
         }
 
         // in case it's not a prefab but a copy template recipe
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+        for (int i = 0; i < inv.getContainerSize(); ++i) {
+            ItemStack itemstack = inv.getItem(i);
             if (itemstack.getItem() instanceof CapsuleItem && !IsCopyable(itemstack)) {
                 return false;
             }
@@ -82,10 +84,10 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack getCraftingResult(CraftingInventory inv) {
-        ItemStack referenceCapsule = recipe.getRecipeOutput();
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+    public ItemStack assemble(CraftingInventory inv) {
+        ItemStack referenceCapsule = recipe.getResultItem();
+        for (int i = 0; i < inv.getContainerSize(); ++i) {
+            ItemStack itemstack = inv.getItem(i);
             if (IsCopyable(itemstack)) {
                 // This blueprint will take the source structure name by copying it here
                 // a new dedicated template is created later.
@@ -97,7 +99,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
         try {
             ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
                     CapsuleItem.getStructureName(referenceCapsule),
-                    CapsuleItem.getBaseColor(recipe.getRecipeOutput()),
+                    CapsuleItem.getBaseColor(recipe.getResultItem()),
                     0xFFFFFF,
                     CapsuleItem.getSize(referenceCapsule),
                     CapsuleItem.isOverpowered(referenceCapsule),
@@ -118,8 +120,8 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean canFit(int width, int height) {
-        return recipe.canFit(width, height);
+    public boolean canCraftInDimensions(int width, int height) {
+        return recipe.canCraftInDimensions(width, height);
     }
 
     @Override
@@ -133,25 +135,24 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean isDynamic() {
+    public boolean isSpecial() {
         return true;
     }
 
     public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<BlueprintCapsuleRecipe> {
-
         @Override
-        public BlueprintCapsuleRecipe read(ResourceLocation recipeId, JsonObject json) {
-            return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.CRAFTING_SHAPED.read(recipeId, json));
+        public BlueprintCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
+            return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.SHAPED_RECIPE.fromJson(recipeId, json));
         }
 
         @Override
-        public BlueprintCapsuleRecipe read(ResourceLocation recipeId, PacketBuffer buffer) {
-            return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.CRAFTING_SHAPED.read(recipeId, buffer));
+        public BlueprintCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+            return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.SHAPED_RECIPE.fromNetwork(recipeId, buffer));
         }
 
         @Override
-        public void write(PacketBuffer buffer, BlueprintCapsuleRecipe recipe) {
-            ShapedRecipe.Serializer.CRAFTING_SHAPED.write(buffer, recipe.recipe);
+        public void toNetwork(PacketBuffer buffer, BlueprintCapsuleRecipe recipe) {
+            ShapedRecipe.Serializer.SHAPED_RECIPE.toNetwork(buffer, recipe.recipe);
         }
     }
 }

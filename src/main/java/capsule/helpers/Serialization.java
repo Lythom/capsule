@@ -2,6 +2,7 @@ package capsule.helpers;
 
 import net.minecraft.block.Block;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ITag;
 import net.minecraft.tags.Tag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
@@ -43,10 +44,10 @@ public class Serialization {
                     states.add(b);
                 } else {
                     // is it a tag ?
-                    Tag<Block> tag = BlockTags.getCollection().get(excludedLocation);
+                    ITag<Block> tag = BlockTags.getAllTags().getTag(excludedLocation);
                     if (tag != null) {
                         // exclude all blocks from tag
-                        states.addAll(tag.getAllElements());
+                        states.addAll(tag.getValues());
                     }
                 }
             }

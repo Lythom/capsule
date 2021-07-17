@@ -68,20 +68,20 @@ public class CapsuleItems {
         for (IRecipe<?> recipe : manager.getRecipes()) {
             if (recipe.getId().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getRecipeOutput(), ((BlueprintCapsuleRecipe) recipe).recipe));
+                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getResultItem(), ((BlueprintCapsuleRecipe) recipe).recipe));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
-                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getRecipeOutput(), (RecoveryCapsuleRecipe) recipe);
+                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getResultItem(), (RecoveryCapsuleRecipe) recipe);
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {
-                    upgradedCapsule = Pair.of(recipe.getRecipeOutput(), (UpgradeCapsuleRecipe) recipe);
+                    upgradedCapsule = Pair.of(recipe.getResultItem(), (UpgradeCapsuleRecipe) recipe);
                 } else if (recipe instanceof BlueprintChangeRecipe) {
-                    blueprintChangedCapsule = Pair.of(recipe.getRecipeOutput(), (BlueprintChangeRecipe) recipe);
+                    blueprintChangedCapsule = Pair.of(recipe.getResultItem(), (BlueprintChangeRecipe) recipe);
                 } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe) {
                     PrefabsBlueprintAggregatorRecipe agg = (PrefabsBlueprintAggregatorRecipe) recipe;
                     for (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe aggregatorRecipe : agg.recipes) {
-                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getRecipeOutput(), aggregatorRecipe.recipe));
+                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getResultItem(), aggregatorRecipe.recipe));
                     }
                 } else {
-                    ItemStack output = recipe.getRecipeOutput();
+                    ItemStack output = recipe.getResultItem();
                     if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
                         if (CapsuleItem.isOverpowered(output)) {
                             CapsuleItems.opCapsuleList.put(output, (ShapedRecipe) recipe);
@@ -100,7 +100,7 @@ public class CapsuleItems {
     }
 
     private static boolean hasNoEmptyTagsIngredient(IRecipe<?> recipe) {
-        return recipe.getIngredients().stream().allMatch(i -> i.hasNoMatchingItems() || Arrays.stream(i.getMatchingStacks()).noneMatch(s -> s.getItem() == Items.BARRIER));
+        return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {
@@ -121,7 +121,7 @@ public class CapsuleItems {
         ItemStack capsuleUp = ironCapsule.copy();
         CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
         CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
-        capsuleUp.setTagInfo("upgraded", IntNBT.valueOf(upLevel));
+        capsuleUp.addTagElement("upgraded", IntNBT.valueOf(upLevel));
         return capsuleUp;
     }
 

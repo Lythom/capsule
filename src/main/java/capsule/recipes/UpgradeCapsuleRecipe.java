@@ -32,7 +32,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         this.recipeId = recipeId;
     }
 
-    public ItemStack getRecipeOutput() {
+    public ItemStack getResultItem() {
         return CapsuleItems.getUpgradedCapsule(CapsuleItems.withState(EMPTY), 1);
     }
 
@@ -43,8 +43,8 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
         ItemStack sourceCapsule = ItemStack.EMPTY;
         int material = 0;
-        for (int i = 0; i < invC.getSizeInventory(); ++i) {
-            ItemStack itemstack = invC.getStackInSlot(i);
+        for (int i = 0; i < invC.getContainerSize(); ++i) {
+            ItemStack itemstack = invC.getItem(i);
 
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
@@ -65,11 +65,11 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack getCraftingResult(CraftingInventory invC) {
+    public ItemStack assemble(CraftingInventory invC) {
         ItemStack input = ItemStack.EMPTY;
         int material = 0;
-        for (int i = 0; i < invC.getSizeInventory(); ++i) {
-            ItemStack itemstack = invC.getStackInSlot(i);
+        for (int i = 0; i < invC.getContainerSize(); ++i) {
+            ItemStack itemstack = invC.getItem(i);
 
             if (!itemstack.isEmpty()
                     && itemstack.getItem() instanceof CapsuleItem
@@ -100,7 +100,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean canFit(int width, int height) {
+    public boolean canCraftInDimensions(int width, int height) {
         return width * height >= 2;
     }
 
@@ -110,7 +110,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean isDynamic() {
+    public boolean isSpecial() {
         return true;
     }
 
@@ -125,8 +125,8 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
             NonNullList<Ingredient> nonnulllist = NonNullList.create();
 
             for (int i = 0; i < p_199568_0_.size(); ++i) {
-                Ingredient ingredient = Ingredient.deserialize(p_199568_0_.get(i));
-                if (!ingredient.hasNoMatchingItems()) {
+                Ingredient ingredient = Ingredient.fromJson(p_199568_0_.get(i));
+                if (!ingredient.isEmpty()) {
                     nonnulllist.add(ingredient);
                 }
             }
@@ -135,8 +135,8 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         }
 
         @Override
-        public UpgradeCapsuleRecipe read(ResourceLocation recipeId, JsonObject json) {
-            NonNullList<Ingredient> nonnulllist = readIngredients(JSONUtils.getJsonArray(json, "ingredients"));
+        public UpgradeCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
+            NonNullList<Ingredient> nonnulllist = readIngredients(JSONUtils.getAsJsonArray(json, "ingredients"));
             if (nonnulllist.isEmpty()) {
                 throw new JsonParseException("No ingredients for shapeless recipe");
             } else {
@@ -145,13 +145,13 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         }
 
         @Override
-        public UpgradeCapsuleRecipe read(ResourceLocation recipeId, PacketBuffer buffer) {
-            return new UpgradeCapsuleRecipe(recipeId, Ingredient.read(buffer));
+        public UpgradeCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+            return new UpgradeCapsuleRecipe(recipeId, Ingredient.fromNetwork(buffer));
         }
 
         @Override
-        public void write(PacketBuffer buffer, UpgradeCapsuleRecipe recipe) {
-            recipe.upgradeIngredient.write(buffer);
+        public void toNetwork(PacketBuffer buffer, UpgradeCapsuleRecipe recipe) {
+            recipe.upgradeIngredient.toNetwork(buffer);
         }
     }
 }

@@ -37,8 +37,8 @@ public class CapsuleThrowQueryToServer {
             return;
         }
 
-        ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
-        ServerWorld world = sendingPlayer.getServerWorld();
+        ItemStack heldItem = sendingPlayer.getMainHandItem();
+        ServerWorld world = sendingPlayer.getLevel();
         ctx.get().enqueueWork(() -> {
             if (heldItem.getItem() instanceof CapsuleItem) {
                 if (instant && pos != null) {
@@ -46,20 +46,20 @@ public class CapsuleThrowQueryToServer {
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
                     if (CapsuleItem.hasState(heldItem, EMPTY)) {
-                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUniqueID(), size, sendingPlayer.getServerWorld(), pos);
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUUID(), size, sendingPlayer.getLevel(), pos);
                         if (captured) {
-                            BlockPos center = pos.add(0, size / 2, 0);
+                            BlockPos center = pos.offset(0, size / 2, 0);
                             CapsuleNetwork.wrapper.send(
-                                    PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, sendingPlayer.getEntityWorld().getDimensionKey())),
-                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.getPosition(), size, CapsuleItem.getStructureName(heldItem))
+                                    PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, sendingPlayer.getCommandSenderWorld().dimension())),
+                                    new CapsuleUndeployNotifToClient(center, sendingPlayer.blockPosition(), size, CapsuleItem.getStructureName(heldItem))
                             );
                         }
                     }
                     // instant deployment
                     else {
-                        boolean deployed = Capsule.deployCapsule(heldItem, pos.add(0, -1, 0), sendingPlayer.getUniqueID(), extendLength, world);
+                        boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, world);
                         if (deployed) {
-                            world.playSound(null, pos, SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                            world.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
                             Capsule.showDeployParticules(world, pos, size);
                         }
                         if (deployed && CapsuleItem.isOneUse(heldItem)) {
@@ -80,7 +80,7 @@ public class CapsuleThrowQueryToServer {
             this.instant = buf.readBoolean();
             boolean hasPos = buf.readBoolean();
             if (hasPos) {
-                this.pos = BlockPos.fromLong(buf.readLong());
+                this.pos = BlockPos.of(buf.readLong());
             }
 
         } catch (IndexOutOfBoundsException ignored) {
@@ -92,7 +92,7 @@ public class CapsuleThrowQueryToServer {
         boolean hasPos = this.pos != null;
         buf.writeBoolean(hasPos);
         if (hasPos) {
-            buf.writeLong(this.pos.toLong());
+            buf.writeLong(this.pos.asLong());
         }
     }
 

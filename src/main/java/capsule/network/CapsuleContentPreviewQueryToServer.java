@@ -32,7 +32,7 @@ public class CapsuleContentPreviewQueryToServer {
 
     public CapsuleContentPreviewQueryToServer(PacketBuffer buf) {
         try {
-            this.setStructureName(buf.readString(32767));
+            this.setStructureName(buf.readUtf(32767));
 
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading AskCapsuleContentPreviewMessageToServer: " + ioe);
@@ -43,7 +43,7 @@ public class CapsuleContentPreviewQueryToServer {
         if (buf == null) return;
         String name = this.getStructureName();
         if (name == null) name = "";
-        buf.writeString(name);
+        buf.writeUtf(name);
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
@@ -55,12 +55,12 @@ public class CapsuleContentPreviewQueryToServer {
 
         ctx.get().enqueueWork(() -> {
             // read the content of the template and send it back to the client
-            ItemStack heldItem = sendingPlayer.getHeldItemMainhand();
+            ItemStack heldItem = sendingPlayer.getMainHandItem();
             if (!(heldItem.getItem() instanceof CapsuleItem) || CapsuleItem.getStructureName(heldItem) == null) {
                 return;
             }
 
-            ServerWorld serverworld = sendingPlayer.getServerWorld();
+            ServerWorld serverworld = sendingPlayer.getLevel();
             Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
             CapsuleTemplate template = templatepair.getRight();
 
@@ -71,7 +71,7 @@ public class CapsuleContentPreviewQueryToServer {
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
                 String structureName = heldItem.getTag().getString("structureName");
-                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName), Util.DUMMY_UUID);
+                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName), Util.NIL_UUID);
             }
         });
         ctx.get().setPacketHandled(true);

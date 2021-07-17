@@ -20,7 +20,7 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
 
 
     @Override
-    public boolean isGlobalRenderer(TileEntityCapture te) {
+    public boolean shouldRenderOffScreen(TileEntityCapture te) {
         return true;
     }
 
@@ -33,7 +33,7 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         int extendSize = (size - 1) / 2;
         int color = tileEntityCapture.getColor();
         AxisAlignedBB boundingBox = Spacial.getBB(0, 0, 0, size, extendSize);
-        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getLines());
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.lines());
         CapsulePreviewHandler.renderRecallBox(matrixStackIn, color, boundingBox, ivertexbuilder, time);
     }
 }

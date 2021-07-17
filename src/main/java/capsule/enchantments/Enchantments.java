@@ -20,7 +20,7 @@ public class Enchantments {
     protected static final Logger LOGGER = LogManager.getLogger(Enchantments.class);
 
     public static Enchantment recallEnchant = null;
-    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getEnchantmentLevel(Enchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
+    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
 
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
 

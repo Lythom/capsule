@@ -113,7 +113,7 @@ public class CapsuleTemplateManager {
         }
 
         CapsuleTemplate template = new CapsuleTemplate();
-        template.read(NBTUtil.update(this.fixer, DefaultTypeReferences.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")));
+        template.load(NBTUtil.update(this.fixer, DefaultTypeReferences.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")));
         return template;
     }
 
@@ -153,7 +153,7 @@ public class CapsuleTemplateManager {
         } else {
             String ext = locationIn.getPath().endsWith(extIn) ? "" : extIn;
             Path p = this.pathGenerated.resolve(locationIn.getPath() + ext);
-            if (FileUtil.isNormalized(p) && FileUtil.containsReservedName(p)) {
+            if (FileUtil.isPathNormalized(p) && FileUtil.isPathPortable(p)) {
                 return p;
             } else {
                 throw new ResourceLocationException("Invalid resource path: " + p);

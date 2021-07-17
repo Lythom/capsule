@@ -9,7 +9,7 @@ public class MinecraftNBT {
      */
     @SuppressWarnings("ConstantConditions")
     public static boolean hasColor(ItemStack stack) {
-        CompoundNBT compoundnbt = stack.getChildTag("display");
+        CompoundNBT compoundnbt = stack.getTagElement("display");
         return compoundnbt != null && compoundnbt.contains("color", 99);
     }
 
@@ -17,7 +17,7 @@ public class MinecraftNBT {
      * Return the color for the specified ItemStack.
      */
     public static int getColor(ItemStack stack) {
-        CompoundNBT compoundnbt = stack.getChildTag("display");
+        CompoundNBT compoundnbt = stack.getTagElement("display");
         return compoundnbt != null && compoundnbt.contains("color", 99) ? compoundnbt.getInt("color") : 0xFFFFFF;
     }
 
@@ -25,6 +25,6 @@ public class MinecraftNBT {
      * Sets the color of the specified ItemStack
      */
     public static void setColor(ItemStack stack, int color) {
-        stack.getOrCreateChildTag("display").putInt("color", color);
+        stack.getOrCreateTagElement("display").putInt("color", color);
     }
 }

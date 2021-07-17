@@ -9,9 +9,9 @@ import net.minecraft.util.math.BlockPos;
 public class RendererUtils {
     public static void doPositionPrologue(ActiveRenderInfo info) {
         RenderSystem.pushMatrix();
-        RenderSystem.rotatef(info.getPitch(), 1.0F, 0.0F, 0.0F);
-        RenderSystem.rotatef(info.getYaw() + 180, 0.0F, 1.0F, 0.0F);
-        RenderSystem.translated(-info.getProjectedView().x, -info.getProjectedView().y, -info.getProjectedView().z);
+        RenderSystem.rotatef(info.getXRot(), 1.0F, 0.0F, 0.0F);
+        RenderSystem.rotatef(info.getYRot() + 180, 0.0F, 1.0F, 0.0F);
+        RenderSystem.translated(-info.getPosition().x, -info.getPosition().y, -info.getPosition().z);
     }
 
     public static void doPositionEpilogue() {
@@ -61,45 +61,45 @@ public class RendererUtils {
     }
 
     public static void drawPlaneNegX(final double x, final double minY, final double maxY, final double minZ, final double maxZ, final BufferBuilder buffer) {
-        buffer.pos(x, minY, minZ).endVertex();
-        buffer.pos(x, minY, maxZ).endVertex();
-        buffer.pos(x, maxY, maxZ).endVertex();
-        buffer.pos(x, maxY, minZ).endVertex();
+        buffer.vertex(x, minY, minZ).endVertex();
+        buffer.vertex(x, minY, maxZ).endVertex();
+        buffer.vertex(x, maxY, maxZ).endVertex();
+        buffer.vertex(x, maxY, minZ).endVertex();
     }
 
     public static void drawPlanePosX(final double x, final double minY, final double maxY, final double minZ, final double maxZ, final BufferBuilder buffer) {
-        buffer.pos(x, minY, minZ).endVertex();
-        buffer.pos(x, maxY, minZ).endVertex();
-        buffer.pos(x, maxY, maxZ).endVertex();
-        buffer.pos(x, minY, maxZ).endVertex();
+        buffer.vertex(x, minY, minZ).endVertex();
+        buffer.vertex(x, maxY, minZ).endVertex();
+        buffer.vertex(x, maxY, maxZ).endVertex();
+        buffer.vertex(x, minY, maxZ).endVertex();
     }
 
     public static void drawPlaneNegY(final double y, final double minX, final double maxX, final double minZ, final double maxZ, final BufferBuilder buffer) {
-        buffer.pos(minX, y, minZ).endVertex();
-        buffer.pos(maxX, y, minZ).endVertex();
-        buffer.pos(maxX, y, maxZ).endVertex();
-        buffer.pos(minX, y, maxZ).endVertex();
+        buffer.vertex(minX, y, minZ).endVertex();
+        buffer.vertex(maxX, y, minZ).endVertex();
+        buffer.vertex(maxX, y, maxZ).endVertex();
+        buffer.vertex(minX, y, maxZ).endVertex();
     }
 
     public static void drawPlanePosY(final double y, final double minX, final double maxX, final double minZ, final double maxZ, final BufferBuilder buffer) {
-        buffer.pos(minX, y, minZ).endVertex();
-        buffer.pos(minX, y, maxZ).endVertex();
-        buffer.pos(maxX, y, maxZ).endVertex();
-        buffer.pos(maxX, y, minZ).endVertex();
+        buffer.vertex(minX, y, minZ).endVertex();
+        buffer.vertex(minX, y, maxZ).endVertex();
+        buffer.vertex(maxX, y, maxZ).endVertex();
+        buffer.vertex(maxX, y, minZ).endVertex();
     }
 
     public static void drawPlaneNegZ(final double z, final double minX, final double maxX, final double minY, final double maxY, final BufferBuilder buffer) {
-        buffer.pos(minX, minY, z).endVertex();
-        buffer.pos(minX, maxY, z).endVertex();
-        buffer.pos(maxX, maxY, z).endVertex();
-        buffer.pos(maxX, minY, z).endVertex();
+        buffer.vertex(minX, minY, z).endVertex();
+        buffer.vertex(minX, maxY, z).endVertex();
+        buffer.vertex(maxX, maxY, z).endVertex();
+        buffer.vertex(maxX, minY, z).endVertex();
     }
 
     public static void drawPlanePosZ(final double z, final double minX, final double maxX, final double minY, final double maxY, final BufferBuilder buffer) {
-        buffer.pos(minX, minY, z).endVertex();
-        buffer.pos(maxX, minY, z).endVertex();
-        buffer.pos(maxX, maxY, z).endVertex();
-        buffer.pos(minX, maxY, z).endVertex();
+        buffer.vertex(minX, minY, z).endVertex();
+        buffer.vertex(maxX, minY, z).endVertex();
+        buffer.vertex(maxX, maxY, z).endVertex();
+        buffer.vertex(minX, maxY, z).endVertex();
     }
 
     public static void drawCapsuleCube(AxisAlignedBB boundingBox, BufferBuilder bufferBuilder) {
@@ -129,12 +129,12 @@ public class RendererUtils {
      * final IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().getBufferBuilders().getEntityVertexConsumers();
      *         for (BlockInfo blockInfo : blockAccess.getBlueprint().getBlockInfoAsList())
      *         {
-     *             matrixStack.push();
+     *             matrixStack.pushPose();
      *             matrixStack.translate(x-viewPosition.getX(), y-viewPosition.getY(), z-viewPosition.getZ());
      *             final Matrix4f model = matrixStack.peek().getModel();
      *             BlockState state = blockInfo.getState();
      *
-     *             final BlockPos blockPos = blockInfo.getPos();
+     *             final BlockPos blockPos = blockInfo.getBlockPos();
      *             matrixStack.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
      *
      *             blockrendererdispatcher.renderBlock(state,
@@ -147,7 +147,7 @@ public class RendererUtils {
      *             matrixStack.translate(-blockPos.getX(), -blockPos.getY(), -blockPos.getZ());
      *             matrixStack.pop();
      *
-     *             matrixStack.push();
+     *             matrixStack.pushPose();
      *             final IFluidState fluidState = state.getFluidState();
      *             if (!fluidState.isEmpty())
      *             {

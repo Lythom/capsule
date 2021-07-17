@@ -7,43 +7,36 @@ import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.Property;
 import net.minecraft.state.StateContainer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.ToolType;
 
-public class BlockCapsuleMarker extends Block implements ITileEntityProvider {
+public class BlockCapsuleMarker extends DispenserBlock {
     /**
      * Whether this fence connects in the northern direction
      */
     public static final Property<Boolean> PROJECTING = BooleanProperty.create("projecting");
 
     public BlockCapsuleMarker() {
-        super(Block.Properties.create(Material.ROCK, MaterialColor.STONE)
-                .hardnessAndResistance(5.0F, 1000.0F)
+        super(BlockCapsuleMarker.Properties.of(Material.STONE, MaterialColor.STONE)
+                .strength(3.5F)
                 .sound(SoundType.STONE)
                 .harvestTool(ToolType.PICKAXE)
                 .harvestLevel(0));
 
-        this.setDefaultState(this.stateContainer.getBaseState()
-                .with(PROJECTING, Boolean.FALSE));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(PROJECTING, Boolean.FALSE)
+        );
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(PROJECTING);
     }
 
     @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) {
+    public TileEntity newBlockEntity(IBlockReader worldIn) {
         return new TileEntityCapture();
     }
 }

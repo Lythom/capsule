@@ -38,8 +38,8 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
         ItemStack itemstack = ItemStack.EMPTY;
         ArrayList<ItemStack> arraylist = Lists.newArrayList();
 
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-            ItemStack itemstack1 = inv.getStackInSlot(i);
+        for (int i = 0; i < inv.getContainerSize(); ++i) {
+            ItemStack itemstack1 = inv.getItem(i);
 
             if (!itemstack1.isEmpty()) {
                 if (itemstack1.getItem() instanceof CapsuleItem) {
@@ -60,12 +60,12 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack getCraftingResult(CraftingInventory inv) {
+    public ItemStack assemble(CraftingInventory inv) {
         List<DyeItem> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-            ItemStack itemstack1 = inv.getStackInSlot(i);
+        for (int i = 0; i < inv.getContainerSize(); ++i) {
+            ItemStack itemstack1 = inv.getItem(i);
             if (!itemstack1.isEmpty()) {
                 Item item = itemstack1.getItem();
                 if (item instanceof CapsuleItem) {
@@ -111,7 +111,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
             }
 
             for (DyeItem dyeitem : dyes) {
-                float[] afloat = dyeitem.getDyeColor().getColorComponentValues();
+                float[] afloat = dyeitem.getDyeColor().getTextureDiffuseColors();
                 int i2 = (int) (afloat[0] * 255.0F);
                 int l = (int) (afloat[1] * 255.0F);
                 int i1 = (int) (afloat[2] * 255.0F);
@@ -142,19 +142,19 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
     }
 
     @Override
-    public boolean canFit(int width, int height) {
+    public boolean canCraftInDimensions(int width, int height) {
         return width * height >= 2;
     }
 
-    public ItemStack getRecipeOutput() {
+    public ItemStack getResultItem() {
         return CapsuleItems.withState(EMPTY);
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
         }
 

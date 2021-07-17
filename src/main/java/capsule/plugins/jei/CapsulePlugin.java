@@ -54,11 +54,11 @@ public class CapsulePlugin implements IModPlugin {
             for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
                 ItemStack capsuleUp = CapsuleItems.getUpgradedCapsule(capsule, upLevel);
                 NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
-                ingredients.set(0, Ingredient.fromStacks(capsule));
+                ingredients.set(0, Ingredient.of(capsule));
                 recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsuleUp, ingredients));
             }
             // clear
-            recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsule, NonNullList.from(Ingredient.EMPTY, Ingredient.fromStacks(CapsuleItems.getUnlabelledCapsule(capsule)))));
+            recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", capsule, NonNullList.of(Ingredient.EMPTY, Ingredient.of(CapsuleItems.getUnlabelledCapsule(capsule)))));
         }
 
         if (CapsuleItems.recoveryCapsule == null ||
@@ -73,8 +73,8 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack unlabelled = CapsuleItems.unlabelledCapsule.getKey();
         ItemStack unlabelledDeployed = CapsuleItems.deployedCapsule.getKey();
         CapsuleItem.setState(unlabelledDeployed, DEPLOYED);
-        Ingredient anyBlueprint = Ingredient.fromStacks(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
-        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.fromStacks(unlabelled), anyBlueprint, Ingredient.fromStacks(recoveryCapsule)));
+        Ingredient anyBlueprint = Ingredient.of(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
+        Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.of(unlabelled), anyBlueprint, Ingredient.of(recoveryCapsule)));
         // recovery
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
         for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
@@ -86,7 +86,7 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
         CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
         CapsuleItem.setLabel(withNewTemplate, "Changed Template");
-        recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", withNewTemplate, NonNullList.from(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
+        recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", withNewTemplate, NonNullList.of(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
@@ -101,7 +101,7 @@ public class CapsulePlugin implements IModPlugin {
             registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);
-        opCapsule.setTagInfo("overpowered", ByteNBT.valueOf(true));
+        opCapsule.addTagElement("overpowered", ByteNBT.valueOf(true));
         registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }

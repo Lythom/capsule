@@ -133,7 +133,7 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath, IResourceManager ressourceManager) {
         try {
-            for (ResourceLocation ressourceLoc : ressourceManager.getAllResourceLocations(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
+            for (ResourceLocation ressourceLoc : ressourceManager.listResources(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
                 IResource ressource = ressourceManager.getResource(ressourceLoc);
                 // source path
                 InputStream sourceTemplate = ressource.getInputStream();

@@ -11,21 +11,22 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
 
+import javax.annotation.Nullable;
+
 /**
  * Will crash if placed at y > 70
  */
 public class BlockDeployCrasher extends Block {
     public BlockDeployCrasher() {
-        super(Block.Properties.create(Material.ROCK, MaterialColor.STONE)
-                .hardnessAndResistance(5.0F, 1000.0F)
+        super(Block.Properties.of(Material.STONE, MaterialColor.STONE)
                 .sound(SoundType.STONE)
                 .harvestTool(ToolType.PICKAXE)
                 .harvestLevel(0));
     }
 
     @Override
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
-        super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(worldIn, pos, state, placer, stack);
         if (pos.getY() > 70) {
             throw new RuntimeException("testing purpose deploy crasher");
         }

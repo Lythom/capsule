@@ -104,7 +104,7 @@ public class StructureSaver {
         template.removeOccupiedPositions();
         PlayerEntity player = null;
         if (playerID != null) {
-            player = worldserver.getPlayerByUuid(playerID);
+            player = worldserver.getPlayerByUUID(playerID);
             if (player != null) template.setAuthor(player.getGameProfile().getName());
         }
         boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
@@ -147,7 +147,7 @@ public class StructureSaver {
 
         PlayerEntity player = null;
         if (playerID != null) {
-            player = worldserver.getPlayerByUuid(playerID);
+            player = worldserver.getPlayerByUUID(playerID);
         }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintBLocks.size() != worldBlocks.size())
@@ -185,16 +185,16 @@ public class StructureSaver {
     }
 
     public static String serializeComparable(Template.BlockInfo b) {
-        return b.state.getBlock().getTranslationKey()
+        return b.state.getBlock().getDescriptionId()
                 + "@"
-                + b.state.getBlock().getDefaultState()
+                + b.state.getBlock().defaultBlockState()
                 + (b.nbt == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
     }
 
     public static CompoundNBT filterIdentityNBT(Template.BlockInfo b) {
         CompoundNBT nbt = b.nbt.copy();
         List<String> converted = Config.getBlueprintIdentityNBT(b.state.getBlock());
-        nbt.keySet().removeIf(key -> converted == null || !converted.contains(key));
+        nbt.getAllKeys().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
     }
 
@@ -204,7 +204,7 @@ public class StructureSaver {
     }
 
     public static boolean isFlowingLiquid(Template.BlockInfo b) {
-        return b.state.getBlock() instanceof FlowingFluidBlock && b.state.get(FlowingFluidBlock.LEVEL) != 0;
+        return b.state.getBlock() instanceof FlowingFluidBlock && b.state.getValue(FlowingFluidBlock.LEVEL) != 0;
     }
 
 
@@ -212,7 +212,7 @@ public class StructureSaver {
     public static CapsuleTemplateManager getTemplateManager(ServerWorld world) {
         if (world == null) return null;
         FolderName folder = new FolderName("generated/capsules/structures");
-        Path directoryPath = world.getServer().func_240776_a_(folder);
+        Path directoryPath = world.getServer().getWorldPath(folder);
 
         if (!CapsulesManagers.containsKey(directoryPath.toString())) {
             File capsuleDir = directoryPath.toFile();
@@ -234,11 +234,11 @@ public class StructureSaver {
 
         // disable tileDrop during the operation so that broken block are not
         // itemized on the ground.
-        GameRules.BooleanValue entityDropsGameRule = world.getGameRules().get(GameRules.DO_ENTITY_DROPS);
-        GameRules.BooleanValue tileDropsGameRule = world.getGameRules().get(GameRules.DO_TILE_DROPS);
+        GameRules.BooleanValue entityDropsGameRule = world.getGameRules().getRule(GameRules.RULE_DOENTITYDROPS);
+        GameRules.BooleanValue tileDropsGameRule = world.getGameRules().getRule(GameRules.RULE_DOBLOCKDROPS);
 
-        boolean flagdoEntityDrops = world.getGameRules().getBoolean(GameRules.DO_ENTITY_DROPS);
-        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS);
+        boolean flagdoEntityDrops = world.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS);
+        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS);
         entityDropsGameRule.set(false, world.getServer());
         tileDropsGameRule.set(false, world.getServer());
         world.restoringBlockSnapshots = true;
@@ -251,14 +251,14 @@ public class StructureSaver {
                 try {
                     // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                     if (playerCanRemove(world, pos, player)) {
-                        TileEntity tileentity = b.hasTileEntity() ? world.getTileEntity(pos) : null;
+                        TileEntity tileentity = b.hasTileEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
                         if (tileentity != null) {
-                            IClearable.clearObj(tileentity);
-                            world.setBlockState(pos, Blocks.BARRIER.getDefaultState(), 20); // from Template.addBlocksToWorld
+                            IClearable.tryClear(tileentity);
+                            world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 20); // from Template.addBlocksToWorld
                         }
 
-                        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
+                        world.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
                     } else {
                         if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
                         couldNotBeRemoved.add(pos);
@@ -266,7 +266,7 @@ public class StructureSaver {
                 } catch (Exception e) {
                     printDeployError(player, e, "Block crashed during Capsule capture phase : couldn't be removed. Will be ignored.");
                     try {
-                        world.setBlockState(pos, b);
+                        world.setBlock(pos, b, 3);
                     } catch (Exception ignored) {
                     }
                     if (couldNotBeRemoved == null) couldNotBeRemoved = new ArrayList<>();
@@ -295,7 +295,7 @@ public class StructureSaver {
 
         PlayerEntity player = null;
         if (thrower != null) {
-            player = playerWorld.getServer().getPlayerList().getPlayerByUUID(thrower);
+            player = playerWorld.getServer().getPlayerList().getPlayer(thrower);
         }
 
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
@@ -310,7 +310,7 @@ public class StructureSaver {
 
         // check if the player can place a block
         if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
-            player.sendMessage(new TranslationTextComponent("capsule.error.notAllowed"), Util.DUMMY_UUID);
+            player.sendMessage(new TranslationTextComponent("capsule.error.notAllowed"), Util.NIL_UUID);
             return false;
         }
 
@@ -356,42 +356,45 @@ public class StructureSaver {
         for (int i = 0, outErrorsSize = outErrors.size(); i < outErrorsSize; i++) {
             ITextComponent outError = outErrors.get(i);
             msg.append(outError);
-            if (i < outErrors.size() - 1) msg.appendString("\n");
+            if (i < outErrors.size() - 1) msg.append("\n");
         }
-        player.sendMessage(msg, Util.DUMMY_UUID);
+        player.sendMessage(msg, Util.NIL_UUID);
     }
 
     public static void placePlayerOnTop(ServerWorld playerWorld, BlockPos dest, int size) {
         // Players don't block deployment, instead they are pushed up if they would suffocate
-        List<LivingEntity> players = playerWorld.getEntitiesWithinAABB(
+        List<LivingEntity> players = playerWorld.getEntitiesOfClass(
                 LivingEntity.class,
                 new AxisAlignedBB(dest.getX(), dest.getY(), dest.getZ(), dest.getX() + size, dest.getY() + size, dest.getZ() + size),
                 entity -> (entity instanceof PlayerEntity)
         );
         for (LivingEntity p : players) {
             for (int y = 0; y < size; y++) {
-                if (checkBlockCollision(p)) {
-                    p.setPositionAndUpdate(p.getPosX(), p.getPosY() + 1, p.getPosZ());
+                if (!checkBlockCollision(p)) {
+                    p.moveTo(p.getX(), p.getY() + 1, p.getZ());
                 }
             }
         }
     }
 
     private static boolean checkBlockCollision(Entity p_241162_1_) {
-        return BlockPos.getAllInBox(p_241162_1_.getBoundingBox()).allMatch(b -> p_241162_1_.world.getBlockState(b).isAir(p_241162_1_.world, b));
+        return BlockPos.betweenClosedStream(p_241162_1_.getBoundingBox()).allMatch(p -> {
+            BlockState state = p_241162_1_.level.getBlockState(p);
+            return state.isAir(p_241162_1_.level, p);
+        });
     }
 
     public static void printDeployError(@Nullable PlayerEntity player, Exception err, String s) {
         LOGGER.error(s, err);
         if (player != null) {
-            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
+            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
         }
     }
 
     public static void printWriteTemplateError(@Nullable PlayerEntity player, String capsuleStructureId) {
         LOGGER.error("Couldn't write template " + capsuleStructureId);
         if (player != null) {
-            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.DUMMY_UUID);
+            player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
         }
     }
 
@@ -422,8 +425,8 @@ public class StructureSaver {
     }
 
     private static boolean isEntityPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player) {
-        BlockSnapshot blocksnapshot = BlockSnapshot.create(worldserver.getDimensionKey(), worldserver, blockPos);
-        BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.getDefaultState(), player);
+        BlockSnapshot blocksnapshot = BlockSnapshot.create(worldserver.dimension(), worldserver, blockPos);
+        BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.defaultBlockState(), player);
         MinecraftForge.EVENT_BUS.post(event);
         return !event.isCanceled();
     }
@@ -475,13 +478,13 @@ public class StructureSaver {
             destWorld, BlockPos destOriginPos, int size,
                                         List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<ITextComponent> outErrors) {
 
-        BlockState air = Blocks.AIR.getDefaultState();
+        BlockState air = Blocks.AIR.defaultBlockState();
 
         List<Template.BlockInfo> srcblocks = template.getBlocks();
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
-            BlockPos blockpos = CapsuleTemplate.transformedBlockPos(placementIn, template$blockinfo.pos).add(destOriginPos).add(CapsuleTemplate.recenterRotation((size - 1) / 2, placementIn));
+            BlockPos blockpos = CapsuleTemplate.calculateRelativePosition(placementIn, template$blockinfo.pos).offset(destOriginPos).offset(CapsuleTemplate.recenterRotation((size - 1) / 2, placementIn));
             blockInfoByPosition.put(blockpos, template$blockinfo);
         }
 
@@ -490,14 +493,14 @@ public class StructureSaver {
             for (int x = 0; x < size; x++) {
                 for (int z = 0; z < size; z++) {
 
-                    BlockPos destPos = destOriginPos.add(x, y, z);
+                    BlockPos destPos = destOriginPos.offset(x, y, z);
                     Template.BlockInfo srcInfo = blockInfoByPosition.get(destPos);
                     BlockState templateBlockState = air;
                     if (srcInfo != null) {
                         templateBlockState = srcInfo.state;
                     }
 
-                    if (!destWorld.isBlockLoaded(destPos)) {
+                    if (!destWorld.hasChunkAt(destPos)) {
                         outErrors.add(new TranslationTextComponent("capsule.error.areaNotLoaded"));
                         return;
                     }
@@ -510,7 +513,7 @@ public class StructureSaver {
 
                     boolean srcOccupied = (!templateBlockState.isAir(destWorld, destPos) && !overridable.contains(templateBlockState.getBlock()));
 
-                    List<LivingEntity> entities = destWorld.getEntitiesWithinAABB(
+                    List<LivingEntity> entities = destWorld.getEntitiesOfClass(
                             LivingEntity.class,
                             new AxisAlignedBB(destPos.getX(), destPos.getY(), destPos.getZ(), destPos.getX() + 1, destPos.getY() + 1, destPos.getZ() + 1),
                             entity -> !(entity instanceof PlayerEntity)
@@ -599,7 +602,7 @@ public class StructureSaver {
         ResourceLocation destinationLocation = new ResourceLocation(sanitized);
         CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
         // populate template from source data
-        destTemplate.read(templateData);
+        destTemplate.load(templateData);
         // empty occupied position, it makes no sense for a new template to copy those situational data
         destTemplate.occupiedPositions = null;
         // remove all tile entities
@@ -638,7 +641,7 @@ public class StructureSaver {
      * Get the Capsule saving tool that remembers last capsule id.
      */
     public static CapsuleSavedData getCapsuleSavedData(ServerWorld capsuleWorld) {
-        return capsuleWorld.getSavedData().getOrCreate(CapsuleSavedData::new, "capsuleData");
+        return capsuleWorld.getDataStorage().get(CapsuleSavedData::new, "capsuleData");
     }
 
     @Nullable
@@ -668,10 +671,10 @@ public class StructureSaver {
         }
 
         if (!created && playerIn != null) {
-            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintCreationError"), Util.DUMMY_UUID);
+            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintCreationError"), Util.NIL_UUID);
         }
         if (outExcluded.size() > 0 && playerIn != null) {
-            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)), Util.DUMMY_UUID);
+            playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)), Util.NIL_UUID);
         }
         return destStructureName;
     }
@@ -686,7 +689,7 @@ public class StructureSaver {
         public boolean equals(Object someOther) {
             if (!(someOther instanceof ItemStackKey)) return false;
             final ItemStack otherStack = ((ItemStackKey) someOther).itemStack;
-            return otherStack.isItemEqual(this.itemStack) && (!otherStack.hasTag() && !this.itemStack.hasTag() || otherStack.getTag().equals(this.itemStack.getTag()));
+            return otherStack.sameItem(this.itemStack) && (!otherStack.hasTag() && !this.itemStack.hasTag() || otherStack.getTag().equals(this.itemStack.getTag()));
         }
 
         public int hashCode() {
@@ -702,7 +705,7 @@ public class StructureSaver {
         }
 
         public static String serializeItemStack(ItemStack itemstack) {
-            return itemstack.getItem().getTranslationKey()
+            return itemstack.getItem().getDescriptionId()
                     + "@"
                     + CapsuleItem.getState(itemstack);
         }

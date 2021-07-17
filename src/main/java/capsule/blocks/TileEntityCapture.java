@@ -3,6 +3,7 @@ package capsule.blocks;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.tileentity.DispenserTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -12,7 +13,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TileEntityCapture extends TileEntity {
+public class TileEntityCapture extends DispenserTileEntity {
 
     public static final List<TileEntityCapture> instances = new ArrayList<>();
 
@@ -22,8 +23,8 @@ public class TileEntityCapture extends TileEntity {
     }
 
     @Override
-    public void remove() {
-        super.remove();
+    public void setRemoved() {
+        super.setRemoved();
         instances.remove(this);
     }
 
@@ -34,7 +35,7 @@ public class TileEntityCapture extends TileEntity {
      */
     @OnlyIn(Dist.CLIENT)
     @Override
-    public double getMaxRenderDistanceSquared() {
+    public double getViewDistance() {
         final int MAXIMUM_DISTANCE_IN_BLOCKS = 32;
         return MAXIMUM_DISTANCE_IN_BLOCKS * MAXIMUM_DISTANCE_IN_BLOCKS;
     }
@@ -44,13 +45,13 @@ public class TileEntityCapture extends TileEntity {
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
         CompoundNBT nbtTagCompound = new CompoundNBT();
-        write(nbtTagCompound);
-        return new SUpdateTileEntityPacket(this.pos, 0, nbtTagCompound);
+        save(nbtTagCompound);
+        return new SUpdateTileEntityPacket(this.getBlockPos(), 0, nbtTagCompound);
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        read(this.world.getBlockState(pkt.getPos()), pkt.getNbtCompound());
+        load(this.level.getBlockState(pkt.getPos()), pkt.getTag());
     }
 
     /**
@@ -83,8 +84,8 @@ public class TileEntityCapture extends TileEntity {
         int size = this.getSize();
         int exdendLength = (size - 1) / 2;
 
-        BlockPos source = this.getPos().add(-exdendLength, 1, -exdendLength);
-        BlockPos end = source.add(size, size, size);
+        BlockPos source = this.getBlockPos().offset(-exdendLength, 1, -exdendLength);
+        BlockPos end = source.offset(size, size, size);
 
         AxisAlignedBB box = new AxisAlignedBB(source.getX(), source.getY(), source.getZ(), end.getX(),
                 end.getY(), end.getZ());

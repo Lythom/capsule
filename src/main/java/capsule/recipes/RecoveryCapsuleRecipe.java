@@ -19,18 +19,18 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
         this.recipe = recipe;
     }
 
-    public ItemStack getRecipeOutput() {
-        return recipe.getRecipeOutput();
+    public ItemStack getResultItem() {
+        return recipe.getResultItem();
     }
 
     /**
      * The original capsule remains in the crafting grid
      */
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
             if (itemstack.getItem() instanceof CapsuleItem) {
                 nonnulllist.set(i, itemstack.copy());
@@ -50,9 +50,9 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack getCraftingResult(CraftingInventory invC) {
-        for (int i = 0; i < invC.getSizeInventory(); ++i) {
-            ItemStack itemstack = invC.getStackInSlot(i);
+    public ItemStack assemble(CraftingInventory invC) {
+        for (int i = 0; i < invC.getContainerSize(); ++i) {
+            ItemStack itemstack = invC.getItem(i);
 
             if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
                 ItemStack copy = itemstack.copy();
@@ -64,8 +64,8 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean canFit(int width, int height) {
-        return recipe.canFit(width, height);
+    public boolean canCraftInDimensions(int width, int height) {
+        return recipe.canCraftInDimensions(width, height);
     }
 
     @Override
@@ -79,25 +79,25 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public boolean isDynamic() {
+    public boolean isSpecial() {
         return true;
     }
 
     public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<RecoveryCapsuleRecipe> {
 
         @Override
-        public RecoveryCapsuleRecipe read(ResourceLocation recipeId, JsonObject json) {
-            return new RecoveryCapsuleRecipe(ShapelessRecipe.Serializer.CRAFTING_SHAPELESS.read(recipeId, json));
+        public RecoveryCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
+            return new RecoveryCapsuleRecipe(ShapelessRecipe.Serializer.SHAPELESS_RECIPE.fromJson(recipeId, json));
         }
 
         @Override
-        public RecoveryCapsuleRecipe read(ResourceLocation recipeId, PacketBuffer buffer) {
-            return new RecoveryCapsuleRecipe(ShapelessRecipe.Serializer.CRAFTING_SHAPELESS.read(recipeId, buffer));
+        public RecoveryCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+            return new RecoveryCapsuleRecipe(ShapelessRecipe.Serializer.SHAPELESS_RECIPE.fromNetwork(recipeId, buffer));
         }
 
         @Override
-        public void write(PacketBuffer buffer, RecoveryCapsuleRecipe recipe) {
-            ShapelessRecipe.Serializer.CRAFTING_SHAPELESS.write(buffer, recipe.recipe);
+        public void toNetwork(PacketBuffer buffer, RecoveryCapsuleRecipe recipe) {
+            ShapelessRecipe.Serializer.SHAPELESS_RECIPE.toNetwork(buffer, recipe.recipe);
         }
     }
 }

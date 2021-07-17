@@ -38,16 +38,16 @@ public class CapsuleContentPreviewAnswerToClient {
 
     public CapsuleContentPreviewAnswerToClient(PacketBuffer buf) {
         try {
-            this.structureName = buf.readString(32767);
+            this.structureName = buf.readUtf(32767);
             int size = buf.readShort();
             this.boundingBoxes = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 boolean isSingleBlock = buf.readBoolean();
                 if (isSingleBlock) {
-                    BlockPos p = BlockPos.fromLong(buf.readLong());
+                    BlockPos p = BlockPos.of(buf.readLong());
                     this.boundingBoxes.add(new AxisAlignedBB(p, p));
                 } else {
-                    this.boundingBoxes.add(new AxisAlignedBB(BlockPos.fromLong(buf.readLong()), BlockPos.fromLong(buf.readLong())));
+                    this.boundingBoxes.add(new AxisAlignedBB(BlockPos.of(buf.readLong()), BlockPos.of(buf.readLong())));
                 }
             }
 
@@ -58,16 +58,16 @@ public class CapsuleContentPreviewAnswerToClient {
     }
 
     public void toBytes(PacketBuffer buf) {
-        buf.writeString(this.structureName);
+        buf.writeUtf(this.structureName);
         int size = Math.min(this.boundingBoxes.size(), Short.MAX_VALUE);
         buf.writeShort(size);
         for (int i = 0; i < size; i++) {
             AxisAlignedBB bb = boundingBoxes.get(i);
-            boolean isSingleBlock = bb.getAverageEdgeLength() == 0;
+            boolean isSingleBlock = bb.getSize() == 0;
             buf.writeBoolean(isSingleBlock);
-            buf.writeLong(new BlockPos(bb.minX, bb.minY, bb.minZ).toLong());
+            buf.writeLong(new BlockPos(bb.minX, bb.minY, bb.minZ).asLong());
             if (!isSingleBlock) {
-                buf.writeLong(new BlockPos(bb.maxX, bb.maxY, bb.maxZ).toLong());
+                buf.writeLong(new BlockPos(bb.maxX, bb.maxY, bb.maxZ).asLong());
             }
         }
     }

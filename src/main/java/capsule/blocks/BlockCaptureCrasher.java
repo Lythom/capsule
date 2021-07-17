@@ -12,16 +12,15 @@ import net.minecraftforge.common.ToolType;
 
 public class BlockCaptureCrasher extends Block {
     public BlockCaptureCrasher() {
-        super(Block.Properties.create(Material.ROCK, MaterialColor.STONE)
-                .hardnessAndResistance(5.0F, 1000.0F)
+        super(Block.Properties.of(Material.STONE, MaterialColor.STONE)
                 .sound(SoundType.STONE)
                 .harvestTool(ToolType.PICKAXE)
                 .harvestLevel(0));
     }
 
     @Override
-    public void onBlockHarvested(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
-        super.onBlockHarvested(worldIn, pos, state, player);
+    public void playerWillDestroy(World worldIn, BlockPos pos, BlockState state, PlayerEntity player) {
+        super.playerWillDestroy(worldIn, pos, state, player);
         throw new RuntimeException("testing purpose");
     }
 }

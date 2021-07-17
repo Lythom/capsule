@@ -18,7 +18,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
         super(id);
     }
 
-    public ItemStack getRecipeOutput() {
+    public ItemStack getResultItem() {
         ItemStack bp = new ItemStack(CapsuleItems.CAPSULE, 1);
         CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
@@ -33,12 +33,12 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         ItemStack blueprintCapsule = null;
         ItemStack templateCapsule = null;
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
             if (blueprintCapsule == null && CapsuleItem.isBlueprint(itemstack)) {
                 blueprintCapsule = itemstack;
             } else if (CapsuleItem.hasStructureLink(itemstack)) {
@@ -58,9 +58,9 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     public boolean matches(CraftingInventory inv, World worldIn) {
         int sourceCapsule = 0;
         int blueprint = 0;
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
 
             if (blueprint == 0 && CapsuleItem.isBlueprint(itemstack)) {
                 blueprint++;
@@ -80,13 +80,13 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
      * Returns an Item that is the result of this recipe
      */
     @Override
-    public ItemStack getCraftingResult(CraftingInventory inv) {
+    public ItemStack assemble(CraftingInventory inv) {
         String templateStructure = null;
         Integer templateSize = null;
         ItemStack blueprintCapsule = null;
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
         for (int i = 0; i < nonnulllist.size(); ++i) {
-            ItemStack itemstack = inv.getStackInSlot(i);
+            ItemStack itemstack = inv.getItem(i);
             if (blueprintCapsule == null && CapsuleItem.isBlueprint(itemstack)) {
                 blueprintCapsule = itemstack.copy();
             } else if (CapsuleItem.hasStructureLink(itemstack)) {
@@ -108,7 +108,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     }
 
     @Override
-    public boolean canFit(int width, int height) {
+    public boolean canCraftInDimensions(int width, int height) {
         return width * height >= 2;
     }
 

@@ -74,8 +74,8 @@ public class CapsuleCommand {
     public static List<ServerPlayerEntity> sentUsageURL = new ArrayList<>();
 
     public static String[] getStructuresList(ServerWorld world) {
-        Path capsuleStructuresPath = world.getServer().func_240776_a_(new FolderName("generated/capsules/structures"));
-        Path minecraftStructuresPath = world.getServer().func_240776_a_(new FolderName("generated/capsules/structures"));
+        Path capsuleStructuresPath = world.getServer().getWorldPath(new FolderName("generated/capsules/structures"));
+        Path minecraftStructuresPath = world.getServer().getWorldPath(new FolderName("generated/capsules/structures"));
         return ArrayUtils.addAll(
                 capsuleStructuresPath.toFile().list(),
                 minecraftStructuresPath.toFile().list()
@@ -96,7 +96,7 @@ public class CapsuleCommand {
 
     private static SuggestionProvider<CommandSource> SUGGEST_TEMPLATE() {
         return (context, builder) -> {
-            String[] tpls = getStructuresList(context.getSource().getWorld());
+            String[] tpls = getStructuresList(context.getSource().getLevel());
             if (tpls == null) tpls = new String[0];
             return ISuggestionProvider.suggest(tpls, builder);
         };
@@ -114,39 +114,39 @@ public class CapsuleCommand {
                 .then(Commands.literal("help")
                         .executes(ctx -> {
                             int count = 0;
-                            if (!sentUsageURL.contains(ctx.getSource().asPlayer())) {
+                            if (!sentUsageURL.contains(ctx.getSource().getPlayerOrException())) {
                                 StringTextComponent msg = new StringTextComponent(
                                         "see Capsule commands usages at " + TextFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
-                                msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
-                                ctx.getSource().sendFeedback(msg, false);
-                                sentUsageURL.add(ctx.getSource().asPlayer());
+                                msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
+                                ctx.getSource().sendSuccess(msg, false);
+                                sentUsageURL.add(ctx.getSource().getPlayerOrException());
                                 count++;
                             }
                             Map<CommandNode<CommandSource>, String> map = dispatcher.getSmartUsage(ctx.getRootNode().getChild("capsule"), ctx.getSource());
 
                             for (String s : map.values()) {
-                                ctx.getSource().sendFeedback(new StringTextComponent("/" + s), false);
+                                ctx.getSource().sendSuccess(new StringTextComponent("/" + s), false);
                             }
 
                             return map.size() + count;
                         }))
                 // giveEmpty [size] [overpowered]
                 .then(Commands.literal("giveEmpty")
-                        .requires((player) -> player.hasPermissionLevel(2))
-                        .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), 3, false))
+                        .requires((player) -> player.hasPermission(2))
+                        .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), 3, false))
                         .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
-                                .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), false))
+                                .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), getInteger(ctx, "size"), false))
                                 .then(Commands.argument("overpowered", BoolArgumentType.bool())
-                                        .executes(ctx -> executeGiveEmpty(ctx.getSource().asPlayer(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
+                                        .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
                                 )
                         )
                 )
                 // giveLinked <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveLinked")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
-                                .executes(ctx -> executeGiveLinked(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
                                 )
@@ -154,10 +154,10 @@ public class CapsuleCommand {
                 )
                 // giveBlueprint <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveBlueprint")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
-                                .executes(ctx -> executeGiveBlueprint(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeGiveBlueprint(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeGiveBlueprint(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
                                 )
@@ -165,20 +165,20 @@ public class CapsuleCommand {
                 )
                 // exportHeldItem
                 .then(Commands.literal("exportHeldItem")
-                        .requires((player) -> player.hasPermissionLevel(2))
-                        .executes(ctx -> executeExportHeldItem(ctx.getSource().asPlayer()))
+                        .requires((player) -> player.hasPermission(2))
+                        .executes(ctx -> executeExportHeldItem(ctx.getSource().getPlayerOrException()))
                 )
                 // exportSeenBlock
                 .then(Commands.literal("exportSeenBlock")
-                        .requires((player) -> player.hasPermissionLevel(2))
-                        .executes(ctx -> executeExportSeenBlock(ctx.getSource().asPlayer()))
+                        .requires((player) -> player.hasPermission(2))
+                        .executes(ctx -> executeExportSeenBlock(ctx.getSource().getPlayerOrException()))
                 )
                 // fromExistingReward <rewardTemplateName> [playerName]
                 .then(Commands.literal("fromExistingReward")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
-                                .executes(ctx -> executeFromExistingReward(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeFromExistingReward(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeFromExistingReward(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
                                 )
@@ -186,10 +186,10 @@ public class CapsuleCommand {
                 )
                 // fromStructure <structureTemplateName> [playerName]
                 .then(Commands.literal("fromStructure")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_TEMPLATE())
-                                .executes(ctx -> executeFromStructure(ctx.getSource().asPlayer(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeFromStructure(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeFromStructure(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
                                 )
@@ -197,22 +197,22 @@ public class CapsuleCommand {
                 )
                 // fromHeldCapsule [outputTemplateName]
                 .then(Commands.literal("fromHeldCapsule")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("outputTemplateName", string())
-                                .executes(ctx -> executeFromHeldCapsule(ctx.getSource().asPlayer(), getString(ctx, "outputTemplateName")))
+                                .executes(ctx -> executeFromHeldCapsule(ctx.getSource().getPlayerOrException(), getString(ctx, "outputTemplateName")))
                         )
                 )
                 // giveRandomLoot [playerName]
                 .then(Commands.literal("giveRandomLoot")
-                        .requires((player) -> player.hasPermissionLevel(2))
-                        .executes(ctx -> executeGiveRandomLoot(ctx.getSource().asPlayer()))
+                        .requires((player) -> player.hasPermission(2))
+                        .executes(ctx -> executeGiveRandomLoot(ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("target", player())
                                 .executes(ctx -> executeGiveRandomLoot(getPlayer(ctx, "target")))
                         )
                 )
                 // reloadLootList
                 .then(Commands.literal("reloadLootList")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .executes(ctx -> {
                             IResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -221,7 +221,7 @@ public class CapsuleCommand {
                 )
                 // reloadWhitelist
                 .then(Commands.literal("reloadWhitelist")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .executes(ctx -> {
                             IResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -232,38 +232,38 @@ public class CapsuleCommand {
                 )
                 // setAuthor <authorName>
                 .then(Commands.literal("setAuthor")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("authorName", string())
-                                .executes(ctx -> executeSetAuthor(ctx.getSource().asPlayer(), getString(ctx, "authorName")))
+                                .executes(ctx -> executeSetAuthor(ctx.getSource().getPlayerOrException(), getString(ctx, "authorName")))
                         )
                 )
                 // setBaseColor <color>
                 .then(Commands.literal("setBaseColor")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
-                                .executes(ctx -> executeSetBaseColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
+                                .executes(ctx -> executeSetBaseColor(ctx.getSource().getPlayerOrException(), getString(ctx, "color")))
                         )
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("setMaterialColor")
-                        .requires((player) -> player.hasPermissionLevel(2))
+                        .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
-                                .executes(ctx -> executeSetMaterialColor(ctx.getSource().asPlayer(), getString(ctx, "color")))
+                                .executes(ctx -> executeSetMaterialColor(ctx.getSource().getPlayerOrException(), getString(ctx, "color")))
                         )
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("downloadTemplate")
-                        .requires((player) -> player.hasPermissionLevel(0))
-                        .executes(ctx -> executeDownloadTemplate(ctx.getSource().asPlayer()))
+                        .requires((player) -> player.hasPermission(0))
+                        .executes(ctx -> executeDownloadTemplate(ctx.getSource().getPlayerOrException()))
                 )
         ;
 
         dispatcher.register(capsuleCommand);
     }
 
-    private static int executeDownloadTemplate(ServerPlayerEntity asPlayer) {
+    private static int executeDownloadTemplate(ServerPlayerEntity getPlayerOrException) {
         return 0;
     }
 
@@ -285,7 +285,7 @@ public class CapsuleCommand {
 
     private static int executeGiveLinked(ServerPlayerEntity player, String rewardTemplateName) {
         String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
-        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
@@ -299,7 +299,7 @@ public class CapsuleCommand {
 
     private static int executeGiveBlueprint(ServerPlayerEntity player, String rewardTemplateName) {
         String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
-        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName)) {
 
             CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.getServer());
             if (srcTemplate != null) {
@@ -320,7 +320,7 @@ public class CapsuleCommand {
 
                 String destTemplate = StructureSaver.createBlueprintTemplate(
                         Config.getRewardPathFromName(templateName), capsule,
-                        player.getServerWorld(),
+                        player.getLevel(),
                         player
                 );
                 CapsuleItem.setStructureName(capsule, destTemplate);
@@ -335,11 +335,11 @@ public class CapsuleCommand {
 
     private static int executeGiveRandomLoot(ServerPlayerEntity player) throws CommandException {
         if (player != null) {
-            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getServerWorld())).withParameter(LootParameters.THIS_ENTITY, player.getEntity()).withParameter(LootParameters.field_237457_g_, player.getPositionVec()).withRandom(player.getRNG());
+            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getLevel())).withParameter(LootParameters.THIS_ENTITY, player.getEntity()).withParameter(LootParameters.ORIGIN, player.position()).withRandom(player.getRandom());
             List<ItemStack> loots = new ArrayList<>();
-            CapsuleLootTableHook.capsulePool.generate(loots::add, lootcontext$builder.build(LootParameterSets.COMMAND));
+            CapsuleLootTableHook.capsulePool.addRandomItems(loots::add, lootcontext$builder.create(LootParameterSets.COMMAND));
             if (loots.size() <= 0) {
-                player.sendMessage(new StringTextComponent("No loot this time !"), Util.DUMMY_UUID);
+                player.sendMessage(new StringTextComponent("No loot this time !"), Util.NIL_UUID);
             } else {
                 for (ItemStack loot : loots) {
                     giveCapsule(loot, player);
@@ -351,7 +351,7 @@ public class CapsuleCommand {
     }
 
     private static int executeFromExistingReward(ServerPlayerEntity player, String templateName) throws CommandException {
-        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getLevel() instanceof ServerWorld) {
 
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
@@ -380,21 +380,21 @@ public class CapsuleCommand {
     }
 
     private static int executeFromStructure(ServerPlayerEntity player, String templateName) throws CommandException {
-        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getLevel() instanceof ServerWorld) {
             CompoundNBT data = new CompoundNBT();
             int size = -1;
             String author = null;
 
             // template
-            TemplateManager templatemanager = player.getServerWorld().getStructureTemplateManager();
+            TemplateManager templatemanager = player.getLevel().getStructureManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
-            Template template = templatemanager.getTemplate(new ResourceLocation(path));
+            Template template = templatemanager.get(new ResourceLocation(path));
             if (template != null) {
                 size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 author = template.getAuthor();
-                template.writeToNBT(data);
+                template.save(data);
             } else {
-                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getServerWorld());
+                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getLevel());
                 CapsuleTemplate ctemplate = capsuletemplatemanager.getTemplateDefaulted(new ResourceLocation(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
@@ -409,7 +409,7 @@ public class CapsuleCommand {
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
                 // write template from source data
-                destTemplate.read(data);
+                destTemplate.load(data);
                 destManager.writeToFile(destinationLocation);
 
                 ItemStack capsule = Capsule.newRewardCapsuleItemStack(
@@ -431,7 +431,7 @@ public class CapsuleCommand {
 
     private static int executeFromHeldCapsule(ServerPlayerEntity player, String templateName) throws CommandSyntaxException {
         if (player != null) {
-            ItemStack heldItem = player.getHeldItemMainhand();
+            ItemStack heldItem = player.getMainHandItem();
             if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
                 String outputName;
@@ -452,13 +452,13 @@ public class CapsuleCommand {
                         heldItem,
                         destinationTemplateLocation,
                         StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager()),
-                        player.getServerWorld(),
+                        player.getLevel(),
                         false,
                         null
                 );
 
                 if (!created) {
-                    player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."), Util.DUMMY_UUID);
+                    player.sendMessage(new StringTextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."), Util.NIL_UUID);
                     return 0;
                 }
 
@@ -486,7 +486,7 @@ public class CapsuleCommand {
         }
 
         if (player != null) {
-            ItemStack heldItem = player.getHeldItemMainhand();
+            ItemStack heldItem = player.getMainHandItem();
             if (heldItem.getItem() instanceof CapsuleItem) {
                 CapsuleItem.setMaterialColor(heldItem, color);
                 return 1;
@@ -504,7 +504,7 @@ public class CapsuleCommand {
         }
 
         if (player != null) {
-            ItemStack heldItem = player.getHeldItemMainhand();
+            ItemStack heldItem = player.getMainHandItem();
             if (heldItem.getItem() instanceof CapsuleItem) {
                 CapsuleItem.setBaseColor(heldItem, color);
                 return 1;
@@ -515,14 +515,14 @@ public class CapsuleCommand {
 
     private static int executeSetAuthor(ServerPlayerEntity player, String authorName) {
         if (player != null) {
-            ItemStack heldItem = player.getHeldItemMainhand();
+            ItemStack heldItem = player.getMainHandItem();
             if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
 
                 if (!StringUtils.isNullOrEmpty(authorName)) {
                     // set a new author
                     //noinspection ConstantConditions
                     heldItem.getTag().putString("author", authorName);
-                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getLevel());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
@@ -534,7 +534,7 @@ public class CapsuleCommand {
                     // called with one parameter = remove author information
                     //noinspection ConstantConditions
                     heldItem.getTag().remove("author");
-                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getServerWorld());
+                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.getLevel());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
@@ -551,25 +551,25 @@ public class CapsuleCommand {
     private static int executeExportSeenBlock(ServerPlayerEntity player) {
         if (player != null) {
             if (player.getServer() != null && !player.getServer().isDedicatedServer()) {
-                BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getRenderPartialTicks(), 50);
+                BlockRayTraceResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getFrameTime(), 50);
 
                 if (rtc.getType() == RayTraceResult.Type.BLOCK) {
 
-                    BlockPos position = rtc.getPos();
-                    BlockState state = player.getServerWorld().getBlockState(position);
-                    TileEntity tileentity = player.getServerWorld().getTileEntity(position);
+                    BlockPos position = rtc.getBlockPos();
+                    BlockState state = player.getLevel().getBlockState(position);
+                    TileEntity tileentity = player.getLevel().getBlockEntity(position);
 
                     String BlockEntityTag = tileentity == null ? "" : "{BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
                     String command = "/give @p " + state.getBlock().getRegistryName() + BlockEntityTag + " 1 ";
                     StringTextComponent msg = new StringTextComponent(command);
-                    msg.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
-                    msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
+                    msg.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
+                    msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                    player.sendMessage(msg, Util.DUMMY_UUID);
+                    player.sendMessage(msg, Util.NIL_UUID);
                     return 1;
                 }
             } else {
-                player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"), Util.DUMMY_UUID);
+                player.sendMessage(new StringTextComponent("This command only works on an integrated server, not on an dedicated one"), Util.NIL_UUID);
             }
         }
         return 0;
@@ -577,7 +577,7 @@ public class CapsuleCommand {
 
     private static int executeExportHeldItem(ServerPlayerEntity player) {
         if (player != null) {
-            ItemStack heldItem = player.getHeldItemMainhand();
+            ItemStack heldItem = player.getMainHandItem();
             if (!heldItem.isEmpty()) {
 
                 String tag = heldItem.hasTag() ? String.valueOf(heldItem.getTag()) : "";
@@ -585,10 +585,10 @@ public class CapsuleCommand {
                 String command = "/give @p " + heldItem.getItem().getRegistryName() + tag + " 1 ";
                 StringTextComponent msg = new StringTextComponent(command);
                 msg.getStyle()
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
-                msg.getStyle().setClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
+                msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                player.sendMessage(msg, Util.DUMMY_UUID);
+                player.sendMessage(msg, Util.NIL_UUID);
                 return 1;
             }
         }
@@ -596,8 +596,8 @@ public class CapsuleCommand {
     }
 
     private static void giveCapsule(ItemStack capsule, PlayerEntity player) {
-        ItemEntity entity = new ItemEntity(player.getEntityWorld(), player.getPosition().getX(), player.getPosition().getY(), player.getPosition().getZ(), capsule);
-        entity.setNoPickupDelay();
-        entity.onCollideWithPlayer(player);
+        ItemEntity entity = new ItemEntity(player.level, player.position().x, player.position().y, player.position().z, capsule);
+        entity.setNoPickUpDelay();
+        entity.setOwner(player.getUUID());
     }
 }

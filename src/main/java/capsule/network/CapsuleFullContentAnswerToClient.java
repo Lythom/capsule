@@ -43,7 +43,7 @@ public class CapsuleFullContentAnswerToClient {
 
     public CapsuleFullContentAnswerToClient(PacketBuffer buf) {
         try {
-            this.structureName = buf.readString(32767);
+            this.structureName = buf.readUtf(32767);
             boolean isSmallEnough = buf.readBoolean();
             this.template = null;
             if (isSmallEnough) {
@@ -56,7 +56,7 @@ public class CapsuleFullContentAnswerToClient {
                 }
                 if (nbt != null) {
                     this.template = new CapsuleTemplate();
-                    this.template.read(nbt);
+                    this.template.load(nbt);
                 }
             }
         } catch (IndexOutOfBoundsException ioe) {
@@ -65,7 +65,7 @@ public class CapsuleFullContentAnswerToClient {
     }
 
     public void toBytes(PacketBuffer buf) {
-        buf.writeString(this.structureName);
+        buf.writeUtf(this.structureName);
         CompoundNBT nbt = StructureSaver.getTemplateNBTData(template);
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
         try {

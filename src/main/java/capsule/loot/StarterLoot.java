@@ -26,7 +26,7 @@ public class StarterLoot {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!event.getPlayer().world.isRemote) {
+        if (!event.getPlayer().level.isClientSide) {
             if (StringUtils.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
@@ -62,14 +62,14 @@ public class StarterLoot {
     public static void giveAllStarters(ServerPlayerEntity player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
-            int stackIdx = player.inventory.getFirstEmptyStack();
-            if (stackIdx < 0 || stackIdx >= player.inventory.getSizeInventory()) {
-                Capsule.throwCapsule(starterCapsule, player, player.getPosition());
+            int stackIdx = player.inventory.getFreeSlot();
+            if (stackIdx < 0 || stackIdx >= player.inventory.getContainerSize()) {
+                Capsule.throwCapsule(starterCapsule, player, player.blockPosition());
             } else {
                 try {
-                    player.inventory.setInventorySlotContents(stackIdx, starterCapsule);
+                    player.inventory.setItem(stackIdx, starterCapsule);
                 } catch (Exception e) {
-                    Capsule.throwCapsule(starterCapsule, player, player.getPosition());
+                    Capsule.throwCapsule(starterCapsule, player, player.blockPosition());
                 }
             }
         }

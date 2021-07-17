@@ -25,14 +25,14 @@ public class LabelEditedMessageToServer {
 
     public LabelEditedMessageToServer(PacketBuffer buf) {
         try {
-            this.setLabel(buf.readString(32767));
+            this.setLabel(buf.readUtf(32767));
         } catch (IndexOutOfBoundsException ioe) {
             LOGGER.error("Exception while reading CapsuleLabelEditedMessageToClient: " + ioe);
         }
     }
 
     public void toBytes(PacketBuffer buf) {
-        buf.writeString(this.label);
+        buf.writeUtf(this.label);
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
@@ -42,7 +42,7 @@ public class LabelEditedMessageToServer {
             return;
         }
         ctx.get().enqueueWork(() -> {
-            ItemStack serverStack = sendingPlayer.getHeldItemMainhand();
+            ItemStack serverStack = sendingPlayer.getMainHandItem();
             if (serverStack.getItem() instanceof CapsuleItem) {
                 // of the player didn't swap item during ui opening
                 CapsuleItem.setLabel(serverStack, getLabel());

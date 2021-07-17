@@ -79,7 +79,7 @@ public class CapsuleMod {
     @OnlyIn(Dist.CLIENT)
     public static void openGuiScreenClient(PlayerEntity player) {
         capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);
-        Minecraft.getInstance().displayGuiScreen(screen);
+        Minecraft.getInstance().setScreen(screen);
     }
 
     public static void openGuiScreenServer(PlayerEntity player) {
@@ -92,7 +92,7 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     public static void setup(FMLCommonSetupEvent event) {
         CapsuleNetwork.setup();
-        DispenserBlock.registerDispenseBehavior(CapsuleItems.CAPSULE, new DispenseCapsuleBehavior());
+        DispenserBlock.registerBehavior(CapsuleItems.CAPSULE, new DispenseCapsuleBehavior());
     }
 
     @SubscribeEvent
@@ -108,7 +108,7 @@ final class CapsuleModEventSubscriber {
             return 0xFFFFFF;
         }, CapsuleItems.CAPSULE);
 
-        ItemModelsProperties.registerProperty(
+        ItemModelsProperties.register(
                 CapsuleItems.CAPSULE,
                 new ResourceLocation(CapsuleMod.MODID, "state"),
                 (stack, world, entity) -> CapsuleItem.getState(stack).getValue()

@@ -31,7 +31,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
     private String templatesPath = null;
 
     public static LootEntry.Builder<?> builder(String templatePath) {
-        return builder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
+        return simpleBuilder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
             int weight = findConfiguredWeight(templatePath);
             return new CapsuleLootEntry(templatePath, weight);
         });
@@ -62,7 +62,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
      * Add all eligible capsuleList to the list to be picked from.
      */
     @Override
-    public void func_216154_a(Consumer<ItemStack> stacks, LootContext context) {
+    public void createItemStack(Consumer<ItemStack> stacks, LootContext context) {
         if (this.templatesPath == null) return;
 
         if (Config.lootTemplatesData.containsKey(this.templatesPath)) {
@@ -111,7 +111,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         Config.LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getWorld().getServer().getDataPackRegistries().getResourceManager());
+            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getLevel().getServer().getDataPackRegistries().getResourceManager());
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;
@@ -122,14 +122,14 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
         for (int i = 0; i < lpd.files.size(); i++) {
             int ri = (initRand + i) % lpd.files.size();
             String structureName = lpd.files.get(ri);
-            CapsuleTemplate template = StructureSaver.getTemplateForReward(context.getWorld().getServer(), this.templatesPath + "/" + structureName).getRight();
+            CapsuleTemplate template = StructureSaver.getTemplateForReward(context.getLevel().getServer(), this.templatesPath + "/" + structureName).getRight();
             if (template != null) return Pair.of(this.templatesPath + "/" + structureName, template);
         }
         return null;
     }
 
     @Override
-    public LootPoolEntryType func_230420_a_() {
-        return LootEntryManager.LOOT_TABLE;
+    public LootPoolEntryType getType() {
+        return LootEntryManager.REFERENCE;
     }
 }

@@ -73,17 +73,17 @@ public class CapsuleTemplate {
         return blocks.get(0).blockInfos;
     }
 
-    private static void func_237149_a_(Template.BlockInfo p_237149_0_, List<Template.BlockInfo> p_237149_1_, List<Template.BlockInfo> p_237149_2_, List<Template.BlockInfo> p_237149_3_) {
+    private static void addToLists(Template.BlockInfo p_237149_0_, List<Template.BlockInfo> p_237149_1_, List<Template.BlockInfo> p_237149_2_, List<Template.BlockInfo> p_237149_3_) {
         if (p_237149_0_.nbt != null) {
             p_237149_2_.add(p_237149_0_);
-        } else if (!p_237149_0_.state.getBlock().isVariableOpacity() && p_237149_0_.state.hasOpaqueCollisionShape(EmptyBlockReader.INSTANCE, BlockPos.ZERO)) {
+        } else if (!p_237149_0_.state.getBlock().hasDynamicShape() && p_237149_0_.state.isCollisionShapeFullBlock(EmptyBlockReader.INSTANCE, BlockPos.ZERO)) {
             p_237149_1_.add(p_237149_0_);
         } else {
             p_237149_3_.add(p_237149_0_);
         }
     }
 
-    private static List<Template.BlockInfo> func_237151_a_(List<Template.BlockInfo> p_237151_0_, List<Template.BlockInfo> p_237151_1_, List<Template.BlockInfo> p_237151_2_) {
+    private static List<Template.BlockInfo> buildInfoList(List<Template.BlockInfo> p_237151_0_, List<Template.BlockInfo> p_237151_1_, List<Template.BlockInfo> p_237151_2_) {
         Comparator<Template.BlockInfo> comparator = Comparator.<Template.BlockInfo>comparingInt((p_237154_0_) -> {
             return p_237154_0_.pos.getY();
         }).thenComparingInt((p_237153_0_) -> {
@@ -101,19 +101,19 @@ public class CapsuleTemplate {
         return list;
     }
 
-    public static BlockPos transformedBlockPos(PlacementSettings placementIn, BlockPos pos) {
-        return getTransformedPos(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getCenterOffset());
+    public static BlockPos calculateRelativePosition(PlacementSettings placementIn, BlockPos pos) {
+        return getTransformedPos(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getRotationPivot());
     }
 
-    public static Vector3d transformedVector3d(PlacementSettings placementIn, Vector3d pos) {
-        return getTransformedPos(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getCenterOffset());
+    public static Vector3d transformedVec3d(PlacementSettings placementIn, Vector3d pos) {
+        return getTransformedPos(pos, placementIn.getMirror(), placementIn.getRotation(), placementIn.getRotationPivot());
     }
 
     public static List<Template.BlockInfo> processBlockInfos(@Nullable CapsuleTemplate template, IWorld worldIn, BlockPos offsetPos, PlacementSettings placementSettingsIn, List<Template.BlockInfo> blockInfos) {
         List<Template.BlockInfo> list = Lists.newArrayList();
 
         for (Template.BlockInfo template$blockinfo : blockInfos) {
-            BlockPos blockpos = transformedBlockPos(placementSettingsIn, template$blockinfo.pos).add(offsetPos);
+            BlockPos blockpos = calculateRelativePosition(placementSettingsIn, template$blockinfo.pos).offset(offsetPos);
             Template.BlockInfo template$blockinfo1 = new Template.BlockInfo(blockpos, template$blockinfo.state, template$blockinfo.nbt);
             list.add(template$blockinfo1);
         }
@@ -121,22 +121,21 @@ public class CapsuleTemplate {
         return list;
     }
 
-    public static List<Template.EntityInfo> processEntityInfos(@Nullable CapsuleTemplate template, IWorld worldIn, BlockPos offsetPos, PlacementSettings placementSettingsIn, List<Template.EntityInfo> blockInfos) {
+    public static List<Template.EntityInfo> processEntityInfos(@Nullable CapsuleTemplate template, IWorld p_215387_0_, BlockPos offsetPos, PlacementSettings placementSettingsIn, List<Template.EntityInfo> blockInfos) {
         List<Template.EntityInfo> list = Lists.newArrayList();
         for (Template.EntityInfo entityInfo : blockInfos) {
-            Vector3d pos = transformedVector3d(placementSettingsIn, entityInfo.pos).add(Vector3d.copy(offsetPos));
-            BlockPos blockpos = transformedBlockPos(placementSettingsIn, entityInfo.blockPos).add(offsetPos);
+            Vector3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(Vector3d.atLowerCornerOf(offsetPos));
+            BlockPos blockpos = calculateRelativePosition(placementSettingsIn, entityInfo.blockPos).offset(offsetPos);
             Template.EntityInfo info = new Template.EntityInfo(pos, blockpos, entityInfo.nbt);
             list.add(info);
         }
-
         return list;
     }
 
     private void addEntitiesToWorld(IServerWorld worldIn, BlockPos offsetPos, PlacementSettings placementIn, Mirror mirrorIn, Rotation rotationIn, BlockPos centerOffset, @Nullable MutableBoundingBox boundsIn, List<Entity> spawnedEntities) {
         for (Template.EntityInfo template$entityinfo : processEntityInfos(this, worldIn, offsetPos, placementIn, this.entities)) {
             BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
-            if (boundsIn == null || boundsIn.isVecInside(blockpos)) {
+            if (boundsIn == null || boundsIn.isInside(blockpos)) {
                 CompoundNBT compoundnbt = template$entityinfo.nbt;
                 Vector3d vector3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListNBT listnbt = new ListNBT();
@@ -145,23 +144,23 @@ public class CapsuleTemplate {
                 listnbt.add(DoubleNBT.valueOf(vector3d1.z));
                 compoundnbt.put("Pos", listnbt);
                 compoundnbt.remove("UUID");
-                loadEntity(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
-                    float f = p_242927_6_.getMirroredYaw(placementIn.getMirror());
-                    f = f + (p_242927_6_.rotationYaw - p_242927_6_.getRotatedYaw(placementIn.getRotation()));
-                    p_242927_6_.setLocationAndAngles(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.rotationPitch);
-                    if (placementIn.func_237134_m_() && p_242927_6_ instanceof MobEntity) {
-                        ((MobEntity) p_242927_6_).onInitialSpawn(worldIn, worldIn.getDifficultyForLocation(new BlockPos(vector3d1)), SpawnReason.STRUCTURE, (ILivingEntityData) null, compoundnbt);
+                createEntityIgnoreException(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
+                    float f = p_242927_6_.mirror(placementIn.getMirror());
+                    f = f + (p_242927_6_.yRot - p_242927_6_.rotate(placementIn.getRotation()));
+                    p_242927_6_.moveTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.xRot);
+                    if (placementIn.shouldFinalizeEntities() && p_242927_6_ instanceof MobEntity) {
+                        ((MobEntity) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(new BlockPos(vector3d1)), SpawnReason.STRUCTURE, (ILivingEntityData) null, compoundnbt);
                     }
-                    worldIn.addEntity(p_242927_6_);
+                    worldIn.addFreshEntityWithPassengers(p_242927_6_);
                     if (spawnedEntities != null) spawnedEntities.add(p_242927_6_);
                 });
             }
         }
     }
 
-    private static Optional<Entity> loadEntity(IServerWorld worldIn, CompoundNBT nbt) {
+    private static Optional<Entity> createEntityIgnoreException(IServerWorld worldIn, CompoundNBT nbt) {
         try {
-            return EntityType.loadEntityUnchecked(nbt, worldIn.getWorld());
+            return EntityType.create(nbt, worldIn.getLevel());
         } catch (Exception exception) {
             return Optional.empty();
         }
@@ -246,7 +245,7 @@ public class CapsuleTemplate {
             for (int j = 0; j < list1.size(); ++j) {
                 Template.BlockInfo template$blockinfo = list1.get(j);
                 CompoundNBT compoundnbt = new CompoundNBT();
-                compoundnbt.put("pos", this.writeInts(template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()));
+                compoundnbt.put("pos", this.newIntegerList(template$blockinfo.pos.getX(), template$blockinfo.pos.getY(), template$blockinfo.pos.getZ()));
                 int k = template$basicpalette.idFor(template$blockinfo.state);
                 compoundnbt.putInt("state", k);
                 if (template$blockinfo.nbt != null) {
@@ -291,8 +290,8 @@ public class CapsuleTemplate {
 
         for (Template.EntityInfo template$entityinfo : this.entities) {
             CompoundNBT compoundnbt1 = new CompoundNBT();
-            compoundnbt1.put("pos", this.writeDoubles(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
-            compoundnbt1.put("blockPos", this.writeInts(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
+            compoundnbt1.put("pos", this.newDoubleList(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
+            compoundnbt1.put("blockPos", this.newIntegerList(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
             if (template$entityinfo.nbt != null) {
                 compoundnbt1.put("nbt", template$entityinfo.nbt);
             }
@@ -301,16 +300,16 @@ public class CapsuleTemplate {
         }
 
         nbt.put("entities", listnbt);
-        nbt.put("size", this.writeInts(this.size.getX(), this.size.getY(), this.size.getZ()));
-        nbt.putInt("DataVersion", SharedConstants.getVersion().getWorldVersion());
+        nbt.put("size", this.newIntegerList(this.size.getX(), this.size.getY(), this.size.getZ()));
+        nbt.putInt("DataVersion", SharedConstants.getCurrentVersion().getWorldVersion());
 
         // CAPSULE save already occupied positions when deployed
         ListNBT occupiedSpawnPositionstaglist = new ListNBT();
         if (this.occupiedPositions != null) {
             for (Map.Entry<BlockPos, Block> entry : occupiedPositions.entrySet()) {
                 CompoundNBT nbtEntry = new CompoundNBT();
-                nbtEntry.putLong("pos", entry.getKey().toLong());
-                nbtEntry.putInt("blockId", Block.getStateId(entry.getValue().getDefaultState()));
+                nbtEntry.putLong("pos", entry.getKey().asLong());
+                nbtEntry.putInt("blockId", Block.getId(entry.getValue().defaultBlockState()));
                 occupiedSpawnPositionstaglist.add(nbtEntry);
             }
             nbt.put("capsule_occupiedSources", occupiedSpawnPositionstaglist);
@@ -318,7 +317,7 @@ public class CapsuleTemplate {
         return nbt;
     }
 
-    public void read(CompoundNBT compound) {
+    public void load(CompoundNBT compound) {
         this.blocks.clear();
         this.entities.clear();
         ListNBT listnbt = compound.getList("size", 3);
@@ -328,10 +327,10 @@ public class CapsuleTemplate {
             ListNBT listnbt2 = compound.getList("palettes", 9);
 
             for (int i = 0; i < listnbt2.size(); ++i) {
-                this.readPalletesAndBlocks(listnbt2.getList(i), listnbt1);
+                this.loadPalette(listnbt2.getList(i), listnbt1);
             }
         } else {
-            this.readPalletesAndBlocks(compound.getList("palette", 10), listnbt1);
+            this.loadPalette(compound.getList("palette", 10), listnbt1);
         }
 
         ListNBT listnbt5 = compound.getList("entities", 10);
@@ -354,13 +353,13 @@ public class CapsuleTemplate {
             ListNBT list = compound.getList("capsule_occupiedSources", 10);
             for (int i = 0; i < list.size(); i++) {
                 CompoundNBT entry = list.getCompound(i);
-                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getStateById(entry.getInt("blockId")).getBlock());
+                occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
             }
             this.occupiedPositions = occupiedSources;
         }
     }
 
-    private void readPalletesAndBlocks(ListNBT palletesNBT, ListNBT blocksNBT) {
+    private void loadPalette(ListNBT palletesNBT, ListNBT blocksNBT) {
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
 
         for (int i = 0; i < palletesNBT.size(); ++i) {
@@ -384,14 +383,14 @@ public class CapsuleTemplate {
             }
 
             Template.BlockInfo template$blockinfo = new Template.BlockInfo(blockpos, blockstate, compoundnbt1);
-            func_237149_a_(template$blockinfo, list2, list, list1);
+            addToLists(template$blockinfo, list2, list, list1);
         }
 
-        List<Template.BlockInfo> list3 = func_237151_a_(list2, list, list1);
+        List<Template.BlockInfo> list3 = buildInfoList(list2, list, list1);
         this.blocks.add(new CapsuleTemplate.Palette(list3));
     }
 
-    private ListNBT writeInts(int... values) {
+    private ListNBT newIntegerList(int... values) {
         ListNBT listnbt = new ListNBT();
 
         for (int i : values) {
@@ -401,7 +400,7 @@ public class CapsuleTemplate {
         return listnbt;
     }
 
-    private ListNBT writeDoubles(double... values) {
+    private ListNBT newDoubleList(double... values) {
         ListNBT listnbt = new ListNBT();
 
         for (double d0 : values) {
@@ -427,7 +426,7 @@ public class CapsuleTemplate {
                     JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.state.getBlock());
                     if (allowedNBT != null) {
                         nbt = b.nbt.copy();
-                        nbt.keySet().removeIf(key -> !allowedNBT.has(key));
+                        nbt.getAllKeys().removeIf(key -> !allowedNBT.has(key));
                     } else {
                         nbt = new CompoundNBT();
                     }
@@ -444,7 +443,7 @@ public class CapsuleTemplate {
     }
 
     static class BasicPalette implements Iterable<BlockState> {
-        public static final BlockState DEFAULT_BLOCK_STATE = Blocks.AIR.getDefaultState();
+        public static final BlockState DEFAULT_BLOCK_STATE = Blocks.AIR.defaultBlockState();
         private final ObjectIntIdentityMap<BlockState> ids = new ObjectIntIdentityMap<>(16);
         private int lastId;
 
@@ -455,7 +454,7 @@ public class CapsuleTemplate {
             int i = this.ids.getId(state);
             if (i == -1) {
                 i = this.lastId++;
-                this.ids.put(state, i);
+                this.ids.addMapping(state, i);
             }
 
             return i;
@@ -463,7 +462,7 @@ public class CapsuleTemplate {
 
         @Nullable
         public BlockState stateFor(int id) {
-            BlockState blockstate = this.ids.getByValue(id);
+            BlockState blockstate = this.ids.byId(id);
             return blockstate == null ? DEFAULT_BLOCK_STATE : blockstate;
         }
 
@@ -472,7 +471,7 @@ public class CapsuleTemplate {
         }
 
         public void addMapping(BlockState p_189956_1_, int p_189956_2_) {
-            this.ids.put(p_189956_1_, p_189956_2_);
+            this.ids.addMapping(p_189956_1_, p_189956_2_);
         }
     }
 
@@ -496,7 +495,7 @@ public class CapsuleTemplate {
         List<BlockPos> transferedBlocks = new ArrayList<>();
 
         if (endPos.getX() >= 1 && endPos.getY() >= 1 && endPos.getZ() >= 1) {
-            BlockPos blockpos = startPos.add(endPos).add(-1, -1, -1);
+            BlockPos blockpos = startPos.offset(endPos).offset(-1, -1, -1);
             List<Template.BlockInfo> list = Lists.newArrayList();
             List<Template.BlockInfo> list1 = Lists.newArrayList();
             List<Template.BlockInfo> list2 = Lists.newArrayList();
@@ -504,19 +503,19 @@ public class CapsuleTemplate {
             BlockPos blockpos2 = new BlockPos(Math.max(startPos.getX(), blockpos.getX()), Math.max(startPos.getY(), blockpos.getY()), Math.max(startPos.getZ(), blockpos.getZ()));
             this.size = endPos;
 
-            for (BlockPos blockpos3 : BlockPos.getAllInBoxMutable(blockpos1, blockpos2)) {
+            for (BlockPos blockpos3 : BlockPos.betweenClosed(blockpos1, blockpos2)) {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);
                 BlockState blockstate = worldIn.getBlockState(blockpos3);
                 if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
-                        && !blockstate.isIn(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
+                        && !blockstate.is(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
                         && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
                         || !(occupiedPositionsToIgnore.containsKey(blockpos3)
                         && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
 
-                    TileEntity tileentity = worldIn.getTileEntity(blockpos3);
+                    TileEntity tileentity = worldIn.getBlockEntity(blockpos3);
                     Template.BlockInfo template$blockinfo;
                     if (tileentity != null) {
-                        CompoundNBT compoundnbt = tileentity.write(new CompoundNBT());
+                        CompoundNBT compoundnbt = tileentity.save(new CompoundNBT());
                         compoundnbt.remove("x");
                         compoundnbt.remove("y");
                         compoundnbt.remove("z");
@@ -525,17 +524,17 @@ public class CapsuleTemplate {
                         template$blockinfo = new Template.BlockInfo(blockpos4, blockstate, (CompoundNBT) null);
                     }
 
-                    func_237149_a_(template$blockinfo, list, list1, list2);
+                    addToLists(template$blockinfo, list, list1, list2);
                     // save a copy
                     transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
                 }
             }
 
-            List<Template.BlockInfo> list3 = func_237151_a_(list, list1, list2);
+            List<Template.BlockInfo> list3 = buildInfoList(list, list1, list2);
             this.blocks.clear();
             this.blocks.add(new CapsuleTemplate.Palette(list3));
 
-            List<Entity> capturedEntities = this.snapshotNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.add(1, 1, 1));
+            List<Entity> capturedEntities = this.snapshotNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.offset(1, 1, 1));
             if (outCapturedEntities != null && capturedEntities != null) {
                 outCapturedEntities.addAll(capturedEntities);
             }
@@ -549,7 +548,7 @@ public class CapsuleTemplate {
     public List<Entity> snapshotNonLivingEntitiesFromWorld(World worldIn, BlockPos startPos, BlockPos endPos) {
 
         // rewritten vanilla code from CapsuleTemplate.takeEntitiesFromWorld
-        List<Entity> list = worldIn.getEntitiesWithinAABB(
+        List<Entity> list = worldIn.getEntitiesOfClass(
                 Entity.class,
                 new AxisAlignedBB(startPos, endPos),
                 entity -> !(entity instanceof ItemEntity) && (!(entity instanceof LivingEntity) || (entity instanceof ArmorStandEntity))
@@ -557,12 +556,12 @@ public class CapsuleTemplate {
         entities.clear();
 
         for (Entity entity : list) {
-            Vector3d vec3d = new Vector3d(entity.getPosX() - (double) startPos.getX(), entity.getPosY() - (double) startPos.getY(), entity.getPosZ() - (double) startPos.getZ());
+            Vector3d vec3d = new Vector3d(entity.getX() - (double) startPos.getX(), entity.getY() - (double) startPos.getY(), entity.getZ() - (double) startPos.getZ());
             CompoundNBT compoundnbt = new CompoundNBT();
-            entity.writeUnlessPassenger(compoundnbt);
+            entity.save(compoundnbt);
             BlockPos blockpos;
             if (entity instanceof PaintingEntity) {
-                blockpos = ((PaintingEntity) entity).getHangingPosition().subtract(startPos);
+                blockpos = ((PaintingEntity) entity).getPos().subtract(startPos);
             } else {
                 blockpos = new BlockPos(vec3d);
             }
@@ -574,8 +573,8 @@ public class CapsuleTemplate {
 
     public static AxisAlignedBB transformedAxisAlignedBB(PlacementSettings placementIn, AxisAlignedBB bb) {
         return new AxisAlignedBB(
-                transformedBlockPos(placementIn, new BlockPos(bb.minX, bb.minY, bb.minZ)),
-                transformedBlockPos(placementIn, new BlockPos(bb.maxX, bb.maxY, bb.maxZ))
+                calculateRelativePosition(placementIn, new BlockPos(bb.minX, bb.minY, bb.minZ)),
+                calculateRelativePosition(placementIn, new BlockPos(bb.maxX, bb.maxY, bb.maxZ))
         );
     }
 
@@ -589,14 +588,14 @@ public class CapsuleTemplate {
                                           List<Block> overridableBlocks,
                                           List<BlockPos> outSpawnedBlocks,
                                           List<Entity> outSpawnedEntities) {
-        int flags = 2; /** @see net.minecraft.world.World#setBlockState(BlockPos, BlockState, int) */
+        int flags = 2; /** @see net.minecraft.world.World#setBlock(BlockPos, BlockState, int) */
         if (this.blocks.isEmpty()) {
             return false;
         } else {
             List<Template.BlockInfo> list = Palette.pickRandomPalette(placementIn, this.blocks, pos).getBlockInfos();
-            if ((!list.isEmpty() || !placementIn.getIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
+            if ((!list.isEmpty() || !placementIn.isIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
                 MutableBoundingBox mutableboundingbox = placementIn.getBoundingBox();
-                List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.func_204763_l() ? list.size() : 0);
+                List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.shouldKeepLiquids() ? list.size() : 0);
                 List<Pair<BlockPos, CompoundNBT>> list2 = Lists.newArrayListWithCapacity(list.size());
                 int i = Integer.MAX_VALUE;
                 int j = Integer.MAX_VALUE;
@@ -607,22 +606,22 @@ public class CapsuleTemplate {
 
                 for (Template.BlockInfo template$blockinfo : processBlockInfos(this, worldIn, pos, placementIn, list)) {
                     // CAPSULE center the structure
-                    BlockPos blockpos = template$blockinfo.pos.add(recenterRotation((size.getX() - 1) / 2, placementIn));
-                    if ((mutableboundingbox == null || mutableboundingbox.isVecInside(blockpos))
+                    BlockPos blockpos = template$blockinfo.pos.offset(recenterRotation((size.getX() - 1) / 2, placementIn));
+                    if ((mutableboundingbox == null || mutableboundingbox.isInside(blockpos))
                             // CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
                             && (!occupiedPositions.containsKey(blockpos) || overridableBlocks.contains(occupiedPositions.get(blockpos)))) {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
                         if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
-                        FluidState ifluidstate = placementIn.func_204763_l() ? worldIn.getFluidState(blockpos) : null;
+                        FluidState ifluidstate = placementIn.shouldKeepLiquids() ? worldIn.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state.mirror(placementIn.getMirror()).rotate(placementIn.getRotation());
                         if (template$blockinfo.nbt != null) {
-                            TileEntity tileentity = worldIn.getTileEntity(blockpos);
-                            IClearable.clearObj(tileentity);
-                            worldIn.setBlockState(blockpos, Blocks.BARRIER.getDefaultState(), 20);
+                            TileEntity tileentity = worldIn.getBlockEntity(blockpos);
+                            IClearable.tryClear(tileentity);
+                            worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
                         }
 
-                        if (worldIn.setBlockState(blockpos, blockstate, flags)) {
+                        if (worldIn.setBlock(blockpos, blockstate, flags)) {
                             i = Math.min(i, blockpos.getX());
                             j = Math.min(j, blockpos.getY());
                             k = Math.min(k, blockpos.getZ());
@@ -631,19 +630,19 @@ public class CapsuleTemplate {
                             j1 = Math.max(j1, blockpos.getZ());
                             list2.add(Pair.of(blockpos, template$blockinfo.nbt));
                             if (template$blockinfo.nbt != null) {
-                                TileEntity tileentity1 = worldIn.getTileEntity(blockpos);
+                                TileEntity tileentity1 = worldIn.getBlockEntity(blockpos);
                                 if (tileentity1 != null) {
                                     template$blockinfo.nbt.putInt("x", blockpos.getX());
                                     template$blockinfo.nbt.putInt("y", blockpos.getY());
                                     template$blockinfo.nbt.putInt("z", blockpos.getZ());
-                                    tileentity1.read(template$blockinfo.state, template$blockinfo.nbt);
+                                    tileentity1.load(template$blockinfo.state, template$blockinfo.nbt);
                                     tileentity1.mirror(placementIn.getMirror());
                                     tileentity1.rotate(placementIn.getRotation());
                                 }
                             }
 
                             if (ifluidstate != null && blockstate.getBlock() instanceof ILiquidContainer) {
-                                ((ILiquidContainer) blockstate.getBlock()).receiveFluid(worldIn, blockpos, blockstate, ifluidstate);
+                                ((ILiquidContainer) blockstate.getBlock()).placeLiquid(worldIn, blockpos, blockstate, ifluidstate);
                                 if (!ifluidstate.isSource()) {
                                     list1.add(blockpos);
                                 }
@@ -665,9 +664,9 @@ public class CapsuleTemplate {
                         FluidState ifluidstate2 = worldIn.getFluidState(blockpos2);
 
                         for (int k1 = 0; k1 < adirection.length && !ifluidstate2.isSource(); ++k1) {
-                            BlockPos blockpos1 = blockpos3.offset(adirection[k1]);
+                            BlockPos blockpos1 = blockpos3.relative(adirection[k1]);
                             FluidState ifluidstate1 = worldIn.getFluidState(blockpos1);
-                            if (ifluidstate1.getActualHeight(worldIn, blockpos1) > ifluidstate2.getActualHeight(worldIn, blockpos3) || ifluidstate1.isSource() && !ifluidstate2.isSource()) {
+                            if (ifluidstate1.getHeight(worldIn, blockpos1) > ifluidstate2.getHeight(worldIn, blockpos3) || ifluidstate1.isSource() && !ifluidstate2.isSource()) {
                                 ifluidstate2 = ifluidstate1;
                                 blockpos3 = blockpos1;
                             }
@@ -677,7 +676,7 @@ public class CapsuleTemplate {
                             BlockState blockstate2 = worldIn.getBlockState(blockpos2);
                             Block block = blockstate2.getBlock();
                             if (block instanceof ILiquidContainer) {
-                                ((ILiquidContainer) block).receiveFluid(worldIn, blockpos2, blockstate2, ifluidstate2);
+                                ((ILiquidContainer) block).placeLiquid(worldIn, blockpos2, blockstate2, ifluidstate2);
                                 flag = true;
                                 iterator.remove();
                             }
@@ -686,7 +685,7 @@ public class CapsuleTemplate {
                 }
 
                 if (i <= l) {
-                    if (!placementIn.func_215218_i()) {
+                    if (!placementIn.getKnownShape()) {
                         VoxelShapePart voxelshapepart = new BitSetVoxelShapePart(l - i + 1, i1 - j + 1, j1 - k + 1);
                         int l1 = i;
                         int i2 = j;
@@ -694,25 +693,25 @@ public class CapsuleTemplate {
 
                         for (Pair<BlockPos, CompoundNBT> pair1 : list2) {
                             BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.setFilled(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
+                            voxelshapepart.setFull(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
                         }
 
-                        Template.func_222857_a(worldIn, flags, voxelshapepart, l1, i2, j2);
+                        Template.updateShapeAtEdge(worldIn, flags, voxelshapepart, l1, i2, j2);
                     }
                     for (Pair<BlockPos, CompoundNBT> pair : list2) {
                         BlockPos blockpos4 = pair.getFirst();
 
                         if (pair.getSecond() != null) {
-                            TileEntity tileentity2 = worldIn.getTileEntity(blockpos4);
+                            TileEntity tileentity2 = worldIn.getBlockEntity(blockpos4);
                             if (tileentity2 != null) {
-                                tileentity2.markDirty();
+                                tileentity2.setChanged();
                             }
                         }
                     }
                 }
 
-                if (!placementIn.getIgnoreEntities()) {
-                    this.addEntitiesToWorld(worldIn, pos, placementIn, placementIn.getMirror(), placementIn.getRotation(), placementIn.getCenterOffset(), placementIn.getBoundingBox(), outSpawnedEntities);
+                if (!placementIn.isIgnoreEntities()) {
+                    this.addEntitiesToWorld(worldIn, pos, placementIn, placementIn.getMirror(), placementIn.getRotation(), placementIn.getRotationPivot(), placementIn.getBoundingBox(), outSpawnedEntities);
                 }
 
                 return true;
@@ -745,11 +744,11 @@ public class CapsuleTemplate {
             MutableBoundingBox structureboundingbox = placementSettings.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : processBlockInfos(this, world, blockPos, placementSettings, list)) {
-                BlockPos blockpos = transformedBlockPos(placementSettings, template$blockinfo.pos)
-                        .add(blockPos)
-                        .add(recenterRotation((size.getX() - 1) / 2, placementSettings));
+                BlockPos blockpos = calculateRelativePosition(placementSettings, template$blockinfo.pos)
+                        .offset(blockPos)
+                        .offset(recenterRotation((size.getX() - 1) / 2, placementSettings));
 
-                if (template$blockinfo.state.getBlock() != Blocks.STRUCTURE_BLOCK && (structureboundingbox == null || structureboundingbox.isVecInside(blockpos))) {
+                if (template$blockinfo.state.getBlock() != Blocks.STRUCTURE_BLOCK && (structureboundingbox == null || structureboundingbox.isInside(blockpos))) {
                     out.add(blockpos);
                 }
             }
@@ -758,11 +757,11 @@ public class CapsuleTemplate {
     }
 
     public static BlockPos recenterRotation(int extendSize, PlacementSettings placement) {
-        return CapsuleTemplate.transformedBlockPos(placement, new BlockPos(-extendSize, 0, -extendSize)).add(new BlockPos(extendSize, 0, extendSize));
+        return CapsuleTemplate.calculateRelativePosition(placement, new BlockPos(-extendSize, 0, -extendSize)).offset(new BlockPos(extendSize, 0, extendSize));
     }
 
     public boolean canRotate() {
-        if(blocks.isEmpty()) return false;
+        if (blocks.isEmpty()) return false;
         try {
             for (Template.BlockInfo block : getBlocks()) {
                 if (block.nbt != null && !Config.blueprintWhitelist.containsKey(block.state.getBlock().getRegistryName().toString())) {
@@ -906,11 +905,11 @@ public class CapsuleTemplate {
 
                 byteId = ((int) blockIdsByte[bi]) & 0xFF;
                 block = palette[(addValue & 0xF0) << 4 | byteId];
-                blocksById[bi] = block.getDefaultState();
+                blocksById[bi] = block.defaultBlockState();
 
                 byteId = ((int) blockIdsByte[bi + 1]) & 0xFF;
                 block = palette[(addValue & 0x0F) << 8 | byteId];
-                blocksById[bi + 1] = block.getDefaultState();
+                blocksById[bi + 1] = block.defaultBlockState();
             }
 
             // Odd number of blocks, handle the last position
@@ -918,7 +917,7 @@ public class CapsuleTemplate {
                 final int addValue = ((int) add[ai]) & 0xFF;
                 byteId = ((int) blockIdsByte[bi]) & 0xFF;
                 block = palette[(addValue & 0xF0) << 4 | byteId];
-                blocksById[bi] = block.getDefaultState();
+                blocksById[bi] = block.defaultBlockState();
             }
         }
         // Old Schematica format
@@ -935,7 +934,7 @@ public class CapsuleTemplate {
         else {
             for (int i = 0; i < numBlocks; i++) {
                 Block block = palette[((int) blockIdsByte[i]) & 0xFF];
-                blocksById[i] = block.getDefaultState();
+                blocksById[i] = block.defaultBlockState();
             }
         }
         return blocksById;
@@ -950,7 +949,7 @@ public class CapsuleTemplate {
         // Schematica palette
         if (nbt.contains("SchematicaMapping", Constants.NBT.TAG_COMPOUND)) {
             CompoundNBT tag = nbt.getCompound("SchematicaMapping");
-            Set<String> keys = tag.keySet();
+            Set<String> keys = tag.getAllKeys();
 
             for (String key : keys) {
                 int id = tag.getShort(key);
@@ -972,7 +971,7 @@ public class CapsuleTemplate {
         // MCEdit2 palette
         else if (nbt.contains("BlockIDs", Constants.NBT.TAG_COMPOUND)) {
             CompoundNBT tag = nbt.getCompound("BlockIDs");
-            Set<String> keys = tag.keySet();
+            Set<String> keys = tag.getAllKeys();
 
             for (String idStr : keys) {
                 String key = tag.getString(idStr);
@@ -1003,7 +1002,7 @@ public class CapsuleTemplate {
         else {
             for (Block block : ForgeRegistries.BLOCKS.getValues()) {
                 if (block != null) {
-                    int id = Block.getStateId(block.getDefaultState());
+                    int id = Block.getId(block.defaultBlockState());
 
                     if (id >= 0 && id < palette.length) {
                         palette[id] = block;

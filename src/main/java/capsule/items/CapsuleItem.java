@@ -10,6 +10,7 @@ import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleThrowQueryToServer;
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
@@ -129,9 +130,9 @@ public class CapsuleItem extends Item {
      * arr ench:[0:{lvl:1s,id:101s}]
      */
     public CapsuleItem() {
-        super((new Item.Properties().group(CapsuleMod.tabCapsule))
-                .maxStackSize(1)
-                .maxDamage(0)
+        super((new Item.Properties().tab(CapsuleMod.tabCapsule))
+                .stacksTo(1)
+                .durability(0)
                 .setNoRepair());
     }
 
@@ -180,11 +181,11 @@ public class CapsuleItem extends Item {
             return "";
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
-            return I18n.format("items.capsule.content_empty");
+            return I18n.get("items.capsule.content_empty");
         } else if (stack.hasTag() && stack.getTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
             return "«" + TextFormatting.ITALIC + stack.getTag().getString("label") + TextFormatting.RESET + "»";
         }
-        return I18n.format("items.capsule.content_unlabeled");
+        return I18n.get("items.capsule.content_unlabeled");
     }
 
     public static void setLabel(ItemStack capsule, String label) {
@@ -296,7 +297,7 @@ public class CapsuleItem extends Item {
     public static RegistryKey<World> getDimension(ItemStack capsule) {
         RegistryKey<World> dim = null;
         if (capsule != null && capsule.hasTag() && capsule.getTag().contains("spawnPosition")) {
-            dim = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(
+            dim = RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(
                     capsule.getTag().getCompound("spawnPosition").getString("dim")
             ));
         }
@@ -354,35 +355,36 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public ITextComponent getDisplayName(ItemStack stack) {
-        String name = I18n.format("items.capsule.name");
+    @MethodsReturnNonnullByDefault
+    public ITextComponent getName(ItemStack stack) {
+        String name = I18n.get("items.capsule.name");
 
         String state = "";
         switch (CapsuleItem.getState(stack)) {
             case ACTIVATED:
             case EMPTY_ACTIVATED:
             case ONE_USE_ACTIVATED:
-                state = TextFormatting.DARK_GREEN + I18n.format("items.capsule.state_activated") + TextFormatting.RESET;
+                state = TextFormatting.DARK_GREEN + I18n.get("items.capsule.state_activated") + TextFormatting.RESET;
                 break;
             case LINKED:
                 state = "";
                 break;
             case DEPLOYED:
                 if (isBlueprint(stack)) {
-                    name = I18n.format("items.capsule.state_blueprint");
+                    name = I18n.get("items.capsule.state_blueprint");
                 } else {
-                    state = I18n.format("items.capsule.state_deployed");
+                    state = I18n.get("items.capsule.state_deployed");
                 }
                 break;
             case ONE_USE:
                 if (isReward(stack)) {
-                    state = I18n.format("items.capsule.state_one_use");
+                    state = I18n.get("items.capsule.state_one_use");
                 } else {
-                    state = I18n.format("items.capsule.state_recovery");
+                    state = I18n.get("items.capsule.state_recovery");
                 }
                 break;
             case BLUEPRINT:
-                name = I18n.format("items.capsule.state_blueprint");
+                name = I18n.get("items.capsule.state_blueprint");
                 break;
         }
 
@@ -398,13 +400,13 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public int getItemEnchantability() {
+    public int getEnchantmentValue() {
         return 5;
     }
 
     @Override
     public int getItemEnchantability(ItemStack stack) {
-        return getItemEnchantability();
+        return getEnchantmentValue();
     }
 
     @Override
@@ -413,37 +415,37 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public boolean hasEffect(ItemStack stack) {
+    public boolean isFoil(ItemStack stack) {
         return isOverpowered(stack);
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void addInformation(ItemStack capsule, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
+    public void appendHoverText(ItemStack capsule, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
         String author = getAuthor(capsule);
         if (author != null) {
-            tooltip.add(new StringTextComponent(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.format("capsule.tooltip.author") + " " + author + TextFormatting.RESET));
+            tooltip.add(new StringTextComponent(TextFormatting.DARK_AQUA + "" + TextFormatting.ITALIC + I18n.get("capsule.tooltip.author") + " " + author + TextFormatting.RESET));
         }
 
         if (CapsuleItem.hasState(capsule, CapsuleState.ONE_USE)) {
-            tooltip.add(new StringTextComponent(I18n.format("capsule.tooltip.one_use").trim()));
+            tooltip.add(new StringTextComponent(I18n.get("capsule.tooltip.one_use").trim()));
         }
 
         if (isOverpowered(capsule)) {
-            tooltip.add(new StringTextComponent(TextFormatting.DARK_PURPLE + I18n.format("capsule.tooltip.overpowered") + TextFormatting.RESET));
+            tooltip.add(new StringTextComponent(TextFormatting.DARK_PURPLE + I18n.get("capsule.tooltip.overpowered") + TextFormatting.RESET));
         }
 
         int size = getSize(capsule);
         int upgradeLevel = getUpgradeLevel(capsule);
         String sizeTxt = size + "×" + size + "×" + size;
         if (upgradeLevel > 0) {
-            sizeTxt += " (" + upgradeLevel + "/" + Config.upgradeLimit + " " + I18n.format("capsule.tooltip.upgraded") + ")";
+            sizeTxt += " (" + upgradeLevel + "/" + Config.upgradeLimit + " " + I18n.get("capsule.tooltip.upgraded") + ")";
         }
         if (isInstantAndUndeployed(capsule) || isBlueprint(capsule)) {
-            sizeTxt += " (" + I18n.format("capsule.tooltip.instant").trim() + ")";
+            sizeTxt += " (" + I18n.get("capsule.tooltip.instant").trim() + ")";
         }
-        tooltip.add(new StringTextComponent(I18n.format("capsule.tooltip.size") + ": " + sizeTxt));
+        tooltip.add(new StringTextComponent(I18n.get("capsule.tooltip.size") + ": " + sizeTxt));
 
 
         if (isBlueprint(capsule)) {
@@ -476,7 +478,7 @@ public class CapsuleItem extends Item {
     }
 
     public void tooltipAddMultiline(List<ITextComponent> tooltip, String key, TextFormatting formatting) {
-        for (String s : I18n.format(key).trim().split("\\\\n")) {
+        for (String s : I18n.get(key).trim().split("\\\\n")) {
             tooltip.add(new StringTextComponent(formatting == null ? s : formatting + s));
         }
     }
@@ -485,8 +487,8 @@ public class CapsuleItem extends Item {
      * Register items in the creative tab
      */
     @Override
-    public void fillItemGroup(ItemGroup tab, NonNullList<ItemStack> subItems) {
-        if (this.isInGroup(tab)) {
+    public void fillItemCategory(ItemGroup tab, NonNullList<ItemStack> subItems) {
+        if (this.allowdedIn(tab)) {
             // Add capsuleList items, loaded from json files
             subItems.addAll(CapsuleItems.capsuleList.keySet());
             subItems.addAll(CapsuleItems.opCapsuleList.keySet());
@@ -508,8 +510,8 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
-        ItemStack stack = event.getPlayer().getHeldItemMainhand();
-        if (event.getWorld().isRemote && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
+        ItemStack stack = event.getPlayer().getMainHandItem();
+        if (event.getWorld().isClientSide && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
             CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -518,19 +520,19 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!event.isCanceled()) {
-            ItemStack stack = event.getPlayer().getHeldItemMainhand();
+            ItemStack stack = event.getPlayer().getMainHandItem();
             if (stack.getItem() instanceof CapsuleItem) {
                 event.setCanceled(true);
-                if (event.getWorld().isRemote) {
+                if (event.getWorld().isClientSide) {
                     if (CapsuleItem.canRotate(stack)) {
-                        if (lastRotationTime + 60 < Util.milliTime()) {
-                            lastRotationTime = Util.milliTime();
+                        if (lastRotationTime + 60 < Util.getMillis()) {
+                            lastRotationTime = Util.getMillis();
                             // prevent action to be triggered on server + on client
                             CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
                             askPreviewIfNeeded(stack);
                         }
                     } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
-                        event.getPlayer().sendMessage(new TranslationTextComponent("capsule.tooltip.cannotRotate"), Util.DUMMY_UUID);
+                        event.getPlayer().sendMessage(new TranslationTextComponent("capsule.tooltip.cannotRotate"), Util.NIL_UUID);
                     }
                 }
             }
@@ -561,19 +563,19 @@ public class CapsuleItem extends Item {
             return ActionResultType.PASS;
         }
         PlayerEntity player = context.getPlayer();
-        World world = context.getWorld();
-        BlockPos pos = context.getPos();
+        World world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
 
-        ItemStack capsule = player.getHeldItem(hand);
-        if (player.isSneaking() && isBlueprint(capsule)) {
-            TileEntity te = world.getTileEntity(pos);
+        ItemStack capsule = player.getItemInHand(hand);
+        if (player.isShiftKeyDown() && isBlueprint(capsule)) {
+            TileEntity te = world.getBlockEntity(pos);
             if (te != null && te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).isPresent()) {
-                if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.getDimensionKey())) {
+                if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.dimension())) {
                     // remove if it was the same
                     saveSourceInventory(capsule, null, null);
                 } else {
                     // new inventory
-                    saveSourceInventory(capsule, pos, world.getDimensionKey());
+                    saveSourceInventory(capsule, pos, world.dimension());
                 }
                 return ActionResultType.SUCCESS;
             }
@@ -586,27 +588,27 @@ public class CapsuleItem extends Item {
      * Activate or power throw on right click.
      */
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn) {
-        ItemStack capsule = playerIn.getHeldItem(handIn);
+    public ActionResult<ItemStack> use(World worldIn, PlayerEntity playerIn, Hand handIn) {
+        ItemStack capsule = playerIn.getItemInHand(handIn);
 
         if (handIn == Hand.OFF_HAND) {
             return new ActionResult<>(ActionResultType.FAIL, capsule);
         }
 
-        if (playerIn.isSneaking() && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE) || CapsuleItem.hasState(capsule, BLUEPRINT))) {
+        if (playerIn.isShiftKeyDown() && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE) || CapsuleItem.hasState(capsule, BLUEPRINT))) {
             CapsuleMod.openGuiScreenCommon.accept(playerIn);
 
-        } else if (!worldIn.isRemote) {
+        } else if (!worldIn.isClientSide) {
             // a capsule is activated on right click, except instant that are deployed immediatly
             if (!isInstantAndUndeployed(capsule)) {
                 activateCapsule(capsule, (ServerWorld) worldIn, playerIn);
             }
-        } else if (worldIn.isRemote) {
+        } else if (worldIn.isClientSide) {
             // client side, if is going to get activated, ask for server preview
             if (!isInstantAndUndeployed(capsule)
                     && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE))) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
+                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()) : null;
                 if (dest != null) {
                     CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
                 }
@@ -618,9 +620,9 @@ public class CapsuleItem extends Item {
                 BlockPos dest = null;
                 if (rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK) {
                     if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
-                        dest = rtr.getPos();
+                        dest = rtr.getBlockPos();
                     } else {
-                        dest = rtr.getPos().add(rtr.getFace().getDirectionVec());
+                        dest = rtr.getBlockPos().offset(rtr.getDirection().getNormal());
                     }
                 }
                 if (dest != null) {
@@ -628,7 +630,7 @@ public class CapsuleItem extends Item {
                 }
             } else if (isActivated(capsule)) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getPos().add(rtr.getFace().getDirectionVec()) : null;
+                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()) : null;
                 CapsuleNetwork.wrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
@@ -651,7 +653,7 @@ public class CapsuleItem extends Item {
         else if (CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {
                 Capsule.resentToCapsule(capsule, worldIn, playerIn);
-                worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
+                worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             } catch (Exception e) {
                 LOGGER.error("Couldn't resend the content into the capsule", e);
             }
@@ -659,9 +661,9 @@ public class CapsuleItem extends Item {
     }
 
     private void startTimer(World worldIn, PlayerEntity playerIn, ItemStack capsule) {
-        CompoundNBT timer = capsule.getOrCreateChildTag("activetimer");
-        timer.putInt("starttime", playerIn.ticksExisted);
-        worldIn.playSound(null, playerIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_ON, SoundCategory.BLOCKS, 0.2F, 0.9F);
+        CompoundNBT timer = capsule.getOrCreateTagElement("activetimer");
+        timer.putInt("starttime", playerIn.tickCount);
+        worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundCategory.BLOCKS, 0.2F, 0.9F);
     }
 
 
@@ -672,14 +674,14 @@ public class CapsuleItem extends Item {
     public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
 
-        if (!worldIn.isRemote) {
+        if (!worldIn.isClientSide) {
 
             // disable capsule after some time
-            CompoundNBT timer = stack.getChildTag("activetimer");
+            CompoundNBT timer = stack.getTagElement("activetimer");
 
-            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.ticksExisted >= timer.getInt("starttime") + ACTIVE_DURATION_IN_TICKS) {
+            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + ACTIVE_DURATION_IN_TICKS) {
                 revertStateFromActivated(stack);
-                worldIn.playSound(null, entityIn.getPosition(), SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
+                worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             }
             // special case that can happen in case of crash
             if (isActivated(stack) && !timer.contains("starttime")) {
@@ -697,19 +699,19 @@ public class CapsuleItem extends Item {
         if (capsule == null) return false;
 
         // Deploying capsule content on collision with a block
-        if (!entity.getEntityWorld().isRemote
-                && entity.ticksExisted > 2 // avoid immediate collision
+        if (!entity.getCommandSenderWorld().isClientSide
+                && entity.tickCount > 2 // avoid immediate collision
                 && isActivated(capsule)
-                && (entity.collidedVertically || entity.collidedHorizontally || Spacial.ItemEntityShouldAndCollideLiquid(entity))
+                && (entity.verticalCollision || entity.horizontalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))
         ) {
             Capsule.handleItemEntityOnGround(entity, capsule);
         }
 
         // throwing the capsule toward the right place
-        if (!entity.getEntityWorld().isRemote
+        if (!entity.getCommandSenderWorld().isClientSide
                 && isActivated(capsule)
                 && capsule.hasTag() && capsule.getTag().contains("deployAt")
-                && !entity.collidedVertically || entity.collidedHorizontally && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
+                && !entity.verticalCollision || entity.horizontalCollision && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
             Spacial.moveItemEntityToDeployPos(entity, capsule, true);
         }
 
@@ -721,23 +723,23 @@ public class CapsuleItem extends Item {
      */
     @SubscribeEvent
     public static void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
-        if (!event.player.world.isRemote) {
-            for (int i = 0; i < event.player.inventory.getSizeInventory(); ++i) {
-                ItemStack itemstack = event.player.inventory.getStackInSlot(i);
+        if (!event.player.level.isClientSide) {
+            for (int i = 0; i < event.player.inventory.getContainerSize(); ++i) {
+                ItemStack itemstack = event.player.inventory.getItem(i);
                 if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied")) {
-                    duplicateBlueprintTemplate(itemstack, event.player.world, event.player);
+                    duplicateBlueprintTemplate(itemstack, event.player.level, event.player);
                 }
             }
         }
     }
 
     @Override
-    public void onCreated(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
+    public void onCraftedBy(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
         duplicateBlueprintTemplate(capsule, worldIn, playerIn);
     }
 
     public static void duplicateBlueprintTemplate(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
-        if (!worldIn.isRemote && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
+        if (!worldIn.isClientSide && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
             if (srcStructurePath != null) {
                 String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (ServerWorld) worldIn, playerIn);
@@ -758,7 +760,7 @@ public class CapsuleItem extends Item {
             ListNBT list = capsule.getTag().getList("occupiedSpawnPositions", 10);
             for (int i = 0; i < list.size(); i++) {
                 CompoundNBT entry = list.getCompound(i);
-                occupiedSources.put(BlockPos.fromLong(entry.getLong("pos")), Block.getStateById(entry.getInt("blockId")).getBlock());
+                occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
             }
         }
         return occupiedSources;
@@ -834,7 +836,7 @@ public class CapsuleItem extends Item {
             pos.putInt("x", dest.getX());
             pos.putInt("y", dest.getY());
             pos.putInt("z", dest.getZ());
-            pos.putString("dim", dimID.getLocation().toString());
+            pos.putString("dim", dimID.location().toString());
         }
         capsule.getOrCreateTag().put("sourceInventory", pos);
     }
@@ -855,7 +857,7 @@ public class CapsuleItem extends Item {
     @Nullable
     public static RegistryKey<World> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            return RegistryKey.getOrCreateKey(Registry.WORLD_KEY, new ResourceLocation(
+            return RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(
                     capsule.getTag().getCompound("sourceInventory").getString("dim")
             ));
         }
@@ -867,9 +869,9 @@ public class CapsuleItem extends Item {
         BlockPos location = CapsuleItem.getSourceInventoryLocation(blueprint);
         RegistryKey<World> dimension = CapsuleItem.getSourceInventoryDimension(blueprint);
         if (location == null || dimension == null) return null;
-        ServerWorld inventoryWorld = w.getServer().getWorld(dimension);
+        ServerWorld inventoryWorld = w.getServer().getLevel(dimension);
 
-        TileEntity te = inventoryWorld.getTileEntity(location);
+        TileEntity te = inventoryWorld.getBlockEntity(location);
         if (te != null) {
             return te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
         }
@@ -890,7 +892,7 @@ public class CapsuleItem extends Item {
                     .setMirror(Mirror.valueOf(capsule.getTag().getString("mirror")))
                     .setRotation(Rotation.valueOf(capsule.getTag().getString("rotation")))
                     .setIgnoreEntities(false)
-                    .setChunk(null);
+                    .setChunkPos(null);
             return placementSettings;
         }
         return new PlacementSettings();
