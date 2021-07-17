@@ -8,8 +8,8 @@
         "color": 2963801
       },
       "sourceInventory": {},
-      "structureName": "capsule:starters/starter_traveller_2.nbt",
-      "label": "Traveller's Base",
+      "structureName": "capsule:config/capsule/rewards/myTemplate.nbt",
+      "label": "My Template",
       "size": 7
     }
   },
