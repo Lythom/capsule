@@ -144,6 +144,7 @@
   "minecraft:anvil",
   "minecraft:chipped_anvil",
   "minecraft:damaged_anvil",
+  "capsule:capsulemarker",
   {
     "block": "immersiveengineering:stone_decoration_slab",
     "keepNBT": {
