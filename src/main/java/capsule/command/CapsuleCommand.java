@@ -50,6 +50,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +80,15 @@ public class CapsuleCommand {
     }
 
     public static String[] getRewardsList() {
-        return (new File(Config.rewardTemplatesPath)).list();
+        try {
+            return java.nio.file.Files.walk(Paths.get(Config.rewardTemplatesPath))
+                    .filter(java.nio.file.Files::isRegularFile)
+                    .map(path -> "\"" + path.toString().replaceAll("\\\\", "/").replaceAll(Config.rewardTemplatesPath + "/", "") + "\"")
+                    .toArray(String[]::new);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new String[0];
     }
 
     private static SuggestionProvider<CommandSource> SUGGEST_REWARD() {
@@ -346,8 +356,33 @@ public class CapsuleCommand {
     }
 
     private static int executeFromExistingReward(ServerPlayerEntity player, String templateName) throws CommandException {
-        if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getEntityWorld() instanceof ServerWorld) {
+        if (player == null || !(player.getEntityWorld() instanceof ServerWorld)) return 0;
 
+        if (templateName.equals("all")) {
+            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
+            for (String rewardName : getRewardsList()) {
+                String structurePath = Config.getRewardPathFromName(rewardName.replaceAll("\"", ""));
+                CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
+                if (template != null) {
+                    int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
+                    if (size % 2 == 0)
+                        size++;
+
+                    ItemStack capsule = Capsule.newRewardCapsuleItemStack(
+                            structurePath,
+                            CapsuleLootEntry.getRandomColor(),
+                            CapsuleLootEntry.getRandomColor(),
+                            size,
+                            Capsule.labelFromPath(rewardName.replaceAll("\"", "")),
+                            template.getAuthor());
+                    CapsuleItem.setCanRotate(capsule, template.canRotate());
+                    giveCapsule(capsule, player);
+                }
+            }
+            return 1;
+        }
+
+        if (!StringUtils.isNullOrEmpty(templateName)) {
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer());
             CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));

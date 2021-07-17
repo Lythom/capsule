@@ -12,6 +12,15 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.15.2-4.0.60 : Fixes and tags**
+
+- Add a new `capsule:excluded` tag for any mod to exclude blocks from being captured in capsules. Documentation on the wiki: https://github.com/Lythom/capsule/wiki/Getting-compatible-with-capsule#115-or-newer. [Thanks to Corail_31 on curseforge](https://www.curseforge.com/members/corail_31) for the suggestion and examples provided.
+- Fix a bug where items could get empty nbt when being used in a crafting table, preventing them from stacking. [Thanks to Aeonian on Discord](https://discord.gg/pgfCwW9) the report with demo.
+- Fix items that could still drop during a capture (including vanilla items not respecting their own rules 😱)
+- Fix a dupe bug with Corail Tombstone. Player graves are now excluded by tag and config. [Thanks to Naccodde on github](https://github.com/Nachodde) for reporting.
+- Add tag support in capsule.cfg for excluded block configuration.
+
+
 **1.15.2-4.0.52 : Preview performance improvement**
 
 - Added a time budget limit to render the full preview. If the full preview cannot be consistantly rendered it will auto-switch to wireframe render which is a lot faster.
