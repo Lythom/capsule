@@ -352,7 +352,6 @@ public class CapsuleCommand {
 
     private static int executeFromExistingReward(ServerPlayerEntity player, String templateName) throws CommandException {
         if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getLevel() instanceof ServerWorld) {
-
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
             CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
@@ -398,7 +397,7 @@ public class CapsuleCommand {
                 CapsuleTemplate ctemplate = capsuletemplatemanager.getTemplateDefaulted(new ResourceLocation(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
-                ctemplate.writeToNBT(data);
+                ctemplate.save(data);
             }
 
             if (size > -1) {
@@ -562,10 +561,10 @@ public class CapsuleCommand {
                     String BlockEntityTag = tileentity == null ? "" : "{BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
                     String command = "/give @p " + state.getBlock().getRegistryName() + BlockEntityTag + " 1 ";
                     StringTextComponent msg = new StringTextComponent(command);
-                    msg.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Copy/Paste from client log (click to open)")));
-                    msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
-
-                    player.sendMessage(msg, Util.NIL_UUID);
+                    player.sendMessage(msg.withStyle(style -> style
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("Click to copy to clipboard")))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, command))
+                    ), Util.NIL_UUID);
                     return 1;
                 }
             } else {
@@ -596,7 +595,7 @@ public class CapsuleCommand {
     }
 
     private static void giveCapsule(ItemStack capsule, PlayerEntity player) {
-        ItemEntity entity = new ItemEntity(player.level, player.position().x, player.position().y, player.position().z, capsule);
+        ItemEntity entity = player.drop(capsule, false);
         entity.setNoPickUpDelay();
         entity.setOwner(player.getUUID());
     }

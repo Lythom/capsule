@@ -65,7 +65,7 @@ public class StructureSaver {
             if (!rewardDir.exists()) {
                 rewardDir.mkdirs();
             }
-            RewardManager = new CapsuleTemplateManager(resourceManager, rewardDir, DataFixesManager.getDataFixer());
+            RewardManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixesManager.getDataFixer());
         }
         return RewardManager;
     }
@@ -142,8 +142,8 @@ public class StructureSaver {
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, null);
-        List<Template.BlockInfo> worldBlocks = tempTemplate.getBlocks().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
-        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.getBlocks().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> worldBlocks = tempTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
         PlayerEntity player = null;
         if (playerID != null) {
@@ -211,7 +211,7 @@ public class StructureSaver {
     @Nullable
     public static CapsuleTemplateManager getTemplateManager(ServerWorld world) {
         if (world == null) return null;
-        FolderName folder = new FolderName("generated/capsules/structures");
+        FolderName folder = new FolderName("capsules");
         Path directoryPath = world.getServer().getWorldPath(folder);
 
         if (!CapsulesManagers.containsKey(directoryPath.toString())) {
@@ -480,7 +480,7 @@ public class StructureSaver {
 
         BlockState air = Blocks.AIR.defaultBlockState();
 
-        List<Template.BlockInfo> srcblocks = template.getBlocks();
+        List<Template.BlockInfo> srcblocks = template.getPalette();
 
         Map<BlockPos, Template.BlockInfo> blockInfoByPosition = new HashMap<>();
         for (Template.BlockInfo template$blockinfo : srcblocks) {
@@ -633,7 +633,7 @@ public class StructureSaver {
     public static CompoundNBT getTemplateNBTData(CapsuleTemplate template) {
         if (template == null) return null;
         CompoundNBT data = new CompoundNBT();
-        template.writeToNBT(data);
+        template.save(data);
         return data;
     }
 

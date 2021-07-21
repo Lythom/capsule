@@ -450,13 +450,14 @@ public class Capsule {
         );
 
         CompoundNBT srcData = new CompoundNBT();
-        srcTemplate.writeToNBT(srcData);
+        srcTemplate.save(srcData);
         StructureSaver.duplicateTemplate(
                 srcData,
                 destStructureName,
                 StructureSaver.getTemplateManager(player.getLevel()),
                 player.getServer()
         );
+        CapsuleItem.setCanRotate(capsule, srcTemplate.canRotate());
         return capsule;
     }
 
@@ -474,7 +475,7 @@ public class Capsule {
         CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleStructureId));
         if (template == null) return false;
 
-        List<Template.BlockInfo> blocks = template.getBlocks();
+        List<Template.BlockInfo> blocks = template.getPalette();
         List<Template.EntityInfo> entities = template.entities;
 
         blocks.clear();

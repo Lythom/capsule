@@ -65,7 +65,7 @@ public class CapsuleContentPreviewQueryToServer {
             CapsuleTemplate template = templatepair.getRight();
 
             if (template != null) {
-                List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.getBlocks());
+                List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.getPalette());
                 CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
                 CapsuleNetwork.wrapper.reply(new CapsuleFullContentAnswerToClient(template, this.getStructureName()), ctx.get());
             } else if (heldItem.hasTag()) {

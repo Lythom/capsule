@@ -116,7 +116,7 @@ public class CapsulePreviewHandler {
                         LOGGER.error("Failed to create parent directory: {}", path);
                     }
                     try {
-                        CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
+                        CompoundNBT compoundnbt = template.save(new CompoundNBT());
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
                         CompressedStreamTools.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
@@ -250,7 +250,7 @@ public class CapsulePreviewHandler {
                 glitchIntensity2 * glitchValuez);
         matrixStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
 
-        for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.blocks.get(0).getBlockInfos())) {
+        for (Template.BlockInfo blockInfo : CapsuleTemplate.processBlockInfos(template, null, destOriginPos, placement, template.palettes.get(0).blocks())) {
             BlockPos blockpos = blockInfo.pos.offset(recenterRotation(extendSize, placement));
             BlockState state = blockInfo.state.mirror(placement.getMirror()).rotate(placement.getRotation());
 

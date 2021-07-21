@@ -135,7 +135,7 @@ public class CapsuleTemplateManager {
                     return false;
                 }
 
-                CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
+                CompoundNBT compoundnbt = template.save(new CompoundNBT());
 
                 try (OutputStream outputstream = new FileOutputStream(path.toFile())) {
                     CompressedStreamTools.writeCompressed(compoundnbt, outputstream);
@@ -173,7 +173,7 @@ public class CapsuleTemplateManager {
             // first raw conversion
             template.readSchematic(schematicNBT);
             // second conversion with update of data if needed
-            CompoundNBT compoundnbt = template.writeToNBT(new CompoundNBT());
+            CompoundNBT compoundnbt = template.save(new CompoundNBT());
             return readFromNBT(compoundnbt);
         } catch (Throwable var10) {
             return null;

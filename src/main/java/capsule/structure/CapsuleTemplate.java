@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class CapsuleTemplate {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleTemplate.class);
 
-    public final List<CapsuleTemplate.Palette> blocks = Lists.newArrayList();
+    public final List<CapsuleTemplate.Palette> palettes = Lists.newArrayList();
     public final List<Template.EntityInfo> entities = Lists.newArrayList();
     public Map<BlockPos, Block> occupiedPositions = null;
 
@@ -68,9 +68,9 @@ public class CapsuleTemplate {
         return this.author;
     }
 
-    public List<Template.BlockInfo> getBlocks() {
-        if (blocks.size() <= 0 || blocks.get(0).blockInfos == null) return Lists.newArrayList();
-        return blocks.get(0).blockInfos;
+    public List<Template.BlockInfo> getPalette() {
+        if (palettes.size() <= 0 || palettes.get(0).blocks == null) return Lists.newArrayList();
+        return palettes.get(0).blocks;
     }
 
     private static void addToLists(Template.BlockInfo p_237149_0_, List<Template.BlockInfo> p_237149_1_, List<Template.BlockInfo> p_237149_2_, List<Template.BlockInfo> p_237149_3_) {
@@ -226,8 +226,8 @@ public class CapsuleTemplate {
         }
     }
 
-    public CompoundNBT writeToNBT(CompoundNBT nbt) {
-        if (this.blocks.isEmpty()) {
+    public CompoundNBT save(CompoundNBT nbt) {
+        if (this.palettes.isEmpty()) {
             nbt.put("blocks", new ListNBT());
             nbt.put("palette", new ListNBT());
         } else {
@@ -235,12 +235,12 @@ public class CapsuleTemplate {
             CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
             list.add(template$basicpalette);
 
-            for (int i = 1; i < this.blocks.size(); ++i) {
+            for (int i = 1; i < this.palettes.size(); ++i) {
                 list.add(new CapsuleTemplate.BasicPalette());
             }
 
             ListNBT listnbt1 = new ListNBT();
-            List<Template.BlockInfo> list1 = getBlocks();
+            List<Template.BlockInfo> list1 = getPalette();
 
             for (int j = 0; j < list1.size(); ++j) {
                 Template.BlockInfo template$blockinfo = list1.get(j);
@@ -254,9 +254,9 @@ public class CapsuleTemplate {
 
                 listnbt1.add(compoundnbt);
 
-                for (int l = 1; l < this.blocks.size(); ++l) {
+                for (int l = 1; l < this.palettes.size(); ++l) {
                     CapsuleTemplate.BasicPalette template$basicpalette1 = list.get(l);
-                    template$basicpalette1.addMapping((this.blocks.get(l).getBlockInfos().get(j)).state, k);
+                    template$basicpalette1.addMapping((this.palettes.get(l).blocks().get(j)).state, k);
                 }
             }
 
@@ -318,7 +318,7 @@ public class CapsuleTemplate {
     }
 
     public void load(CompoundNBT compound) {
-        this.blocks.clear();
+        this.palettes.clear();
         this.entities.clear();
         ListNBT listnbt = compound.getList("size", 3);
         this.size = new BlockPos(listnbt.getInt(0), listnbt.getInt(1), listnbt.getInt(2));
@@ -359,11 +359,11 @@ public class CapsuleTemplate {
         }
     }
 
-    private void loadPalette(ListNBT palletesNBT, ListNBT blocksNBT) {
+    private void loadPalette(ListNBT palettesNBT, ListNBT blocksNBT) {
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
 
-        for (int i = 0; i < palletesNBT.size(); ++i) {
-            template$basicpalette.addMapping(NBTUtil.readBlockState(palletesNBT.getCompound(i)), i);
+        for (int i = 0; i < palettesNBT.size(); ++i) {
+            template$basicpalette.addMapping(NBTUtil.readBlockState(palettesNBT.getCompound(i)), i);
         }
 
         List<Template.BlockInfo> list2 = Lists.newArrayList();
@@ -387,7 +387,7 @@ public class CapsuleTemplate {
         }
 
         List<Template.BlockInfo> list3 = buildInfoList(list2, list, list1);
-        this.blocks.add(new CapsuleTemplate.Palette(list3));
+        this.palettes.add(new CapsuleTemplate.Palette(list3));
     }
 
     private ListNBT newIntegerList(int... values) {
@@ -411,7 +411,7 @@ public class CapsuleTemplate {
     }
 
     public void filterFromWhitelist(List<String> outExcluded) {
-        List<Template.BlockInfo> newBlockList = this.getBlocks().stream()
+        List<Template.BlockInfo> newBlockList = this.getPalette().stream()
                 .filter(b -> {
                     ResourceLocation registryName = b.state.getBlock().getRegistryName();
                     boolean included = b.nbt == null
@@ -436,8 +436,8 @@ public class CapsuleTemplate {
                             nbt
                     );
                 }).collect(Collectors.toList());
-        getBlocks().clear();
-        getBlocks().addAll(newBlockList);
+        getPalette().clear();
+        getPalette().addAll(newBlockList);
         // remove all entities
         entities.clear();
     }
@@ -531,8 +531,8 @@ public class CapsuleTemplate {
             }
 
             List<Template.BlockInfo> list3 = buildInfoList(list, list1, list2);
-            this.blocks.clear();
-            this.blocks.add(new CapsuleTemplate.Palette(list3));
+            this.palettes.clear();
+            this.palettes.add(new CapsuleTemplate.Palette(list3));
 
             List<Entity> capturedEntities = this.snapshotNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.offset(1, 1, 1));
             if (outCapturedEntities != null && capturedEntities != null) {
@@ -579,7 +579,7 @@ public class CapsuleTemplate {
     }
 
     /**
-     * Tweaked version of "addBlocksToWorld" for capsule
+     * Tweaked version of "placeInWorld" for capsule
      */
     public boolean spawnBlocksAndEntities(IServerWorld worldIn,
                                           BlockPos pos,
@@ -589,10 +589,10 @@ public class CapsuleTemplate {
                                           List<BlockPos> outSpawnedBlocks,
                                           List<Entity> outSpawnedEntities) {
         int flags = 2; /** @see net.minecraft.world.World#setBlock(BlockPos, BlockState, int) */
-        if (this.blocks.isEmpty()) {
+        if (this.palettes.isEmpty()) {
             return false;
         } else {
-            List<Template.BlockInfo> list = Palette.pickRandomPalette(placementIn, this.blocks, pos).getBlockInfos();
+            List<Template.BlockInfo> list = Palette.getRandomPalette(placementIn, this.palettes, pos).blocks();
             if ((!list.isEmpty() || !placementIn.isIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
                 MutableBoundingBox mutableboundingbox = placementIn.getBoundingBox();
                 List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.shouldKeepLiquids() ? list.size() : 0);
@@ -724,8 +724,8 @@ public class CapsuleTemplate {
 
     public void removeBlocks(List<BlockPos> couldNotBeRemoved, BlockPos startPos) {
         for (BlockPos blockPos : couldNotBeRemoved) {
-            for (Palette palette : this.blocks) {
-                palette.blockInfos.removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
+            for (Palette palette : this.palettes) {
+                palette.blocks.removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos));
             }
         }
     }
@@ -738,7 +738,7 @@ public class CapsuleTemplate {
         ArrayList<BlockPos> out = new ArrayList<>();
         if (size == null) return out;
 
-        List<Template.BlockInfo> list = Palette.pickRandomPalette(placementSettings, blocks, blockPos).blockInfos;
+        List<Template.BlockInfo> list = Palette.getRandomPalette(placementSettings, palettes, blockPos).blocks;
 
         if (!list.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
             MutableBoundingBox structureboundingbox = placementSettings.getBoundingBox();
@@ -761,9 +761,9 @@ public class CapsuleTemplate {
     }
 
     public boolean canRotate() {
-        if (blocks.isEmpty()) return false;
+        if (palettes.isEmpty()) return false;
         try {
-            for (Template.BlockInfo block : getBlocks()) {
+            for (Template.BlockInfo block : getPalette()) {
                 if (block.nbt != null && !Config.blueprintWhitelist.containsKey(block.state.getBlock().getRegistryName().toString())) {
                     return false;
                 }
@@ -790,8 +790,8 @@ public class CapsuleTemplate {
             nbt.putInt("DataVersion", 500);
         }
 
-        this.blocks.clear();
-        this.blocks.add(new Palette(new ArrayList<>()));
+        this.palettes.clear();
+        this.palettes.add(new Palette(new ArrayList<>()));
         this.entities.clear();
 
         int width = nbt.getShort("Width");
@@ -847,7 +847,7 @@ public class CapsuleTemplate {
                     if (state.getBlock() != Blocks.AIR) {
                         BlockPos pos = new BlockPos(x, y, z);
                         CompoundNBT teNBT = tiles.get(pos);
-                        getBlocks().add(new Template.BlockInfo(pos, state, teNBT));
+                        getPalette().add(new Template.BlockInfo(pos, state, teNBT));
                         if (pos.getX() > sizeX) sizeX = pos.getX();
                         if (pos.getY() > sizeY) sizeY = pos.getY();
                         if (pos.getZ() > sizeZ) sizeZ = pos.getZ();
@@ -1017,18 +1017,18 @@ public class CapsuleTemplate {
     }
 
     public static final class Palette {
-        private final List<Template.BlockInfo> blockInfos;
-        private final Map<Block, List<Template.BlockInfo>> field_237156_b_ = Maps.newHashMap();
+        private final List<Template.BlockInfo> blocks;
+        private final Map<Block, List<Template.BlockInfo>> cache = Maps.newHashMap();
 
         private Palette(List<Template.BlockInfo> p_i232120_1_) {
-            this.blockInfos = p_i232120_1_;
+            this.blocks = p_i232120_1_;
         }
 
-        public List<Template.BlockInfo> getBlockInfos() {
-            return this.blockInfos;
+        public List<Template.BlockInfo> blocks() {
+            return this.blocks;
         }
 
-        public static Palette pickRandomPalette(PlacementSettings placementSettings, List<Palette> p_237132_1_, @Nullable BlockPos p_237132_2_) {
+        public static Palette getRandomPalette(PlacementSettings placementSettings, List<Palette> p_237132_1_, @Nullable BlockPos p_237132_2_) {
             int i = p_237132_1_.size();
             if (i == 0) {
                 throw new IllegalStateException("No palettes");

@@ -5,8 +5,6 @@ import capsule.StructureSaver;
 import capsule.StructureSaver.ItemStackKey;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;
@@ -115,7 +113,7 @@ public class Blueprint {
 
     public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
-        for (Template.BlockInfo block : blueprintTemplate.getBlocks()) {// Note: tile entities not supported so nbt data is not used here
+        for (Template.BlockInfo block : blueprintTemplate.getPalette()) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
