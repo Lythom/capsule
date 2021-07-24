@@ -20,12 +20,14 @@ TLDR: there should be a `data/capsule/tags/blocks/excluded.json` file in your mo
 ```
 {
     "replace": false,
-    "values": [
-        "tombstone:player_graves"
+    "values": [],
+    "optional": [
+        "#tombstone:player_graves"
     ]
 }
 ```
-
+In this example, optional should be used if the mod is not a required dependency. The `#` before `tombstone:player_graves` indicates that all the blocks under the tag `tombstone:player_graves` should be included here. The value could also be a block id without # to refer to a single block instead of another tag.
+ 
 ### 1.12
 Open an issue on github and provide the block id to be excluded by default. I'll update the mod with the new configuration.
 
