@@ -701,12 +701,14 @@ public class CapsuleTemplate {
                     }
                     for (Pair<BlockPos, CompoundNBT> pair : list2) {
                         BlockPos blockpos4 = pair.getFirst();
-
-                        if (pair.getSecond() != null) {
-                            TileEntity tileentity2 = worldIn.getBlockEntity(blockpos4);
-                            if (tileentity2 != null) {
-                                tileentity2.setChanged();
+                        if (!placementIn.getKnownShape()) {
+                            BlockState blockstate1 = worldIn.getBlockState(blockpos4);
+                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, worldIn, blockpos4);
+                            if (blockstate1 != blockstate3) {
+                                worldIn.setBlock(blockpos4, blockstate3, flags & -2 | 16);
                             }
+
+                            worldIn.blockUpdated(blockpos4, blockstate3.getBlock());
                         }
                     }
                 }

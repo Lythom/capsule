@@ -255,7 +255,7 @@ public class StructureSaver {
                         // content of TE have been snapshoted, remove the content
                         if (tileentity != null) {
                             IClearable.tryClear(tileentity);
-                            world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 20); // from Template.addBlocksToWorld
+                            world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 20); // from Template.placeInWorld
                         }
 
                         world.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
