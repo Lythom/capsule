@@ -96,7 +96,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return null;
         }
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(capsuleStructureId));
         Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
@@ -452,7 +452,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -463,7 +463,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -600,7 +600,7 @@ public class StructureSaver {
         // create a destination template
         String sanitized = destinationStructureName.toLowerCase();
         ResourceLocation destinationLocation = new ResourceLocation(sanitized);
-        CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
+        CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
         // populate template from source data
         destTemplate.load(templateData, destinationLocation.toString());
         // empty occupied position, it makes no sense for a new template to copy those situational data

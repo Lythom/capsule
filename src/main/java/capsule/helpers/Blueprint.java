@@ -135,7 +135,7 @@ public class Blueprint {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
-                CapsuleTemplate template = tempManager.getTemplateDefaulted(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 if (template != null) {
                     Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
                     if (fullList != null) {
@@ -205,13 +205,13 @@ public class Blueprint {
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, Config.getCapsuleConfigDir().toFile().getParentFile().getParentFile(), DataFixesManager.getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixesManager.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
-                CapsuleTemplate template = tempManager.getTemplateDefaulted(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (ingredients.getLeft() == null && ingredients.getMiddle() == null && ingredients.getRight() == null) {
                     LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");

@@ -354,7 +354,7 @@ public class CapsuleCommand {
         if (player != null && !StringUtils.isNullOrEmpty(templateName) && player.getLevel() instanceof ServerWorld) {
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
-            CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
+            CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -394,7 +394,7 @@ public class CapsuleCommand {
                 template.save(data);
             } else {
                 CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getLevel());
-                CapsuleTemplate ctemplate = capsuletemplatemanager.getTemplateDefaulted(new ResourceLocation(path));
+                CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(new ResourceLocation(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
                 ctemplate.save(data);
@@ -406,7 +406,7 @@ public class CapsuleCommand {
                 // create a destination template
                 ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + path);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
-                CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
+                CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
                 // write template from source data
                 destTemplate.load(data, destinationLocation.toString());
                 destManager.writeToFile(destinationLocation);

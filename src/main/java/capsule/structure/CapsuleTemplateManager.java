@@ -38,7 +38,7 @@ public class CapsuleTemplateManager {
         this.pathGenerated = templateFolder.toPath().normalize();
     }
 
-    public CapsuleTemplate getTemplateDefaulted(ResourceLocation templateLocation) {
+    public CapsuleTemplate getOrCreateTemplate(ResourceLocation templateLocation) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
         CapsuleTemplate template = this.getTemplate(capsuleTemplateLocation);
         if (template == null) {

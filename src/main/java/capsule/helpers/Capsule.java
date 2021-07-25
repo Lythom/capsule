@@ -463,7 +463,7 @@ public class Capsule {
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server.getDataPackRegistries().getResourceManager());
-        return srcTemplatemanager.getTemplateDefaulted(new ResourceLocation(structurePath));
+        return srcTemplatemanager.getOrCreateTemplate(new ResourceLocation(structurePath));
     }
 
     public static boolean clearTemplate(ServerWorld worldserver, String capsuleStructureId) {
@@ -472,7 +472,7 @@ public class Capsule {
             LOGGER.error("getTemplateManager returned null");
             return false;
         }
-        CapsuleTemplate template = templatemanager.getTemplateDefaulted(new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(capsuleStructureId));
         if (template == null) return false;
 
         List<Template.BlockInfo> blocks = template.getPalette();
