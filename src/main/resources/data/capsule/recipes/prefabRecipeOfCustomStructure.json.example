@@ -8,8 +8,8 @@
         "color": 2963801
       },
       "sourceInventory": {},
-      "structureName": "capsule:starters/_starter_old_house.nbt",
-      "label": "Traveller's Base",
+      "structureName": "capsule:config/capsule/rewards/myPrefab.nbt",
+      "label": "My Custom Prefab The User Will Have To Fill Before Deploy",
       "size": 7
     }
   },
