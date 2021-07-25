@@ -314,6 +314,7 @@ public class CapsuleTemplate {
             }
             nbt.put("capsule_occupiedSources", occupiedSpawnPositionstaglist);
         }
+        nbt.putString("author", getAuthor());
         return nbt;
     }
 
