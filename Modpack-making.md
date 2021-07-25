@@ -31,7 +31,7 @@ There are 3 types of capsules to know in order to use Capsule as a modpack makin
 
 ### Standard
 
-Standard capsules are live created by players while playing. They are stored in <worldsave>/structures/capsules for each world.
+Standard capsules are live created by players while playing. They are stored in (1.12-)<worldsave>/structures/capsules or (1.16+)/<worldsave>/capsules for each world.
 
 When the player capture some new content with an Empty Capsule, a new Template file is created there. Through the game, only this crafted Capsule and the Recovery Capsules linked to it can modify the Template file. In-game commands for modpackmakers are non-destructive on live created capsules, so you can't mess with players contents if using commands on a "live" server. The Template file is empty if the capsule is deployed, and contains the captured region data if the capsule is undeployed, so you want to create rewards from undeployed capsules.
 
@@ -81,7 +81,7 @@ Each folder will get an entry in the capsule config file on server restart, to b
 
 Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [https://imgur.com/gallery/vN1sJrf](https://imgur.com/gallery/vN1sJrf) for more information on how to use as a player).
 
-Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: <worldsave>/structures/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
+Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: (1.12-)<worldsave>/structures/capsules or (1.16+)/<worldsave>/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
 
 #### How to give one
 
