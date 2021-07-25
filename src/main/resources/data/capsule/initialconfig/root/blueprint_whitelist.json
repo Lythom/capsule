@@ -55,6 +55,7 @@
   "minecraft:enchanting_table",
   "minecraft:flower_pot",
   "minecraft:furnace",
+  "minecraft:blast_furnace",
   "minecraft:gray_shulker_box",
   "minecraft:green_shulker_box",
   "minecraft:hopper",
@@ -144,7 +145,12 @@
   "minecraft:anvil",
   "minecraft:chipped_anvil",
   "minecraft:damaged_anvil",
-  "capsule:captureblock",
+  "minecraft:lectern",
+  "minecraft:barrel",
+  "minecraft:smoker",
+  "minecraft:bee_nest",
+  "minecraft:beehive",
+  "minecraft:bell",
   {
     "block": "immersiveengineering:stone_decoration_slab",
     "keepNBT": {
