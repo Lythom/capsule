@@ -11,8 +11,8 @@ apply plugin: 'net.minecraftforge.gradle'
 // EDIT AFTER THIS
 def build_version = "BUILD_ID"
 def capsule_version = "5.0"
-def minecraft_version = "1.16.4"
-def jei_version = "7.6.1.65"
+def minecraft_version = "1.16.5"
+def jei_version = "7.7.1.115"
 
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
