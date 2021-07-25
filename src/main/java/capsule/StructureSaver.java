@@ -602,7 +602,7 @@ public class StructureSaver {
         ResourceLocation destinationLocation = new ResourceLocation(sanitized);
         CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
         // populate template from source data
-        destTemplate.load(templateData);
+        destTemplate.load(templateData, destinationLocation.toString());
         // empty occupied position, it makes no sense for a new template to copy those situational data
         destTemplate.occupiedPositions = null;
         // remove all tile entities

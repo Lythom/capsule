@@ -56,7 +56,7 @@ public class CapsuleFullContentAnswerToClient {
                 }
                 if (nbt != null) {
                     this.template = new CapsuleTemplate();
-                    this.template.load(nbt);
+                    this.template.load(nbt, "`networked from server`");
                 }
             }
         } catch (IndexOutOfBoundsException ioe) {

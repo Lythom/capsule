@@ -70,7 +70,7 @@ public class CapsuleTemplateManager {
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
         try (IResource iresource = this.resourceManager.getResource(capsuleTemplateLocation)) {
-            CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension));
+            CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension), capsuleTemplateLocation.toString());
             return template;
         } catch (FileNotFoundException var18) {
             return null;
@@ -88,7 +88,7 @@ public class CapsuleTemplateManager {
             Path path = this.resolvePath(locationIn, extension);
 
             try (InputStream inputstream = new FileInputStream(path.toFile())) {
-                CapsuleTemplate template = this.loadTemplate(inputstream, ".schematics".equals(extension));
+                CapsuleTemplate template = this.loadTemplate(inputstream, ".schematics".equals(extension), path.toString());
                 return template;
             } catch (FileNotFoundException var18) {
                 return null;
@@ -99,21 +99,21 @@ public class CapsuleTemplateManager {
         }
     }
 
-    private CapsuleTemplate loadTemplate(InputStream inputStreamIn, Boolean isSchematic) throws IOException {
+    private CapsuleTemplate loadTemplate(InputStream inputStreamIn, Boolean isSchematic, String location) throws IOException {
         if (isSchematic) {
-            return readTemplateFromSchematic(inputStreamIn);
+            return readTemplateFromSchematic(inputStreamIn, location);
         }
         CompoundNBT compoundnbt = CompressedStreamTools.readCompressed(inputStreamIn);
-        return this.readFromNBT(compoundnbt);
+        return this.readFromNBT(compoundnbt, location);
     }
 
-    public CapsuleTemplate readFromNBT(CompoundNBT p_227458_1_) {
+    public CapsuleTemplate readFromNBT(CompoundNBT p_227458_1_, String location) {
         if (!p_227458_1_.contains("DataVersion", 99)) {
             p_227458_1_.putInt("DataVersion", 500);
         }
 
         CapsuleTemplate template = new CapsuleTemplate();
-        template.load(NBTUtil.update(this.fixer, DefaultTypeReferences.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")));
+        template.load(NBTUtil.update(this.fixer, DefaultTypeReferences.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
         return template;
     }
 
@@ -166,7 +166,7 @@ public class CapsuleTemplateManager {
         this.templates.remove(capsuleTemplateLocation);
     }
 
-    public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream) {
+    public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream, String location) {
         try {
             CompoundNBT schematicNBT = CompressedStreamTools.readCompressed(inputstream);
             CapsuleTemplate template = new CapsuleTemplate();
@@ -174,7 +174,7 @@ public class CapsuleTemplateManager {
             template.readSchematic(schematicNBT);
             // second conversion with update of data if needed
             CompoundNBT compoundnbt = template.save(new CompoundNBT());
-            return readFromNBT(compoundnbt);
+            return readFromNBT(compoundnbt, location);
         } catch (Throwable var10) {
             return null;
         }

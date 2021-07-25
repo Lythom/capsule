@@ -318,7 +318,7 @@ public class CapsuleTemplate {
         return nbt;
     }
 
-    public void load(CompoundNBT compound) {
+    public void load(CompoundNBT compound, String location) {
         this.palettes.clear();
         this.entities.clear();
         ListNBT listnbt = compound.getList("size", 3);
@@ -357,6 +357,9 @@ public class CapsuleTemplate {
                 occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
             }
             this.occupiedPositions = occupiedSources;
+        }
+        if (this.palettes.size() == 0) {
+            LOGGER.error("Template located at " + location + " might be missing or corrupted: it should have a palette tag.");
         }
     }
 

@@ -408,7 +408,7 @@ public class CapsuleCommand {
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getTemplateDefaulted(destinationLocation);
                 // write template from source data
-                destTemplate.load(data);
+                destTemplate.load(data, destinationLocation.toString());
                 destManager.writeToFile(destinationLocation);
 
                 ItemStack capsule = Capsule.newRewardCapsuleItemStack(
