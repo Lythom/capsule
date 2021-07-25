@@ -1023,6 +1023,7 @@ public class CapsuleTemplate {
 
         private Palette(List<Template.BlockInfo> p_i232120_1_) {
             this.blocks = p_i232120_1_;
+            this.blocks.sort(Comparator.comparingInt(b -> b.pos.getY()));
         }
 
         public List<Template.BlockInfo> blocks() {
