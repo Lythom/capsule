@@ -101,7 +101,7 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 ---
 ## fromStructure ##
 
-Create a new Reward Capsule by copying the template from named structure block template (<worldsave>/structures/<structureName>.nbt) into configured reward folder (default config/capsule/rewards).
+Create a new Reward Capsule by copying the template from named structure block template ((1.12-)<worldsave>/structures/<structureName>.nbt or (1.15+)<worldsave>/generated/minecraft/structures) into configured reward folder (default config/capsule/rewards).
 
 This command can be used to create a new Reward or to update an existing one.
 
