@@ -37,7 +37,7 @@ public class Spacial {
         Vector3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
         return thePlayer.getCommandSenderWorld().clip(
-                new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.COLLIDER, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
+                new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.OUTLINE, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
         );
     }
 
