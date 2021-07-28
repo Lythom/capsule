@@ -641,7 +641,7 @@ public class StructureSaver {
      * Get the Capsule saving tool that remembers last capsule id.
      */
     public static CapsuleSavedData getCapsuleSavedData(ServerWorld capsuleWorld) {
-        return capsuleWorld.getDataStorage().get(CapsuleSavedData::new, "capsuleData");
+        return capsuleWorld.getDataStorage().computeIfAbsent(CapsuleSavedData::new, "capsuleData");
     }
 
     @Nullable

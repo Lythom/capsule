@@ -128,6 +128,7 @@ public class Files {
         }
         ArrayList<String> prefabsTemplatesList = new ArrayList<>();
         iterateTemplates(prefabsFolder, templateName -> prefabsTemplatesList.add(prefabsTemplatesPath + "/" + templateName));
+        LOGGER.info(prefabsTemplatesList.size() + " prefab capsules loaded.");
         return prefabsTemplatesList;
     }
 

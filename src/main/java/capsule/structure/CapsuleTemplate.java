@@ -123,8 +123,10 @@ public class CapsuleTemplate {
 
     public static List<Template.EntityInfo> processEntityInfos(@Nullable CapsuleTemplate template, IWorld p_215387_0_, BlockPos offsetPos, PlacementSettings placementSettingsIn, List<Template.EntityInfo> blockInfos) {
         List<Template.EntityInfo> list = Lists.newArrayList();
+        BlockPos recenterOffset = template == null ? BlockPos.ZERO : recenterRotation((template.size.getX() - 1) / 2, placementSettingsIn);
+
         for (Template.EntityInfo entityInfo : blockInfos) {
-            Vector3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(Vector3d.atLowerCornerOf(offsetPos));
+            Vector3d pos = transformedVec3d(placementSettingsIn, entityInfo.pos).add(Vector3d.atLowerCornerOf(offsetPos)).add(Vector3d.atLowerCornerOf(recenterOffset));
             BlockPos blockpos = calculateRelativePosition(placementSettingsIn, entityInfo.blockPos).offset(offsetPos);
             Template.EntityInfo info = new Template.EntityInfo(pos, blockpos, entityInfo.nbt);
             list.add(info);
