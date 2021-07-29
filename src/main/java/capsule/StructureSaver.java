@@ -666,8 +666,13 @@ public class StructureSaver {
 
         // try to cleanup previous template to save disk space on the long run
         if (destCapsule.getTag() != null && destCapsule.getTag().contains("prevStructureName")) {
-            if (templateManager != null)
-                templateManager.deleteTemplate(new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
+            if (templateManager != null) {
+                try {
+                    templateManager.deleteTemplate(new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
+                } catch (Exception e) {
+                    LOGGER.error(e);
+                }
+            }
         }
 
         if (!created && playerIn != null) {

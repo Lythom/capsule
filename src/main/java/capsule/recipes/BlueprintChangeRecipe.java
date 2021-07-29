@@ -97,6 +97,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
         if (templateStructure != null && blueprintCapsule != null) {
             if (blueprintCapsule.getTag() != null) {
                 blueprintCapsule.getTag().putString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
+                blueprintCapsule.getTag().putBoolean("templateShouldBeCopied", true);
             }
             CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
             CapsuleItem.setState(blueprintCapsule, DEPLOYED);
