@@ -1,11 +1,57 @@
 {
-    "forge_marker": 1,
-    "variants": {
-        "projecting=true": {
-            "model": "capsule:block/capsulemarker_on"
-        },
-        "projecting=false": {
-            "model": "capsule:block/capsulemarker"
-        }
+  "forge_marker": 1,
+  "variants": {
+    "facing=down,triggered=false": {
+      "model": "capsule:block/capsulemarker_on",
+      "x": 180,
+      "y": 180
+    },
+    "facing=east,triggered=false": {
+      "model": "capsule:block/capsulemarker_east_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,triggered=false": {
+      "model": "capsule:block/capsulemarker_on",
+      "x": 90
+    },
+    "facing=south,triggered=false": {
+      "model": "capsule:block/capsulemarker_on",
+      "x": 270
+    },
+    "facing=up,triggered=false": {
+      "model": "capsule:block/capsulemarker_on"
+    },
+    "facing=west,triggered=false": {
+      "model": "capsule:block/capsulemarker_west_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=down,triggered=true": {
+      "model": "capsule:block/capsulemarker",
+      "x": 180,
+      "y": 180
+    },
+    "facing=east,triggered=true": {
+      "model": "capsule:block/capsulemarker_east",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,triggered=true": {
+      "model": "capsule:block/capsulemarker",
+      "x": 90
+    },
+    "facing=south,triggered=true": {
+      "model": "capsule:block/capsulemarker",
+      "x": 270
+    },
+    "facing=up,triggered=true": {
+      "model": "capsule:block/capsulemarker"
+    },
+    "facing=west,triggered=true": {
+      "model": "capsule:block/capsulemarker_west",
+      "x": 90,
+      "y": 270
     }
+  }
 }

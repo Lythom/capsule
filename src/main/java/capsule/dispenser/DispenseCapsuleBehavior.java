@@ -1,6 +1,7 @@
 package capsule.dispenser;
 
 import capsule.helpers.Capsule;
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.dispenser.DefaultDispenseItemBehavior;
@@ -29,15 +30,10 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
                 LOGGER.error("Couldn't resend the content into the capsule", e);
             }
         } else if (CapsuleItem.hasStructureLink(capsule)) {
-            Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
             final int size = CapsuleItem.getSize(capsule);
             final int extendLength = (size - 1) / 2;
 
-            BlockPos anchor = new BlockPos(
-                    source.x() + (double) direction.getStepX() * (0.5 + size * 0.5),
-                    source.y() + (double) direction.getStepY() + (direction.getStepY() < 0 ? -size :  - 1),
-                    source.z() + (double) direction.getStepZ() * (0.5 + size * 0.5)
-            );
+            BlockPos anchor = Spacial.getAnchor(source.getPos(), source.getBlockState(), size);
             boolean deployed = Capsule.deployCapsule(capsule, anchor, null, extendLength, serverWorld);
             if (deployed) {
                 source.getLevel().playSound(null, source.getPos(), SoundEvents.ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.4F);

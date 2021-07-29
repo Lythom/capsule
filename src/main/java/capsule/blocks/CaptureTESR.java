@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 
 public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
 
@@ -32,7 +33,8 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
             return;
         int extendSize = (size - 1) / 2;
         int color = tileEntityCapture.getColor();
-        AxisAlignedBB boundingBox = Spacial.getBB(0, 0, 0, size, extendSize);
+        BlockPos offset = Spacial.getAnchor(BlockPos.ZERO, tileEntityCapture.getBlockState(), size);
+        AxisAlignedBB boundingBox = Spacial.getBB(offset.getX(), offset.getY(), offset.getZ(), size, extendSize);
         IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.lines());
         CapsulePreviewHandler.renderRecallBox(matrixStackIn, color, boundingBox, ivertexbuilder, time);
     }

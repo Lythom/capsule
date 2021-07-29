@@ -1,8 +1,12 @@
 {
-    "parent": "block/orientable",
+    "parent": "block/cube",
     "textures": {
-        "top": "capsule:block/capsulemarker_activated",
-        "front": "block/furnace_side",
-        "side": "block/furnace_side"
+        "particle": "block/furnace_side",
+        "down": "minecraft:block/furnace_top",
+        "up": "capsule:block/capsulemarker_activated",
+        "north": "block/furnace_side",
+        "east": "block/furnace_side",
+        "south": "block/furnace_side",
+        "west": "block/furnace_side"
     }
 }

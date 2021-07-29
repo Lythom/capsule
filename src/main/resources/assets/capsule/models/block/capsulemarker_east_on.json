@@ -1,9 +1,9 @@
 {
-    "parent": "block/cube",
+    "parent": "capsule:block/cube_east",
     "textures": {
         "particle": "block/furnace_side",
         "down": "minecraft:block/furnace_top",
-        "up": "capsule:block/capsulemarker",
+        "up": "capsule:block/capsulemarker_activated",
         "north": "block/furnace_side",
         "east": "block/furnace_side",
         "south": "block/furnace_side",

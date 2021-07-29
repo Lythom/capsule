@@ -1,13 +1,18 @@
 package capsule.helpers;
 
+import capsule.blocks.BlockCapsuleMarker;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.gen.feature.template.Template;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -15,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
+    protected static final Logger LOGGER = LogManager.getLogger(Spacial.class);
 
     public static BlockPos findBottomBlock(ItemEntity ItemEntity) {
         return findBottomBlock(ItemEntity.getX(), ItemEntity.getY(), ItemEntity.getZ());
@@ -62,6 +68,21 @@ public class Spacial {
         }
 
         return null;
+    }
+
+    public static BlockPos getAnchor(BlockPos captureBasePosition, BlockState captureBaseState, int size) {
+        Direction direction = null;
+        try {
+            direction = captureBaseState.getValue(BlockCapsuleMarker.FACING);
+        } catch (Exception e) {
+            LOGGER.error("Could not get BlockCapsuleMarker.FACING in blockstate at " + captureBasePosition);
+            return captureBasePosition;
+        }
+        return new BlockPos(
+                captureBasePosition.getX() + (double) direction.getStepX() * (0.5 + size * 0.5),
+                captureBasePosition.getY() + (double) direction.getStepY() + (direction.getStepY() < 0 ? -size :  - 1),
+                captureBasePosition.getZ() + (double) direction.getStepZ() * (0.5 + size * 0.5)
+        );
     }
 
     public static List<AxisAlignedBB> mergeVoxels(List<Template.BlockInfo> blocks) {

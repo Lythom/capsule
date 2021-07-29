@@ -1,5 +1,5 @@
 {
-    "parent": "block/cube",
+    "parent": "capsule:block/cube_west",
     "textures": {
         "particle": "block/furnace_side",
         "down": "minecraft:block/furnace_top",

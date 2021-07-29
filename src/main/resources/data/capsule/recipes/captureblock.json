@@ -4,16 +4,16 @@
     "item": "capsule:capsulemarker"
   },
   "pattern": [
-    "#G#",
     "#C#",
-    "#T#"
+    "#T#",
+    "#D#"
   ],
   "key": {
     "#": {
       "tag": "forge:cobblestone"
     },
-    "G": {
-      "item": "minecraft:glass_pane"
+    "D": {
+      "item": "minecraft:dispenser"
     },
     "C": {
       "item": "minecraft:compass"

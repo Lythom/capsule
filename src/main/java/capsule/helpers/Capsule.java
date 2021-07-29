@@ -11,6 +11,7 @@ import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -405,7 +406,9 @@ public class Capsule {
             // CAPTURE
             // is not linked, capture
             try {
-                BlockPos anchor = Spacial.findSpecificBlock(ItemEntity, size + 2, BlockCapsuleMarker.class);
+                BlockPos captureBasePosition = Spacial.findSpecificBlock(ItemEntity, size + 2, BlockCapsuleMarker.class);
+                BlockPos anchor = Spacial.getAnchor(captureBasePosition, itemWorld.getBlockState(captureBasePosition), size);
+
                 boolean captured = captureContentIntoCapsule(capsule, anchor, ItemEntity.getThrower(), size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.offset(0, size / 2, 0);

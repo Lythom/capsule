@@ -36,8 +36,7 @@ public class TileEntityCapture extends DispenserTileEntity {
     @OnlyIn(Dist.CLIENT)
     @Override
     public double getViewDistance() {
-        final int MAXIMUM_DISTANCE_IN_BLOCKS = 32;
-        return MAXIMUM_DISTANCE_IN_BLOCKS * MAXIMUM_DISTANCE_IN_BLOCKS;
+        return 128;
     }
 
     // When the world loads from disk, the server needs to send the TileEntity information to the client
@@ -82,10 +81,8 @@ public class TileEntityCapture extends DispenserTileEntity {
     public AxisAlignedBB getBoundingBox() {
 
         int size = this.getSize();
-        int exdendLength = (size - 1) / 2;
-
-        BlockPos source = this.getBlockPos().offset(-exdendLength, 1, -exdendLength);
-        BlockPos end = source.offset(size, size, size);
+        BlockPos source = this.getBlockPos().offset(-size, -size, -size);
+        BlockPos end = this.getBlockPos().offset(size, size, size);
 
         AxisAlignedBB box = new AxisAlignedBB(source.getX(), source.getY(), source.getZ(), end.getX(),
                 end.getY(), end.getZ());
