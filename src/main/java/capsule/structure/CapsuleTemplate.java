@@ -242,7 +242,7 @@ public class CapsuleTemplate {
             }
 
             ListNBT listnbt1 = new ListNBT();
-            List<Template.BlockInfo> list1 = getPalette();
+            List<Template.BlockInfo> list1 = palettes.get(0).blocks;
 
             for (int j = 0; j < list1.size(); ++j) {
                 Template.BlockInfo template$blockinfo = list1.get(j);
@@ -598,7 +598,13 @@ public class CapsuleTemplate {
         if (this.palettes.isEmpty()) {
             return false;
         } else {
-            List<Template.BlockInfo> list = Palette.getRandomPalette(placementIn, this.palettes, pos).blocks();
+            List<Template.BlockInfo> list = null;
+            try {
+                list = Palette.getRandomPalette(placementIn, this.palettes, pos).blocks();
+            } catch (Exception e) {
+                LOGGER.error(e);
+                list = new ArrayList<>();
+            }
             if ((!list.isEmpty() || !placementIn.isIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
                 MutableBoundingBox mutableboundingbox = placementIn.getBoundingBox();
                 List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.shouldKeepLiquids() ? list.size() : 0);
@@ -746,8 +752,13 @@ public class CapsuleTemplate {
         ArrayList<BlockPos> out = new ArrayList<>();
         if (size == null) return out;
 
-        List<Template.BlockInfo> list = Palette.getRandomPalette(placementSettings, palettes, blockPos).blocks;
-
+        List<Template.BlockInfo> list = null;
+        try {
+            list = Palette.getRandomPalette(placementSettings, this.palettes, blockPos).blocks();
+        } catch (Exception e) {
+            LOGGER.error(e);
+            list = new ArrayList<>();
+        }
         if (!list.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
             MutableBoundingBox structureboundingbox = placementSettings.getBoundingBox();
 
