@@ -17,10 +17,10 @@ import org.apache.logging.log4j.Logger;
 public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
     protected static final Logger LOGGER = LogManager.getLogger(DispenseCapsuleBehavior.class);
 
-    public ItemStack dispenseStack(IBlockSource source, ItemStack capsule) {
+    public ItemStack execute(IBlockSource source, ItemStack capsule) {
         if (!(capsule.getItem() instanceof CapsuleItem)) return capsule;
 
-        ServerWorld serverWorld = (ServerWorld) source.getLevel();
+        ServerWorld serverWorld = source.getLevel();
         if (CapsuleItem.hasState(capsule, CapsuleItem.CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {
                 Capsule.resentToCapsule(capsule, serverWorld, null);
