@@ -626,7 +626,7 @@ public class CapsuleTemplate {
                         if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
                         FluidState ifluidstate = placementIn.shouldKeepLiquids() ? worldIn.getFluidState(blockpos) : null;
-                        BlockState blockstate = template$blockinfo.state.mirror(placementIn.getMirror()).rotate(placementIn.getRotation());
+                        BlockState blockstate = template$blockinfo.state.mirror(placementIn.getMirror()).rotate(worldIn, blockpos, placementIn.getRotation());
                         if (template$blockinfo.nbt != null) {
                             TileEntity tileentity = worldIn.getBlockEntity(blockpos);
                             IClearable.tryClear(tileentity);

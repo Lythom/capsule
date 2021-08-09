@@ -1,6 +1,7 @@
 package capsule.network;
 
 import capsule.StructureSaver;
+import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -35,6 +36,11 @@ public class CapsuleFullContentAnswerToClient {
             if (template != null) {
                 synchronized (capsule.client.CapsulePreviewHandler.currentFullPreview) {
                     capsule.client.CapsulePreviewHandler.currentFullPreview.put(getStructureName(), template);
+                    if (capsule.client.CapsulePreviewHandler.cachedFullPreview.containsKey(getStructureName())) {
+                        capsule.client.CapsulePreviewHandler.cachedFullPreview.get(getStructureName()).setWorldDirty();
+                    } else {
+                        capsule.client.CapsulePreviewHandler.cachedFullPreview.put(getStructureName(), new CapsuleTemplateRenderer());
+                    }
                 }
             }
         });

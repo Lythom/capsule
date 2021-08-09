@@ -1,0 +1,2 @@
+Most of the code in this directory come from https://github.com/Mrbysco/StructureVisualizer and from https://github.com/Direwolf20-MC/BuildingGadgets/
+The code was modified and might not reflect the original source.

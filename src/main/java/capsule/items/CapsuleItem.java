@@ -63,7 +63,7 @@ import static capsule.items.CapsuleItem.CapsuleState.*;
 @SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
 
-    public static final int ACTIVE_DURATION_IN_TICKS = 60; // 3 sec at 20 ticks/sec
+    public static final int ACTIVE_DURATION_IN_TICKS = 120; // 6 sec at 20 ticks/sec
 
     public enum CapsuleState {
         EMPTY(0),
