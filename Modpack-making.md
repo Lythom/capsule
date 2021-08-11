@@ -16,6 +16,7 @@
     + [Dying a capsule](#dying-a-capsule)
     + [Create a Template to be used as Loot](#create-a-template-to-be-used-as-loot)
     + [Test looting system](#test-looting-system)
+    + [Change starters capsules](#change-starters-capsules)
   * [Submit your templates !](#submit-your-templates--)
   * [Other tools](#other-tools)
     + [Exporting the item NBT](#exporting-the-item-nbt)
@@ -198,6 +199,12 @@ You may want to check if the template are correctly added to the loot table are 
 
 1. Use command `/capsule reloadLootList` to read new files added in the folders. If a new folder was added to the config file, a restart is required.
 2. Use command `/capsule giveRandomLoot` to roll among the folders a get a Loot capsule (or not if an empty folder is rolled !)
+
+### Change starters capsules
+
+Starter capsule are given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`. 
+
+See entry `starterMode` in capsule config file to give none or all starters instead of a random one (default value).
 
 ## Submit your templates !
 
