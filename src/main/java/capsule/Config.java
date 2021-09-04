@@ -79,6 +79,7 @@ public class Config {
     public static int upgradeLimit;
     public static boolean allowBlueprintReward;
     public static String starterMode;
+    public static boolean allowMirror;
 
     public static ForgeConfigSpec.ConfigValue<String> enchantRarity;
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
@@ -94,6 +95,7 @@ public class Config {
     private static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPathCfg;
     private static ForgeConfigSpec.IntValue upgradeLimitCfg;
     private static ForgeConfigSpec.BooleanValue allowBlueprintRewardCfg;
+    private static ForgeConfigSpec.BooleanValue allowMirrorCfg;
     private static ForgeConfigSpec.ConfigValue<String> starterModeCfg;
 
 
@@ -121,6 +123,7 @@ public class Config {
         Config.upgradeLimit = upgradeLimitCfg.get();
         Config.allowBlueprintReward = allowBlueprintRewardCfg.get();
         Config.starterMode = starterModeCfg.get();
+        Config.allowMirror = allowMirrorCfg.get();
 
         if (CapsuleMod.server != null) {
             populateConfigFolders(CapsuleMod.server);
@@ -240,6 +243,9 @@ public class Config {
 
         Config.allowBlueprintRewardCfg = configBuild.comment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true")
                 .define("allowBlueprintReward", true);
+
+        Config.allowMirrorCfg = configBuild.comment("If true, sneak+left click in air allow mirroring of the capsule content. Can be disabled for multiblock compatibility. \nDefault value: true")
+                .define("allowMirror", true);
     }
 
     public static void configureEnchants(ForgeConfigSpec.Builder configBuild) {

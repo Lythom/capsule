@@ -1,5 +1,6 @@
 package capsule.network;
 
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
@@ -55,18 +56,22 @@ public class CapsuleLeftClickQueryToServer {
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);
                 if (sendingPlayer.isShiftKeyDown()) {
-                    switch (placement.getMirror()) {
-                        case FRONT_BACK:
-                            placement.setMirror(Mirror.LEFT_RIGHT);
-                            break;
-                        case LEFT_RIGHT:
-                            placement.setMirror(Mirror.NONE);
-                            break;
-                        case NONE:
-                            placement.setMirror(Mirror.FRONT_BACK);
-                            break;
+                    if (Config.allowMirror) {
+                        switch (placement.getMirror()) {
+                            case FRONT_BACK:
+                                placement.setMirror(Mirror.LEFT_RIGHT);
+                                break;
+                            case LEFT_RIGHT:
+                                placement.setMirror(Mirror.NONE);
+                                break;
+                            case NONE:
+                                placement.setMirror(Mirror.FRONT_BACK);
+                                break;
+                        }
+                        sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
+                    } else {
+                        sendingPlayer.sendMessage(new TranslationTextComponent("Mirroring disabled by config"), Util.NIL_UUID);
                     }
-                    sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
                 } else {
                     placement.setRotation(placement.getRotation().getRotated(Rotation.CLOCKWISE_90));
                     sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.NIL_UUID);
