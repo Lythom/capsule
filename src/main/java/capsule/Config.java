@@ -37,7 +37,7 @@ public class Config {
     public static final String CATEGORY_ENCHANTS = "enchants";
 
     static {
-        COMMON_BUILDER.comment("Loot settings").push(CATEGORY_LOOT);
+        COMMON_BUILDER.comment(" Check out the wiki pages at https://github.com/Lythom/capsule/wiki for full documentation.\n\nLoot settings").push(CATEGORY_LOOT);
         configureLoot(COMMON_BUILDER);
         COMMON_BUILDER.pop();
 
