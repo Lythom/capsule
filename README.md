@@ -12,6 +12,13 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.16.5-5.0.73 : New preview renderer**
+
+- Complete rework of the preview rendering: it should now be far more accurate.
+- Add a config entry "allowMirror" to enable/disable mirroring (to prevent multiblocks from disfunctionning). Mirroring is still enabled by default. (Suggested by Golrith on Discord](https://discord.gg/pgfCwW9))
+- Fix the castle kit (thanks to [Thanks to RageShadowolf on Discord](https://discord.gg/pgfCwW9))
+
+
 **1.16.5-5.0.70 : Directional capture base**
 
 - Capture Base are now directional and work as dispensers.
