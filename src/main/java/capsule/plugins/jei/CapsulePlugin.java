@@ -20,6 +20,7 @@ import net.minecraft.item.crafting.ShapelessRecipe;
 import net.minecraft.nbt.ByteNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -120,7 +121,8 @@ public class CapsulePlugin implements IModPlugin {
             String capsuleState = String.valueOf(CapsuleItem.getState(itemStack));
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));
-            String label = CapsuleItem.getLabel(itemStack);
+            ITextComponent labelComp = CapsuleItem.getLabel(itemStack);
+            String label = labelComp == null ? "" : labelComp.getString();
             return capsuleState + capsuleColor + isOP + capsuleBlueprint + label;
         }
     }

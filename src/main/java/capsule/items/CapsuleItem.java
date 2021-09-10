@@ -32,10 +32,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.*;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.server.ServerWorld;
@@ -175,17 +172,18 @@ public class CapsuleItem extends Item {
         return (!itemstack.isEmpty() && itemstack.getItem() instanceof CapsuleItem && CapsuleItem.hasState(itemstack, LINKED));
     }
 
-    public static String getLabel(ItemStack stack) {
-
+    public static ITextComponent getLabel(ItemStack stack) {
         if (stack.isEmpty())
-            return "";
+            return null;
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
-            return I18n.get("items.capsule.content_empty");
+            return new TranslationTextComponent("items.capsule.content_empty");
         } else if (stack.hasTag() && stack.getTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
-            return "«" + TextFormatting.ITALIC + stack.getTag().getString("label") + TextFormatting.RESET + "»";
+            return new StringTextComponent("«")
+                    .append(new StringTextComponent(stack.getTag().getString("label")).withStyle(TextFormatting.ITALIC))
+                    .append("»");
         }
-        return I18n.get("items.capsule.content_unlabeled");
+        return new TranslationTextComponent("items.capsule.content_unlabeled");
     }
 
     public static void setLabel(ItemStack capsule, String label) {
@@ -357,46 +355,50 @@ public class CapsuleItem extends Item {
     @Override
     @MethodsReturnNonnullByDefault
     public ITextComponent getName(ItemStack stack) {
-        String name = I18n.get("items.capsule.name");
+        IFormattableTextComponent name = new TranslationTextComponent("items.capsule.name");
 
-        String state = "";
+        IFormattableTextComponent state = null;
         switch (CapsuleItem.getState(stack)) {
             case ACTIVATED:
             case EMPTY_ACTIVATED:
             case ONE_USE_ACTIVATED:
-                state = TextFormatting.DARK_GREEN + I18n.get("items.capsule.state_activated") + TextFormatting.RESET;
+                state = new TranslationTextComponent("items.capsule.state_activated").withStyle(TextFormatting.DARK_GREEN);
                 break;
             case LINKED:
-                state = "";
+                state = null;
                 break;
             case DEPLOYED:
                 if (isBlueprint(stack)) {
-                    name = I18n.get("items.capsule.state_blueprint");
+                    name = new TranslationTextComponent("items.capsule.state_blueprint");
                 } else {
-                    state = I18n.get("items.capsule.state_deployed");
+                    state = new TranslationTextComponent("items.capsule.state_deployed");
                 }
                 break;
             case ONE_USE:
                 if (isReward(stack)) {
-                    state = I18n.get("items.capsule.state_one_use");
+                    state = new TranslationTextComponent("items.capsule.state_one_use");
                 } else {
-                    state = I18n.get("items.capsule.state_recovery");
+                    state = new TranslationTextComponent("items.capsule.state_recovery");
                 }
                 break;
             case BLUEPRINT:
-                name = I18n.get("items.capsule.state_blueprint");
+                name = new TranslationTextComponent("items.capsule.state_blueprint");
                 break;
         }
 
-        if (state.length() > 0) {
-            state = state + " ";
-        }
-        String content = getLabel(stack);
-        if (content.length() > 0) {
-            content = content + " ";
-        }
+        ITextComponent content = getLabel(stack);
 
-        return new StringTextComponent(TextFormatting.RESET + state + content + name);
+        IFormattableTextComponent output = new StringTextComponent("");
+
+        if (state != null) {
+            output = output.append(state).append(" ");
+        }
+        if (content != null) {
+            output = output.append(content).append(" ");
+        }
+        output = output.append(name);
+
+        return output;
     }
 
     @Override
@@ -477,6 +479,7 @@ public class CapsuleItem extends Item {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
     public void tooltipAddMultiline(List<ITextComponent> tooltip, String key, TextFormatting formatting) {
         for (String s : I18n.get(key).trim().split("\\\\n")) {
             tooltip.add(new StringTextComponent(formatting == null ? s : formatting + s));
