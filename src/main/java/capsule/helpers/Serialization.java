@@ -3,7 +3,6 @@ package capsule.helpers;
 import net.minecraft.block.Block;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ITag;
-import net.minecraft.tags.Tag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 public class Serialization {
     protected static final Logger LOGGER = LogManager.getLogger(Serialization.class);
 
-    public static List<Block> deserializeBlockList(List<String> blockIds) {
+    public static List<Block> deserializeBlockList(List<? extends String> blockIds) {
         ArrayList<Block> states = new ArrayList<>();
         ArrayList<String> notfound = new ArrayList<>();
 

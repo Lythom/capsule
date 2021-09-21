@@ -75,7 +75,7 @@ public class Config {
     public static String starterTemplatesPath;
     public static String prefabsTemplatesPath;
     public static String rewardTemplatesPath;
-    public static List<String> lootTablesList;
+    public static List<? extends String> lootTablesList;
     public static int upgradeLimit;
     public static boolean allowBlueprintReward;
     public static String starterMode;
@@ -85,11 +85,11 @@ public class Config {
     public static ForgeConfigSpec.ConfigValue<String> recallEnchantType;
 
     // provided by spec
-    private static ForgeConfigSpec.ConfigValue<List<String>> excludedBlocksIdsCfg;
-    private static ForgeConfigSpec.ConfigValue<List<String>> overridableBlocksIdsCfg;
-    private static ForgeConfigSpec.ConfigValue<List<String>> opExcludedBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<? extends String>> excludedBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<? extends String>> overridableBlocksIdsCfg;
+    private static ForgeConfigSpec.ConfigValue<List<? extends String>> opExcludedBlocksIdsCfg;
     private static ForgeConfigSpec.ConfigValue<List<CommentedConfig>> lootTemplatesPathsCfg;
-    private static ForgeConfigSpec.ConfigValue<List<String>> lootTablesListCfg;
+    private static ForgeConfigSpec.ConfigValue<List<? extends String>> lootTablesListCfg;
     private static ForgeConfigSpec.ConfigValue<String> starterTemplatesPathCfg;
     private static ForgeConfigSpec.ConfigValue<String> prefabsTemplatesPathCfg;
     private static ForgeConfigSpec.ConfigValue<String> rewardTemplatesPathCfg;
@@ -165,10 +165,10 @@ public class Config {
                 excludedBlocksOPArray
         );
         excludedBlocksIdsCfg = configBuild.comment("List of block ids or tags that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.\n Ex block: minecraft:spawner\n Ex tag: minecraft:beds")
-                .define("excludedBlocks", Arrays.asList(excludedBlocksStandardArray));
+                .defineList("excludedBlocks", Arrays.asList(excludedBlocksStandardArray), item -> item instanceof String);
 
         opExcludedBlocksIdsCfg = configBuild.comment("List of block ids or tags that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
-                .define("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray));
+                .defineList("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray), item -> item instanceof String);
 
         // Overridable
         List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.REPLACEABLE_PLANT, Material.SNOW);
@@ -177,7 +177,7 @@ public class Config {
                 .toArray(Block[]::new);
 
         overridableBlocksIdsCfg = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
-                .define("overridableBlocks", Arrays.asList(Serialization.serializeBlockArray(overridableBlocksList)));
+                .defineList("overridableBlocks", Arrays.asList(Serialization.serializeBlockArray(overridableBlocksList)), item -> item instanceof String);
     }
 
     public static void configureLoot(ForgeConfigSpec.Builder configBuild) {
@@ -211,7 +211,7 @@ public class Config {
                 LootTables.WOODLAND_MANSION.toString());
 
         Config.lootTablesListCfg = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
-                .define("lootTablesList", defaultLootTablesList);
+                .defineList("lootTablesList", defaultLootTablesList, item -> item instanceof String);
 
         SimpleCommentedConfig common = new SimpleCommentedConfig(null);
         common.add("path", "config/capsule/loot/common");
