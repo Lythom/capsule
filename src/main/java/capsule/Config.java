@@ -1,6 +1,7 @@
 package capsule;
 
 import capsule.helpers.Serialization;
+import capsule.items.CapsuleItem;
 import capsule.loot.LootPathData;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
@@ -41,6 +42,8 @@ public class Config {
     public static HashMap<String, JsonObject> blueprintWhitelist;
     public static boolean allowBlueprintReward;
     public static String starterMode;
+    public static boolean allowStandardMirror;
+    public static boolean allowBlueprintMirror;
 
     public static String enchantRarity;
     public static String recallEnchantType;
@@ -191,6 +194,15 @@ public class Config {
         Property allowBlueprintRewardProp = Config.config.get("loots", "allowBlueprintReward", true);
         allowBlueprintRewardProp.setComment("If true, loot rewards will be pre-charged blueprint when possible (if the content contains no entity).\nIf false loot reward will always be one-use capsules.\nDefault value: true");
         Config.allowBlueprintReward = allowBlueprintRewardProp.getBoolean();
+
+        Property allowSMirrorProp = Config.config.get("compatibility", "allowStandardMirror", true);
+        allowSMirrorProp.setComment("If true, sneak+left click in air allow mirroring of the standard capsule content. Can be disabled for multiblock compatibility. \nDefault value: true");
+        Config.allowStandardMirror = allowSMirrorProp.getBoolean();
+
+
+        Property allowBMirrorProp = Config.config.get("compatibility", "allowBluprintMirror", true);
+        allowBMirrorProp.setComment("If true, sneak+left click in air allow mirroring of the capsule blueprint. Can be disabled for multiblock compatibility. \nDefault value: true");
+        Config.allowBlueprintMirror = allowBMirrorProp.getBoolean();
 
         // init paths properties from config
         for (int i = 0; i < Config.lootTemplatesPaths.length; i++) {

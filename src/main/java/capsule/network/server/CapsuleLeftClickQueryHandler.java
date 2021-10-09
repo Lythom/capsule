@@ -1,5 +1,6 @@
 package capsule.network.server;
 
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
@@ -78,22 +79,26 @@ public class CapsuleLeftClickQueryHandler
             }
             else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 PlacementSettings placement = CapsuleItem.getPlacement(stack);
-                if (sendingPlayer.isSneaking()) {
-                    switch (placement.getMirror()) {
-                        case FRONT_BACK:
-                            placement.setMirror(Mirror.LEFT_RIGHT);
-                            break;
-                        case LEFT_RIGHT:
-                            placement.setMirror(Mirror.NONE);
-                            break;
-                        case NONE:
-                            placement.setMirror(Mirror.FRONT_BACK);
-                            break;
-                    }
-                    sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
+                 if (sendingPlayer.isSneaking()) {
+                	 if ((CapsuleItem.isBlueprint(stack) && Config.allowBlueprintMirror) || (!CapsuleItem.isBlueprint(stack) && Config.allowStandardMirror)) {
+	                    switch (placement.getMirror()) {
+	                        case FRONT_BACK:
+	                            placement.setMirror(Mirror.LEFT_RIGHT);
+	                            break;
+	                        case LEFT_RIGHT:
+	                            placement.setMirror(Mirror.NONE);
+	                            break;
+	                        case NONE:
+	                            placement.setMirror(Mirror.FRONT_BACK);
+	                            break;
+	                    }
+	                    sendingPlayer.sendMessage(new TextComponentTranslation("[ ]: " + Capsule.getMirrorLabel(placement)));
+	                } else {
+	                	sendingPlayer.sendMessage(new TextComponentTranslation("Mirroring disabled by config"));
+	                }
                 } else {
-                    placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
+                	 placement.setRotation(placement.getRotation().add(Rotation.CLOCKWISE_90));
+	                 sendingPlayer.sendMessage(new TextComponentTranslation("⟳: " + Capsule.getRotationLabel(placement)));
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }

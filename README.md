@@ -12,6 +12,17 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+
+**1.12.2-3.4.76 : Full content preview for deploy**
+
+- [Community suggestion] Add a config entry to prevent mirroring so that multi blocks doesn't break. See config/capsule.cfg file after starting minecraft to find the new compatibility section. [Thanks to Golrith on Discord](https://discord.gg/pgfCwW9)
+
+
+**1.12.2-3.4.58 : Full content preview for deploy**
+
+- The preview of the capsule is no more juste wireframes but a rendered version of blocks and fluids.
+- [Community suggestion] Allow upgrade item (default popped chorus fruit) to be changed by configuration. See config/capsule.cfg file after starting minecraft to find the new capsuleUpgradeItem entry.
+
 **1.12.2-3.3.7 : Fix deployment can create network overflow**
 
 -  [Community report] Fix: deploying was flooding item nbt with occupiedPositions informations if a big capsule was deployed in dense non-air environment (ie. under water). This fix saves occupiedPositions in the template files instead of nbt data to prevent any network transmission of this data. [Thanks to Kazahm on Discord](https://discord.gg/pgfCwW9).
