@@ -170,6 +170,15 @@ If any problem with the mod feel free to PM or to submit an issue [https://githu
 
 All the information is at [https://github.com/Lythom/capsule/wiki/Modpack-making](https://github.com/Lythom/capsule/wiki/Modpack-making).
 
+**How to move my capsule from a world to new one?**
+
+1. in the old world, have the capsule in hand and use the command : `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move). It will create a file in config/capsule/rewards and give you a one-use capsule you can throw away.
+2. [If the new world is on the same server you can skip this step] Copy the file from `<oldServer>/config/capsule/rewards/<someName>.nbt` to `<newServer>/config/capsule/rewards/`
+3. In the new world, use the command `/capsule giveLinked <someName>` (repeat for each capsule). It will create a standard capsule from the template.
+
+[1.15+] If you don't have admin level and want to download the .nbt file from a remote server, you can use the command `/capsule downloadTemplate`. It will copy the .nbt file of the currently held capsule in a "capsule_exports" folder inside minecraft instance directory. This might not work if the content is too big or if the content is not fetched yet (use right click to preview and force the download in this case).
+Once you have the nbt file, you can copy it in `<newServer>/config/capsule/rewards/` and do step 3.
+
 **1.7.10 version ?**
 
 Capsule now rely on structure blocks mechanics, so I'll only maintain 1.10+ versions.
