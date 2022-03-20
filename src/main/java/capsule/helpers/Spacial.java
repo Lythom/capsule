@@ -1,29 +1,27 @@
 package capsule.helpers;
 
 import capsule.blocks.BlockCapsuleMarker;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.Direction;
-import net.minecraft.util.math.*;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 
 public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
@@ -87,7 +85,7 @@ public class Spacial {
         }
         return new BlockPos(
                 captureBasePosition.getX() + (double) direction.getStepX() * (0.5 + size * 0.5),
-                captureBasePosition.getY() + (double) direction.getStepY() + (direction.getStepY() < 0 ? -size :  - 1),
+                captureBasePosition.getY() + (double) direction.getStepY() + (direction.getStepY() < 0 ? -size : -1),
                 captureBasePosition.getZ() + (double) direction.getStepZ() * (0.5 + size * 0.5)
         );
     }
@@ -104,11 +102,10 @@ public class Spacial {
             if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state.getBlock() == block.state.getBlock()) {
                 // extend the below BB to current
                 BoundingBox bb = bbByPos.get(below);
-                bb.y1++;
-                bbByPos.put(destPos, bb);
+                bbByPos.put(destPos, new BoundingBox(bb.minX(), bb.minY(), bb.minZ(), bb.maxX(), bb.maxY() + 1, bb.maxZ()));
             } else {
                 // start a new column
-                BoundingBox column = new BoundingBox(block.pos, block.pos);
+                BoundingBox column = new BoundingBox(block.pos);
                 bbByPos.put(destPos, column);
             }
         });
@@ -121,7 +118,7 @@ public class Spacial {
                 BoundingBox matchingBB = findMatchingExpandingX(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
-                    bb.expand(matchingBB);
+                    bb.encapsulate(matchingBB);
                     matchingBB = findMatchingExpandingX(bb, allBB);
                 }
             }
@@ -135,7 +132,7 @@ public class Spacial {
                 BoundingBox matchingBB = findMatchingExpandingZ(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
-                    bb.expand(matchingBB);
+                    bb.encapsulate(matchingBB);
                     matchingBB = findMatchingExpandingZ(bb, allBB);
                 }
             }
@@ -143,21 +140,21 @@ public class Spacial {
         allBB.removeAll(toRemove);
 
         return allBB.stream().map(bb -> new AABB(
-                new BlockPos(bb.x0, bb.y0, bb.z0),
-                new BlockPos(bb.x1, bb.y1, bb.z1)
+                bb.minX(), bb.minY(), bb.minZ(),
+                bb.maxX(), bb.maxY(), bb.maxZ()
         )).collect(Collectors.toList());
     }
 
     private static BoundingBox findMatchingExpandingX(final BoundingBox bb, final List<BoundingBox> allBB) {
         return allBB.stream()
-                .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.z0 == bb.z0 && candidate.z1 == bb.z1 && candidate.x0 == bb.x1 + 1)
+                .filter(candidate -> candidate != bb && candidate.minY() == bb.minY() && candidate.maxY() == bb.maxY() && candidate.minZ() == bb.minZ() && candidate.maxZ() == bb.maxZ() && candidate.minX() == bb.maxX() + 1)
                 .findFirst()
                 .orElse(null);
     }
 
     private static BoundingBox findMatchingExpandingZ(final BoundingBox bb, final List<BoundingBox> allBB) {
         return allBB.stream()
-                .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.x0 == bb.x0 && candidate.x1 == bb.x1 && candidate.z0 == bb.z1 + 1)
+                .filter(candidate -> candidate != bb && candidate.minY() == bb.minY() && candidate.maxY() == bb.maxY() && candidate.minX() == bb.minX() && candidate.maxX() == bb.maxX() && candidate.minZ() == bb.maxZ() + 1)
                 .findFirst()
                 .orElse(null);
     }
@@ -187,7 +184,7 @@ public class Spacial {
         double diffX = (dest.getX() + 0.5 - ItemEntity.getX());
         double diffZ = (dest.getZ() + 0.5 - ItemEntity.getZ());
 
-        double distance = Mth.sqrt(diffX * diffX + diffZ * diffZ);
+        double distance = Math.sqrt(diffX * diffX + diffZ * diffZ);
 
         // velocity will slow down when approaching
         double requiredVelocity = distance / 10;

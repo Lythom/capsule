@@ -34,7 +34,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -50,6 +49,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StructureSaver {
@@ -91,7 +92,7 @@ public class StructureSaver {
         }
         List<Entity> outCapturedEntities = new ArrayList<>();
 
-        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver);
+        CapsuleTemplateManager templatemanager = getTemplateManager(worldserver.getServer());
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
             return null;
@@ -113,9 +114,9 @@ public class StructureSaver {
             for (Entity e : outCapturedEntities) {
                 if (e instanceof AbstractMinecartContainer) {
                     AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
-                    eMinecart.dropContentsWhenDead(false);
+                    eMinecart.clearContent();
                 }
-                e.remove();
+                e.remove(Entity.RemovalReason.DISCARDED);
             }
             // check if some remove failed, exclude those blocks from the template.
             if (couldNotBeRemoved != null) {
@@ -164,7 +165,7 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt == null || !b.nbt.contains("Items") || b.nbt.getList("Items", Constants.NBT.TAG_COMPOUND).isEmpty());
+        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt == null || !b.nbt.contains("Items") || b.nbt.getList("Items", TAG_COMPOUND).isEmpty());
 
         if (blueprintMatch) {
             blueprintTemplate.removeOccupiedPositions();
@@ -209,15 +210,14 @@ public class StructureSaver {
 
 
     @Nullable
-    public static CapsuleTemplateManager getTemplateManager(ServerLevel world) {
-        if (world == null) return null;
-        LevelResource folder = new LevelResource("capsules");
-        Path directoryPath = world.getServer().getWorldPath(folder);
+    public static CapsuleTemplateManager getTemplateManager(MinecraftServer server) {
+         LevelResource folder = new LevelResource("capsules");
+        Path directoryPath = server.getWorldPath(folder);
 
         if (!CapsulesManagers.containsKey(directoryPath.toString())) {
             File capsuleDir = directoryPath.toFile();
             capsuleDir.mkdirs();
-            CapsulesManagers.put(directoryPath.toString(), new CapsuleTemplateManager(world.getServer().getDataPackRegistries().getResourceManager(), capsuleDir, DataFixers.getDataFixer()));
+            CapsulesManagers.put(directoryPath.toString(), new CapsuleTemplateManager(server.getResourceManager(), capsuleDir, DataFixers.getDataFixer()));
         }
         return CapsulesManagers.get(directoryPath.toString());
     }
@@ -251,7 +251,7 @@ public class StructureSaver {
                 try {
                     // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
                     if (playerCanRemove(world, pos, player)) {
-                        BlockEntity tileentity = b.hasTileEntity() ? world.getBlockEntity(pos) : null;
+                        BlockEntity tileentity = b.hasBlockEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
                         if (tileentity != null) {
                             Clearable.tryClear(tileentity);
@@ -343,9 +343,9 @@ public class StructureSaver {
             for (Entity e : spawnedEntities) {
                 if (e instanceof AbstractMinecartContainer) {
                     AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
-                    eMinecart.dropContentsWhenDead(false);
+                    eMinecart.clearContent();
                 }
-                e.remove();
+                e.remove(Entity.RemovalReason.DISCARDED);
             }
             return false;
         }
@@ -377,10 +377,10 @@ public class StructureSaver {
         }
     }
 
-    private static boolean checkBlockCollision(Entity p_241162_1_) {
-        return BlockPos.betweenClosedStream(p_241162_1_.getBoundingBox()).allMatch(p -> {
-            BlockState state = p_241162_1_.level.getBlockState(p);
-            return state.isAir(p_241162_1_.level, p);
+    private static boolean checkBlockCollision(Entity entity) {
+        return BlockPos.betweenClosedStream(entity.getBoundingBox()).allMatch(p -> {
+            BlockState state = entity.level.getBlockState(p);
+            return state.isAir();
         });
     }
 
@@ -447,7 +447,7 @@ public class StructureSaver {
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForCapsule(ServerLevel
                                                                                               playerWorld, String structurePath) {
-        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
+        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld.getServer());
         if (templatemanager == null || net.minecraft.util.StringUtil.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
@@ -458,7 +458,7 @@ public class StructureSaver {
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplateForReward(MinecraftServer server, String
             structurePath) {
-        CapsuleTemplateManager templatemanager = getRewardManager(server.getDataPackRegistries().getResourceManager());
+        CapsuleTemplateManager templatemanager = getRewardManager(server.getResourceManager());
         if (templatemanager == null || net.minecraft.util.StringUtil.isNullOrEmpty(structurePath))
             return Pair.of(null, null);
 
@@ -506,12 +506,12 @@ public class StructureSaver {
                     }
                     BlockState worldDestState = destWorld.getBlockState(destPos);
 
-                    boolean worldDestOccupied = (!worldDestState.isAir(destWorld, destPos) && !overridable.contains(worldDestState.getBlock()));
-                    if (!worldDestState.isAir(destWorld, destPos) && outOccupiedPositions != null) {
+                    boolean worldDestOccupied = (!worldDestState.isAir() && !overridable.contains(worldDestState.getBlock()));
+                    if (!worldDestState.isAir() && outOccupiedPositions != null) {
                         outOccupiedPositions.put(destPos, worldDestState.getBlock());
                     }
 
-                    boolean srcOccupied = (!templateBlockState.isAir(destWorld, destPos) && !overridable.contains(templateBlockState.getBlock()));
+                    boolean srcOccupied = (!templateBlockState.isAir() && !overridable.contains(templateBlockState.getBlock()));
 
                     List<LivingEntity> entities = destWorld.getEntitiesOfClass(
                             LivingEntity.class,
@@ -551,10 +551,10 @@ public class StructureSaver {
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
      */
     public static String getUniqueName(ServerLevel playerWorld, String player) {
-        CapsuleSavedData csd = getCapsuleSavedData(playerWorld);
+        CapsuleSavedData csd = getCapsuleSavedData(playerWorld.getServer().overworld());
         String p = player.toLowerCase();
         String capsuleID = "c-" + p + "-" + csd.getNextCount();
-        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld);
+        CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld.getServer().overworld().getServer());
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
             return "cexception-" + p + "-" + csd.getNextCount();
@@ -572,7 +572,7 @@ public class StructureSaver {
     public static String getBlueprintUniqueName(ServerLevel world) {
         CapsuleSavedData csd = getCapsuleSavedData(world);
         String capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
-        CapsuleTemplateManager templatemanager = getTemplateManager(world);
+        CapsuleTemplateManager templatemanager = getTemplateManager(world.getServer());
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
             return "bexception-" + csd.getNextCount();
@@ -641,7 +641,7 @@ public class StructureSaver {
      * Get the Capsule saving tool that remembers last capsule id.
      */
     public static CapsuleSavedData getCapsuleSavedData(ServerLevel capsuleWorld) {
-        return capsuleWorld.getDataStorage().computeIfAbsent(CapsuleSavedData::new, "capsuleData");
+        return capsuleWorld.getDataStorage().computeIfAbsent(CapsuleSavedData::load, CapsuleSavedData::new, "capsuleData");
     }
 
     @Nullable
@@ -654,7 +654,7 @@ public class StructureSaver {
 
         String destStructureName = getBlueprintUniqueName(worldServer) + "-" + srcStructurePath.replace("/", "_");
 
-        CapsuleTemplateManager templateManager = getTemplateManager(worldServer);
+        CapsuleTemplateManager templateManager = getTemplateManager(worldServer.getServer());
         outExcluded.clear();
         boolean created = templateManager != null && duplicateTemplate(
                 getTemplateNBTData(srcStructurePath, worldServer),

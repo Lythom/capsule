@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlockContainer;
-import net.minecraft.entity.*;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.decoration.Painting;
@@ -18,7 +17,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.Clearable;
 import net.minecraft.nbt.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.util.*;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -31,7 +29,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -161,8 +158,8 @@ public class CapsuleTemplate {
                 compoundnbt.remove("UUID");
                 createEntityIgnoreException(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
                     float f = p_242927_6_.mirror(placementIn.getMirror());
-                    f = f + (p_242927_6_.yRot - p_242927_6_.rotate(placementIn.getRotation()));
-                    p_242927_6_.moveTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.xRot);
+                    f = f + (p_242927_6_.getYRot() - p_242927_6_.rotate(placementIn.getRotation()));
+                    p_242927_6_.moveTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.getXRot());
                     if (placementIn.shouldFinalizeEntities() && p_242927_6_ instanceof Mob) {
                         ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(new BlockPos(vector3d1)), MobSpawnType.STRUCTURE, (SpawnGroupData) null, compoundnbt);
                     }
@@ -531,14 +528,14 @@ public class CapsuleTemplate {
                         || !(occupiedPositionsToIgnore.containsKey(blockpos3)
                         && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
 
-                    BlockEntity tileentity = worldIn.getBlockEntity(blockpos3);
+                    BlockEntity blockentity = worldIn.getBlockEntity(blockpos3);
                     StructureTemplate.StructureBlockInfo template$blockinfo;
-                    if (tileentity != null) {
-                        CompoundTag compoundnbt = tileentity.save(new CompoundTag());
+                    if (blockentity != null) {
+                        CompoundTag compoundnbt = blockentity.saveWithId();
                         compoundnbt.remove("x");
                         compoundnbt.remove("y");
                         compoundnbt.remove("z");
-                        template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, compoundnbt.copy());
+                        template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, compoundnbt);
                     } else {
                         template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, (CompoundTag) null);
                     }
@@ -607,7 +604,7 @@ public class CapsuleTemplate {
                                           List<Block> overridableBlocks,
                                           List<BlockPos> outSpawnedBlocks,
                                           List<Entity> outSpawnedEntities) {
-        int flags = 2; /** @see net.minecraft.world.World#setBlock(BlockPos, BlockState, int) */
+        int flags = 2; /** @see net.minecraft.world.level.Level#setBlock(BlockPos, BlockState, int) */
         if (this.palettes.isEmpty()) {
             return false;
         } else {
@@ -640,11 +637,9 @@ public class CapsuleTemplate {
 
                         FluidState ifluidstate = placementIn.shouldKeepLiquids() ? worldIn.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state.mirror(placementIn.getMirror()).rotate(worldIn, blockpos, placementIn.getRotation());
-                        if (template$blockinfo.nbt != null) {
-                            BlockEntity tileentity = worldIn.getBlockEntity(blockpos);
-                            Clearable.tryClear(tileentity);
-                            worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
-                        }
+                        BlockEntity blockentity = worldIn.getBlockEntity(blockpos);
+                        Clearable.tryClear(blockentity);
+                        worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
 
                         if (worldIn.setBlock(blockpos, blockstate, flags)) {
                             i = Math.min(i, blockpos.getX());
@@ -654,16 +649,14 @@ public class CapsuleTemplate {
                             i1 = Math.max(i1, blockpos.getY());
                             j1 = Math.max(j1, blockpos.getZ());
                             list2.add(Pair.of(blockpos, template$blockinfo.nbt));
-                            if (template$blockinfo.nbt != null) {
-                                BlockEntity tileentity1 = worldIn.getBlockEntity(blockpos);
-                                if (tileentity1 != null) {
-                                    template$blockinfo.nbt.putInt("x", blockpos.getX());
-                                    template$blockinfo.nbt.putInt("y", blockpos.getY());
-                                    template$blockinfo.nbt.putInt("z", blockpos.getZ());
-                                    tileentity1.load(template$blockinfo.state, template$blockinfo.nbt);
-                                    tileentity1.mirror(placementIn.getMirror());
-                                    tileentity1.rotate(placementIn.getRotation());
-                                }
+                            BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
+                            if (blockentity1 != null) {
+                                template$blockinfo.nbt.putInt("x", blockpos.getX());
+                                template$blockinfo.nbt.putInt("y", blockpos.getY());
+                                template$blockinfo.nbt.putInt("z", blockpos.getZ());
+                                blockentity1.load(template$blockinfo.nbt);
+                                blockentity1.getBlockState().mirror(placementIn.getMirror());
+                                blockentity1.getBlockState().rotate(worldIn, placementIn.getRotationPivot(), placementIn.getRotation());
                             }
 
                             if (ifluidstate != null && blockstate.getBlock() instanceof LiquidBlockContainer) {
@@ -718,7 +711,7 @@ public class CapsuleTemplate {
 
                         for (Pair<BlockPos, CompoundTag> pair1 : list2) {
                             BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.setFull(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
+                            voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
                         }
 
                         StructureTemplate.updateShapeAtEdge(worldIn, flags, voxelshapepart, l1, i2, j2);
@@ -812,8 +805,8 @@ public class CapsuleTemplate {
     // Also for schematic V2 See https://github.com/EngineHub/WorldEdit/blob/master/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java for version 2
     public boolean readSchematic(CompoundTag nbt) {
 
-        if (!nbt.contains("Blocks", Constants.NBT.TAG_BYTE_ARRAY) ||
-                !nbt.contains("Data", Constants.NBT.TAG_BYTE_ARRAY)) {
+        if (!nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) ||
+                !nbt.contains("Data", Tag.TAG_BYTE_ARRAY)) {
             LOGGER.error("Schematic: Missing block data in the schematic");
             return false;
         }
@@ -859,10 +852,10 @@ public class CapsuleTemplate {
 
         // get entities
         this.entities.clear();
-        ListTag tagList = nbt.getList("Entities", Constants.NBT.TAG_COMPOUND);
+        ListTag tagList = nbt.getList("Entities", Tag.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); ++i) {
             CompoundTag entityNBT = tagList.getCompound(i);
-            ListTag posList = entityNBT.getList("Pos", Constants.NBT.TAG_DOUBLE);
+            ListTag posList = entityNBT.getList("Pos", Tag.TAG_DOUBLE);
             Vec3 vec3d = new Vec3(posList.getDouble(0), posList.getDouble(1), posList.getDouble(2));
             this.entities.add(new StructureTemplate.StructureEntityInfo(vec3d, new BlockPos(vec3d), entityNBT));
         }
@@ -896,7 +889,7 @@ public class CapsuleTemplate {
 
     private Map<BlockPos, CompoundTag> getSchematicTiles(CompoundTag nbt) {
         Map<BlockPos, CompoundTag> tiles = new HashMap<>();
-        ListTag tagList = nbt.getList("TileEntities", Constants.NBT.TAG_COMPOUND);
+        ListTag tagList = nbt.getList("TileEntities", Tag.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); ++i) {
             CompoundTag tag = tagList.getCompound(i);
             BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
@@ -908,7 +901,7 @@ public class CapsuleTemplate {
     @Nullable
     private BlockState[] getSchematicBlocks(CompoundTag nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
         BlockState[] blocksById = new BlockState[numBlocks];
-        if (nbt.contains("AddBlocks", Constants.NBT.TAG_BYTE_ARRAY)) {
+        if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
             byte[] add = nbt.getByteArray("AddBlocks");
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);
 
@@ -953,12 +946,12 @@ public class CapsuleTemplate {
             }
         }
         // Old Schematica format
-        else if (nbt.contains("Add", Constants.NBT.TAG_BYTE_ARRAY)) {
+        else if (nbt.contains("Add", Tag.TAG_BYTE_ARRAY)) {
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
         // V2 Schematica format
-        else if (nbt.contains("Version", Constants.NBT.TAG_INT)) {
+        else if (nbt.contains("Version", Tag.TAG_INT)) {
             LOGGER.error("Schematic: Newer Schematica format {} detected, not implemented", nbt.getInt("Version"));
             return null;
         }
@@ -979,7 +972,7 @@ public class CapsuleTemplate {
         Arrays.fill(palette, air);
 
         // Schematica palette
-        if (nbt.contains("SchematicaMapping", Constants.NBT.TAG_COMPOUND)) {
+        if (nbt.contains("SchematicaMapping", Tag.TAG_COMPOUND)) {
             CompoundTag tag = nbt.getCompound("SchematicaMapping");
             Set<String> keys = tag.getAllKeys();
 
@@ -1001,7 +994,7 @@ public class CapsuleTemplate {
             }
         }
         // MCEdit2 palette
-        else if (nbt.contains("BlockIDs", Constants.NBT.TAG_COMPOUND)) {
+        else if (nbt.contains("BlockIDs", Tag.TAG_COMPOUND)) {
             CompoundTag tag = nbt.getCompound("BlockIDs");
             Set<String> keys = tag.getAllKeys();
 

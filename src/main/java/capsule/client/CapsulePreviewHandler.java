@@ -3,7 +3,7 @@ package capsule.client;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.blocks.BlockCapsuleMarker;
-import capsule.blocks.TileEntityCapture;
+import capsule.blocks.BlockEntityCapture;
 import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
@@ -34,7 +34,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -391,9 +390,9 @@ public class CapsulePreviewHandler {
     private static void setCaptureTESizeColor(int size, int color, Level worldIn) {
         if (size == lastSize && color == lastColor) return;
 
-        // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone
+        // change MinecraftNBT of all existing BlockEntityCapture in the world to make them display the preview zone
         // remember it's client side only
-        for (TileEntityCapture te : new ArrayList<>(TileEntityCapture.instances)) {
+        for (BlockEntityCapture te : new ArrayList<>(BlockEntityCapture.instances)) {
             if (te.getLevel() == worldIn) {
                 CompoundTag teData = te.getTileData();
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {

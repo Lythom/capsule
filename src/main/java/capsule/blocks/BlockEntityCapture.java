@@ -1,24 +1,24 @@
 package capsule.blocks;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TileEntityCapture extends DispenserBlockEntity {
+public class BlockEntityCapture extends DispenserBlockEntity {
 
-    public static final List<TileEntityCapture> instances = new ArrayList<>();
+    public static final List<BlockEntityCapture> instances = new ArrayList<>();
 
-    public TileEntityCapture() {
-        super(CapsuleBlocks.MARKER_TE);
+    public BlockEntityCapture(BlockPos p_155490_, BlockState p_155491_) {
+        super(CapsuleBlocks.MARKER_TE, p_155490_, p_155491_);
         instances.add(this);
     }
 
@@ -28,33 +28,15 @@ public class TileEntityCapture extends DispenserBlockEntity {
         instances.remove(this);
     }
 
-    /**
-     * Don't render the gem if the player is too far away
-     *
-     * @return the maximum distance squared at which the TESR should render
-     */
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public double getViewDistance() {
-        return 128;
-    }
-
-    // When the world loads from disk, the server needs to send the TileEntity information to the client
+    // When the world loads from disk, the server needs to send the BlockEntity information to the client
     //  it uses getUpdatePacket() and onDataPacket() to do this
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
-        CompoundTag nbtTagCompound = new CompoundTag();
-        save(nbtTagCompound);
-        return new ClientboundBlockEntityDataPacket(this.getBlockPos(), 0, nbtTagCompound);
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        load(this.level.getBlockState(pkt.getPos()), pkt.getTag());
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     /**
-     * @return an appropriately size AABB for the TileEntity
+     * @return an appropriately size AABB for the BlockEntity
      */
     @OnlyIn(Dist.CLIENT)
     @Override

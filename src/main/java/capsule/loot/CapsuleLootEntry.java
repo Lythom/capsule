@@ -117,7 +117,7 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
     public Pair<String, CapsuleTemplate> getRandomTemplate(LootContext context) {
         Config.LootPathData lpd = Config.lootTemplatesData.get(this.templatesPath);
         if (lpd == null || lpd.files == null) {
-            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getLevel().getServer().getDataPackRegistries().getResourceManager());
+            Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, context.getLevel().getServer().getResourceManager());
             lpd = Config.lootTemplatesData.get(this.templatesPath);
         }
         if (lpd == null || lpd.files == null || lpd.files.isEmpty()) return null;

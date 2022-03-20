@@ -147,7 +147,7 @@ public class Config {
     }
 
     public static void populateConfigFolders(MinecraftServer server) {
-        ResourceManager ressourceManager = server.getDataPackRegistries().getResourceManager();
+        ResourceManager ressourceManager = server.getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);

@@ -11,8 +11,8 @@ import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.block.BlockState;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,7 +25,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -33,9 +32,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -153,7 +152,7 @@ public class Capsule {
                 CapsuleItem.setState(capsule, CapsuleState.DEPLOYED);
                 if (!CapsuleItem.isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
-                    clearTemplate(world, structureName);
+                    clearTemplate(structureName, world.getServer());
                 }
             }
 
@@ -328,7 +327,7 @@ public class Capsule {
             // +0.5 to aim the center of the block
             double diffX = (destination.getX() + 0.5 - playerPos.getX());
             double diffZ = (destination.getZ() + 0.5 - playerPos.getZ());
-            double flatDistance = Mth.sqrt(diffX * diffX + diffZ * diffZ);
+            double flatDistance = Math.sqrt(diffX * diffX + diffZ * diffZ);
 
             double diffY = destination.getY() - playerPos.getY() + Math.min(1, flatDistance / 3);
             double yVelocity = (diffY / 10) - (0.5 * 10 * -1 * CapsuleItem.GRAVITY_PER_TICK); // move up then down
@@ -338,12 +337,12 @@ public class Capsule {
             float f = 0.5F;
             Vec3 playerInMotion = playerIn.getDeltaMovement();
             ItemEntity.setDeltaMovement(
-                    (double) (-Mth.sin(playerIn.yRot * CapsuleItem.TO_RAD) * Mth.cos(playerIn.xRot * CapsuleItem.TO_RAD) * f) + playerInMotion.x,
-                    (double) (-Mth.sin(playerIn.xRot * CapsuleItem.TO_RAD) * f + 0.1F) + playerInMotion.y,
-                    (double) (Mth.cos(playerIn.yRot * CapsuleItem.TO_RAD) * Mth.cos(playerIn.xRot * CapsuleItem.TO_RAD) * f) + playerInMotion.z
+                    (double) (-Mth.sin(playerIn.getYRot() * CapsuleItem.TO_RAD) * Mth.cos(playerIn.getXRot() * CapsuleItem.TO_RAD) * f) + playerInMotion.x,
+                    (double) (-Mth.sin(playerIn.getXRot() * CapsuleItem.TO_RAD) * f + 0.1F) + playerInMotion.y,
+                    (double) (Mth.cos(playerIn.getYRot() * CapsuleItem.TO_RAD) * Mth.cos(playerIn.getXRot() * CapsuleItem.TO_RAD) * f) + playerInMotion.z
             );
         }
-        playerIn.inventory.setItem(playerIn.inventory.selected, ItemStack.EMPTY);
+        playerIn.getInventory().setItem(playerIn.getInventory().selected, ItemStack.EMPTY);
         playerIn.getCommandSenderWorld().playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.2F, 0.1f);
         playerIn.getCommandSenderWorld().addFreshEntity(ItemEntity);
         return ItemEntity;
@@ -404,7 +403,7 @@ public class Capsule {
                 showDeployParticules(itemWorld, ItemEntity.blockPosition(), size);
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {
-                ItemEntity.remove();
+                ItemEntity.remove(Entity.RemovalReason.DISCARDED);
             }
 
         } else {
@@ -463,7 +462,7 @@ public class Capsule {
         StructureSaver.duplicateTemplate(
                 srcData,
                 destStructureName,
-                StructureSaver.getTemplateManager(player.getLevel()),
+                StructureSaver.getTemplateManager(player.getLevel().getServer()),
                 player.getServer()
         );
         CapsuleItem.setCanRotate(capsule, srcTemplate.canRotate());
@@ -471,12 +470,12 @@ public class Capsule {
     }
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
-        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server.getDataPackRegistries().getResourceManager());
+        CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server.getResourceManager());
         return srcTemplatemanager.getOrCreateTemplate(new ResourceLocation(structurePath));
     }
 
-    public static boolean clearTemplate(ServerLevel worldserver, String capsuleStructureId) {
-        CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(worldserver);
+    public static boolean clearTemplate(String capsuleStructureId, MinecraftServer server) {
+        CapsuleTemplateManager templatemanager = StructureSaver.getTemplateManager(server);
         if (templatemanager == null) {
             LOGGER.error("getTemplateManager returned null");
             return false;

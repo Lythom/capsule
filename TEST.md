@@ -350,3 +350,9 @@ Create a reward: https://github.com/Lythom/capsule/wiki/Modpack-making#create-a-
 - [ ] Find a desert pyramid in creative on a standard world and check the chest contains a rare loot.
 - [ ] Find an underground dungeon in spectator mode, switch back to creative and look in the chest, there should be no capsule.
 2. remove your capsule-common.toml file in config folder to reset the config to default for other tests.
+
+
+# To test after 1.18 upgrade (uncertain migration)
+
+- [ ] undeploy + deploy minecrat with stuff does drop content
+- [ ] 

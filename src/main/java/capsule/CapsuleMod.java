@@ -66,7 +66,7 @@ public class CapsuleMod {
         server = e.getServer();
         Config.populateConfigFolders(server);
         if (PrefabsBlueprintAggregatorRecipe.instance != null)
-            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getDataPackRegistries().getResourceManager());
+            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getResourceManager());
     }
 
     public static void RegisterCommands(final RegisterCommandsEvent e) {
@@ -170,9 +170,9 @@ final class CapsuleForgeSubscriber {
 
     @SubscribeEvent
     public static void setup(AddReloadListenerEvent event) {
-        StructureSaver.getRewardManager(event.getDataPackRegistries().getResourceManager()).onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+        StructureSaver.getRewardManager(event.getResourceManager()).onResourceManagerReload(event.getResourceManager());
         for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
-            ctm.onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+            ctm.onResourceManagerReload(event.getResourceManager());
         }
 
     }

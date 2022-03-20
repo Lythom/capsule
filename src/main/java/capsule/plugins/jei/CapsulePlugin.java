@@ -9,18 +9,20 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaRecipeCategoryUid;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.IIngredientSubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
-import net.minecraft.nbt.ByteTag;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,21 +92,21 @@ public class CapsulePlugin implements IModPlugin {
         recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", withNewTemplate, NonNullList.of(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
 
         registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
-        registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, "jei.capsule.desc.capsule");
-        registry.addIngredientInfo(CapsuleItems.blueprintChangedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
-        registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
-        registry.addIngredientInfo(CapsuleItems.deployedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
-        registry.addIngredientInfo(CapsuleItems.recoveryCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
+        registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.capsule"));
+        registry.addIngredientInfo(CapsuleItems.blueprintChangedCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.blueprintCapsule"));
+        registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.linkedCapsule"));
+        registry.addIngredientInfo(CapsuleItems.deployedCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.linkedCapsule"));
+        registry.addIngredientInfo(CapsuleItems.recoveryCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.recoveryCapsule"));
         for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
-            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.blueprintCapsule"));
         }
         for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
-            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
+            registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.blueprintCapsule"));
         }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);
         opCapsule.addTagElement("overpowered", ByteTag.valueOf(true));
-        registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
-        registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
+        registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.opCapsule"));
+        registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.capsuleMarker"));
     }
 
     @Override
@@ -113,9 +115,10 @@ public class CapsulePlugin implements IModPlugin {
     }
 
 
-    private static class CapsuleSubtypeInterpreter implements ISubtypeInterpreter {
+    private static class CapsuleSubtypeInterpreter implements IIngredientSubtypeInterpreter<ItemStack> {
+
         @Override
-        public String apply(ItemStack itemStack) {
+        public String apply(ItemStack itemStack, UidContext context) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
             String isOP = String.valueOf(itemStack.hasTag() && itemStack.getTag().getBoolean("overpowered"));
             String capsuleState = String.valueOf(CapsuleItem.getState(itemStack));

@@ -11,13 +11,14 @@ public class CapsuleSavedData extends SavedData {
     private int capsuleCounter = 0;
 
     public CapsuleSavedData() {
-        super("capsuleData");
+        super();
     }
 
-    @Override
-    public void load(CompoundTag nbt) {
+    public static CapsuleSavedData load(CompoundTag nbt) {
         // retrieve lastReservedPosition
-        capsuleCounter = nbt.getInt("counter");
+        CapsuleSavedData data = new CapsuleSavedData();
+        data.capsuleCounter = nbt.getInt("counter");
+        return data;
     }
 
     @Override

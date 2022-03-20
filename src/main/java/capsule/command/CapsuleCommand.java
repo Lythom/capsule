@@ -17,37 +17,37 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringUtil;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.StringUtil;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -56,6 +56,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
@@ -63,8 +64,8 @@ import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.mojang.brigadier.arguments.StringArgumentType.string;
-import static net.minecraft.command.arguments.EntityArgument.getPlayer;
-import staticnet.minecraft.commands.arguments.EntityArgumentt.player;
+import static net.minecraft.commands.arguments.EntityArgument.getPlayer;
+import static net.minecraft.commands.arguments.EntityArgument.player;
 
 /**
  * @author Lythom
@@ -214,7 +215,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("reloadLootList")
                         .requires((player) -> player.hasPermission(2))
                         .executes(ctx -> {
-                            ResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
+                            ResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
                             return 1;
                         })
@@ -223,7 +224,7 @@ public class CapsuleCommand {
                 .then(Commands.literal("reloadWhitelist")
                         .requires((player) -> player.hasPermission(2))
                         .executes(ctx -> {
-                            ResourceManager resourceManager = ctx.getSource().getServer().getDataPackRegistries().getResourceManager();
+                            ResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
                             Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, resourceManager);
                             Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), resourceManager);
@@ -335,7 +336,7 @@ public class CapsuleCommand {
 
     private static int executeGiveRandomLoot(ServerPlayer player) throws CommandRuntimeException {
         if (player != null) {
-            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getLevel())).withParameter(LootContextParams.THIS_ENTITY, player.getEntity()).withParameter(LootContextParams.ORIGIN, player.position()).withRandom(player.getRandom());
+            LootContext.Builder lootcontext$builder = (new LootContext.Builder(player.getLevel())).withParameter(LootContextParams.THIS_ENTITY, player).withParameter(LootContextParams.ORIGIN, player.position()).withRandom(player.getRandom());
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool.addRandomItems(loots::add, lootcontext$builder.create(LootContextParamSets.COMMAND));
             if (loots.size() <= 0) {
@@ -353,7 +354,7 @@ public class CapsuleCommand {
     private static int executeFromExistingReward(ServerPlayer player, String templateName) throws CommandRuntimeException {
         if (player != null && !StringUtil.isNullOrEmpty(templateName) && player.getLevel() instanceof ServerLevel) {
             String structurePath = Config.getRewardPathFromName(templateName);
-            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
+            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
             CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
@@ -387,13 +388,14 @@ public class CapsuleCommand {
             // template
             StructureManager templatemanager = player.getLevel().getStructureManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
-            StructureTemplate template = templatemanager.get(new ResourceLocation(path));
-            if (template != null) {
+            Optional<StructureTemplate> templateO = templatemanager.get(new ResourceLocation(path));
+            if (templateO.isPresent()) {
+                StructureTemplate template = templateO.get();
                 size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 author = template.getAuthor();
                 template.save(data);
             } else {
-                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getLevel());
+                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.getLevel().getServer());
                 CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(new ResourceLocation(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
@@ -405,7 +407,7 @@ public class CapsuleCommand {
                     size++;
                 // create a destination template
                 ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + path);
-                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager());
+                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
                 // write template from source data
                 destTemplate.load(data, destinationLocation.toString());
@@ -450,7 +452,7 @@ public class CapsuleCommand {
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
-                        StructureSaver.getRewardManager(player.getServer().getDataPackRegistries().getResourceManager()),
+                        StructureSaver.getRewardManager(player.getServer().getResourceManager()),
                         player.getLevel(),
                         false,
                         null
