@@ -85,15 +85,20 @@ public class CapsuleTemplateManager {
         if (!this.pathGenerated.toAbsolutePath().toFile().isDirectory()) {
             return null;
         } else {
-            Path path = this.resolvePath(locationIn, extension);
+            try {
+                Path path = this.resolvePath(locationIn, extension);
 
-            try (InputStream inputstream = new FileInputStream(path.toFile())) {
-                CapsuleTemplate template = this.loadTemplate(inputstream, ".schematics".equals(extension), path.toString());
-                return template;
-            } catch (FileNotFoundException var18) {
-                return null;
-            } catch (IOException ioexception) {
-                LOGGER.error("Couldn't load structure from {}", path, ioexception);
+                try (InputStream inputstream = new FileInputStream(path.toFile())) {
+                    CapsuleTemplate template = this.loadTemplate(inputstream, ".schematics".equals(extension), path.toString());
+                    return template;
+                } catch (FileNotFoundException var18) {
+                    return null;
+                } catch (IOException ioexception) {
+                    LOGGER.error("Couldn't load structure from {}", path, ioexception);
+                    return null;
+                }
+            } catch (ResourceLocationException e) {
+                LOGGER.error("Couldn't resolve proper location: {}", locationIn.getPath(), e);
                 return null;
             }
         }
