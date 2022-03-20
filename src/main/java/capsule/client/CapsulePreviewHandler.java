@@ -9,29 +9,29 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import joptsimple.internal.Strings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
-import net.minecraft.world.gen.feature.template.PlacementSettings;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.Util;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -54,11 +54,15 @@ import static capsule.client.RendererUtils.*;
 import static capsule.items.CapsuleItem.CapsuleState.*;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
+import net.minecraft.client.Camera;
+
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static final Map<String, List<AxisAlignedBB>> currentPreview = new HashMap<>();
+    public static final Map<String, List<AABB>> currentPreview = new HashMap<>();
     public static final Map<String, CapsuleTemplate> currentFullPreview = new HashMap<>();
     public static final Map<String, CapsuleTemplateRenderer> cachedFullPreview = new HashMap<>();
     public static final double NS_TO_MS = 0.000001d;
@@ -107,17 +111,17 @@ public class CapsulePreviewHandler {
                         LOGGER.error("Failed to create parent directory: {}", path);
                     }
                     try {
-                        CompoundNBT compoundnbt = template.save(new CompoundNBT());
+                        CompoundTag compoundnbt = template.save(new CompoundTag());
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
-                        CompressedStreamTools.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
-                        mc.player.sendMessage(new StringTextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.NIL_UUID);
+                        NbtIo.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
+                        mc.player.sendMessage(new TextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.NIL_UUID);
                     } catch (Throwable var21) {
                         LOGGER.error(var21);
-                        mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.NIL_UUID);
+                        mc.player.sendMessage(new TranslatableComponent("capsule.error.cantDownload"), Util.NIL_UUID);
                     }
                 } else {
-                    mc.player.sendMessage(new TranslationTextComponent("capsule.error.cantDownload"), Util.NIL_UUID);
+                    mc.player.sendMessage(new TranslatableComponent("capsule.error.cantDownload"), Util.NIL_UUID);
                 }
             }
         }
@@ -131,13 +135,13 @@ public class CapsulePreviewHandler {
     @SubscribeEvent
     public static void onLivingUpdateEvent(TickEvent.PlayerTickEvent event) {
         // do something to player every update tick:
-        if (event.player instanceof ClientPlayerEntity && event.phase.equals(TickEvent.Phase.START)) {
-            ClientPlayerEntity player = (ClientPlayerEntity) event.player;
+        if (event.player instanceof LocalPlayer && event.phase.equals(TickEvent.Phase.START)) {
+            LocalPlayer player = (LocalPlayer) event.player;
             tryPreviewCapture(player, player.getMainHandItem());
         }
     }
 
-    private static boolean tryPreviewCapture(ClientPlayerEntity player, ItemStack heldItem) {
+    private static boolean tryPreviewCapture(LocalPlayer player, ItemStack heldItem) {
         // an item is in hand
         if (!heldItem.isEmpty()) {
             Item heldItemItem = heldItem.getItem();
@@ -161,15 +165,15 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private static void tryPreviewDeploy(ClientPlayerEntity thePlayer, float partialTicks, ItemStack heldItemMainhand, MatrixStack matrixStack) {
+    private static void tryPreviewDeploy(LocalPlayer thePlayer, float partialTicks, ItemStack heldItemMainhand, PoseStack matrixStack) {
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && heldItemMainhand.hasTag()
                 && isDeployable(heldItemMainhand)
                 && !Strings.isNullOrEmpty(heldItemMainhand.getTag().getString("structureName"))
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
-            BlockRayTraceResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
-            if (rtc != null && rtc.getType() == RayTraceResult.Type.BLOCK) {
+            BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
+            if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, 0.01, -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
@@ -180,7 +184,7 @@ public class CapsulePreviewHandler {
                     completePreviewsCount = 0;
                 }
 
-                AxisAlignedBB errorBoundingBox = new AxisAlignedBB(
+                AABB errorBoundingBox = new AABB(
                         0,
                         +0.01,
                         0,
@@ -207,10 +211,10 @@ public class CapsulePreviewHandler {
 
     }
 
-    private static void DisplayFullPreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, MatrixStack matrixStack, int extendSize, BlockPos destOriginPos, String structureName) {
+    private static void DisplayFullPreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, PoseStack matrixStack, int extendSize, BlockPos destOriginPos, String structureName) {
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         CapsuleTemplateRenderer renderer = CapsulePreviewHandler.cachedFullPreview.get(structureName);
-        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+        StructurePlaceSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
         renderer.changeTemplateIfDirty(
                 template,
                 thePlayer.getCommandSenderWorld(),
@@ -243,30 +247,30 @@ public class CapsulePreviewHandler {
         return ImmutableList.of(RenderType.translucent(), RenderType.cutout(), RenderType.cutoutMipped(), RenderType.solid());
     }
 
-    private static void DisplayWireframePreview(ClientPlayerEntity thePlayer, ItemStack heldItemMainhand, int size, BlockRayTraceResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AxisAlignedBB errorBoundingBox, boolean haveFullPreview) {
-        List<AxisAlignedBB> blockspos = new ArrayList<>();
+    private static void DisplayWireframePreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, int size, BlockHitResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AABB errorBoundingBox, boolean haveFullPreview) {
+        List<AABB> blockspos = new ArrayList<>();
         if (size > 1) {
             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
         } else if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
             // (1/2) hack this renderer for specific case : capture of a 1-sized empty capsule
             BlockPos pos = rtc.getBlockPos().subtract(destOriginPos);
-            blockspos.add(new AxisAlignedBB(pos, pos));
+            blockspos.add(new AABB(pos, pos));
         }
         if (blockspos.isEmpty()) {
             BlockPos pos = new BlockPos(extendSize, 0, extendSize);
-            blockspos.add(new AxisAlignedBB(pos, pos));
+            blockspos.add(new AABB(pos, pos));
         }
 
         doPositionPrologue(Minecraft.getInstance().getEntityRenderDispatcher().camera);
         doWirePrologue();
-        Tessellator tessellator = Tessellator.getInstance();
+        Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuilder();
 
-        PlacementSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+        StructurePlaceSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
 
-        for (AxisAlignedBB bb : blockspos) {
+        for (AABB bb : blockspos) {
             BlockPos recenter = recenterRotation(extendSize, placement);
-            AxisAlignedBB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
+            AABB dest = CapsuleTemplate.transformedAxisAlignedBB(placement, bb)
                     .move(destOriginPos.getX(), destOriginPos.getY() + 0.01, destOriginPos.getZ())
                     .move(recenter.getX(), recenter.getY(), recenter.getZ())
                     .expandTowards(1, 1, 1);
@@ -283,7 +287,7 @@ public class CapsulePreviewHandler {
                             BlockPos pos = new BlockPos(l, k, j);
                             if (!Config.overridableBlocks.contains(thePlayer.getCommandSenderWorld().getBlockState(pos).getBlock())) {
                                 GlStateManager._lineWidth(5.0F);
-                                bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
+                                bufferBuilder.begin(1, DefaultVertexFormat.POSITION);
                                 setColor(0xaa0000, 255);
                                 drawCapsuleCube(errorBoundingBox.move(pos), bufferBuilder);
                                 tessellator.end();
@@ -296,7 +300,7 @@ public class CapsulePreviewHandler {
             if (!haveFullPreview) {
                 GlStateManager._lineWidth(1);
                 RenderSystem.enableBlend();
-                bufferBuilder.begin(1, DefaultVertexFormats.POSITION);
+                bufferBuilder.begin(1, DefaultVertexFormat.POSITION);
                 setColor(color, 160);
                 drawCapsuleCube(dest, bufferBuilder);
                 tessellator.end();
@@ -315,7 +319,7 @@ public class CapsulePreviewHandler {
                 || CapsuleItem.getSize(heldItemMainhand) == 1 && !CapsuleItem.hasState(heldItemMainhand, DEPLOYED);
     }
 
-    private static void tryPreviewRecall(ItemStack heldItem, MatrixStack matrixStack) {
+    private static void tryPreviewRecall(ItemStack heldItem, PoseStack matrixStack) {
         // an item is in hand
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
@@ -330,14 +334,14 @@ public class CapsulePreviewHandler {
         }
     }
 
-    private static void tryPreviewLinkedInventory(ClientPlayerEntity player, ItemStack heldItem) {
+    private static void tryPreviewLinkedInventory(LocalPlayer player, ItemStack heldItem) {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
                     && CapsuleItem.isBlueprint(heldItem)
                     && CapsuleItem.hasSourceInventory(heldItem)) {
                 BlockPos location = CapsuleItem.getSourceInventoryLocation(heldItem);
-                RegistryKey<World> dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
+                ResourceKey<Level> dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
                 if (location != null
                         && dimension != null
                         && dimension.equals(player.getCommandSenderWorld().dimension())
@@ -352,9 +356,9 @@ public class CapsulePreviewHandler {
         doPositionPrologue(Minecraft.getInstance().getEntityRenderDispatcher().camera);
         doOverlayPrologue();
 
-        Tessellator tessellator = Tessellator.getInstance();
+        Tesselator tessellator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuilder();
-        bufferBuilder.begin(7, DefaultVertexFormats.POSITION);
+        bufferBuilder.begin(7, DefaultVertexFormat.POSITION);
         setColor(0x5B9CFF, 80);
         drawCube(location, 0, bufferBuilder);
         tessellator.end();
@@ -363,18 +367,18 @@ public class CapsulePreviewHandler {
         doPositionEpilogue();
     }
 
-    private static void previewRecall(ItemStack capsule, MatrixStack matrixStack) {
+    private static void previewRecall(ItemStack capsule, PoseStack matrixStack) {
         if (capsule.getTag() == null) return;
-        CompoundNBT linkPos = capsule.getTag().getCompound("spawnPosition");
+        CompoundTag linkPos = capsule.getTag().getCompound("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
-        ActiveRenderInfo renderInfo = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        AxisAlignedBB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
-        IRenderTypeBuffer.Impl impl = IRenderTypeBuffer.immediate(Tessellator.getInstance().getBuilder());
-        IVertexBuilder ivertexbuilder = impl.getBuffer(RenderType.lines());
+        Camera renderInfo = Minecraft.getInstance().getEntityRenderDispatcher().camera;
+        AABB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
+        MultiBufferSource.BufferSource impl = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        VertexConsumer ivertexbuilder = impl.getBuffer(RenderType.lines());
         matrixStack.pushPose();
         matrixStack.translate(-renderInfo.getPosition().x, -renderInfo.getPosition().y, -renderInfo.getPosition().z);
 
@@ -384,14 +388,14 @@ public class CapsulePreviewHandler {
         matrixStack.pushPose();
     }
 
-    private static void setCaptureTESizeColor(int size, int color, World worldIn) {
+    private static void setCaptureTESizeColor(int size, int color, Level worldIn) {
         if (size == lastSize && color == lastColor) return;
 
         // change MinecraftNBT of all existing TileEntityCapture in the world to make them display the preview zone
         // remember it's client side only
         for (TileEntityCapture te : new ArrayList<>(TileEntityCapture.instances)) {
             if (te.getLevel() == worldIn) {
-                CompoundNBT teData = te.getTileData();
+                CompoundTag teData = te.getTileData();
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {
                     te.getTileData().putInt("size", size);
                     te.getTileData().putInt("color", color);
@@ -405,25 +409,25 @@ public class CapsulePreviewHandler {
         lastColor = color;
     }
 
-    public static void renderRecallBox(MatrixStack matrixStackIn, int color, AxisAlignedBB boundingBox, IVertexBuilder ivertexbuilder, double time) {
+    public static void renderRecallBox(PoseStack matrixStackIn, int color, AABB boundingBox, VertexConsumer ivertexbuilder, double time) {
         final float af = 200 / 255f;
         final float rf = ((color >> 16) & 0xFF) / 255f;
         final float gf = ((color >> 8) & 0xFF) / 255f;
         final float bf = (color & 0xFF) / 255f;
-        WorldRenderer.renderLineBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
+        LevelRenderer.renderLineBox(matrixStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
         for (int i = 0; i < 5; i++) {
             double i1 = getMovingEffectPos(boundingBox, i, time, 0.0015f);
             double i2 = getMovingEffectPos(boundingBox, i, time, 0.0017f);
             double lowI = Math.min(i1, i2);
             double highI = Math.max(i1, i2);
-            WorldRenderer.renderLineBox(matrixStackIn, ivertexbuilder,
+            LevelRenderer.renderLineBox(matrixStackIn, ivertexbuilder,
                     boundingBox.minX, lowI, boundingBox.minZ,
                     boundingBox.maxX, highI, boundingBox.maxZ,
                     rf, gf, bf, 0.01f + i * 0.05f, rf, gf, bf);
         }
     }
 
-    private static double getMovingEffectPos(AxisAlignedBB boundingBox, int t, double incTime, float offset) {
+    private static double getMovingEffectPos(AABB boundingBox, int t, double incTime, float offset) {
         return boundingBox.minY + (Math.cos(t * incTime * offset) * 0.5 + 0.5) * (boundingBox.maxY - boundingBox.minY);
     }
 }

@@ -3,16 +3,16 @@ package capsule.recipes;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapedRecipe;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
@@ -23,7 +23,7 @@ import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
  * crafting a blueprint from a source capsule, in this case the structureName to create template is taken from the source capsule
  * crafting a prefab, in this case the structureName to create template is taken from the recipe output
  */
-public class BlueprintCapsuleRecipe implements ICraftingRecipe {
+public class BlueprintCapsuleRecipe implements CraftingRecipe {
     public final ShapedRecipe recipe;
 
     public BlueprintCapsuleRecipe(ShapedRecipe recipe) {
@@ -44,7 +44,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     /**
      * The original capsule remains in the crafting grid
      */
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -65,7 +65,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         if (!recipe.matches(inv, worldIn)) {
             return false;
         }
@@ -84,7 +84,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingInventory inv) {
+    public ItemStack assemble(CraftingContainer inv) {
         ItemStack referenceCapsule = recipe.getResultItem();
         for (int i = 0; i < inv.getContainerSize(); ++i) {
             ItemStack itemstack = inv.getItem(i);
@@ -130,7 +130,7 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.BLUEPRINT_CAPSULE_SERIALIZER;
     }
 
@@ -139,19 +139,19 @@ public class BlueprintCapsuleRecipe implements ICraftingRecipe {
         return true;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<BlueprintCapsuleRecipe> {
+    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<BlueprintCapsuleRecipe> {
         @Override
         public BlueprintCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
             return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.SHAPED_RECIPE.fromJson(recipeId, json));
         }
 
         @Override
-        public BlueprintCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+        public BlueprintCapsuleRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.SHAPED_RECIPE.fromNetwork(recipeId, buffer));
         }
 
         @Override
-        public void toNetwork(PacketBuffer buffer, BlueprintCapsuleRecipe recipe) {
+        public void toNetwork(FriendlyByteBuf buffer, BlueprintCapsuleRecipe recipe) {
             ShapedRecipe.Serializer.SHAPED_RECIPE.toNetwork(buffer, recipe.recipe);
         }
     }

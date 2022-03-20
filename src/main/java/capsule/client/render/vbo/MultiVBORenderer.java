@@ -2,10 +2,10 @@ package capsule.client.render.vbo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.math.vector.Matrix4f;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.math.Matrix4f;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class MultiVBORenderer implements Closeable {
 	private static final int BUFFER_SIZE = 2 * 1024 * 1024 * 3;
 
-	public static MultiVBORenderer of(Consumer<IRenderTypeBuffer> vertexProducer) {
+	public static MultiVBORenderer of(Consumer<MultiBufferSource> vertexProducer) {
 		final Map<RenderType, CustomBufferBuilder> builders = Maps.newHashMap();
 
 		vertexProducer.accept(rt -> builders.computeIfAbsent(rt, (_rt) -> {

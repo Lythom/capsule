@@ -2,18 +2,18 @@ package capsule.recipes;
 
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.SpecialRecipe;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
-public class ClearCapsuleRecipe extends SpecialRecipe {
+public class ClearCapsuleRecipe extends CustomRecipe {
 
     public ClearCapsuleRecipe(ResourceLocation idIn) {
         super(idIn);
@@ -21,14 +21,14 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
 
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.CLEAR_CAPSULE_SERIALIZER;
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         int sourceCapsule = 0;
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -48,7 +48,7 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInventory inv) {
+    public ItemStack assemble(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -78,7 +78,7 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
         return CapsuleItems.withState(EMPTY);
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {

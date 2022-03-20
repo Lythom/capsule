@@ -2,13 +2,13 @@ package capsule.network;
 
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
@@ -31,14 +31,14 @@ public class CapsuleThrowQueryToServer {
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
-        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        final ServerPlayer sendingPlayer = ctx.get().getSender();
         if (sendingPlayer == null) {
             LOGGER.error("ServerPlayerEntity was null when " + this.getClass().getName() + " was received");
             return;
         }
 
         ItemStack heldItem = sendingPlayer.getMainHandItem();
-        ServerWorld world = sendingPlayer.getLevel();
+        ServerLevel world = sendingPlayer.getLevel();
         ctx.get().enqueueWork(() -> {
             if (heldItem.getItem() instanceof CapsuleItem) {
                 if (instant && pos != null) {
@@ -59,7 +59,7 @@ public class CapsuleThrowQueryToServer {
                     else {
                         boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, world);
                         if (deployed) {
-                            world.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
+                            world.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
                             Capsule.showDeployParticules(world, pos, size);
                         }
                         if (deployed && CapsuleItem.isOneUse(heldItem)) {
@@ -75,7 +75,7 @@ public class CapsuleThrowQueryToServer {
         ctx.get().setPacketHandled(true);
     }
 
-    public CapsuleThrowQueryToServer(PacketBuffer buf) {
+    public CapsuleThrowQueryToServer(FriendlyByteBuf buf) {
         try {
             this.instant = buf.readBoolean();
             boolean hasPos = buf.readBoolean();
@@ -87,7 +87,7 @@ public class CapsuleThrowQueryToServer {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeBoolean(this.instant);
         boolean hasPos = this.pos != null;
         buf.writeBoolean(hasPos);

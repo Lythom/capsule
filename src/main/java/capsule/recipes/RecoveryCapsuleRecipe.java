@@ -2,17 +2,17 @@ package capsule.recipes;
 
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.ShapelessRecipe;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
-public class RecoveryCapsuleRecipe implements ICraftingRecipe {
+public class RecoveryCapsuleRecipe implements CraftingRecipe {
     public final ShapelessRecipe recipe;
 
     public RecoveryCapsuleRecipe(ShapelessRecipe recipe) {
@@ -26,7 +26,7 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     /**
      * The original capsule remains in the crafting grid
      */
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -43,14 +43,14 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         return recipe.matches(inv, worldIn);
     }
 
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingInventory invC) {
+    public ItemStack assemble(CraftingContainer invC) {
         for (int i = 0; i < invC.getContainerSize(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 
@@ -74,7 +74,7 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.RECOVERY_CAPSULE_SERIALIZER;
     }
 
@@ -83,7 +83,7 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
         return true;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<RecoveryCapsuleRecipe> {
+    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<RecoveryCapsuleRecipe> {
 
         @Override
         public RecoveryCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
@@ -91,12 +91,12 @@ public class RecoveryCapsuleRecipe implements ICraftingRecipe {
         }
 
         @Override
-        public RecoveryCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+        public RecoveryCapsuleRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             return new RecoveryCapsuleRecipe(ShapelessRecipe.Serializer.SHAPELESS_RECIPE.fromNetwork(recipeId, buffer));
         }
 
         @Override
-        public void toNetwork(PacketBuffer buffer, RecoveryCapsuleRecipe recipe) {
+        public void toNetwork(FriendlyByteBuf buffer, RecoveryCapsuleRecipe recipe) {
             ShapelessRecipe.Serializer.SHAPELESS_RECIPE.toNetwork(buffer, recipe.recipe);
         }
     }

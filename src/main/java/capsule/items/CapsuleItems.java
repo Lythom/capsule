@@ -3,15 +3,15 @@ package capsule.items;
 import capsule.CapsuleMod;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.*;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.RecipeManager;
-import net.minecraft.item.crafting.ShapedRecipe;
-import net.minecraft.nbt.IntNBT;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.RegistryEvent;
@@ -31,12 +31,12 @@ public class CapsuleItems {
         return capsule;
     }
 
-    public static TreeMap<ItemStack, ICraftingRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
-    public static TreeMap<ItemStack, ICraftingRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
-    public static List<Pair<ItemStack, ICraftingRecipe>> blueprintCapsules = new ArrayList<>();
-    public static List<Pair<ItemStack, ICraftingRecipe>> blueprintPrefabs = new ArrayList<>();
-    public static Pair<ItemStack, ICraftingRecipe> unlabelledCapsule = null;
-    public static Pair<ItemStack, ICraftingRecipe> deployedCapsule = null;
+    public static TreeMap<ItemStack, CraftingRecipe> capsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
+    public static TreeMap<ItemStack, CraftingRecipe> opCapsuleList = new TreeMap<>(Comparator.comparingDouble(CapsuleItems::compare));
+    public static List<Pair<ItemStack, CraftingRecipe>> blueprintCapsules = new ArrayList<>();
+    public static List<Pair<ItemStack, CraftingRecipe>> blueprintPrefabs = new ArrayList<>();
+    public static Pair<ItemStack, CraftingRecipe> unlabelledCapsule = null;
+    public static Pair<ItemStack, CraftingRecipe> deployedCapsule = null;
     public static Pair<ItemStack, RecoveryCapsuleRecipe> recoveryCapsule = null;
     public static Pair<ItemStack, BlueprintChangeRecipe> blueprintChangedCapsule = null;
     public static Pair<ItemStack, UpgradeCapsuleRecipe> upgradedCapsule = null;
@@ -65,7 +65,7 @@ public class CapsuleItems {
 
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
-        for (IRecipe<?> recipe : manager.getRecipes()) {
+        for (Recipe<?> recipe : manager.getRecipes()) {
             if (recipe.getId().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
                     blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getResultItem(), ((BlueprintCapsuleRecipe) recipe).recipe));
@@ -99,7 +99,7 @@ public class CapsuleItems {
         }
     }
 
-    private static boolean hasNoEmptyTagsIngredient(IRecipe<?> recipe) {
+    private static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
         return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 
@@ -121,7 +121,7 @@ public class CapsuleItems {
         ItemStack capsuleUp = ironCapsule.copy();
         CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
         CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
-        capsuleUp.addTagElement("upgraded", IntNBT.valueOf(upLevel));
+        capsuleUp.addTagElement("upgraded", IntTag.valueOf(upLevel));
         return capsuleUp;
     }
 

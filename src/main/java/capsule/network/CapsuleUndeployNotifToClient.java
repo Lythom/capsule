@@ -3,9 +3,9 @@ package capsule.network;
 import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Capsule;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.StringUtils;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.StringUtil;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,7 +31,7 @@ public class CapsuleUndeployNotifToClient {
     public void onClient(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             Capsule.showUndeployParticules(Minecraft.getInstance().level, posFrom, posTo, size);
-            if (!StringUtils.isNullOrEmpty(templateName)) {
+            if (!StringUtil.isNullOrEmpty(templateName)) {
                 CapsulePreviewHandler.currentPreview.remove(templateName);
                 CapsulePreviewHandler.currentFullPreview.remove(templateName);
             }
@@ -39,7 +39,7 @@ public class CapsuleUndeployNotifToClient {
         ctx.get().setPacketHandled(true);
     }
 
-    public CapsuleUndeployNotifToClient(PacketBuffer buf) {
+    public CapsuleUndeployNotifToClient(FriendlyByteBuf buf) {
         try {
             this.posFrom = buf.readBlockPos();
             this.posTo = buf.readBlockPos();
@@ -50,7 +50,7 @@ public class CapsuleUndeployNotifToClient {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeBlockPos(posFrom);
         buf.writeBlockPos(posTo);
         buf.writeShort(size);

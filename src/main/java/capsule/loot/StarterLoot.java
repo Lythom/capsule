@@ -3,10 +3,10 @@ package capsule.loot;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.helpers.Capsule;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.StringUtils;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.StringUtil;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -27,15 +27,15 @@ public class StarterLoot {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!event.getPlayer().level.isClientSide) {
-            if (StringUtils.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
+            if (StringUtil.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.size() <= 0) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;
             }
-            ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
-            CompoundNBT playerData = player.getPersistentData();
-            CompoundNBT data;
+            ServerPlayer player = (ServerPlayer) event.getPlayer();
+            CompoundTag playerData = player.getPersistentData();
+            CompoundTag data;
             if (!playerData.contains("PlayerPersisted")) {
-                data = new CompoundNBT();
+                data = new CompoundTag();
             } else {
                 data = playerData.getCompound("PlayerPersisted");
             }
@@ -59,7 +59,7 @@ public class StarterLoot {
         }
     }
 
-    public static void giveAllStarters(ServerPlayerEntity player, List<String> allStartersToGive) {
+    public static void giveAllStarters(ServerPlayer player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
             int stackIdx = player.inventory.getFreeSlot();

@@ -3,9 +3,9 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
 
@@ -18,7 +18,7 @@ public class CapsuleIngredient extends Ingredient
 
     protected CapsuleIngredient(ItemStack stack)
     {
-        super(Stream.of(new Ingredient.SingleItemList(stack)));
+        super(Stream.of(new Ingredient.ItemValue(stack)));
         this.referenceStack = stack;
     }
 
@@ -61,7 +61,7 @@ public class CapsuleIngredient extends Ingredient
         public static final Serializer INSTANCE = new Serializer();
 
         @Override
-        public CapsuleIngredient parse(PacketBuffer buffer) {
+        public CapsuleIngredient parse(FriendlyByteBuf buffer) {
             return new CapsuleIngredient(buffer.readItem());
         }
 
@@ -71,7 +71,7 @@ public class CapsuleIngredient extends Ingredient
         }
 
         @Override
-        public void write(PacketBuffer buffer, CapsuleIngredient ingredient) {
+        public void write(FriendlyByteBuf buffer, CapsuleIngredient ingredient) {
             buffer.writeItemStack(ingredient.referenceStack, false);
         }
     }

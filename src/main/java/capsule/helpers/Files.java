@@ -2,11 +2,11 @@ package capsule.helpers;
 
 import capsule.Config;
 import com.google.gson.*;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StringUtils;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,7 +27,7 @@ public class Files {
     public static JsonObject readJSON(File file) {
         if (file.exists()) {
             try (final InputStream stream = new FileInputStream(file)) {
-                JsonObject jsonContent = JSONUtils.fromJson(GSON, new InputStreamReader(stream), JsonObject.class);
+                JsonObject jsonContent = GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonObject.class);
                 return jsonContent;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -45,7 +45,7 @@ public class Files {
         }
     }
 
-    public static HashMap<String, JsonObject> populateWhitelistConfig(File capsuleConfigDir, IResourceManager ressourceManager) {
+    public static HashMap<String, JsonObject> populateWhitelistConfig(File capsuleConfigDir, ResourceManager ressourceManager) {
         if (!capsuleConfigDir.exists()) {
             capsuleConfigDir.mkdirs();
         }
@@ -58,7 +58,7 @@ public class Files {
             }
             if (whitelistFile.exists()) {
                 try (final InputStream stream = new FileInputStream(whitelistFile)) {
-                    JsonArray whitelistElements = JSONUtils.fromJson(GSON, new InputStreamReader(stream), JsonArray.class);
+                    JsonArray whitelistElements = GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonArray.class);
                     if (whitelistElements != null)
                         for (JsonElement elem : whitelistElements) {
                             if (elem.isJsonPrimitive()) {
@@ -81,8 +81,8 @@ public class Files {
         return blueprintWhitelist;
     }
 
-    public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath, IResourceManager ressourceManager) {
-        if (StringUtils.isNullOrEmpty(starterTemplatesPath)) return new ArrayList<>();
+    public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath, ResourceManager ressourceManager) {
+        if (StringUtil.isNullOrEmpty(starterTemplatesPath)) return new ArrayList<>();
         File startersFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), starterTemplatesPath);
 
         if (!startersFolder.exists()) {
@@ -96,7 +96,7 @@ public class Files {
         return starterTemplatesList;
     }
 
-    public static void populateAndLoadLootList(File capsuleConfigDir, Map<String, Config.LootPathData> lootTemplatesData, IResourceManager ressourceManager) {
+    public static void populateAndLoadLootList(File capsuleConfigDir, Map<String, Config.LootPathData> lootTemplatesData, ResourceManager ressourceManager) {
         // Init the manager for reward Lists
         for (Config.LootPathData data : lootTemplatesData.values()) {
             File templateFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), data.path);
@@ -117,7 +117,7 @@ public class Files {
         }
     }
 
-    public static ArrayList<String> populatePrefabs(File capsuleConfigDir, String prefabsTemplatesPath, IResourceManager ressourceManager) {
+    public static ArrayList<String> populatePrefabs(File capsuleConfigDir, String prefabsTemplatesPath, ResourceManager ressourceManager) {
         File prefabsFolder = new File(capsuleConfigDir.getParentFile().getParentFile(), prefabsTemplatesPath);
 
         if (!prefabsFolder.exists()) {
@@ -132,10 +132,10 @@ public class Files {
         return prefabsTemplatesList;
     }
 
-    public static void populateFolder(File templateFolder, String assetPath, IResourceManager ressourceManager) {
+    public static void populateFolder(File templateFolder, String assetPath, ResourceManager ressourceManager) {
         try {
             for (ResourceLocation ressourceLoc : ressourceManager.listResources(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
-                IResource ressource = ressourceManager.getResource(ressourceLoc);
+                Resource ressource = ressourceManager.getResource(ressourceLoc);
                 // source path
                 InputStream sourceTemplate = ressource.getInputStream();
                 String sourcePath = ressourceLoc.getPath();

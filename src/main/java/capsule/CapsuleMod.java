@@ -11,18 +11,18 @@ import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.block.Block;
-import net.minecraft.block.DispenserBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemModelsProperties;
-import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
@@ -49,9 +49,9 @@ public class CapsuleMod {
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(CapsuleMod.class);
 
     public static final String MODID = "capsule";
-    public static ItemGroup tabCapsule = new CapsuleItemGroups(ItemGroup.getGroupCountSafe(), "capsule");
+    public static CreativeModeTab tabCapsule = new CapsuleItemGroups(CreativeModeTab.getGroupCountSafe(), "capsule");
 
-    public static Consumer<PlayerEntity> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static Consumer<Player> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
     public static MinecraftServer server = null;
 
     public CapsuleMod() {
@@ -78,12 +78,12 @@ public class CapsuleMod {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void openGuiScreenClient(PlayerEntity player) {
+    public static void openGuiScreenClient(Player player) {
         capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);
         Minecraft.getInstance().setScreen(screen);
     }
 
-    public static void openGuiScreenServer(PlayerEntity player) {
+    public static void openGuiScreenServer(Player player) {
     }
 }
 
@@ -109,7 +109,7 @@ final class CapsuleModEventSubscriber {
             return 0xFFFFFF;
         }, CapsuleItems.CAPSULE);
 
-        ItemModelsProperties.register(
+        ItemProperties.register(
                 CapsuleItems.CAPSULE,
                 new ResourceLocation(CapsuleMod.MODID, "state"),
                 (stack, world, entity) -> CapsuleItem.getState(stack).getValue()
@@ -145,7 +145,7 @@ final class CapsuleModEventSubscriber {
     }
 
     @SubscribeEvent
-    public static void registerTileEntities(final RegistryEvent.Register<TileEntityType<?>> event) {
+    public static void registerTileEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
         CapsuleBlocks.registerTileEntities(event);
     }
 
@@ -155,7 +155,7 @@ final class CapsuleModEventSubscriber {
     }
 
     @SubscribeEvent
-    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+    public static void registerRecipeSerializers(RegistryEvent.Register<RecipeSerializer<?>> event) {
         CapsuleRecipes.registerRecipeSerializers(event);
     }
 }

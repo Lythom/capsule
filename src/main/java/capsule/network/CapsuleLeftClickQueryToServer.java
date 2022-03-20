@@ -4,15 +4,15 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.gen.feature.template.PlacementSettings;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.Util;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,11 +29,11 @@ public class CapsuleLeftClickQueryToServer {
     public CapsuleLeftClickQueryToServer() {
     }
 
-    public CapsuleLeftClickQueryToServer(PacketBuffer buf) {
+    public CapsuleLeftClickQueryToServer(FriendlyByteBuf buf) {
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
-        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        final ServerPlayer sendingPlayer = ctx.get().getSender();
         if (sendingPlayer == null) {
             LOGGER.error("ServerPlayerEntity was null when " + this.getClass().getName() + " was received");
             return;
@@ -46,7 +46,7 @@ public class CapsuleLeftClickQueryToServer {
                 // Reload if no missing materials
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getLevel(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
-                    StringTextComponent message = new StringTextComponent("Missing :");
+                    TextComponent message = new TextComponent("Missing :");
                     for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
                         message.append("\n* " + entry.getValue() + " ");
                         message.append(entry.getKey().itemStack.getItem().getName(entry.getKey().itemStack));
@@ -54,7 +54,7 @@ public class CapsuleLeftClickQueryToServer {
                     sendingPlayer.sendMessage(message, Util.NIL_UUID);
                 }
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
-                PlacementSettings placement = CapsuleItem.getPlacement(stack);
+                StructurePlaceSettings placement = CapsuleItem.getPlacement(stack);
                 if (sendingPlayer.isShiftKeyDown()) {
                     if (Config.allowMirror) {
                         switch (placement.getMirror()) {
@@ -68,13 +68,13 @@ public class CapsuleLeftClickQueryToServer {
                                 placement.setMirror(Mirror.FRONT_BACK);
                                 break;
                         }
-                        sendingPlayer.sendMessage(new TranslationTextComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
+                        sendingPlayer.sendMessage(new TranslatableComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
                     } else {
-                        sendingPlayer.sendMessage(new TranslationTextComponent("Mirroring disabled by config"), Util.NIL_UUID);
+                        sendingPlayer.sendMessage(new TranslatableComponent("Mirroring disabled by config"), Util.NIL_UUID);
                     }
                 } else {
                     placement.setRotation(placement.getRotation().getRotated(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TranslationTextComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.NIL_UUID);
+                    sendingPlayer.sendMessage(new TranslatableComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.NIL_UUID);
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }
@@ -82,7 +82,7 @@ public class CapsuleLeftClickQueryToServer {
         ctx.get().setPacketHandled(true);
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
     }
 
     @Override

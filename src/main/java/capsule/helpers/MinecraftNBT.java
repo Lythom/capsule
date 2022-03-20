@@ -1,7 +1,7 @@
 package capsule.helpers;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 
 public class MinecraftNBT {
     /**
@@ -9,7 +9,7 @@ public class MinecraftNBT {
      */
     @SuppressWarnings("ConstantConditions")
     public static boolean hasColor(ItemStack stack) {
-        CompoundNBT compoundnbt = stack.getTagElement("display");
+        CompoundTag compoundnbt = stack.getTagElement("display");
         return compoundnbt != null && compoundnbt.contains("color", 99);
     }
 
@@ -17,7 +17,7 @@ public class MinecraftNBT {
      * Return the color for the specified ItemStack.
      */
     public static int getColor(ItemStack stack) {
-        CompoundNBT compoundnbt = stack.getTagElement("display");
+        CompoundTag compoundnbt = stack.getTagElement("display");
         return compoundnbt != null && compoundnbt.contains("color", 99) ? compoundnbt.getInt("color") : 0xFFFFFF;
     }
 

@@ -7,20 +7,20 @@ import capsule.items.CapsuleItems;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
-public class UpgradeCapsuleRecipe implements ICraftingRecipe {
+public class UpgradeCapsuleRecipe implements CraftingRecipe {
     /**
      * Is the ItemStack that you repair.
      */
@@ -39,7 +39,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory invC, World worldIn) {
+    public boolean matches(CraftingContainer invC, Level worldIn) {
 
         ItemStack sourceCapsule = ItemStack.EMPTY;
         int material = 0;
@@ -65,7 +65,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInventory invC) {
+    public ItemStack assemble(CraftingContainer invC) {
         ItemStack input = ItemStack.EMPTY;
         int material = 0;
         for (int i = 0; i < invC.getContainerSize(); ++i) {
@@ -105,7 +105,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.UPGRADE_CAPSULE_SERIALIZER;
     }
 
@@ -119,7 +119,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         return recipeId;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<UpgradeCapsuleRecipe> {
+    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<UpgradeCapsuleRecipe> {
 
         private static NonNullList<Ingredient> readIngredients(JsonArray p_199568_0_) {
             NonNullList<Ingredient> nonnulllist = NonNullList.create();
@@ -136,7 +136,7 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
 
         @Override
         public UpgradeCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            NonNullList<Ingredient> nonnulllist = readIngredients(JSONUtils.getAsJsonArray(json, "ingredients"));
+            NonNullList<Ingredient> nonnulllist = readIngredients(GsonHelper.getAsJsonArray(json, "ingredients"));
             if (nonnulllist.isEmpty()) {
                 throw new JsonParseException("No ingredients for shapeless recipe");
             } else {
@@ -145,12 +145,12 @@ public class UpgradeCapsuleRecipe implements ICraftingRecipe {
         }
 
         @Override
-        public UpgradeCapsuleRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+        public UpgradeCapsuleRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             return new UpgradeCapsuleRecipe(recipeId, Ingredient.fromNetwork(buffer));
         }
 
         @Override
-        public void toNetwork(PacketBuffer buffer, UpgradeCapsuleRecipe recipe) {
+        public void toNetwork(FriendlyByteBuf buffer, UpgradeCapsuleRecipe recipe) {
             recipe.upgradeIngredient.toNetwork(buffer);
         }
     }

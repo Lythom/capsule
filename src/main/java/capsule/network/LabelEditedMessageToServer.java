@@ -1,9 +1,9 @@
 package capsule.network;
 
 import capsule.items.CapsuleItem;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +23,7 @@ public class LabelEditedMessageToServer {
         setLabel(newLabel);
     }
 
-    public LabelEditedMessageToServer(PacketBuffer buf) {
+    public LabelEditedMessageToServer(FriendlyByteBuf buf) {
         try {
             this.setLabel(buf.readUtf(32767));
         } catch (IndexOutOfBoundsException ioe) {
@@ -31,12 +31,12 @@ public class LabelEditedMessageToServer {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.label);
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
-        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        final ServerPlayer sendingPlayer = ctx.get().getSender();
         if (sendingPlayer == null) {
             LOGGER.error("ServerPlayerEntity was null when LabelEditedMessageToServer was received");
             return;

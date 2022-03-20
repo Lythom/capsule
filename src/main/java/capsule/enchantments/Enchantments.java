@@ -2,13 +2,13 @@ package capsule.enchantments;
 
 import capsule.CapsuleMod;
 import capsule.Config;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.Enchantment.Rarity;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.EnchantmentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantment.Rarity;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +31,9 @@ public class Enchantments {
             LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity.get() + ". Using RARE instead.");
         }
 
-        EnchantmentType recallEnchantTypeEnumValue = null;
+        EnchantmentCategory recallEnchantTypeEnumValue = null;
         try {
-            recallEnchantTypeEnumValue = EnchantmentType.valueOf(Config.recallEnchantType.get());
+            recallEnchantTypeEnumValue = EnchantmentCategory.valueOf(Config.recallEnchantType.get());
         } catch (IllegalArgumentException ignored) {
         }
 

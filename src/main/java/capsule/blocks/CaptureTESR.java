@@ -2,19 +2,19 @@ package capsule.blocks;
 
 import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Spacial;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
 
-public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
+public class CaptureTESR extends BlockEntityRenderer<TileEntityCapture> {
 
     double time = 0;
 
-    public CaptureTESR(TileEntityRendererDispatcher renderDispatcherIn) {
+    public CaptureTESR(BlockEntityRenderDispatcher renderDispatcherIn) {
         super(renderDispatcherIn);
         time = Math.random() * 10000;
     }
@@ -26,7 +26,7 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
     }
 
     @Override
-    public void render(TileEntityCapture tileEntityCapture, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(TileEntityCapture tileEntityCapture, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
         time += partialTicks;
         int size = tileEntityCapture.getSize();
         if (size == 0)
@@ -34,8 +34,8 @@ public class CaptureTESR extends TileEntityRenderer<TileEntityCapture> {
         int extendSize = (size - 1) / 2;
         int color = tileEntityCapture.getColor();
         BlockPos offset = Spacial.getAnchor(BlockPos.ZERO, tileEntityCapture.getBlockState(), size);
-        AxisAlignedBB boundingBox = Spacial.getBB(offset.getX(), offset.getY(), offset.getZ(), size, extendSize);
-        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.lines());
+        AABB boundingBox = Spacial.getBB(offset.getX(), offset.getY(), offset.getZ(), size, extendSize);
+        VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderType.lines());
         CapsulePreviewHandler.renderRecallBox(matrixStackIn, color, boundingBox, ivertexbuilder, time);
     }
 }

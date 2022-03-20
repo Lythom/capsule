@@ -1,8 +1,8 @@
 package capsule.client.render;
 
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.lwjgl.opengl.GL11;
 
 public class CustomRenderType extends RenderType {
@@ -11,8 +11,8 @@ public class CustomRenderType extends RenderType {
 	}
 
 	public static final RenderType VISUAL_BLOCK = create("structurevisualizer:block",
-			DefaultVertexFormats.BLOCK, GL11.GL_QUADS, 256,
-			RenderType.State.builder()
+			DefaultVertexFormat.BLOCK, GL11.GL_QUADS, 256,
+			RenderType.CompositeState.builder()
 					.setShadeModelState(SMOOTH_SHADE)
 					.setLightmapState(LIGHTMAP)
 					.setTextureState(BLOCK_SHEET_MIPPED)

@@ -2,8 +2,8 @@ package capsule.loot;
 
 import capsule.CapsuleMod;
 import capsule.Config;
-import net.minecraft.loot.ConstantRange;
-import net.minecraft.loot.LootPool;
+import net.minecraft.world.level.storage.loot.ConstantIntValue;
+import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,7 +26,7 @@ public class CapsuleLootTableHook {
             LootPool.Builder capsulePoolBuilder = LootPool.lootPool()
                     .bonusRolls(0, 0)
                     .name("capsulePool")
-                    .setRolls(ConstantRange.exactly(1));
+                    .setRolls(ConstantIntValue.exactly(1));
             for (Config.LootPathData data : Config.lootTemplatesData.values()) {
                 capsulePoolBuilder.add(CapsuleLootEntry.builder(data.path));
             }

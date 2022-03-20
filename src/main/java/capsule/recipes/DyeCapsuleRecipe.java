@@ -4,22 +4,22 @@ import capsule.helpers.MinecraftNBT;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.SpecialRecipe;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
-public class DyeCapsuleRecipe extends SpecialRecipe {
+public class DyeCapsuleRecipe extends CustomRecipe {
 
     public DyeCapsuleRecipe(ResourceLocation idIn) {
         super(idIn);
@@ -27,14 +27,14 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
 
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.DYE_CAPSULE_SERIALIZER;
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         ItemStack itemstack = ItemStack.EMPTY;
         ArrayList<ItemStack> arraylist = Lists.newArrayList();
 
@@ -60,7 +60,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInventory inv) {
+    public ItemStack assemble(CraftingContainer inv) {
         List<DyeItem> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
@@ -150,7 +150,7 @@ public class DyeCapsuleRecipe extends SpecialRecipe {
         return CapsuleItems.withState(EMPTY);
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {

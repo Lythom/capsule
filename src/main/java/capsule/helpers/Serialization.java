@@ -1,10 +1,10 @@
 package capsule.helpers;
 
-import net.minecraft.block.Block;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StringUtils;
+import net.minecraft.tags.Tag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringUtil;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +23,7 @@ public class Serialization {
         for (String blockId : blockIds) {
             ResourceLocation excludedLocation = new ResourceLocation(blockId);
             // is it a whole registryName to exclude ?
-            if (StringUtils.isNullOrEmpty(excludedLocation.getPath())) {
+            if (StringUtil.isNullOrEmpty(excludedLocation.getPath())) {
                 List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
                         .filter(block -> {
                             ResourceLocation registryName = block.getRegistryName();
@@ -43,7 +43,7 @@ public class Serialization {
                     states.add(b);
                 } else {
                     // is it a tag ?
-                    ITag<Block> tag = BlockTags.getAllTags().getTag(excludedLocation);
+                    Tag<Block> tag = BlockTags.getAllTags().getTag(excludedLocation);
                     if (tag != null) {
                         // exclude all blocks from tag
                         states.addAll(tag.getValues());

@@ -3,15 +3,15 @@ package capsule.structure;
 import capsule.CapsuleMod;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DataFixer;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.resources.IResource;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.FileUtil;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.ResourceLocationException;
-import net.minecraft.util.datafix.DefaultTypeReferences;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.FileUtil;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.ResourceLocationException;
+import net.minecraft.util.datafix.DataFixTypes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,10 +29,10 @@ public class CapsuleTemplateManager {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
-    private IResourceManager resourceManager;
+    private ResourceManager resourceManager;
     private final Path pathGenerated;
 
-    public CapsuleTemplateManager(IResourceManager resourceManager, File templateFolder, DataFixer fixerIn) {
+    public CapsuleTemplateManager(ResourceManager resourceManager, File templateFolder, DataFixer fixerIn) {
         this.resourceManager = resourceManager;
         this.fixer = fixerIn;
         this.pathGenerated = templateFolder.toPath().normalize();
@@ -61,7 +61,7 @@ public class CapsuleTemplateManager {
         });
     }
 
-    public void onResourceManagerReload(IResourceManager resourceManager) {
+    public void onResourceManagerReload(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
         this.templates.clear();
     }
@@ -69,7 +69,7 @@ public class CapsuleTemplateManager {
     @Nullable
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
-        try (IResource iresource = this.resourceManager.getResource(capsuleTemplateLocation)) {
+        try (Resource iresource = this.resourceManager.getResource(capsuleTemplateLocation)) {
             CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension), capsuleTemplateLocation.toString());
             return template;
         } catch (FileNotFoundException var18) {
@@ -108,17 +108,17 @@ public class CapsuleTemplateManager {
         if (isSchematic) {
             return readTemplateFromSchematic(inputStreamIn, location);
         }
-        CompoundNBT compoundnbt = CompressedStreamTools.readCompressed(inputStreamIn);
+        CompoundTag compoundnbt = NbtIo.readCompressed(inputStreamIn);
         return this.readFromNBT(compoundnbt, location);
     }
 
-    public CapsuleTemplate readFromNBT(CompoundNBT p_227458_1_, String location) {
+    public CapsuleTemplate readFromNBT(CompoundTag p_227458_1_, String location) {
         if (!p_227458_1_.contains("DataVersion", 99)) {
             p_227458_1_.putInt("DataVersion", 500);
         }
 
         CapsuleTemplate template = new CapsuleTemplate();
-        template.load(NBTUtil.update(this.fixer, DefaultTypeReferences.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
+        template.load(NbtUtils.update(this.fixer, DataFixTypes.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
         return template;
     }
 
@@ -140,10 +140,10 @@ public class CapsuleTemplateManager {
                     return false;
                 }
 
-                CompoundNBT compoundnbt = template.save(new CompoundNBT());
+                CompoundTag compoundnbt = template.save(new CompoundTag());
 
                 try (OutputStream outputstream = new FileOutputStream(path.toFile())) {
-                    CompressedStreamTools.writeCompressed(compoundnbt, outputstream);
+                    NbtIo.writeCompressed(compoundnbt, outputstream);
                     return true;
                 } catch (Throwable var21) {
                     return false;
@@ -173,12 +173,12 @@ public class CapsuleTemplateManager {
 
     public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream, String location) {
         try {
-            CompoundNBT schematicNBT = CompressedStreamTools.readCompressed(inputstream);
+            CompoundTag schematicNBT = NbtIo.readCompressed(inputstream);
             CapsuleTemplate template = new CapsuleTemplate();
             // first raw conversion
             template.readSchematic(schematicNBT);
             // second conversion with update of data if needed
-            CompoundNBT compoundnbt = template.save(new CompoundNBT());
+            CompoundTag compoundnbt = template.save(new CompoundTag());
             return readFromNBT(compoundnbt, location);
         } catch (Throwable var10) {
             return null;

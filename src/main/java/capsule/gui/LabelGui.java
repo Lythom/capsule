@@ -2,14 +2,14 @@ package capsule.gui;
 
 import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.TranslationTextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
@@ -22,12 +22,12 @@ public class LabelGui extends Screen {
     public static int GUI_WIDTH = 250;
     public static int GUI_HEIGHT = 20;
 
-    private TextFieldWidget textInput;
-    private PlayerEntity player;
-    private TranslationTextComponent gui_capsule_name = new TranslationTextComponent("capsule.gui.capsuleName");
+    private EditBox textInput;
+    private Player player;
+    private TranslatableComponent gui_capsule_name = new TranslatableComponent("capsule.gui.capsuleName");
 
-    public LabelGui(PlayerEntity player) {
-        super(new TranslationTextComponent("capsule.gui.capsuleName"));
+    public LabelGui(Player player) {
+        super(new TranslatableComponent("capsule.gui.capsuleName"));
         this.player = player;
     }
 
@@ -39,7 +39,7 @@ public class LabelGui extends Screen {
         super.init();
         buttons.clear();
 
-        textInput = new TextFieldWidget(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
+        textInput = new EditBox(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
         textInput.setMaxLength(32);
         textInput.changeFocus(true);
 
@@ -48,7 +48,7 @@ public class LabelGui extends Screen {
                 textInput.y + textInput.getHeight() + 10,
                 200,
                 20,
-                DialogTexts.GUI_DONE,
+                CommonComponents.GUI_DONE,
                 (p_212984_1_) -> {
                     this.onClose();
                 }));
@@ -98,7 +98,7 @@ public class LabelGui extends Screen {
     }
 
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(matrixStack);
         this.drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 70, 16777215);
         textInput.render(matrixStack, mouseX, mouseY, partialTicks);

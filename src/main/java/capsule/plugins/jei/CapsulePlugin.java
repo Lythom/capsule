@@ -12,15 +12,15 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.item.crafting.ShapelessRecipe;
-import net.minecraft.nbt.ByteNBT;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +48,7 @@ public class CapsulePlugin implements IModPlugin {
 
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
-        List<IRecipe> recipes = new ArrayList<>();
+        List<Recipe> recipes = new ArrayList<>();
 
         Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
@@ -78,10 +78,10 @@ public class CapsulePlugin implements IModPlugin {
         Ingredient unlabelledIng = Ingredient.merge(Arrays.asList(Ingredient.of(unlabelled), anyBlueprint, Ingredient.of(recoveryCapsule)));
         // recovery
         recipes.add(CapsuleItems.recoveryCapsule.getValue().recipe);
-        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintCapsules) {
+        for (Pair<ItemStack, CraftingRecipe> r : CapsuleItems.blueprintCapsules) {
             recipes.add(r.getValue());
         }
-        for (Pair<ItemStack, ICraftingRecipe> r : CapsuleItems.blueprintPrefabs) {
+        for (Pair<ItemStack, CraftingRecipe> r : CapsuleItems.blueprintPrefabs) {
             recipes.add(r.getValue());
         }
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
@@ -95,14 +95,14 @@ public class CapsulePlugin implements IModPlugin {
         registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.deployedCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.linkedCapsule");
         registry.addIngredientInfo(CapsuleItems.recoveryCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.recoveryCapsule");
-        for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
+        for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
             registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         }
-        for (Pair<ItemStack, ICraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
+        for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
             registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM, "jei.capsule.desc.blueprintCapsule");
         }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);
-        opCapsule.addTagElement("overpowered", ByteNBT.valueOf(true));
+        opCapsule.addTagElement("overpowered", ByteTag.valueOf(true));
         registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM, "jei.capsule.desc.opCapsule");
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER), VanillaTypes.ITEM, "jei.capsule.desc.capsuleMarker");
     }
@@ -121,7 +121,7 @@ public class CapsulePlugin implements IModPlugin {
             String capsuleState = String.valueOf(CapsuleItem.getState(itemStack));
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));
-            ITextComponent labelComp = CapsuleItem.getLabel(itemStack);
+            Component labelComp = CapsuleItem.getLabel(itemStack);
             String label = labelComp == null ? "" : labelComp.getString();
             return capsuleState + capsuleColor + isOP + capsuleBlueprint + label;
         }

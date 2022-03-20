@@ -1,8 +1,8 @@
 package capsule.network;
 
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,11 +18,11 @@ public class CapsuleContentPreviewAnswerToClient {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewAnswerToClient.class);
 
-    private List<AxisAlignedBB> boundingBoxes = null;
+    private List<AABB> boundingBoxes = null;
     private String structureName = null;
 
 
-    public CapsuleContentPreviewAnswerToClient(List<AxisAlignedBB> boundingBoxes, String structureName) {
+    public CapsuleContentPreviewAnswerToClient(List<AABB> boundingBoxes, String structureName) {
         this.boundingBoxes = boundingBoxes;
         this.structureName = structureName;
     }
@@ -36,7 +36,7 @@ public class CapsuleContentPreviewAnswerToClient {
         ctx.get().setPacketHandled(true);
     }
 
-    public CapsuleContentPreviewAnswerToClient(PacketBuffer buf) {
+    public CapsuleContentPreviewAnswerToClient(FriendlyByteBuf buf) {
         try {
             this.structureName = buf.readUtf(32767);
             int size = buf.readShort();
@@ -45,9 +45,9 @@ public class CapsuleContentPreviewAnswerToClient {
                 boolean isSingleBlock = buf.readBoolean();
                 if (isSingleBlock) {
                     BlockPos p = BlockPos.of(buf.readLong());
-                    this.boundingBoxes.add(new AxisAlignedBB(p, p));
+                    this.boundingBoxes.add(new AABB(p, p));
                 } else {
-                    this.boundingBoxes.add(new AxisAlignedBB(BlockPos.of(buf.readLong()), BlockPos.of(buf.readLong())));
+                    this.boundingBoxes.add(new AABB(BlockPos.of(buf.readLong()), BlockPos.of(buf.readLong())));
                 }
             }
 
@@ -57,12 +57,12 @@ public class CapsuleContentPreviewAnswerToClient {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.structureName);
         int size = Math.min(this.boundingBoxes.size(), Short.MAX_VALUE);
         buf.writeShort(size);
         for (int i = 0; i < size; i++) {
-            AxisAlignedBB bb = boundingBoxes.get(i);
+            AABB bb = boundingBoxes.get(i);
             boolean isSingleBlock = bb.getSize() == 0;
             buf.writeBoolean(isSingleBlock);
             buf.writeLong(new BlockPos(bb.minX, bb.minY, bb.minZ).asLong());
@@ -77,7 +77,7 @@ public class CapsuleContentPreviewAnswerToClient {
         return getClass().toString();
     }
 
-    public List<AxisAlignedBB> getBoundingBoxes() {
+    public List<AABB> getBoundingBoxes() {
         return boundingBoxes;
     }
 

@@ -3,9 +3,9 @@ package capsule.network;
 import capsule.StructureSaver;
 import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.structure.CapsuleTemplate;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,16 +47,16 @@ public class CapsuleFullContentAnswerToClient {
         ctx.get().setPacketHandled(true);
     }
 
-    public CapsuleFullContentAnswerToClient(PacketBuffer buf) {
+    public CapsuleFullContentAnswerToClient(FriendlyByteBuf buf) {
         try {
             this.structureName = buf.readUtf(32767);
             boolean isSmallEnough = buf.readBoolean();
             this.template = null;
             if (isSmallEnough) {
                 ByteArrayInputStream bytearrayoutputstream = new ByteArrayInputStream(buf.readByteArray());
-                CompoundNBT nbt = null;
+                CompoundTag nbt = null;
                 try {
-                    nbt = CompressedStreamTools.readCompressed(bytearrayoutputstream);
+                    nbt = NbtIo.readCompressed(bytearrayoutputstream);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -70,12 +70,12 @@ public class CapsuleFullContentAnswerToClient {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.structureName);
-        CompoundNBT nbt = StructureSaver.getTemplateNBTData(template);
+        CompoundTag nbt = StructureSaver.getTemplateNBTData(template);
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
         try {
-            CompressedStreamTools.writeCompressed(nbt, bytearrayoutputstream);
+            NbtIo.writeCompressed(nbt, bytearrayoutputstream);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

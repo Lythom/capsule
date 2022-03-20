@@ -1,22 +1,29 @@
 package capsule.helpers;
 
 import capsule.blocks.BlockCapsuleMarker;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Direction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Direction;
 import net.minecraft.util.math.*;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.gen.feature.template.Template;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 
 public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
@@ -36,14 +43,14 @@ public class Spacial {
         return !entity.isFree(0, 1.5, 0);
     }
 
-    public static BlockRayTraceResult clientRayTracePreview(PlayerEntity thePlayer, float partialTicks, int size) {
+    public static BlockHitResult clientRayTracePreview(Player thePlayer, float partialTicks, int size) {
         int blockReachDistance = 18 + size;
-        Vector3d vec3d = thePlayer.getEyePosition(partialTicks);
-        Vector3d vec3d1 = thePlayer.getViewVector(partialTicks);
-        Vector3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
+        Vec3 vec3d = thePlayer.getEyePosition(partialTicks);
+        Vec3 vec3d1 = thePlayer.getViewVector(partialTicks);
+        Vec3 vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
         return thePlayer.getCommandSenderWorld().clip(
-                new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.OUTLINE, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
+                new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, stopOnLiquid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, thePlayer)
         );
     }
 
@@ -85,10 +92,10 @@ public class Spacial {
         );
     }
 
-    public static List<AxisAlignedBB> mergeVoxels(List<Template.BlockInfo> blocks) {
+    public static List<AABB> mergeVoxels(List<StructureTemplate.StructureBlockInfo> blocks) {
 
-        Map<BlockPos, Template.BlockInfo> blocksByPos = new HashMap<>();
-        Map<BlockPos, MutableBoundingBox> bbByPos = new HashMap<>();
+        Map<BlockPos, StructureTemplate.StructureBlockInfo> blocksByPos = new HashMap<>();
+        Map<BlockPos, BoundingBox> bbByPos = new HashMap<>();
         blocks.forEach(b -> blocksByPos.put(b.pos, b));
 
         blocks.forEach(block -> {
@@ -96,22 +103,22 @@ public class Spacial {
             BlockPos below = block.pos.offset(0, -1, 0);
             if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state.getBlock() == block.state.getBlock()) {
                 // extend the below BB to current
-                MutableBoundingBox bb = bbByPos.get(below);
+                BoundingBox bb = bbByPos.get(below);
                 bb.y1++;
                 bbByPos.put(destPos, bb);
             } else {
                 // start a new column
-                MutableBoundingBox column = new MutableBoundingBox(block.pos, block.pos);
+                BoundingBox column = new BoundingBox(block.pos, block.pos);
                 bbByPos.put(destPos, column);
             }
         });
-        final List<MutableBoundingBox> allBB = bbByPos.values().stream().distinct().collect(Collectors.toList());
+        final List<BoundingBox> allBB = bbByPos.values().stream().distinct().collect(Collectors.toList());
 
         // Merge X
-        List<MutableBoundingBox> toRemove = new ArrayList<>();
+        List<BoundingBox> toRemove = new ArrayList<>();
         allBB.forEach(bb -> {
             if (!toRemove.contains(bb)) {
-                MutableBoundingBox matchingBB = findMatchingExpandingX(bb, allBB);
+                BoundingBox matchingBB = findMatchingExpandingX(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
                     bb.expand(matchingBB);
@@ -125,7 +132,7 @@ public class Spacial {
         // Merge Z
         allBB.forEach(bb -> {
             if (!toRemove.contains(bb)) {
-                MutableBoundingBox matchingBB = findMatchingExpandingZ(bb, allBB);
+                BoundingBox matchingBB = findMatchingExpandingZ(bb, allBB);
                 while (matchingBB != null) {
                     toRemove.add(matchingBB);
                     bb.expand(matchingBB);
@@ -135,20 +142,20 @@ public class Spacial {
         });
         allBB.removeAll(toRemove);
 
-        return allBB.stream().map(bb -> new AxisAlignedBB(
+        return allBB.stream().map(bb -> new AABB(
                 new BlockPos(bb.x0, bb.y0, bb.z0),
                 new BlockPos(bb.x1, bb.y1, bb.z1)
         )).collect(Collectors.toList());
     }
 
-    private static MutableBoundingBox findMatchingExpandingX(final MutableBoundingBox bb, final List<MutableBoundingBox> allBB) {
+    private static BoundingBox findMatchingExpandingX(final BoundingBox bb, final List<BoundingBox> allBB) {
         return allBB.stream()
                 .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.z0 == bb.z0 && candidate.z1 == bb.z1 && candidate.x0 == bb.x1 + 1)
                 .findFirst()
                 .orElse(null);
     }
 
-    private static MutableBoundingBox findMatchingExpandingZ(final MutableBoundingBox bb, final List<MutableBoundingBox> allBB) {
+    private static BoundingBox findMatchingExpandingZ(final BoundingBox bb, final List<BoundingBox> allBB) {
         return allBB.stream()
                 .filter(candidate -> candidate != bb && candidate.y0 == bb.y0 && candidate.y1 == bb.y1 && candidate.x0 == bb.x0 && candidate.x1 == bb.x1 && candidate.z0 == bb.z1 + 1)
                 .findFirst()
@@ -158,7 +165,7 @@ public class Spacial {
     public static boolean isThrowerUnderLiquid(final ItemEntity ItemEntity) {
         UUID thrower = ItemEntity.getThrower();
         if (thrower == null) return false;
-        PlayerEntity player = ItemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
+        Player player = ItemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
     }
@@ -180,7 +187,7 @@ public class Spacial {
         double diffX = (dest.getX() + 0.5 - ItemEntity.getX());
         double diffZ = (dest.getZ() + 0.5 - ItemEntity.getZ());
 
-        double distance = MathHelper.sqrt(diffX * diffX + diffZ * diffZ);
+        double distance = Mth.sqrt(diffX * diffX + diffZ * diffZ);
 
         // velocity will slow down when approaching
         double requiredVelocity = distance / 10;
@@ -189,7 +196,7 @@ public class Spacial {
         double normalizedDiffZ = (diffZ / distance);
 
         // momentum allow to hit side walls
-        Vector3d motion = ItemEntity.getDeltaMovement();
+        Vec3 motion = ItemEntity.getDeltaMovement();
         ItemEntity.setDeltaMovement(
                 keepMomentum ? 0.9 * motion.x + 0.1 * normalizedDiffX * velocity : normalizedDiffX * velocity,
                 motion.y,
@@ -197,8 +204,8 @@ public class Spacial {
         );
     }
 
-    public static AxisAlignedBB getBB(double relativeX, double relativeY, double relativeZ, int size, int extendSize) {
-        AxisAlignedBB boundingBox = new AxisAlignedBB(
+    public static AABB getBB(double relativeX, double relativeY, double relativeZ, int size, int extendSize) {
+        AABB boundingBox = new AABB(
                 -extendSize - 0.01 + relativeX,
                 1.01 + relativeY,
                 -extendSize - 0.01 + relativeZ,

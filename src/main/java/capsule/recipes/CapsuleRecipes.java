@@ -1,29 +1,29 @@
 package capsule.recipes;
 
 import capsule.CapsuleMod;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.SpecialRecipeSerializer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.SimpleRecipeSerializer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.event.RegistryEvent;
 
 public class CapsuleRecipes {
 
     public static final BlueprintCapsuleRecipe.Serializer BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
-    public static final SpecialRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SpecialRecipeSerializer<>(BlueprintChangeRecipe::new));
-    public static final SpecialRecipeSerializer<ClearCapsuleRecipe> CLEAR_CAPSULE_SERIALIZER = register("clear_capsule", new SpecialRecipeSerializer<>(ClearCapsuleRecipe::new));
-    public static final SpecialRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SpecialRecipeSerializer<>(DyeCapsuleRecipe::new));
+    public static final SimpleRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SimpleRecipeSerializer<>(BlueprintChangeRecipe::new));
+    public static final SimpleRecipeSerializer<ClearCapsuleRecipe> CLEAR_CAPSULE_SERIALIZER = register("clear_capsule", new SimpleRecipeSerializer<>(ClearCapsuleRecipe::new));
+    public static final SimpleRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SimpleRecipeSerializer<>(DyeCapsuleRecipe::new));
     public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
     public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("upgrade_capsule", new UpgradeCapsuleRecipe.Serializer());
     public static final PrefabsBlueprintAggregatorRecipe.Serializer PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new PrefabsBlueprintAggregatorRecipe.Serializer());
 
-    private static <T extends IRecipeSerializer<? extends IRecipe<?>>> T register(final String name, final T t) {
+    private static <T extends RecipeSerializer<? extends Recipe<?>>> T register(final String name, final T t) {
         t.setRegistryName(new ResourceLocation(CapsuleMod.MODID, name));
         return t;
     }
 
-    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> event) {
+    public static void registerRecipeSerializers(RegistryEvent.Register<RecipeSerializer<?>> event) {
         CraftingHelper.register(new ResourceLocation("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE);
         event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
         event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);

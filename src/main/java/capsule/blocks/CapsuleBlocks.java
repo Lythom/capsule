@@ -1,12 +1,12 @@
 package capsule.blocks;
 
 import capsule.CapsuleMod;
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.RegistryEvent;
@@ -21,7 +21,7 @@ public class CapsuleBlocks {
     public final static ResourceLocation CAPSULE_MARKER_TE_REGISTERY_NAME = new ResourceLocation(CapsuleMod.MODID, "capsulemarker_te");
 
     public static BlockCapsuleMarker CAPSULE_MARKER;
-    public static TileEntityType<TileEntityCapture> MARKER_TE;
+    public static BlockEntityType<TileEntityCapture> MARKER_TE;
 
     // testing blocks
     public static BlockCaptureCrasher blockCaptureCrasher;
@@ -30,8 +30,8 @@ public class CapsuleBlocks {
     public static BlockDeployCrasher blockDeployCrasher;
     public final static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
-    private static <T extends TileEntity> TileEntityType<T> buildTileEntity(Supplier<T> supplier, ResourceLocation name, Block... blocks) {
-        TileEntityType<T> te = TileEntityType.Builder.of(supplier, blocks).build(null);
+    private static <T extends BlockEntity> BlockEntityType<T> buildTileEntity(Supplier<T> supplier, ResourceLocation name, Block... blocks) {
+        BlockEntityType<T> te = BlockEntityType.Builder.of(supplier, blocks).build(null);
         te.setRegistryName(name);
         return te;
     }
@@ -68,7 +68,7 @@ public class CapsuleBlocks {
         }
     }
 
-    public static void registerTileEntities(final RegistryEvent.Register<TileEntityType<?>> event) {
+    public static void registerTileEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
         MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
         event.getRegistry().register(MARKER_TE);
     }

@@ -2,17 +2,17 @@ package capsule.recipes;
 
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.SpecialRecipe;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
-public class BlueprintChangeRecipe extends SpecialRecipe {
+public class BlueprintChangeRecipe extends CustomRecipe {
 
     public BlueprintChangeRecipe(ResourceLocation id) {
         super(id);
@@ -28,11 +28,11 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER;
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         ItemStack blueprintCapsule = null;
@@ -55,7 +55,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
      * Used to check if a recipe matches current crafting inventory
      */
     @Override
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         int sourceCapsule = 0;
         int blueprint = 0;
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
@@ -80,7 +80,7 @@ public class BlueprintChangeRecipe extends SpecialRecipe {
      * Returns an Item that is the result of this recipe
      */
     @Override
-    public ItemStack assemble(CraftingInventory inv) {
+    public ItemStack assemble(CraftingContainer inv) {
         String templateStructure = null;
         Integer templateSize = null;
         ItemStack blueprintCapsule = null;

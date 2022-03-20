@@ -7,15 +7,15 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.item.crafting.*;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
@@ -24,7 +24,13 @@ import java.util.Optional;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 
-public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+
+public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
     public static PrefabsBlueprintAggregatorRecipe instance;
 
@@ -41,7 +47,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
      * < before RecipesUpdatedEvent (so that the recupies are registered by JEI)
      * @param resourceManager
      */
-    public void populateRecipes(IResourceManager resourceManager) {
+    public void populateRecipes(ResourceManager resourceManager) {
         if (resourceManager == null) return;
         List<String> prefabsTemplatesList = Config.prefabsTemplatesList;
         recipes.clear();
@@ -56,21 +62,21 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
 
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return CapsuleRecipes.PREFABS_AGGREGATOR_SERIALIZER;
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingInventory inv, World worldIn) {
+    public boolean matches(CraftingContainer inv, Level worldIn) {
         return recipes.stream().anyMatch(r -> r.matches(inv));
     }
 
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInventory inv) {
+    public ItemStack assemble(CraftingContainer inv) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
         if (recipe.isPresent()) return recipe.get().assemble(inv);
         return ItemStack.EMPTY;
@@ -85,13 +91,13 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         return CapsuleItems.withState(BLUEPRINT);
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
         if (recipe.isPresent()) return recipe.get().getRemainingItems(inv);
         return NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
     }
 
-    public static class PrefabsBlueprintCapsuleRecipe implements ICraftingRecipe {
+    public static class PrefabsBlueprintCapsuleRecipe implements CraftingRecipe {
         private final ResourceLocation id;
 
         public final ShapedRecipe recipe;
@@ -111,7 +117,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         }
 
         public void buildRecipeFromPattern(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
-            JsonArray patternArr = JSONUtils.getAsJsonArray(template, "pattern");
+            JsonArray patternArr = GsonHelper.getAsJsonArray(template, "pattern");
             String pattern = patternArr.get(0).getAsString() + patternArr.get(1).getAsString() + patternArr.get(2).getAsString();
             ingredientOneIndex = pattern.indexOf("1");
             ingredientTwoIndex = pattern.indexOf("2");
@@ -136,7 +142,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         /**
          * Only blueprint material is consumed. Materials used inside blueprint are given back.
          */
-        public NonNullList<ItemStack> getRemainingItems(CraftingInventory inv) {
+        public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -160,11 +166,11 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         }
 
         @Override
-        public IRecipeSerializer<?> getSerializer() {
+        public RecipeSerializer<?> getSerializer() {
             return ShapedRecipe.Serializer.SHAPED_RECIPE;
         }
 
-        public boolean matches(CraftingInventory inv) {
+        public boolean matches(CraftingContainer inv) {
             for (int i = 0; i <= inv.getWidth() - recipe.getWidth(); ++i) {
                 for (int j = 0; j <= inv.getHeight() - recipe.getHeight(); ++j) {
                     if (this.checkMatch(inv, i, j, true)) {
@@ -180,14 +186,14 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
             return false;
         }
 
-        public boolean matches(CraftingInventory inv, World worldIn) {
+        public boolean matches(CraftingContainer inv, Level worldIn) {
             return matches(inv);
         }
 
         /**
          * Checks if the region of a crafting inventory is match for the recipe.
          */
-        private boolean checkMatch(CraftingInventory craftingInventory, int p_77573_2_, int p_77573_3_, boolean p_77573_4_) {
+        private boolean checkMatch(CraftingContainer craftingInventory, int p_77573_2_, int p_77573_3_, boolean p_77573_4_) {
             for (int i = 0; i < craftingInventory.getWidth(); ++i) {
                 for (int j = 0; j < craftingInventory.getHeight(); ++j) {
                     int k = i - p_77573_2_;
@@ -210,7 +216,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
             return true;
         }
 
-        public ItemStack assemble(CraftingInventory invC) {
+        public ItemStack assemble(CraftingContainer invC) {
             return recipe.assemble(invC);
         }
 
@@ -221,7 +227,7 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
     }
 
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
+    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
 
         @Override
         public PrefabsBlueprintAggregatorRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
@@ -229,13 +235,13 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         }
 
         @Override
-        public PrefabsBlueprintAggregatorRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
+        public PrefabsBlueprintAggregatorRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             if (instance == null) {
                 instance = new PrefabsBlueprintAggregatorRecipe(recipeId);
             }
             instance.recipes.clear();
 
-            IRecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
+            RecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
             int size = buffer.readInt();
             for (int i = 0; i < size; i++) {
                 ResourceLocation id = new ResourceLocation(buffer.readUtf());
@@ -247,8 +253,8 @@ public class PrefabsBlueprintAggregatorRecipe extends SpecialRecipe {
         }
 
         @Override
-        public void toNetwork(PacketBuffer buffer, PrefabsBlueprintAggregatorRecipe recipe) {
-            IRecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
+        public void toNetwork(FriendlyByteBuf buffer, PrefabsBlueprintAggregatorRecipe recipe) {
+            RecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
             buffer.writeInt(recipe.recipes.size());
             for (PrefabsBlueprintCapsuleRecipe subRecipe : recipe.recipes) {
                 buffer.writeUtf(subRecipe.id.toString());

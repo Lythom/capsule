@@ -5,11 +5,11 @@ import capsule.helpers.Files;
 import capsule.helpers.Serialization;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
-import net.minecraft.loot.LootTables;
-import net.minecraft.resources.IResourceManager;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
@@ -147,7 +147,7 @@ public class Config {
     }
 
     public static void populateConfigFolders(MinecraftServer server) {
-        IResourceManager ressourceManager = server.getDataPackRegistries().getResourceManager();
+        ResourceManager ressourceManager = server.getDataPackRegistries().getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
@@ -204,31 +204,31 @@ public class Config {
 
         // Loot tables that can reward a capsule
         List<String> defaultLootTablesList = Arrays.asList(
-                LootTables.ABANDONED_MINESHAFT.toString(),
-                LootTables.BASTION_BRIDGE.toString(),
-                LootTables.BASTION_HOGLIN_STABLE.toString(),
-                LootTables.BASTION_OTHER.toString(),
-                LootTables.BASTION_TREASURE.toString(),
-                LootTables.SHIPWRECK_TREASURE.toString(),
-                LootTables.DESERT_PYRAMID.toString(),
-                LootTables.END_CITY_TREASURE.toString(),
-                LootTables.IGLOO_CHEST.toString(),
-                LootTables.JUNGLE_TEMPLE.toString(),
-                LootTables.SIMPLE_DUNGEON.toString(),
-                LootTables.STRONGHOLD_CORRIDOR.toString(),
-                LootTables.STRONGHOLD_CROSSING.toString(),
-                LootTables.STRONGHOLD_LIBRARY.toString(),
-                LootTables.VILLAGE_TOOLSMITH.toString(),
-                LootTables.VILLAGE_ARMORER.toString(),
-                LootTables.VILLAGE_TEMPLE.toString(),
-                LootTables.VILLAGE_WEAPONSMITH.toString(),
-                LootTables.BURIED_TREASURE.toString(),
-                LootTables.JUNGLE_TEMPLE_DISPENSER.toString(),
-                LootTables.PILLAGER_OUTPOST.toString(),
-                LootTables.SHIPWRECK_TREASURE.toString(),
-                LootTables.UNDERWATER_RUIN_BIG.toString(),
-                LootTables.UNDERWATER_RUIN_SMALL.toString(),
-                LootTables.WOODLAND_MANSION.toString());
+                BuiltInLootTables.ABANDONED_MINESHAFT.toString(),
+                BuiltInLootTables.BASTION_BRIDGE.toString(),
+                BuiltInLootTables.BASTION_HOGLIN_STABLE.toString(),
+                BuiltInLootTables.BASTION_OTHER.toString(),
+                BuiltInLootTables.BASTION_TREASURE.toString(),
+                BuiltInLootTables.SHIPWRECK_TREASURE.toString(),
+                BuiltInLootTables.DESERT_PYRAMID.toString(),
+                BuiltInLootTables.END_CITY_TREASURE.toString(),
+                BuiltInLootTables.IGLOO_CHEST.toString(),
+                BuiltInLootTables.JUNGLE_TEMPLE.toString(),
+                BuiltInLootTables.SIMPLE_DUNGEON.toString(),
+                BuiltInLootTables.STRONGHOLD_CORRIDOR.toString(),
+                BuiltInLootTables.STRONGHOLD_CROSSING.toString(),
+                BuiltInLootTables.STRONGHOLD_LIBRARY.toString(),
+                BuiltInLootTables.VILLAGE_TOOLSMITH.toString(),
+                BuiltInLootTables.VILLAGE_ARMORER.toString(),
+                BuiltInLootTables.VILLAGE_TEMPLE.toString(),
+                BuiltInLootTables.VILLAGE_WEAPONSMITH.toString(),
+                BuiltInLootTables.BURIED_TREASURE.toString(),
+                BuiltInLootTables.JUNGLE_TEMPLE_DISPENSER.toString(),
+                BuiltInLootTables.PILLAGER_OUTPOST.toString(),
+                BuiltInLootTables.SHIPWRECK_TREASURE.toString(),
+                BuiltInLootTables.UNDERWATER_RUIN_BIG.toString(),
+                BuiltInLootTables.UNDERWATER_RUIN_SMALL.toString(),
+                BuiltInLootTables.WOODLAND_MANSION.toString());
 
         Config.lootTablesListCfg = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
                 .worldRestart()

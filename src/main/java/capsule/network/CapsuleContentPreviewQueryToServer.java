@@ -5,13 +5,13 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.Util;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +30,7 @@ public class CapsuleContentPreviewQueryToServer {
         this.setStructureName(structureName);
     }
 
-    public CapsuleContentPreviewQueryToServer(PacketBuffer buf) {
+    public CapsuleContentPreviewQueryToServer(FriendlyByteBuf buf) {
         try {
             this.setStructureName(buf.readUtf(32767));
 
@@ -39,7 +39,7 @@ public class CapsuleContentPreviewQueryToServer {
         }
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(FriendlyByteBuf buf) {
         if (buf == null) return;
         String name = this.getStructureName();
         if (name == null) name = "";
@@ -47,7 +47,7 @@ public class CapsuleContentPreviewQueryToServer {
     }
 
     public void onServer(Supplier<NetworkEvent.Context> ctx) {
-        final ServerPlayerEntity sendingPlayer = ctx.get().getSender();
+        final ServerPlayer sendingPlayer = ctx.get().getSender();
         if (sendingPlayer == null) {
             LOGGER.error("ServerPlayerEntity was null when AskCapsuleContentPreviewMessageToServer was received");
             return;
@@ -60,18 +60,18 @@ public class CapsuleContentPreviewQueryToServer {
                 return;
             }
 
-            ServerWorld serverworld = sendingPlayer.getLevel();
+            ServerLevel serverworld = sendingPlayer.getLevel();
             Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
             CapsuleTemplate template = templatepair.getRight();
 
             if (template != null) {
-                List<AxisAlignedBB> blockspos = Spacial.mergeVoxels(template.getPalette());
+                List<AABB> blockspos = Spacial.mergeVoxels(template.getPalette());
                 CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
                 CapsuleNetwork.wrapper.reply(new CapsuleFullContentAnswerToClient(template, this.getStructureName()), ctx.get());
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
                 String structureName = heldItem.getTag().getString("structureName");
-                sendingPlayer.sendMessage(new TranslationTextComponent("capsule.error.templateNotFound", structureName), Util.NIL_UUID);
+                sendingPlayer.sendMessage(new TranslatableComponent("capsule.error.templateNotFound", structureName), Util.NIL_UUID);
             }
         });
         ctx.get().setPacketHandled(true);

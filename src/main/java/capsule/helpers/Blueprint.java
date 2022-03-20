@@ -7,21 +7,21 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
 import net.minecraft.block.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.resources.IResourceManager;
-import net.minecraft.state.properties.BedPart;
-import net.minecraft.state.properties.DoubleBlockHalf;
-import net.minecraft.state.properties.SlabType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
-import net.minecraft.util.datafix.DataFixesManager;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.gen.feature.template.Template;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.Util;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
@@ -36,13 +36,24 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.piston.MovingPistonBlock;
+import net.minecraft.world.level.block.piston.PistonHeadBlock;
+import net.minecraft.world.level.block.state.BlockState;
+
 public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
 
-    public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo) {
+    public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo) {
         final BlockState state = blockInfo.state;
         Block block = state.getBlock();
-        CompoundNBT blockNBT = blockInfo.nbt;
+        CompoundTag blockNBT = blockInfo.nbt;
         try {
             // prevent door to beeing counted twice
             if (block instanceof DoorBlock) {
@@ -60,11 +71,11 @@ public class Blueprint {
             } else if (block instanceof SlabBlock && state.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) {
                 return new ItemStack(block.asItem(), 2);
 
-            } else if (block instanceof FarmlandBlock) {
+            } else if (block instanceof FarmBlock) {
                 return new ItemStack(Blocks.DIRT);
 
-            } else if (block instanceof FlowingFluidBlock) {
-                FlowingFluidBlock fblock = (FlowingFluidBlock) block;
+            } else if (block instanceof LiquidBlock) {
+                LiquidBlock fblock = (LiquidBlock) block;
                 if (isLiquidSource(state, fblock)) {
                     ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidAttributes.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
@@ -79,7 +90,7 @@ public class Blueprint {
             if (blockNBT != null) {
 //                if (blockNBT.contains("dummy") && blockNBT.getBoolean("dummy"))
 //                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
-                CompoundNBT itemNBT = new CompoundNBT();
+                CompoundTag itemNBT = new CompoundTag();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
                 for (String key : blockNBT.getAllKeys()) {
                     if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
@@ -98,26 +109,26 @@ public class Blueprint {
         }
     }
 
-    public static boolean isLiquidSource(BlockState state, FlowingFluidBlock block) {
+    public static boolean isLiquidSource(BlockState state, LiquidBlock block) {
         return block.getFluidState(state).isSource();
     }
 
     @Nullable
-    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, ServerWorld
-            worldserver, PlayerEntity player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(ItemStack blueprint, ServerLevel
+            worldserver, Player player) {
         CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return null;
 
         return getMaterialList(blueprintTemplate, player);
     }
 
-    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable Player player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
-        for (Template.BlockInfo block : blueprintTemplate.getPalette()) {// Note: tile entities not supported so nbt data is not used here
+        for (StructureTemplate.StructureBlockInfo block : blueprintTemplate.getPalette()) {// Note: tile entities not supported so nbt data is not used here
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
-                if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
+                if (player != null) player.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
                 if (player != null)
                     LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
                 return null;
@@ -197,7 +208,7 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(IResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+    public static void createDynamicPrefabRecipes(ResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
         JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
@@ -205,7 +216,7 @@ public class Blueprint {
             TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
             Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
             // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixesManager.getDataFixer());
+            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixers.getDataFixer());
             enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
             templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
             reduced = reduceIngredientCount(templatesByIngrendients);

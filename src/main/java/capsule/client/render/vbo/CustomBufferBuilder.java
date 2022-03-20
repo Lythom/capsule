@@ -3,15 +3,15 @@ package capsule.client.render.vbo;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Floats;
-import com.mojang.blaze3d.vertex.DefaultColorVertexBuilder;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
-import com.mojang.blaze3d.vertex.IVertexConsumer;
+import com.mojang.blaze3d.vertex.DefaultedVertexConsumer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.BufferVertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrays;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import com.mojang.blaze3d.platform.MemoryTracker;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
@@ -27,7 +27,7 @@ import java.util.List;
  * Credits to Direwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
  * https://github.com/Direwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renderer/DireBufferBuilder.java
  */
-public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IVertexConsumer {
+public class CustomBufferBuilder extends DefaultedVertexConsumer implements BufferVertexConsumer {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private ByteBuffer byteBuffer;
 	private final List<CustomBufferBuilder.DrawState> drawStates = Lists.newArrayList();
@@ -46,7 +46,7 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 	private boolean isBuilding;
 
 	public CustomBufferBuilder(int bufferSizeIn) {
-		this.byteBuffer = GLAllocation.createByteBuffer(bufferSizeIn * 4);
+		this.byteBuffer = MemoryTracker.createByteBuffer(bufferSizeIn * 4);
 	}
 
 	protected void ensureVertexCapacity() {
@@ -58,7 +58,7 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 			int i = this.byteBuffer.capacity();
 			int j = i + roundUpPositive(increaseAmount);
 			LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", i, j);
-			ByteBuffer bytebuffer = GLAllocation.createByteBuffer(j);
+			ByteBuffer bytebuffer = MemoryTracker.createByteBuffer(j);
 			this.byteBuffer.position(0);
 			bytebuffer.put(this.byteBuffer);
 			bytebuffer.rewind();
@@ -100,7 +100,7 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 			return Floats.compare(afloat[p_227830_1_], afloat[p_227830_2_]);
 		});
 		BitSet bitset = new BitSet();
-		FloatBuffer floatbuffer1 = GLAllocation.createFloatBuffer(this.vertexFormat.getIntegerSize() * 4);
+		FloatBuffer floatbuffer1 = MemoryTracker.createFloatBuffer(this.vertexFormat.getIntegerSize() * 4);
 
 		for (int l = bitset.nextClearBit(0); l < aint.length; l = bitset.nextClearBit(l + 1)) {
 			int i1 = aint[l];
@@ -192,8 +192,8 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 	private void setVertexFormat(VertexFormat vertexFormatIn) {
 		if (this.vertexFormat != vertexFormatIn) {
 			this.vertexFormat = vertexFormatIn;
-			boolean flag = vertexFormatIn == DefaultVertexFormats.POSITION_COLOR_TEX_LIGHTMAP; //POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
-			boolean flag1 = vertexFormatIn == DefaultVertexFormats.BLOCK;
+			boolean flag = vertexFormatIn == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP; //POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+			boolean flag1 = vertexFormatIn == DefaultVertexFormat.BLOCK;
 			this.fastFormat = flag || flag1;
 			this.fullFormat = flag;
 		}
@@ -244,16 +244,16 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 		}
 
 		if (this.defaultColorSet && this.vertexFormatElement.getUsage() == VertexFormatElement.Usage.COLOR) {
-			IVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
+			BufferVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
 		}
 
 	}
 
-	public IVertexBuilder color(int red, int green, int blue, int alpha) {
+	public VertexConsumer color(int red, int green, int blue, int alpha) {
 		if (this.defaultColorSet) {
 			throw new IllegalStateException();
 		} else {
-			return IVertexConsumer.super.color(red, green, blue, alpha);
+			return BufferVertexConsumer.super.color(red, green, blue, alpha);
 		}
 	}
 
@@ -281,9 +281,9 @@ public class CustomBufferBuilder extends DefaultColorVertexBuilder implements IV
 
 			this.putShort(i + 0, (short) (lightmapUV & '\uffff'));
 			this.putShort(i + 2, (short) (lightmapUV >> 16 & '\uffff'));
-			this.putByte(i + 4, IVertexConsumer.normalIntValue(normalX)); // @mcp: func_227846_a_ = normalInt
-			this.putByte(i + 5, IVertexConsumer.normalIntValue(normalY));
-			this.putByte(i + 6, IVertexConsumer.normalIntValue(normalZ));
+			this.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX)); // @mcp: func_227846_a_ = normalInt
+			this.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY));
+			this.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ));
 			this.nextElementBytes += i + 8;
 			this.endVertex();
 		} else {

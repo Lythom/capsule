@@ -6,10 +6,10 @@ import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.loot.*;
-import net.minecraft.loot.conditions.ILootCondition;
-import net.minecraft.loot.functions.ILootFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -18,10 +18,16 @@ import java.util.function.Consumer;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntries;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
+import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+
 /**
  * @author Lythom
  */
-public class CapsuleLootEntry extends StandaloneLootEntry {
+public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
     public static final int DEFAULT_WEIGHT = 3;
     public static String[] COLOR_PALETTE = new String[]{
@@ -30,7 +36,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
     private static final Random random = new Random();
     private String templatesPath = null;
 
-    public static LootEntry.Builder<?> builder(String templatePath) {
+    public static LootPoolEntryContainer.Builder<?> builder(String templatePath) {
         return simpleBuilder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
             int weight = findConfiguredWeight(templatePath);
             return new CapsuleLootEntry(templatePath, weight);
@@ -50,7 +56,7 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
      * @param weightIn
      */
     protected CapsuleLootEntry(String templatesPath, int weightIn) {
-        super(weightIn, 0, new ILootCondition[0], new ILootFunction[0]);
+        super(weightIn, 0, new LootItemCondition[0], new LootItemFunction[0]);
         this.templatesPath = templatesPath;
     }
 
@@ -130,6 +136,6 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
 
     @Override
     public LootPoolEntryType getType() {
-        return LootEntryManager.REFERENCE;
+        return LootPoolEntries.REFERENCE;
     }
 }
