@@ -12,6 +12,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.16.5-5.0.76 : preview duration config and custom template load**
+
+- Add a client configuration for capsule activation duration (duration of the preview when right clicking). Default unchanged 120 tick (6 seconds).
+- Fix game won't crash anymore if a custom template cannot be looked up in file system.
+
 **1.16.5-5.0.75 : Bug fixes**
 
 - Fix the configuration file being regenerated and resetting changes in lists (Thanks to [StarDruid on curseforge](https://www.curseforge.com/minecraft/mc-mods/capsule?comment=266))
