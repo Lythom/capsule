@@ -12,6 +12,11 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.16.5-5.0.75 : Bug fixes**
+
+- Fix the configuration file being regenerated and resetting changes in lists (Thanks to [StarDruid on curseforge](https://www.curseforge.com/minecraft/mc-mods/capsule?comment=266))
+- Fix a crash when CapsuleItem.GetName() is called from server creating a incompatibility with InventoryPets (among others). (Thanks to [WenXin20 on github](https://github.com/Lythom/capsule/issues/53))
+
 **1.16.5-5.0.73 : New preview renderer**
 
 - Complete rework of the preview rendering: it should now be far more accurate.
