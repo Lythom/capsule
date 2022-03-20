@@ -59,9 +59,6 @@ import static capsule.items.CapsuleItem.CapsuleState.*;
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
-
-    public static final int ACTIVE_DURATION_IN_TICKS = 120; // 6 sec at 20 ticks/sec
-
     public enum CapsuleState {
         EMPTY(0),
         EMPTY_ACTIVATED(4),
@@ -682,7 +679,7 @@ public class CapsuleItem extends Item {
             // disable capsule after some time
             CompoundNBT timer = stack.getTagElement("activetimer");
 
-            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + ACTIVE_DURATION_IN_TICKS) {
+            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + Config.previewDisplayDuration) {
                 revertStateFromActivated(stack);
                 worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             }

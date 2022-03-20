@@ -56,6 +56,7 @@ public class CapsuleMod {
 
     public CapsuleMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.CLIENT_CONFIG);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
@@ -125,6 +126,10 @@ final class CapsuleModEventSubscriber {
         if (config.getSpec() == Config.COMMON_CONFIG) {
             Config.bakeConfig(config);
             CapsuleMod.LOGGER.debug("Baked COMMON_CONFIG");
+        }
+        if (config.getSpec() == Config.CLIENT_CONFIG) {
+            Config.bakeClientConfig(config);
+            CapsuleMod.LOGGER.debug("Baked CLIENT_CONFIG");
         }
     }
 
