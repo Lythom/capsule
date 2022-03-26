@@ -1,10 +1,13 @@
 package capsule.client.render;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.core.particles.ParticleOptions;
@@ -19,9 +22,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.dimension.DimensionType;
-import net.minecraft.world.level.TickList;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.border.WorldBorder;
@@ -32,6 +33,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.Heightmap.Types;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.storage.LevelData;
+import net.minecraft.world.ticks.LevelTickAccess;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -80,12 +82,22 @@ public class FakeWorld implements LevelAccessor {
 	}
 
 	@Override
+	public void gameEvent(@org.jetbrains.annotations.Nullable Entity pEntity, GameEvent pEvent, BlockPos pPos) {
+
+	}
+
+	@Override
 	public List<Entity> getEntities(@Nullable Entity entity, AABB axisAlignedBB, @Nullable Predicate<? super Entity> predicate) {
 		return new ArrayList<>();
 	}
 
 	@Override
-	public <T extends Entity> List<T> getEntitiesOfClass(Class<? extends T> aClass, AABB axisAlignedBB, @Nullable Predicate<? super T> predicate) {
+	public <T extends Entity> List<T> getEntities(EntityTypeTest<Entity, T> pEntityTypeTest, AABB pArea, Predicate<? super T> pPredicate) {
+		return null;
+	}
+
+	@Override
+	public <T extends Entity> List<T> getEntitiesOfClass(Class<T> aClass, AABB axisAlignedBB, @Nullable Predicate<? super T> predicate) {
 		return new ArrayList<>();
 	}
 
@@ -121,19 +133,29 @@ public class FakeWorld implements LevelAccessor {
 	}
 
 	@Override
+	public boolean isFluidAtPosition(BlockPos pPos, Predicate<FluidState> pPredicate) {
+		return false;
+	}
+
+	@Override
 	@OnlyIn(Dist.CLIENT)
 	public int getMoonPhase() {
 		return delegate.getMoonPhase();
 	}
 
 	@Override
-	public TickList<Block> getBlockTicks() {
+	public long nextSubTickCount() {
+		return delegate.nextSubTickCount();
+	}
+
+	@Override
+	public LevelTickAccess<Block> getBlockTicks() {
 		return delegate.getBlockTicks();
 	}
 
 	@Override
-	public TickList<Fluid> getLiquidTicks() {
-		return delegate.getLiquidTicks();
+	public LevelTickAccess<Fluid> getFluidTicks() {
+		return delegate.getFluidTicks();
 	}
 
 	/**
@@ -152,6 +174,12 @@ public class FakeWorld implements LevelAccessor {
 	@Override
 	public DifficultyInstance getCurrentDifficultyAt(BlockPos pos) {
 		return delegate.getCurrentDifficultyAt(pos);
+	}
+
+	@org.jetbrains.annotations.Nullable
+	@Override
+	public MinecraftServer getServer() {
+		return this.delegate.getServer();
 	}
 
 	@Override
@@ -187,7 +215,7 @@ public class FakeWorld implements LevelAccessor {
 	 */
 	@Override
 	public boolean isEmptyBlock(BlockPos pos) {
-		return getBlockState(pos).isAir(this, pos);
+		return getBlockState(pos).isAir();
 	}
 
 	@Override
@@ -260,7 +288,7 @@ public class FakeWorld implements LevelAccessor {
 
 	@Override
 	public BlockState getBlockState(BlockPos pos) {
-		if (Level.isOutsideBuildHeight(pos))
+		if (this.delegate.isOutsideBuildHeight(pos))
 			return Blocks.VOID_AIR.defaultBlockState();
 		BlockState state = getOverriddenBlockState(pos);
 		return state != null ? state : Blocks.AIR.defaultBlockState();
@@ -294,7 +322,7 @@ public class FakeWorld implements LevelAccessor {
 	 */
 	@Override
 	public boolean setBlock(BlockPos pos, BlockState newState, int flags) {
-		if (Level.isOutsideBuildHeight(pos))
+		if (this.delegate.isOutsideBuildHeight(pos))
 			return false;
 		posToBlock.put(pos, newState);
 		return true;
@@ -306,7 +334,7 @@ public class FakeWorld implements LevelAccessor {
 	@Override
 	public boolean destroyBlock(BlockPos pos, boolean dropBlock) {
 		// adapted from World
-		return ! this.getBlockState(pos).isAir(this, pos) && removeBlock(pos, true);
+		return !this.getBlockState(pos).isAir() && removeBlock(pos, true);
 	}
 
 	@Override

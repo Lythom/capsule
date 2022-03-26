@@ -14,8 +14,8 @@ import java.util.function.Consumer;
 
 /**
  * Vertex Buffer Object for caching the render. Pretty similar to how the chunk caching works
- * Credits to Direwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
- * https://github.com/Direwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renders/CopyPasteRender.java
+ * Credits to Customwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
+ * https://github.com/Customwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renders/CopyPasteRender.java
  */
 public class MultiVBORenderer implements Closeable {
 	private static final int BUFFER_SIZE = 2 * 1024 * 1024 * 3;
@@ -25,7 +25,7 @@ public class MultiVBORenderer implements Closeable {
 
 		vertexProducer.accept(rt -> builders.computeIfAbsent(rt, (_rt) -> {
 			CustomBufferBuilder builder = new CustomBufferBuilder(BUFFER_SIZE);
-			builder.begin(_rt.mode(), _rt.format());
+			builder.begin(_rt.mode().asGLMode, _rt.format());
 
 			return builder;
 		}));
@@ -60,7 +60,7 @@ public class MultiVBORenderer implements Closeable {
 			RenderType rt = kv.getKey();
 			CustomBufferBuilder.State state = kv.getValue();
 			CustomBufferBuilder builder = new CustomBufferBuilder(BUFFER_SIZE);
-			builder.begin(rt.mode(), rt.format());
+			builder.begin(rt.mode().asGLMode, rt.format());
 			builder.setVertexState(state);
 			builder.sortVertexData(x, y, z);
 			builder.finishDrawing();
@@ -76,8 +76,8 @@ public class MultiVBORenderer implements Closeable {
 
 			rt.setupRenderState();
 			vbo.bindBuffer();
-			fmt.setupBufferState(0L);
-			vbo.draw(matrix, rt.mode());
+			fmt.setupBufferState();
+			vbo.draw(matrix, rt.mode().asGLMode);
 			CustomVertexBuffer.unbindBuffer();
 			fmt.clearBufferState();
 			rt.clearRenderState();

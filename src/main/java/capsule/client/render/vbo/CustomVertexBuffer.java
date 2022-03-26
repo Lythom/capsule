@@ -9,10 +9,11 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Credits to Direwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
- * https://github.com/Direwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renderer/DireVertexBuffer.java
+ * Credits to Customwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
+ * https://github.com/Customwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renderer/CustomVertexBuffer.java
  */
 public class CustomVertexBuffer implements AutoCloseable {
+
 	private int glBufferId;
 	private final VertexFormat vertexFormat;
 	private int count;
@@ -36,6 +37,7 @@ public class CustomVertexBuffer implements AutoCloseable {
 		} else {
 			this.uploadRaw(bufferIn);
 		}
+
 	}
 
 	public CompletableFuture<Void> uploadLater(CustomBufferBuilder bufferIn) {
@@ -52,7 +54,7 @@ public class CustomVertexBuffer implements AutoCloseable {
 	}
 
 	private void uploadRaw(CustomBufferBuilder bufferIn) {
-		Pair<CustomBufferBuilder.DrawState, ByteBuffer> pair = bufferIn.popNextBuffer();
+		Pair<CustomBufferBuilder.DrawState, ByteBuffer> pair = bufferIn.getNextBuffer();
 		if (this.glBufferId != -1) {
 			ByteBuffer bytebuffer = pair.getSecond();
 			this.count = bytebuffer.remaining() / this.vertexFormat.getVertexSize();
@@ -63,11 +65,12 @@ public class CustomVertexBuffer implements AutoCloseable {
 	}
 
 	public void draw(Matrix4f matrixIn, int modeIn) {
-		RenderSystem.pushMatrix();
-		RenderSystem.loadIdentity();
-		RenderSystem.multMatrix(matrixIn);
-		RenderSystem.drawArrays(modeIn, 0, this.count);
-		RenderSystem.popMatrix();
+//        Render
+//        RenderSystem.pushMatrix();
+//        RenderSystem.loadIdentity();
+//        RenderSystem.multMatrix(matrixIn);
+//        RenderSystem.drawArrays(modeIn, 0, this.count);
+//        RenderSystem.popMatrix();
 	}
 
 	public static void unbindBuffer() {
@@ -79,5 +82,6 @@ public class CustomVertexBuffer implements AutoCloseable {
 			RenderSystem.glDeleteBuffers(this.glBufferId);
 			this.glBufferId = -1;
 		}
+
 	}
 }

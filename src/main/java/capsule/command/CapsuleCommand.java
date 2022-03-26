@@ -558,9 +558,9 @@ public class CapsuleCommand {
 
                     BlockPos position = rtc.getBlockPos();
                     BlockState state = player.getLevel().getBlockState(position);
-                    BlockEntity tileentity = player.getLevel().getBlockEntity(position);
+                    BlockEntity BlockEntity = player.getLevel().getBlockEntity(position);
 
-                    String BlockEntityTag = tileentity == null ? "" : "{BlockEntityTag:" + tileentity.serializeNBT().toString() + "}";
+                    String BlockEntityTag = BlockEntity == null ? "" : "{BlockEntityTag:" + BlockEntity.serializeNBT().toString() + "}";
                     String command = "/give @p " + state.getBlock().getRegistryName() + BlockEntityTag + " 1 ";
                     TextComponent msg = new TextComponent(command);
                     player.sendMessage(msg.withStyle(style -> style

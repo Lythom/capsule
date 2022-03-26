@@ -8,14 +8,11 @@ import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ToolType;
 
 public class BlockCaptureCrasher extends Block {
     public BlockCaptureCrasher() {
         super(Block.Properties.of(Material.STONE, MaterialColor.STONE)
-                .sound(SoundType.STONE)
-                .harvestTool(ToolType.PICKAXE)
-                .harvestLevel(0));
+                .sound(SoundType.STONE));
     }
 
     @Override

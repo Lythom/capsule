@@ -1,33 +1,33 @@
 package capsule.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Camera;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 
 public class RendererUtils {
-    public static void doPositionPrologue(Camera info) {
-        RenderSystem.pushMatrix();
-        RenderSystem.rotatef(info.getXRot(), 1.0F, 0.0F, 0.0F);
-        RenderSystem.rotatef(info.getYRot() + 180, 0.0F, 1.0F, 0.0F);
-        RenderSystem.translated(-info.getPosition().x, -info.getPosition().y, -info.getPosition().z);
+    public static void doPositionPrologue(Camera camera, PoseStack poseStack) {
+        poseStack.pushPose();
+        poseStack.mulPose(Vector3f.XP.rotationDegrees(camera.getXRot()));
+        poseStack.mulPose(Vector3f.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
     }
 
-    public static void doPositionEpilogue() {
-        RenderSystem.popMatrix();
+    public static void doPositionEpilogue(PoseStack poseStack) {
+        poseStack.popPose();
     }
 
     public static void doOverlayPrologue() {
-        RenderSystem.disableLighting();
         RenderSystem.disableTexture();
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
     }
 
     public static void doOverlayEpilogue() {
-        RenderSystem.enableLighting();
         RenderSystem.enableTexture();
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
@@ -35,7 +35,6 @@ public class RendererUtils {
 
     public static void doWirePrologue() {
         RenderSystem.disableCull();
-        RenderSystem.disableLighting();
         RenderSystem.disableTexture();
         RenderSystem.lineWidth(3.0F);
     }
@@ -43,7 +42,6 @@ public class RendererUtils {
     public static void doWireEpilogue() {
         RenderSystem.lineWidth(1.0F);
         RenderSystem.enableTexture();
-        RenderSystem.enableLighting();
         RenderSystem.enableCull();
 
     }
@@ -122,6 +120,6 @@ public class RendererUtils {
         final float gf = g / 255f;
         final float bf = b / 255f;
 
-        RenderSystem.color4f(rf, gf, bf, af);
+        RenderSystem.setShaderColor(rf, gf, bf, af);
     }
 }

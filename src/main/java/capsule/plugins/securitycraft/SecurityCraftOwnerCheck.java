@@ -10,10 +10,10 @@ import net.minecraftforge.fml.ModList;
 public class SecurityCraftOwnerCheck {
     public static boolean canTakeBlock(ServerLevel worldserver, BlockPos blockPos, Player player) {
         if (!ModList.get().isLoaded("securitycraft")) return true;
-        BlockEntity tileEntity = worldserver.getBlockEntity(blockPos);
+        BlockEntity BlockEntity = worldserver.getBlockEntity(blockPos);
         // if not an IOwnable, SecurityCraft should not prevent taking
-        if (!(tileEntity instanceof IOwnable)) return true;
+        if (!(BlockEntity instanceof IOwnable)) return true;
         // can take the block if owner
-        return ((IOwnable) tileEntity).getOwner().isOwner(player);
+        return ((IOwnable) BlockEntity).getOwner().isOwner(player);
     }
 }

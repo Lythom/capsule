@@ -23,10 +23,6 @@ import java.nio.FloatBuffer;
 import java.util.BitSet;
 import java.util.List;
 
-/**
- * Credits to Direwolf20's (and the team of) Building Gadgets which is under the MIT license as of writing 16/06/2021 (d/m/y)
- * https://github.com/Direwolf20-MC/BuildingGadgets/blob/1.16/src/main/java/com/direwolf20/buildinggadgets/client/renderer/DireBufferBuilder.java
- */
 public class CustomBufferBuilder extends DefaultedVertexConsumer implements BufferVertexConsumer {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private ByteBuffer byteBuffer;
@@ -43,22 +39,22 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	private VertexFormat vertexFormat;
 	private boolean fastFormat;
 	private boolean fullFormat;
-	private boolean isBuilding;
+	private boolean isDrawing;
 
 	public CustomBufferBuilder(int bufferSizeIn) {
-		this.byteBuffer = MemoryTracker.createByteBuffer(bufferSizeIn * 4);
+		this.byteBuffer = MemoryTracker.create(bufferSizeIn * 4); // TODO: might need to remove or change to 6
 	}
 
-	protected void ensureVertexCapacity() {
-		this.ensureCapacity(this.vertexFormat.getVertexSize());
+	protected void growBuffer() {
+		this.growBuffer(this.vertexFormat.getVertexSize());
 	}
 
-	private void ensureCapacity(int increaseAmount) {
+	private void growBuffer(int increaseAmount) {
 		if (this.nextElementBytes + increaseAmount > this.byteBuffer.capacity()) {
 			int i = this.byteBuffer.capacity();
 			int j = i + roundUpPositive(increaseAmount);
 			LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", i, j);
-			ByteBuffer bytebuffer = MemoryTracker.createByteBuffer(j);
+			ByteBuffer bytebuffer = MemoryTracker.create(j);
 			this.byteBuffer.position(0);
 			bytebuffer.put(this.byteBuffer);
 			bytebuffer.rewind();
@@ -100,7 +96,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 			return Floats.compare(afloat[p_227830_1_], afloat[p_227830_2_]);
 		});
 		BitSet bitset = new BitSet();
-		FloatBuffer floatbuffer1 = MemoryTracker.createFloatBuffer(this.vertexFormat.getIntegerSize() * 4);
+		FloatBuffer floatbuffer1 = FloatBuffer.allocate(this.vertexFormat.getIntegerSize() * 6);
 
 		for (int l = bitset.nextClearBit(0); l < aint.length; l = bitset.nextClearBit(l + 1)) {
 			int i1 = aint[l];
@@ -165,7 +161,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	public void setVertexState(CustomBufferBuilder.State state) {
 		state.stateByteBuffer.clear();
 		int i = state.stateByteBuffer.capacity();
-		this.ensureCapacity(i);
+		this.growBuffer(i);
 		this.byteBuffer.limit(this.byteBuffer.capacity());
 		this.byteBuffer.position(this.renderedBytes);
 		this.byteBuffer.put(state.stateByteBuffer);
@@ -177,10 +173,10 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	}
 
 	public void begin(int glMode, VertexFormat format) {
-		if (this.isBuilding) {
+		if (this.isDrawing) {
 			throw new IllegalStateException("Already building!");
 		} else {
-			this.isBuilding = true;
+			this.isDrawing = true;
 			this.drawMode = glMode;
 			this.setVertexFormat(format);
 			this.vertexFormatElement = format.getElements().get(0);
@@ -200,10 +196,10 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	}
 
 	public void finishDrawing() {
-		if (!this.isBuilding) {
+		if (!this.isDrawing) {
 			throw new IllegalStateException("Not building!");
 		} else {
-			this.isBuilding = false;
+			this.isDrawing = false;
 			this.drawStates.add(new CustomBufferBuilder.DrawState(this.vertexFormat, this.vertexCount, this.drawMode));
 			this.renderedBytes += this.vertexCount * this.vertexFormat.getVertexSize();
 			this.vertexCount = 0;
@@ -229,7 +225,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 			throw new IllegalStateException("Not filled all elements of the vertex");
 		} else {
 			++this.vertexCount;
-			this.ensureVertexCapacity();
+			this.growBuffer();
 		}
 	}
 
@@ -281,7 +277,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 
 			this.putShort(i + 0, (short) (lightmapUV & '\uffff'));
 			this.putShort(i + 2, (short) (lightmapUV >> 16 & '\uffff'));
-			this.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX)); // @mcp: func_227846_a_ = normalInt
+			this.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX)); // @mcp: normalIntValue = normalInt
 			this.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY));
 			this.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ));
 			this.nextElementBytes += i + 8;
@@ -291,7 +287,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 		}
 	}
 
-	public Pair<CustomBufferBuilder.DrawState, ByteBuffer> popNextBuffer() {
+	public Pair<CustomBufferBuilder.DrawState, ByteBuffer> getNextBuffer() {
 		CustomBufferBuilder.DrawState bufferbuilder$drawstate = this.drawStates.get(this.drawStateIndex++);
 		this.byteBuffer.position(this.uploadedBytes);
 		this.uploadedBytes += bufferbuilder$drawstate.getVertexCount() * bufferbuilder$drawstate.getFormat().getVertexSize();
@@ -329,20 +325,20 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 		}
 	}
 
-	public boolean building() {
-		return this.isBuilding;
+	public boolean isDrawing() {
+		return this.isDrawing;
 	}
 
 	@OnlyIn(Dist.CLIENT)
 	public static final class DrawState {
 		private final VertexFormat format;
 		private final int vertexCount;
-		private final int mode;
+		private final int drawMode;
 
 		private DrawState(VertexFormat formatIn, int vertexCountIn, int drawModeIn) {
 			this.format = formatIn;
 			this.vertexCount = vertexCountIn;
-			this.mode = drawModeIn;
+			this.drawMode = drawModeIn;
 		}
 
 		public VertexFormat getFormat() {
@@ -353,8 +349,8 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 			return this.vertexCount;
 		}
 
-		public int mode() {
-			return this.mode;
+		public int getDrawMode() {
+			return this.drawMode;
 		}
 	}
 
@@ -370,7 +366,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	}
 
 	public void putBulkData(ByteBuffer buffer) {
-		ensureCapacity(buffer.limit() + this.vertexFormat.getVertexSize());
+		growBuffer(buffer.limit() + this.vertexFormat.getVertexSize());
 		this.byteBuffer.position(this.vertexCount * this.vertexFormat.getVertexSize());
 		this.byteBuffer.put(buffer);
 		this.vertexCount += buffer.limit() / this.vertexFormat.getVertexSize();

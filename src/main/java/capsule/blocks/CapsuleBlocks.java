@@ -1,6 +1,10 @@
 package capsule.blocks;
 
 import capsule.CapsuleMod;
+import com.mojang.datafixers.types.Type;
+import net.minecraft.Util;
+import net.minecraft.core.Registry;
+import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -9,8 +13,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -21,7 +25,7 @@ public class CapsuleBlocks {
     public final static ResourceLocation CAPSULE_MARKER_TE_REGISTERY_NAME = new ResourceLocation(CapsuleMod.MODID, "capsulemarker_te");
 
     public static BlockCapsuleMarker CAPSULE_MARKER;
-    public static BlockEntityType<TileEntityCapture> MARKER_TE;
+    public static BlockEntityType<BlockEntityCapture> MARKER_TE;
 
     // testing blocks
     public static BlockCaptureCrasher blockCaptureCrasher;
@@ -30,10 +34,11 @@ public class CapsuleBlocks {
     public static BlockDeployCrasher blockDeployCrasher;
     public final static String DEPLOY_CRASHER_REGISTERY_NAME = "deploycrasher";
 
-    private static <T extends BlockEntity> BlockEntityType<T> buildTileEntity(Supplier<T> supplier, ResourceLocation name, Block... blocks) {
-        BlockEntityType<T> te = BlockEntityType.Builder.of(supplier, blocks).build(null);
+    private static <T extends BlockEntity> BlockEntityType<T> buildBlockEntity(BlockEntityType.BlockEntitySupplier<T> supplier, ResourceLocation name, Block... blocks) {
+        Type<?> type = Util.fetchChoiceType(References.BLOCK_ENTITY, name.toString());
+        BlockEntityType<T> te = BlockEntityType.Builder.of(supplier, blocks).build(type);
         te.setRegistryName(name);
-        return te;
+        return Registry.register(Registry.BLOCK_ENTITY_TYPE, name, te);
     }
 
     public static void registerBlocks(final RegistryEvent.Register<Block> event) {
@@ -68,13 +73,13 @@ public class CapsuleBlocks {
         }
     }
 
-    public static void registerTileEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
-        MARKER_TE = buildTileEntity(TileEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
+    public static void registerBlockEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
+        MARKER_TE = buildBlockEntity(BlockEntityCapture::new, CapsuleBlocks.CAPSULE_MARKER_TE_REGISTERY_NAME, CapsuleBlocks.CAPSULE_MARKER);
         event.getRegistry().register(MARKER_TE);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void bindTileEntitiesRenderer() {
-        ClientRegistry.bindTileEntityRenderer(MARKER_TE, CaptureTESR::new);
+    public static void bindBlockEntitiesRenderer() {
+        ClientRegistry.bindBlockEntityRenderer(MARKER_TE, CaptureTESR::new);
     }
 }

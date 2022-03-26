@@ -33,6 +33,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraftforge.client.RenderProperties;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -103,7 +104,7 @@ public class CapsuleTemplateRenderer {
                 try {
                     if (state.getRenderShape() == RenderShape.MODEL) {
                         for (Direction direction : Direction.values()) {
-                            if (Block.shouldRenderFace(state, templateWorld, targetPos, direction) && !(templateWorld.getBlockState(targetPos.relative(direction)).getBlock().equals(state.getBlock()))) {
+                            if (Block.shouldRenderFace(state, templateWorld, targetPos, direction, targetPos.relative(direction)) && !(templateWorld.getBlockState(targetPos.relative(direction)).getBlock().equals(state.getBlock()))) {
                                 if (state.getMaterial().isSolidBlocking()) {
                                     renderModelBrightnessColorQuads(stack.last(), builder, f, f1, f2, 1, ibakedmodel.getQuads(state, direction, new Random(Mth.getSeed(targetPos)), EmptyModelData.INSTANCE), 15728640, OverlayTexture.NO_OVERLAY);
                                 } else {
@@ -121,7 +122,7 @@ public class CapsuleTemplateRenderer {
                             renderFluid(stack, targetPos, level, builder, ifluidstate);
                         } else if (state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
                             ItemStack itemstack = new ItemStack(state.getBlock());
-                            itemstack.getItem().getItemStackTileEntityRenderer().renderByItem(itemstack, ItemTransforms.TransformType.NONE, stack, buffer, 15728640, OverlayTexture.NO_OVERLAY);
+                            RenderProperties.get(itemstack).getItemStackRenderer().renderByItem(itemstack, ItemTransforms.TransformType.NONE, stack, buffer, 15728640, OverlayTexture.NO_OVERLAY);
                         }
                     }
                 } catch (Exception e) {
@@ -137,13 +138,13 @@ public class CapsuleTemplateRenderer {
     }
 
     private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(ifluidstate.getFluidState().getType().getAttributes().getStillTexture());
+        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(ifluidstate.getType().getAttributes().getStillTexture());
 
         float minU = sprite.getU0();
         float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
         float minV = sprite.getV0();
         float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
-        int waterColor = ifluidstate.getFluidState().getType().getAttributes().getColor(world, destOriginPos);
+        int waterColor = ifluidstate.getType().getAttributes().getColor(world, destOriginPos);
         float red = (float) (waterColor >> 16 & 255) / 255.0F;
         float green = (float) (waterColor >> 8 & 255) / 255.0F;
         float blue = (float) (waterColor & 255) / 255.0F;
@@ -176,7 +177,7 @@ public class CapsuleTemplateRenderer {
                 f2 = 1f;
             }
 
-            builder.addVertexData(matrixEntry, bakedquad, f, f1, f2, alpha, combinedLightsIn, combinedOverlayIn);
+            builder.putBulkData(matrixEntry, bakedquad, f, f1, f2, alpha, combinedLightsIn, combinedOverlayIn);
         }
     }
 
@@ -215,8 +216,8 @@ public class CapsuleTemplateRenderer {
                         FluidState fluidstate = placementSettings.shouldKeepLiquids() ? templateWorld.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state.mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
                         if (template$blockinfo.nbt != null) {
-                            BlockEntity tileentity = templateWorld.getBlockEntity(blockpos);
-                            Clearable.tryClear(tileentity);
+                            BlockEntity BlockEntity = templateWorld.getBlockEntity(blockpos);
+                            Clearable.tryClear(BlockEntity);
                             templateWorld.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
                         }
 
@@ -282,7 +283,7 @@ public class CapsuleTemplateRenderer {
 
                         for (Pair<BlockPos, CompoundTag> pair1 : list2) {
                             BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.setFull(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
+                            voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
                         }
 
                         StructureTemplate.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);

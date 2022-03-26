@@ -11,18 +11,18 @@ import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.structure.CapsuleTemplateManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DispenserBlock;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
@@ -30,16 +30,17 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Consumer;
@@ -62,7 +63,7 @@ public class CapsuleMod {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
     }
 
-    public static void serverStarting(final FMLServerStartingEvent e) {
+    public static void serverStarting(final ServerStartingEvent e) {
         server = e.getServer();
         Config.populateConfigFolders(server);
         if (PrefabsBlueprintAggregatorRecipe.instance != null)
@@ -73,7 +74,7 @@ public class CapsuleMod {
         CapsuleCommand.register(e.getDispatcher());
     }
 
-    public static void serverStopped(final FMLServerStoppedEvent e) {
+    public static void serverStopped(final ServerStoppedEvent e) {
         server = null;
     }
 
@@ -99,7 +100,7 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void clientSetup(FMLClientSetupEvent event) {
-        CapsuleBlocks.bindTileEntitiesRenderer();
+        CapsuleBlocks.bindBlockEntitiesRenderer();
 
         // register color variants
         Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
@@ -112,7 +113,7 @@ final class CapsuleModEventSubscriber {
         ItemProperties.register(
                 CapsuleItems.CAPSULE,
                 new ResourceLocation(CapsuleMod.MODID, "state"),
-                (stack, world, entity) -> CapsuleItem.getState(stack).getValue()
+                (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
         );
     }
 
@@ -120,7 +121,7 @@ final class CapsuleModEventSubscriber {
      * This method will be called by Forge when a config changes.
      */
     @SubscribeEvent
-    public static void onModConfigEvent(final ModConfig.ModConfigEvent event) {
+    public static void onModConfigEvent(final ModConfigEvent event) {
         final ModConfig config = event.getConfig();
         // Rebake the configs when they change
         if (config.getSpec() == Config.COMMON_CONFIG) {
@@ -145,8 +146,8 @@ final class CapsuleModEventSubscriber {
     }
 
     @SubscribeEvent
-    public static void registerTileEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
-        CapsuleBlocks.registerTileEntities(event);
+    public static void registerBlockEntities(final RegistryEvent.Register<BlockEntityType<?>> event) {
+        CapsuleBlocks.registerBlockEntities(event);
     }
 
     @SubscribeEvent
@@ -170,9 +171,9 @@ final class CapsuleForgeSubscriber {
 
     @SubscribeEvent
     public static void setup(AddReloadListenerEvent event) {
-        StructureSaver.getRewardManager(event.getResourceManager()).onResourceManagerReload(event.getResourceManager());
+        StructureSaver.getRewardManager(event.getDataPackRegistries().getResourceManager()).onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
         for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
-            ctm.onResourceManagerReload(event.getResourceManager());
+            ctm.onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
         }
 
     }

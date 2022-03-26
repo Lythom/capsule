@@ -249,12 +249,12 @@ public class StructureSaver {
             for (BlockPos pos : transferedPositions) {
                 BlockState b = world.getBlockState(pos);
                 try {
-                    // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
+                    // uses same mechanic for BlockEntity than net.minecraft.world.gen.feature.template.Template
                     if (playerCanRemove(world, pos, player)) {
-                        BlockEntity tileentity = b.hasBlockEntity() ? world.getBlockEntity(pos) : null;
+                        BlockEntity BlockEntity = b.hasBlockEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
-                        if (tileentity != null) {
-                            Clearable.tryClear(tileentity);
+                        if (BlockEntity != null) {
+                            Clearable.tryClear(BlockEntity);
                             world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 20); // from Template.placeInWorld
                         }
 

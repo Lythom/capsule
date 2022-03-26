@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 
-public class CaptureTESR extends BlockEntityRenderer<TileEntityCapture> {
+public class CaptureTESR extends BlockEntityRenderer<BlockEntityCapture> {
 
     double time = 0;
 
@@ -21,19 +21,19 @@ public class CaptureTESR extends BlockEntityRenderer<TileEntityCapture> {
 
 
     @Override
-    public boolean shouldRenderOffScreen(TileEntityCapture te) {
+    public boolean shouldRenderOffScreen(BlockEntityCapture te) {
         return true;
     }
 
     @Override
-    public void render(TileEntityCapture tileEntityCapture, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(BlockEntityCapture BlockEntityCapture, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
         time += partialTicks;
-        int size = tileEntityCapture.getSize();
+        int size = BlockEntityCapture.getSize();
         if (size == 0)
             return;
         int extendSize = (size - 1) / 2;
-        int color = tileEntityCapture.getColor();
-        BlockPos offset = Spacial.getAnchor(BlockPos.ZERO, tileEntityCapture.getBlockState(), size);
+        int color = BlockEntityCapture.getColor();
+        BlockPos offset = Spacial.getAnchor(BlockPos.ZERO, BlockEntityCapture.getBlockState(), size);
         AABB boundingBox = Spacial.getBB(offset.getX(), offset.getY(), offset.getZ(), size, extendSize);
         VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderType.lines());
         CapsulePreviewHandler.renderRecallBox(matrixStackIn, color, boundingBox, ivertexbuilder, time);
