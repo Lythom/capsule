@@ -1,15 +1,15 @@
 package capsule.tags;
 
 import capsule.CapsuleMod;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.Tags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 
 public class CapsuleTags {
-    public static final  Tags.IOptionalNamedTag<Block> excludedBlocks = capsuleTag("excluded");
+    public static final TagKey<Block> excludedBlocks = capsuleTag("excluded");
 
-    private static Tags.IOptionalNamedTag<Block> capsuleTag(String name) {
-        return BlockTags.createOptional(new ResourceLocation(CapsuleMod.MODID, name));
+    private static TagKey<Block> capsuleTag(String name) {
+        return BlockTags.create(new ResourceLocation(CapsuleMod.MODID, name));
     }
 }

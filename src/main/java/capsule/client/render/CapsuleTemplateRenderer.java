@@ -6,35 +6,38 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.Clearable;
-import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.core.Direction;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
-import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
-import com.mojang.math.Matrix4f;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.Clearable;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlockContainer;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.client.RenderProperties;
-import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
+import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,18 +46,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LiquidBlockContainer;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.state.BlockState;
-
 public class CapsuleTemplateRenderer {
     private static final Logger LOGGER = LogManager.getLogger();
     public MultiVBORenderer renderBuffer;
     public FakeWorld templateWorld = null;
     private boolean isWorldDirty = true;
     private StructurePlaceSettings lastPlacementSettings;
+    private ModelBlockRenderer blockRenderer = new ModelBlockRenderer(BlockColors.createDefault());
+    private LiquidBlockRenderer liquidBlockRenderer = new LiquidBlockRenderer();
 
     public void renderTemplate(PoseStack poseStack, Player player, BlockPos destPos) {
         if (player == null)
@@ -71,70 +70,83 @@ public class CapsuleTemplateRenderer {
         poseStack.popPose();
     }
 
+//    public void renderTemplate(PoseStack poseStack, Vec3 cameraView, Player player) {
+//        if (renderBuffer != null) {
+//            renderBuffer.render(poseStack.last().pose()); //Actually draw whats in the buffer
+//            return;
+//        }
+//
+//        Minecraft minecraft = Minecraft.getInstance();
+//        renderBuffer = MultiVBORenderer.of((buffer) -> {
+//            VertexConsumer builder = buffer.getBuffer(CustomRenderType.VISUAL_BLOCK);
+//            MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+//            var dispatcher = minecraft.getBlockRenderer();
+//
+//            PoseStack stack = new PoseStack(); //Create a new matrix stack for use in the buffer building process
+//            stack.pushPose(); //Save position
+//
+//            for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
+//                BlockPos targetPos = entry.getKey();
+//                BlockState state = entry.getValue();
+//
+//                stack.pushPose(); //Save position again
+//                stack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ());
+//
+//                BakedModel ibakedmodel = dispatcher.getBlockModel(state);
+//                try {
+//                    if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
+//                        blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, builder, true, new Random(Mth.getSeed(targetPos)), Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+//                    } else {
+//                        FluidState ifluidstate = state.getFluidState();
+//                        if (!ifluidstate.isEmpty()) {
+//                            liquidBlockRenderer.tesselate(templateWorld, targetPos, builder, state, ifluidstate);
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    LOGGER.trace("Caught exception whilst rendering {}.", state, e);
+//                }
+//                stack.popPose(); // Load the position we saved earlier
+//            }
+//            stack.popPose(); //Load after loop
+//        });
+//
+//        // renderBuffer.sort((float) (-destPos.getX() + cameraView.x()), (float) (-destPos.getY() + cameraView.y()), (float) (-destPos.getZ() + cameraView.z()));
+//        renderBuffer.render(poseStack.last().pose()); //Actually draw whats in the buffer
+//    }
+
     public void renderTemplate(PoseStack poseStack, Vec3 cameraView, Player player) {
-        if (renderBuffer != null) {
-            renderBuffer.render(poseStack.last().pose()); //Actually draw whats in the buffer
-            return;
-        }
-
         Minecraft minecraft = Minecraft.getInstance();
-        renderBuffer = MultiVBORenderer.of((buffer) -> {
-            Level level = player.level;
-            VertexConsumer builder = buffer.getBuffer(CustomRenderType.VISUAL_BLOCK);
+        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+        VertexConsumer bufferSolid = bufferSource.getBuffer(CustomRenderType.VISUAL_BLOCK);
+//        VertexConsumer bufferSolid = bufferSource.getBuffer(RenderType.cutoutMipped());
 
-            BlockRenderDispatcher dispatcher = minecraft.getBlockRenderer();
+        // PoseStack stack = new PoseStack(); //Create a new matrix stack for use in the bufferSolid building process
+        //stack.pushPose(); //Save position
 
-            PoseStack stack = new PoseStack(); //Create a new matrix stack for use in the buffer building process
-            stack.pushPose(); //Save position
+        for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
+            BlockPos targetPos = entry.getKey();
+            BlockState state = entry.getValue();
+            BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
 
-            for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
-                BlockPos targetPos = entry.getKey();
-                BlockState state = entry.getValue();
-
-                stack.pushPose(); //Save position again
-                stack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ());
-
-                BakedModel ibakedmodel = dispatcher.getBlockModel(state);
-                BlockColors blockColors = minecraft.getBlockColors();
-                int color = blockColors.getColor(state, templateWorld, targetPos, 0);
-
-                float f = (float) (color >> 16 & 255) / 255.0F;
-                float f1 = (float) (color >> 8 & 255) / 255.0F;
-                float f2 = (float) (color & 255) / 255.0F;
-                try {
-                    if (state.getRenderShape() == RenderShape.MODEL) {
-                        for (Direction direction : Direction.values()) {
-                            if (Block.shouldRenderFace(state, templateWorld, targetPos, direction, targetPos.relative(direction)) && !(templateWorld.getBlockState(targetPos.relative(direction)).getBlock().equals(state.getBlock()))) {
-                                if (state.getMaterial().isSolidBlocking()) {
-                                    renderModelBrightnessColorQuads(stack.last(), builder, f, f1, f2, 1, ibakedmodel.getQuads(state, direction, new Random(Mth.getSeed(targetPos)), EmptyModelData.INSTANCE), 15728640, OverlayTexture.NO_OVERLAY);
-                                } else {
-                                    renderModelBrightnessColorQuads(stack.last(), builder, f, f1, f2, 1, ibakedmodel.getQuads(state, direction, new Random(Mth.getSeed(targetPos)), EmptyModelData.INSTANCE), 15728640, OverlayTexture.NO_OVERLAY);
-                                }
-                            }
-                        }
-                        if (state.getMaterial().isSolidBlocking())
-                            renderModelBrightnessColorQuads(stack.last(), builder, f, f1, f2, 1, ibakedmodel.getQuads(state, null, new Random(Mth.getSeed(targetPos)), EmptyModelData.INSTANCE), 15728640, OverlayTexture.NO_OVERLAY);
-                        else
-                            renderModelBrightnessColorQuads(stack.last(), builder, f, f1, f2, 1, ibakedmodel.getQuads(state, null, new Random(Mth.getSeed(targetPos)), EmptyModelData.INSTANCE), 15728640, OverlayTexture.NO_OVERLAY);
-                    } else {
-                        FluidState ifluidstate = state.getFluidState();
-                        if (!ifluidstate.isEmpty()) {
-                            renderFluid(stack, targetPos, level, builder, ifluidstate);
-                        } else if (state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
-                            ItemStack itemstack = new ItemStack(state.getBlock());
-                            RenderProperties.get(itemstack).getItemStackRenderer().renderByItem(itemstack, ItemTransforms.TransformType.NONE, stack, buffer, 15728640, OverlayTexture.NO_OVERLAY);
-                        }
+            poseStack.pushPose(); //Save position again
+            poseStack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ()); // handled by renderBatched
+            try {
+                if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
+                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, new Random(Mth.getSeed(targetPos)), Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+                } else {
+                    FluidState ifluidstate = state.getFluidState();
+                    if (!ifluidstate.isEmpty()) {
+//                        liquidBlockRenderer.tesselate(templateWorld, targetPos, bufferSolid, state, ifluidstate);
+                        renderFluid(poseStack, targetPos, templateWorld, bufferSolid, ifluidstate);
                     }
-                } catch (Exception e) {
-                    LOGGER.trace("Caught exception whilst rendering {}.", state, e);
                 }
-                stack.popPose(); // Load the position we saved earlier
+            } catch (Exception e) {
+                LOGGER.trace("Caught exception whilst rendering {}.", state, e);
             }
-            stack.popPose(); //Load after loop
-        });
+            poseStack.popPose(); // Load the position we saved earlier
 
-        // renderBuffer.sort((float) (-destPos.getX() + cameraView.x()), (float) (-destPos.getY() + cameraView.y()), (float) (-destPos.getZ() + cameraView.z()));
-        renderBuffer.render(poseStack.last().pose()); //Actually draw whats in the buffer
+        }
+        //stack.popPose(); //Load after loop
     }
 
     private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
@@ -157,11 +169,14 @@ public class CapsuleTemplateRenderer {
         vertex(buffer, maxU, maxV, red, green, blue, matrix, 1, 1, 0);
     }
 
-    private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green, float blue, Matrix4f matrix, int x, int y, int z) {
+    private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green,
+                               float blue, Matrix4f matrix, int x, int y, int z) {
         buffer.vertex(matrix, x, y, z).color(red, green, blue, 1.0F).uv(maxU, minV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
 
-    public static void renderModelBrightnessColorQuads(PoseStack.Pose matrixEntry, VertexConsumer builder, float red, float green, float blue, float alpha, List<BakedQuad> listQuads, int combinedLightsIn, int combinedOverlayIn) {
+    public static void renderModelBrightnessColorQuads(PoseStack.Pose matrixEntry, VertexConsumer builder,
+                                                       float red, float green, float blue, float alpha, List<BakedQuad> listQuads, int combinedLightsIn,
+                                                       int combinedOverlayIn) {
         for (BakedQuad bakedquad : listQuads) {
             float f;
             float f1;
@@ -181,7 +196,8 @@ public class CapsuleTemplateRenderer {
         }
     }
 
-    public boolean changeTemplateIfDirty(CapsuleTemplate template, Level world, BlockPos destPos, BlockPos offPos, StructurePlaceSettings placementSettings, int placeFlag) {
+    public boolean changeTemplateIfDirty(CapsuleTemplate template, Level world, BlockPos destPos, BlockPos
+            offPos, StructurePlaceSettings placementSettings, int placeFlag) {
         if (lastPlacementSettings == null ||
                 (placementSettings != null && (
                         placementSettings.getRotation() != lastPlacementSettings.getRotation()

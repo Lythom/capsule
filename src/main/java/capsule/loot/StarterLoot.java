@@ -3,10 +3,10 @@ package capsule.loot;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.helpers.Capsule;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -62,12 +62,12 @@ public class StarterLoot {
     public static void giveAllStarters(ServerPlayer player, List<String> allStartersToGive) {
         for (String templatePath : allStartersToGive) {
             ItemStack starterCapsule = Capsule.createLinkedCapsuleFromReward(templatePath, player);
-            int stackIdx = player.inventory.getFreeSlot();
-            if (stackIdx < 0 || stackIdx >= player.inventory.getContainerSize()) {
+            int stackIdx = player.getInventory().getFreeSlot();
+            if (stackIdx < 0 || stackIdx >= player.getInventory().getContainerSize()) {
                 Capsule.throwCapsule(starterCapsule, player, player.blockPosition());
             } else {
                 try {
-                    player.inventory.setItem(stackIdx, starterCapsule);
+                    player.getInventory().setItem(stackIdx, starterCapsule);
                 } catch (Exception e) {
                     Capsule.throwCapsule(starterCapsule, player, player.blockPosition());
                 }

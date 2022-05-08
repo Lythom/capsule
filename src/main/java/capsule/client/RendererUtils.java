@@ -1,13 +1,13 @@
 package capsule.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
 import net.minecraft.client.Camera;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 
 public class RendererUtils {
     public static void doPositionPrologue(Camera camera, PoseStack poseStack) {

@@ -4,18 +4,18 @@ import capsule.client.CapsulePreviewHandler;
 import capsule.helpers.Spacial;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 
-public class CaptureTESR extends BlockEntityRenderer<BlockEntityCapture> {
+public class CaptureBER implements BlockEntityRenderer<BlockEntityCapture> {
 
     double time = 0;
 
-    public CaptureTESR(BlockEntityRenderDispatcher renderDispatcherIn) {
-        super(renderDispatcherIn);
+    public CaptureBER(BlockEntityRendererProvider.Context ctx) {
         time = Math.random() * 10000;
     }
 

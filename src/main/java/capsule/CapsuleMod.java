@@ -15,6 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -25,6 +28,7 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RecipesUpdatedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -42,6 +46,7 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.apache.logging.log4j.LogManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -52,7 +57,7 @@ public class CapsuleMod {
     public static final String MODID = "capsule";
     public static CreativeModeTab tabCapsule = new CapsuleItemGroups(CreativeModeTab.getGroupCountSafe(), "capsule");
 
-    public static Consumer<Player> openGuiScreenCommon = DistExecutor.runForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static Consumer<Player> openGuiScreenCommon = DistExecutor.unsafeRunForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
     public static MinecraftServer server = null;
 
     public CapsuleMod() {
@@ -80,8 +85,10 @@ public class CapsuleMod {
 
     @OnlyIn(Dist.CLIENT)
     public static void openGuiScreenClient(Player player) {
-        capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);
-        Minecraft.getInstance().setScreen(screen);
+        if (player.level.isClientSide) {
+            capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);
+            Minecraft.getInstance().setScreen(screen);
+        }
     }
 
     public static void openGuiScreenServer(Player player) {
@@ -100,8 +107,6 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void clientSetup(FMLClientSetupEvent event) {
-        CapsuleBlocks.bindBlockEntitiesRenderer();
-
         // register color variants
         Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
             if (stack.getItem() instanceof CapsuleItem) {
@@ -151,6 +156,11 @@ final class CapsuleModEventSubscriber {
     }
 
     @SubscribeEvent
+    public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        CapsuleBlocks.registerBlockEntitiesRenderer(event);
+    }
+
+    @SubscribeEvent
     public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
         Enchantments.registerEnchantments(event);
     }
@@ -171,10 +181,20 @@ final class CapsuleForgeSubscriber {
 
     @SubscribeEvent
     public static void setup(AddReloadListenerEvent event) {
-        StructureSaver.getRewardManager(event.getDataPackRegistries().getResourceManager()).onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+        event.addListener(new StructureSaverReloadListener());
+    }
+}
+
+class StructureSaverReloadListener extends SimplePreparableReloadListener<Void> {
+    protected @NotNull Void prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        StructureSaver.getRewardManager(pResourceManager).onResourceManagerReload(pResourceManager);
         for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
-            ctm.onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+            ctm.onResourceManagerReload(pResourceManager);
         }
+        return (Void) null;
+    }
+
+    protected void apply(Void pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
 
     }
 }

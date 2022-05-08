@@ -7,14 +7,16 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.item.crafting.*;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -23,12 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
-
-import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.CustomRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.ShapedRecipe;
 
 public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
@@ -45,6 +41,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
      * Must be called
      * > after server start (providing a server is required) and
      * < before RecipesUpdatedEvent (so that the recupies are registered by JEI)
+     *
      * @param resourceManager
      */
     public void populateRecipes(ResourceManager resourceManager) {
@@ -107,32 +104,33 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
         public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
             this.id = id;
+            FixIngredient(template, ingredients.getLeft(), "1");
+            FixIngredient(template, ingredients.getMiddle(), "2");
+            FixIngredient(template, ingredients.getRight(), "3");
             this.recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.fromJson(id, template);
-            buildRecipeFromPattern(template, ingredients);
+        }
+
+        private void FixIngredient(JsonObject template, StructureSaver.ItemStackKey ingredientKey, String key) {
+            if (ingredientKey != null) {
+                // Add the key for the item
+                var keyOne = new JsonObject();
+                keyOne.addProperty("item", ingredientKey.itemStack.getItem().getRegistryName().toString());
+                template.getAsJsonObject("key").add(key, keyOne);
+            } else {
+                // remove the pattern entry if no ingredient by replacing the key with an empty space
+                JsonArray patternArr = GsonHelper.getAsJsonArray(template, "pattern");
+                if (patternArr.size() != 3) {
+                    throw new JsonSyntaxException("pattern entry in prefab_blueprint_recipe.json should define a 3x3 recipe.");
+                }
+                for (int i = 0; i < 3; i++) {
+                    patternArr.set(i, new JsonPrimitive(patternArr.get(i).getAsString().replaceAll(key, " ")));
+                }
+            }
         }
 
         public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, ShapedRecipe serializedRecipe) {
             this.id = id;
             this.recipe = serializedRecipe;
-        }
-
-        public void buildRecipeFromPattern(JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
-            JsonArray patternArr = GsonHelper.getAsJsonArray(template, "pattern");
-            String pattern = patternArr.get(0).getAsString() + patternArr.get(1).getAsString() + patternArr.get(2).getAsString();
-            ingredientOneIndex = pattern.indexOf("1");
-            ingredientTwoIndex = pattern.indexOf("2");
-            ingredientThreeIndex = pattern.indexOf("3");
-            this.recipe.getIngredients().set(ingredientOneIndex, Ingredient.of(ingredients.getLeft().itemStack));
-            if (ingredients.getMiddle() != null) {
-                this.recipe.getIngredients().set(ingredientTwoIndex, Ingredient.of(ingredients.getMiddle().itemStack));
-            } else {
-                this.recipe.getIngredients().set(ingredientTwoIndex, Ingredient.EMPTY);
-            }
-            if (ingredients.getRight() != null) {
-                this.recipe.getIngredients().set(ingredientThreeIndex, Ingredient.of(ingredients.getRight().itemStack));
-            } else {
-                this.recipe.getIngredients().set(ingredientThreeIndex, Ingredient.EMPTY);
-            }
         }
 
         public ItemStack getResultItem() {

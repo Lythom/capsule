@@ -1,8 +1,8 @@
 package capsule.client.render.vbo;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Matrix4f;
 
 import java.nio.ByteBuffer;

@@ -2,8 +2,8 @@ package capsule.loot;
 
 import capsule.CapsuleMod;
 import capsule.Config;
-import net.minecraft.world.level.storage.loot.ConstantIntValue;
 import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,9 +24,9 @@ public class CapsuleLootTableHook {
         // create a capsule loot entry per folder
         if (capsulePool == null) {
             LootPool.Builder capsulePoolBuilder = LootPool.lootPool()
-                    .bonusRolls(0, 0)
+                    .setBonusRolls(ConstantValue.exactly(0))
                     .name("capsulePool")
-                    .setRolls(ConstantIntValue.exactly(1));
+                    .setRolls(ConstantValue.exactly(1));
             for (Config.LootPathData data : Config.lootTemplatesData.values()) {
                 capsulePoolBuilder.add(CapsuleLootEntry.builder(data.path));
             }

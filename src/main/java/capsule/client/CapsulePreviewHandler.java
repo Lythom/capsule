@@ -19,6 +19,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -70,6 +71,7 @@ public class CapsulePreviewHandler {
     private static String uncompletePreviewsCountStructure = null;
 
     static double time = 0;
+    public static ChunkRenderDispatcher dispatcher;
 
     public CapsulePreviewHandler() {
     }
@@ -78,10 +80,11 @@ public class CapsulePreviewHandler {
      * Render recall preview when deployed capsule in hand
      */
     @SubscribeEvent
-    public static void onWorldRenderLast(RenderLevelLastEvent event) {
+    public static void onLevelRenderLast(RenderLevelLastEvent event) {
         Minecraft mc = Minecraft.getInstance();
         time += 1;
         if (mc.player != null) {
+            dispatcher = event.getLevelRenderer().getChunkRenderDispatcher();
             tryPreviewRecall(mc.player.getMainHandItem(), event.getPoseStack());
             tryPreviewDeploy(mc.player, event.getPartialTick(), mc.player.getMainHandItem(), event.getPoseStack());
             tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), event.getPoseStack());
@@ -341,7 +344,7 @@ public class CapsulePreviewHandler {
                 if (location != null
                         && dimension != null
                         && dimension.equals(player.getCommandSenderWorld().dimension())
-                        && location.distSqr(player.getX(), player.getY(), player.getZ(), true) < 60 * 60) {
+                        && location.distToCenterSqr(player.getX(), player.getY(), player.getZ()) < 60 * 60) {
                     previewLinkedInventory(location, poseStack);
                 }
             }

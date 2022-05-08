@@ -1,7 +1,7 @@
 package capsule.helpers;
 
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 
 public class MinecraftNBT {
     /**

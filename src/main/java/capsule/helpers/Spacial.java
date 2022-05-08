@@ -3,7 +3,6 @@ package capsule.helpers;
 import capsule.blocks.BlockCapsuleMarker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +32,7 @@ public class Spacial {
 
     public static BlockPos findBottomBlock(double x, double y, double z) {
         return BlockPos.betweenClosedStream(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1))
-                .min(Comparator.comparingDouble((BlockPos pos) -> pos.distSqr(x, y, z, true))).orElse(null);
+                .min(Comparator.comparingDouble((BlockPos pos) -> pos.distToLowCornerSqr(x, y, z))).orElse(null);
     }
 
     public static boolean isImmergedInLiquid(Entity entity) {

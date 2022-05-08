@@ -2,17 +2,20 @@ package capsule.gui;
 
 import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 /**
  * @author Lythom
@@ -25,6 +28,7 @@ public class LabelGui extends Screen {
     private EditBox textInput;
     private Player player;
     private TranslatableComponent gui_capsule_name = new TranslatableComponent("capsule.gui.capsuleName");
+    private final List<Button> buttons = Lists.newArrayList();
 
     public LabelGui(Player player) {
         super(new TranslatableComponent("capsule.gui.capsuleName"));
@@ -37,21 +41,19 @@ public class LabelGui extends Screen {
 
     public void init() {
         super.init();
-        buttons.clear();
 
         textInput = new EditBox(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
         textInput.setMaxLength(32);
         textInput.changeFocus(true);
 
-        this.addButton(new Button(
+        buttons.add(new Button(
                 textInput.x + textInput.getWidth() - 200,
                 textInput.y + textInput.getHeight() + 10,
                 200,
                 20,
                 CommonComponents.GUI_DONE,
-                (p_212984_1_) -> {
-                    this.onClose();
-                }));
+                (p_212984_1_) -> this.onClose())
+        );
 
         String label = "";
         ItemStack itemStack = this.getItemStack();

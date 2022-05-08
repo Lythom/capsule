@@ -1,16 +1,16 @@
 package capsule.helpers;
 
-import net.minecraft.world.level.block.Block;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringUtil;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Serialization {
@@ -43,17 +43,23 @@ public class Serialization {
                     states.add(b);
                 } else {
                     // is it a tag ?
-                    Tag<Block> tag = BlockTags.getAllTags().getTag(excludedLocation);
-                    if (tag != null) {
-                        // exclude all blocks from tag
-                        states.addAll(tag.getValues());
+                    Optional<TagKey<Block>> tag = ForgeRegistries.BLOCKS.tags().getTagNames()
+                            .filter(t -> excludedLocation.equals(t.location()))
+                            .findFirst();
+                    if (tag.isPresent()) {
+                        // get all blocks concerned by tag
+                        List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
+                                .filter((Block block) -> block.builtInRegistryHolder().is(tag.get())).collect(Collectors.toList());
+                        states.addAll(blockIdsList);
+                    } else {
+                        notfound.add(excludedLocation.toString());
                     }
                 }
             }
         }
         if (notfound.size() > 0) {
             LOGGER.info(String.format(
-                    "Blocks not found from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
+                    "Blocks couldn't be resolved as Block or Tag from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
                     String.join(", ", notfound.toArray(new CharSequence[0]))
             ));
         }

@@ -7,7 +7,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
-import mezz.jei.api.constants.VanillaRecipeCategoryUid;
+import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.IIngredientSubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
@@ -21,7 +21,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +49,7 @@ public class CapsulePlugin implements IModPlugin {
 
         // normally you should ignore nbt per-item, but these tags are universally understood
         // and apply to many vanilla and modded items
-        List<Recipe> recipes = new ArrayList<>();
+        List<CraftingRecipe> recipes = new ArrayList<>();
 
         Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
@@ -91,7 +90,7 @@ public class CapsulePlugin implements IModPlugin {
         CapsuleItem.setLabel(withNewTemplate, "Changed Template");
         recipes.add(new ShapelessRecipe(new ResourceLocation(CapsuleMod.MODID, "capsule"), "capsule", withNewTemplate, NonNullList.of(Ingredient.EMPTY, anyBlueprint, unlabelledIng)));
 
-        registry.addRecipes(recipes, VanillaRecipeCategoryUid.CRAFTING);
+        registry.addRecipes(RecipeTypes.CRAFTING, recipes);
         registry.addIngredientInfo(new ArrayList<>(CapsuleItems.capsuleList.keySet()), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.capsule"));
         registry.addIngredientInfo(CapsuleItems.blueprintChangedCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.blueprintCapsule"));
         registry.addIngredientInfo(CapsuleItems.unlabelledCapsule.getKey(), VanillaTypes.ITEM, new TranslatableComponent("jei.capsule.desc.linkedCapsule"));

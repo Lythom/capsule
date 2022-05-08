@@ -4,20 +4,20 @@ import capsule.CapsuleMod;
 import com.mojang.datafixers.types.Type;
 import net.minecraft.Util;
 import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.datafix.fixes.References;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.event.RegistryEvent;
 
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class CapsuleBlocks {
 
@@ -38,7 +38,7 @@ public class CapsuleBlocks {
         Type<?> type = Util.fetchChoiceType(References.BLOCK_ENTITY, name.toString());
         BlockEntityType<T> te = BlockEntityType.Builder.of(supplier, blocks).build(type);
         te.setRegistryName(name);
-        return Registry.register(Registry.BLOCK_ENTITY_TYPE, name, te);
+        return te;
     }
 
     public static void registerBlocks(final RegistryEvent.Register<Block> event) {
@@ -79,7 +79,7 @@ public class CapsuleBlocks {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void bindBlockEntitiesRenderer() {
-        ClientRegistry.bindBlockEntityRenderer(MARKER_TE, CaptureTESR::new);
+    public static void registerBlockEntitiesRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(MARKER_TE, CaptureBER::new);
     }
 }
