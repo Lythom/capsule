@@ -743,14 +743,14 @@ public class CapsuleTemplate {
     /**
      * list positions of futur deployment
      */
-    public List<BlockPos> calculateDeployPositions(Level world, BlockPos blockPos, StructurePlaceSettings placementSettings) {
+    public List<BlockPos> calculateDeployPositions(Level level, BlockPos deployPos, StructurePlaceSettings placementSettings) {
 
         ArrayList<BlockPos> out = new ArrayList<>();
         if (size == null) return out;
 
         List<StructureTemplate.StructureBlockInfo> list = null;
         try {
-            list = Palette.getRandomPalette(placementSettings, this.palettes, blockPos).blocks();
+            list = Palette.getRandomPalette(placementSettings, this.palettes, deployPos).blocks();
         } catch (Exception e) {
             LOGGER.error(e);
             list = new ArrayList<>();
@@ -758,11 +758,8 @@ public class CapsuleTemplate {
         if (!list.isEmpty() && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
             BoundingBox structureboundingbox = placementSettings.getBoundingBox();
 
-            for (StructureTemplate.StructureBlockInfo template$blockinfo : processBlockInfos(this, world, blockPos, placementSettings, list)) {
-                BlockPos blockpos = calculateRelativePosition(placementSettings, template$blockinfo.pos)
-                        .offset(blockPos)
-                        .offset(recenterRotation((size.getX() - 1) / 2, placementSettings));
-
+            for (StructureTemplate.StructureBlockInfo template$blockinfo : processBlockInfos(this, level, deployPos, placementSettings, list)) {
+                BlockPos blockpos = template$blockinfo.pos.offset(recenterRotation((size.getX() - 1) / 2, placementSettings));
                 if (template$blockinfo.state.getBlock() != Blocks.STRUCTURE_BLOCK && (structureboundingbox == null || structureboundingbox.isInside(blockpos))) {
                     out.add(blockpos);
                 }

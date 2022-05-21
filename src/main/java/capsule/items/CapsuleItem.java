@@ -554,14 +554,6 @@ public class CapsuleItem extends Item {
         }
     }
 
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void heldItemChange(LivingEquipmentChangeEvent event) {
-        if (event.getEntity() instanceof Player && event.getSlot().equals(EquipmentSlot.MAINHAND) && isInstantAndUndeployed(event.getTo())) {
-            askPreviewIfNeeded(event.getTo());
-        }
-    }
-
     @OnlyIn(Dist.CLIENT)
     public static void askPreviewIfNeeded(ItemStack stack) {
         if (!capsule.client.CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {

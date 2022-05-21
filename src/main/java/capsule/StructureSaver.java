@@ -211,7 +211,7 @@ public class StructureSaver {
 
     @Nullable
     public static CapsuleTemplateManager getTemplateManager(MinecraftServer server) {
-         LevelResource folder = new LevelResource("capsules");
+        LevelResource folder = new LevelResource("capsules");
         Path directoryPath = server.getWorldPath(folder);
 
         if (!CapsulesManagers.containsKey(directoryPath.toString())) {
@@ -406,7 +406,7 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (blockPos.getY() >= worldserver.getHeight() || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
+                if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() <= worldserver.getMinBuildHeight() || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
                     return false;
             }
         }
@@ -552,7 +552,10 @@ public class StructureSaver {
      */
     public static String getUniqueName(ServerLevel playerWorld, String player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld.getServer().overworld());
-        String p = player.toLowerCase();
+        String p = player.toLowerCase().codePoints()
+                .filter(c -> ResourceLocation.isAllowedInResourceLocation((char) c))
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
         String capsuleID = "c-" + p + "-" + csd.getNextCount();
         CapsuleTemplateManager templatemanager = getTemplateManager(playerWorld.getServer().overworld().getServer());
         if (templatemanager == null) {

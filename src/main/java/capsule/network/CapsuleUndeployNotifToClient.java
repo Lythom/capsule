@@ -32,8 +32,11 @@ public class CapsuleUndeployNotifToClient {
         ctx.get().enqueueWork(() -> {
             Capsule.showUndeployParticules(Minecraft.getInstance().level, posFrom, posTo, size);
             if (!StringUtil.isNullOrEmpty(templateName)) {
+                // remove templates because they are dirty and must be redownloaded
                 CapsulePreviewHandler.currentPreview.remove(templateName);
                 CapsulePreviewHandler.currentFullPreview.remove(templateName);
+                // ask a preview refresh
+                CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(templateName));
             }
         });
         ctx.get().setPacketHandled(true);
