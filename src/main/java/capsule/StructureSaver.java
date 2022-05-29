@@ -406,7 +406,7 @@ public class StructureSaver {
         if (player != null) {
             List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
             for (BlockPos blockPos : expectedOut) {
-                if (blockPos.getY() >= worldserver.getHeight() || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
+                if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() < 0 || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
                     return false;
             }
         }

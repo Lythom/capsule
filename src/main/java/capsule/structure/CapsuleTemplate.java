@@ -763,10 +763,7 @@ public class CapsuleTemplate {
             MutableBoundingBox structureboundingbox = placementSettings.getBoundingBox();
 
             for (Template.BlockInfo template$blockinfo : processBlockInfos(this, world, blockPos, placementSettings, list)) {
-                BlockPos blockpos = calculateRelativePosition(placementSettings, template$blockinfo.pos)
-                        .offset(blockPos)
-                        .offset(recenterRotation((size.getX() - 1) / 2, placementSettings));
-
+                BlockPos blockpos = template$blockinfo.pos.offset(recenterRotation((size.getX() - 1) / 2, placementSettings));
                 if (template$blockinfo.state.getBlock() != Blocks.STRUCTURE_BLOCK && (structureboundingbox == null || structureboundingbox.isInside(blockpos))) {
                     out.add(blockpos);
                 }

@@ -30,9 +30,7 @@ public class Config {
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(Config.class);
 
     private static final ForgeConfigSpec.Builder COMMON_BUILDER = new ForgeConfigSpec.Builder();
-    private static final ForgeConfigSpec.Builder CLIENT_BUILDER = new ForgeConfigSpec.Builder();
     public static ForgeConfigSpec COMMON_CONFIG;
-    public static ForgeConfigSpec CLIENT_CONFIG;
 
     public static final String CATEGORY_GENERAL = "general";
     public static final String CATEGORY_BALANCE = "balance";
@@ -53,12 +51,6 @@ public class Config {
         COMMON_BUILDER.pop();
 
         COMMON_CONFIG = COMMON_BUILDER.build();
-
-        CLIENT_BUILDER.comment("General settings").push(CATEGORY_GENERAL);
-        previewDisplayDurationCfg = CLIENT_BUILDER.comment("Duration in ticks for an undeployed capsule to remain activated (preview displayed) when right clicking. 20 ticks = 1 second.\nDefault value: 120.")
-                .defineInRange("previewDisplayDuration", 120, 0, Integer.MAX_VALUE);
-        CLIENT_BUILDER.pop();
-        CLIENT_CONFIG = CLIENT_BUILDER.build();
     }
 
     // calculated and cached from init
@@ -115,10 +107,6 @@ public class Config {
         return FMLPaths.CONFIGDIR.get().resolve("capsule");
     }
 
-    public static void bakeClientConfig(final ModConfig config) {
-        Config.previewDisplayDuration = previewDisplayDurationCfg.get();
-    }
-
     public static void bakeConfig(final ModConfig config) {
         // init paths properties from config
         List<CommentedConfig> templatesPaths = Config.lootTemplatesPathsCfg.get();
@@ -140,6 +128,7 @@ public class Config {
         Config.allowBlueprintReward = allowBlueprintRewardCfg.get();
         Config.starterMode = starterModeCfg.get();
         Config.allowMirror = allowMirrorCfg.get();
+        Config.previewDisplayDuration = previewDisplayDurationCfg.get();
 
         if (CapsuleMod.server != null) {
             populateConfigFolders(CapsuleMod.server);
@@ -155,6 +144,9 @@ public class Config {
     }
 
     public static void configureCapture(ForgeConfigSpec.Builder configBuild) {
+
+        previewDisplayDurationCfg = configBuild.comment("Duration in ticks for an undeployed capsule to remain activated (preview displayed) when right clicking. 20 ticks = 1 second.\nDefault value: 120.")
+                .defineInRange("previewDisplayDuration", 120, 0, Integer.MAX_VALUE);
 
         // upgrade limits
         upgradeLimitCfg = configBuild.comment("Number of upgrades an empty capsule can get to improve capacity. If <= 0, the capsule won't be able to upgrade.")
