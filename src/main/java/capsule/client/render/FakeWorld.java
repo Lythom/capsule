@@ -8,6 +8,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.LevelTickAccess;
 import net.minecraftforge.api.distmarker.Dist;
@@ -74,6 +76,10 @@ public class FakeWorld implements LevelAccessor {
     @Override
     public void levelEvent(@Nullable Player p_217378_1_, int p_217378_2_, BlockPos p_217378_3_, int p_217378_4_) {
 
+    }
+
+    @Override
+    public void gameEvent(GameEvent p_220404_, Vec3 p_220405_, GameEvent.Context p_220406_) {
     }
 
     @Override
@@ -192,7 +198,7 @@ public class FakeWorld implements LevelAccessor {
 
 
     @Override
-    public Random getRandom() {
+    public RandomSource getRandom() {
         return delegate.getRandom();
     }
 
@@ -341,7 +347,6 @@ public class FakeWorld implements LevelAccessor {
         return false;
     }
 
-    @Override
     public float getBrightness(BlockPos pos) {
         return 15;
     }

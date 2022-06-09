@@ -2,28 +2,36 @@ package capsule.enchantments;
 
 import capsule.CapsuleMod;
 import capsule.Config;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantment.Rarity;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.function.Predicate;
 
-public class Enchantments {
+public class CapsuleEnchantments {
 
-    protected static final Logger LOGGER = LogManager.getLogger(Enchantments.class);
+    private static final DeferredRegister<Enchantment> ENCHANTMENTS = DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, CapsuleMod.MODID);
+    public static final RegistryObject<Enchantment> RECALL = ENCHANTMENTS.register("recall", CapsuleEnchantments::CreateRecall);
+
+    protected static final Logger LOGGER = LogManager.getLogger(CapsuleEnchantments.class);
 
     public static Enchantment recallEnchant = null;
-    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
+    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getItemEnchantmentLevel(CapsuleEnchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
 
-    public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
+    public static void registerEnchantments(IEventBus eventBus) {
+        ENCHANTMENTS.register(eventBus);
+    }
 
+    public static RecallEnchant CreateRecall() {
         Rarity enchantRarity = Rarity.RARE;
         try {
             enchantRarity = Rarity.valueOf(Config.enchantRarity.get());
@@ -37,12 +45,9 @@ public class Enchantments {
         } catch (IllegalArgumentException ignored) {
         }
 
-        Enchantments.recallEnchant = new RecallEnchant(
-                new ResourceLocation(CapsuleMod.MODID, "recall"), // name
+        return new RecallEnchant(// name
                 enchantRarity, // weight (chances to appear)
                 recallEnchantTypeEnumValue // possible targets
         );
-
-        event.getRegistry().register(Enchantments.recallEnchant);
     }
 }

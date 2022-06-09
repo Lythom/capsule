@@ -8,7 +8,7 @@ import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -120,9 +120,9 @@ public class Blueprint {
             ItemStack itemStack = getBlockItemCost(block);
             ItemStackKey stackKey = new ItemStackKey(itemStack);
             if (itemStack == null) {
-                if (player != null) player.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
+                if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
                 if (player != null)
-                    LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
+                    LOGGER.error("Unknown item during blueprint undo for " + block.state.getBlock().toString());
                 return null;
             } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
                 Integer currValue = list.get(stackKey);

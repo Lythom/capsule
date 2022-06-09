@@ -20,6 +20,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Initiated from mc original net.minecraft.world.gen.feature.template.TemplateManager, but using CapsuleTemplate instead and custom jar source folder.
@@ -69,15 +70,20 @@ public class CapsuleTemplateManager {
     @Nullable
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
-        try (Resource iresource = this.resourceManager.getResource(capsuleTemplateLocation)) {
-            CapsuleTemplate template = this.loadTemplate(iresource.getInputStream(), ".schematics".equals(extension), capsuleTemplateLocation.toString());
-            return template;
-        } catch (FileNotFoundException var18) {
-            return null;
-        } catch (Throwable throwable) {
-            LOGGER.error("Couldn't load structure {}: {}", capsuleTemplateLocation, throwable.toString());
-            return null;
+
+        Optional<Resource> optionalTemplate = this.resourceManager.getResource(capsuleTemplateLocation);
+        if (optionalTemplate.isPresent()) {
+            try {
+                CapsuleTemplate template = this.loadTemplate(optionalTemplate.get().open(), ".schematics".equals(extension), capsuleTemplateLocation.toString());
+                return template;
+            } catch (FileNotFoundException var18) {
+                return null;
+            } catch (Throwable throwable) {
+                LOGGER.error("Couldn't load structure {}: {}", capsuleTemplateLocation, throwable.toString());
+                return null;
+            }
         }
+        return null;
     }
 
     @Nullable

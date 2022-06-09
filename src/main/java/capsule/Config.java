@@ -281,7 +281,7 @@ public class Config {
     }
 
     public static JsonObject getBlueprintAllowedNBT(Block b) {
-        return blueprintWhitelist.get(b.getRegistryName().toString());
+        return blueprintWhitelist.get(ForgeRegistries.BLOCKS.getKey(b).toString());
     }
 
     /**

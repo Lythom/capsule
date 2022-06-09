@@ -8,23 +8,21 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.IIngredientSerializer;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.stream.Stream;
 
-public class CapsuleIngredient extends Ingredient
-{
+public class CapsuleIngredient extends Ingredient {
     private final ItemStack referenceStack;
 
-    protected CapsuleIngredient(ItemStack stack)
-    {
+    protected CapsuleIngredient(ItemStack stack) {
         super(Stream.of(new Ingredient.ItemValue(stack)));
         this.referenceStack = stack;
     }
 
     @Override
-    public boolean test(@Nullable ItemStack input)
-    {
+    public boolean test(@Nullable ItemStack input) {
         if (input == null || !(input.getItem() instanceof CapsuleItem))
             return false;
         return this.referenceStack.getItem() == input.getItem()
@@ -33,31 +31,26 @@ public class CapsuleIngredient extends Ingredient
     }
 
     @Override
-    public boolean isSimple()
-    {
+    public boolean isSimple() {
         return false;
     }
 
     @Override
-    public IIngredientSerializer<? extends Ingredient> getSerializer()
-    {
+    public IIngredientSerializer<? extends Ingredient> getSerializer() {
         return Serializer.INSTANCE;
     }
 
     @Override
-    public JsonElement toJson()
-    {
+    public JsonElement toJson() {
         JsonObject json = new JsonObject();
         json.addProperty("type", CraftingHelper.getID(Serializer.INSTANCE).toString());
-        json.addProperty("item", referenceStack.getItem().getRegistryName().toString());
+        json.addProperty("item", ForgeRegistries.ITEMS.getKey(referenceStack.getItem()).toString());
         json.addProperty("count", referenceStack.getCount());
-        if (referenceStack.hasTag())
-            json.addProperty("nbt", referenceStack.getTag().toString());
+        if (referenceStack.hasTag()) json.addProperty("nbt", referenceStack.getTag().toString());
         return json;
     }
 
-    public static class Serializer implements IIngredientSerializer<CapsuleIngredient>
-    {
+    public static class Serializer implements IIngredientSerializer<CapsuleIngredient> {
         public static final Serializer INSTANCE = new Serializer();
 
         @Override

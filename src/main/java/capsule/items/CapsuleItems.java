@@ -4,7 +4,6 @@ import capsule.CapsuleMod;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.*;
 import net.minecraft.nbt.IntTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -14,7 +13,10 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -23,10 +25,11 @@ public class CapsuleItems {
 
     private static final int UPGRADE_STEP = 2;
 
-    public static CapsuleItem CAPSULE;
+    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, CapsuleMod.MODID);
+    public static final RegistryObject<CapsuleItem> CAPSULE = ITEMS.register("capsule", CapsuleItem::new);
 
     public static ItemStack withState(CapsuleState state) {
-        ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE, 1);
+        ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE.get(), 1);
         CapsuleItem.setState(capsule, state);
         return capsule;
     }
@@ -43,12 +46,6 @@ public class CapsuleItems {
 
     private static double compare(ItemStack capsule) {
         return CapsuleItem.getSize(capsule) + CapsuleItem.getMaterialColor(capsule) * 0.000000000001D;
-    }
-
-    public static void registerItems(RegistryEvent.Register<Item> event) {
-        CAPSULE = new CapsuleItem();
-        CAPSULE.setRegistryName(new ResourceLocation(CapsuleMod.MODID, "capsule"));
-        event.getRegistry().register(CAPSULE);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -125,4 +122,7 @@ public class CapsuleItems {
         return capsuleUp;
     }
 
+    public static void registerItems(IEventBus modEventBus) {
+        ITEMS.register(modEventBus);
+    }
 }

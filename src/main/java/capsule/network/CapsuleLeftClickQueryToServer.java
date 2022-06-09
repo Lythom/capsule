@@ -6,8 +6,8 @@ import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import net.minecraft.Util;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Mirror;
@@ -46,12 +46,12 @@ public class CapsuleLeftClickQueryToServer {
                 // Reload if no missing materials
                 Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getLevel(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
-                    TextComponent message = new TextComponent("Missing :");
+                    MutableComponent message = Component.literal("Missing :");
                     for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
                         message.append("\n* " + entry.getValue() + " ");
                         message.append(entry.getKey().itemStack.getItem().getName(entry.getKey().itemStack));
                     }
-                    sendingPlayer.sendMessage(message, Util.NIL_UUID);
+                    sendingPlayer.sendSystemMessage(message);
                 }
             } else if (stack.getItem() instanceof CapsuleItem && CapsuleItem.canRotate(stack)) {
                 StructurePlaceSettings placement = CapsuleItem.getPlacement(stack);
@@ -68,13 +68,13 @@ public class CapsuleLeftClickQueryToServer {
                                 placement.setMirror(Mirror.FRONT_BACK);
                                 break;
                         }
-                        sendingPlayer.sendMessage(new TranslatableComponent("[ ]: " + Capsule.getMirrorLabel(placement)), Util.NIL_UUID);
+                        sendingPlayer.sendSystemMessage(Component.translatable("[ ]: " + Capsule.getMirrorLabel(placement)));
                     } else {
-                        sendingPlayer.sendMessage(new TranslatableComponent("Mirroring disabled by config"), Util.NIL_UUID);
+                        sendingPlayer.sendSystemMessage(Component.translatable("Mirroring disabled by config"));
                     }
                 } else {
                     placement.setRotation(placement.getRotation().getRotated(Rotation.CLOCKWISE_90));
-                    sendingPlayer.sendMessage(new TranslatableComponent("⟳: " + Capsule.getRotationLabel(placement)), Util.NIL_UUID);
+                    sendingPlayer.sendSystemMessage(Component.translatable("⟳: " + Capsule.getRotationLabel(placement)));
                 }
                 CapsuleItem.setPlacement(stack, placement);
             }

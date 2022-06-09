@@ -129,7 +129,7 @@ public class BlueprintCapsuleRecipe implements CraftingRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.BLUEPRINT_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.BLUEPRINT_CAPSULE_SERIALIZER.get();
     }
 
     @Override
@@ -137,7 +137,7 @@ public class BlueprintCapsuleRecipe implements CraftingRecipe {
         return true;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<BlueprintCapsuleRecipe> {
+    public static class Serializer implements RecipeSerializer<BlueprintCapsuleRecipe> {
         @Override
         public BlueprintCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
             return new BlueprintCapsuleRecipe(ShapedRecipe.Serializer.SHAPED_RECIPE.fromJson(recipeId, json));

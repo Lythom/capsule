@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,12 +25,10 @@ public class Serialization {
             ResourceLocation excludedLocation = new ResourceLocation(blockId);
             // is it a whole registryName to exclude ?
             if (StringUtil.isNullOrEmpty(excludedLocation.getPath())) {
-                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
-                        .filter(block -> {
-                            ResourceLocation registryName = block.getRegistryName();
-                            if (registryName == null) return false;
-                            return registryName.toString().toLowerCase().contains(blockId.toLowerCase());
-                        }).collect(Collectors.toList());
+                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getEntries().stream()
+                        .filter(blockEntry -> blockEntry.getKey().toString().toLowerCase().contains(blockId.toLowerCase()))
+                        .map(Map.Entry::getValue)
+                        .collect(Collectors.toList());
                 if (blockIdsList.size() > 0) {
                     states.addAll(blockIdsList);
                 } else {
@@ -71,7 +70,7 @@ public class Serialization {
     public static String[] serializeBlockArray(Block[] states) {
         String[] blocksNames = new String[states.length];
         for (int i = 0; i < states.length; i++) {
-            ResourceLocation registryName = states[i].getRegistryName();
+            ResourceLocation registryName = ForgeRegistries.BLOCKS.getKey(states[i]);
             blocksNames[i] = registryName == null ? null : registryName.toString();
         }
         return blocksNames;

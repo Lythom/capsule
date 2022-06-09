@@ -8,8 +8,7 @@ import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -310,7 +309,7 @@ public class StructureSaver {
 
         // check if the player can place a block
         if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
-            player.sendMessage(new TranslatableComponent("capsule.error.notAllowed"), Util.NIL_UUID);
+            player.sendSystemMessage(Component.translatable("capsule.error.notAllowed"));
             return false;
         }
 
@@ -352,13 +351,13 @@ public class StructureSaver {
     }
 
     private static void printDeployFailure(Player player, List<Component> outErrors) {
-        TextComponent msg = new TextComponent("");
+        MutableComponent msg = Component.literal("");
         for (int i = 0, outErrorsSize = outErrors.size(); i < outErrorsSize; i++) {
             Component outError = outErrors.get(i);
             msg.append(outError);
             if (i < outErrors.size() - 1) msg.append("\n");
         }
-        player.sendMessage(msg, Util.NIL_UUID);
+        player.sendSystemMessage(msg);
     }
 
     public static void placePlayerOnTop(ServerLevel playerWorld, BlockPos dest, int size) {
@@ -387,14 +386,14 @@ public class StructureSaver {
     public static void printDeployError(@Nullable Player player, Exception err, String s) {
         LOGGER.error(s, err);
         if (player != null) {
-            player.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
+            player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
         }
     }
 
     public static void printWriteTemplateError(@Nullable Player player, String capsuleStructureId) {
         LOGGER.error("Couldn't write template " + capsuleStructureId);
         if (player != null) {
-            player.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
+            player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
         }
     }
 
@@ -501,7 +500,7 @@ public class StructureSaver {
                     }
 
                     if (!destWorld.hasChunkAt(destPos)) {
-                        outErrors.add(new TranslatableComponent("capsule.error.areaNotLoaded"));
+                        outErrors.add(Component.translatable("capsule.error.areaNotLoaded"));
                         return;
                     }
                     BlockState worldDestState = destWorld.getBlockState(destPos);
@@ -528,17 +527,17 @@ public class StructureSaver {
                         for (Object e : entities) {
                             Entity entity = (Entity) e;
                             if (entity != null) {
-                                outErrors.add(new TranslatableComponent("capsule.error.cantMergeWithDestinationEntity", entity.getDisplayName()));
+                                outErrors.add(Component.translatable("capsule.error.cantMergeWithDestinationEntity", entity.getDisplayName()));
                                 found = true;
                             }
                         }
                         if (!found)
-                            outErrors.add(new TranslatableComponent("capsule.error.cantMergeWithDestinationEntity", "???"));
+                            outErrors.add(Component.translatable("capsule.error.cantMergeWithDestinationEntity", "???"));
 
                         return;
                     }
                     if (worldDestOccupied && !overridable.contains(templateBlockState.getBlock())) {
-                        outErrors.add(new TranslatableComponent("capsule.error.cantMergeWithDestination", destPos.toString()));
+                        outErrors.add(Component.translatable("capsule.error.cantMergeWithDestination", destPos.toString()));
                         return;
                     }
                 }
@@ -679,10 +678,10 @@ public class StructureSaver {
         }
 
         if (!created && playerIn != null) {
-            playerIn.sendMessage(new TranslatableComponent("capsule.error.blueprintCreationError"), Util.NIL_UUID);
+            playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintCreationError"));
         }
         if (outExcluded.size() > 0 && playerIn != null) {
-            playerIn.sendMessage(new TranslatableComponent("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)), Util.NIL_UUID);
+            playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintExcluded", "\n* " + String.join("\n* ", outExcluded)));
         }
         return destStructureName;
     }

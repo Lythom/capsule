@@ -419,7 +419,7 @@ public class CapsuleTemplate {
     public void filterFromWhitelist(List<String> outExcluded) {
         List<StructureTemplate.StructureBlockInfo> newBlockList = this.getPalette().stream()
                 .filter(b -> {
-                    ResourceLocation registryName = b.state.getBlock().getRegistryName();
+                    ResourceLocation registryName = ForgeRegistries.BLOCKS.getKey(b.state.getBlock());
                     boolean included = b.nbt == null
                             || registryName != null && Config.blueprintWhitelist.containsKey(registryName.toString());
                     if (!included && outExcluded != null) outExcluded.add(b.state.toString());
@@ -776,7 +776,7 @@ public class CapsuleTemplate {
         if (palettes.isEmpty()) return false;
         try {
             for (StructureTemplate.StructureBlockInfo block : getPalette()) {
-                if (block.nbt != null && !Config.blueprintWhitelist.containsKey(block.state.getBlock().getRegistryName().toString())) {
+                if (block.nbt != null && !Config.blueprintWhitelist.containsKey(ForgeRegistries.BLOCKS.getKey(block.state.getBlock()).toString())) {
                     return false;
                 }
             }
@@ -1019,7 +1019,7 @@ public class CapsuleTemplate {
                     if (id >= 0 && id < palette.length) {
                         palette[id] = block;
                     } else {
-                        LOGGER.error("Schematic: Invalid ID {} for block '{}' from the registry", id, block.getRegistryName());
+                        LOGGER.error("Schematic: Invalid ID {} for block '{}' from the registry", id, ForgeRegistries.BLOCKS.getKey(block));
                     }
                 }
             }

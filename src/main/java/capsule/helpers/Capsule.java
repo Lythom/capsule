@@ -20,7 +20,7 @@ import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -96,7 +96,7 @@ public class Capsule {
                 CapsuleItem.cleanDeploymentTags(capsule);
                 if (playerIn != null) notifyUndeploy(playerIn, startPos, size, null); // no cache clean for blueprints
             } else if (playerIn != null) {
-                playerIn.sendMessage(new TranslatableComponent("capsule.error.blueprintDontMatch"), Util.NIL_UUID);
+                playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintDontMatch"));
             }
         } else {
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, playerIn == null ? null : playerIn.getUUID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
@@ -110,7 +110,7 @@ public class Capsule {
             } else {
                 LOGGER.error("Error occured during undeploy of capsule.");
                 if (playerIn != null)
-                    playerIn.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
+                    playerIn.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
             }
         }
     }
@@ -181,7 +181,7 @@ public class Capsule {
             // send a chat message to explain failure
             Player player = playerWorld.getPlayerByUUID(thrower);
             if (player != null) {
-                player.sendMessage(new TranslatableComponent("capsule.error.noCaptureBase"), Util.NIL_UUID);
+                player.sendSystemMessage(Component.translatable("capsule.error.noCaptureBase"));
             }
         }
 
@@ -250,7 +250,7 @@ public class Capsule {
         Map<StructureSaver.ItemStackKey, Integer> missingMaterials = Blueprint.getMaterialList(blueprint, world, player);
         if (missingMaterials == null) {
             if (player != null) {
-                player.sendMessage(new TranslatableComponent("capsule.error.technicalError"), Util.NIL_UUID);
+                player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
             }
             return null;
         }

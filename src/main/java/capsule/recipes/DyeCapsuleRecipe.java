@@ -28,7 +28,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.DYE_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.DYE_CAPSULE_SERIALIZER.get();
     }
 
     /**

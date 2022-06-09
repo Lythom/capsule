@@ -18,6 +18,7 @@ import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.PREFABS_AGGREGATOR_SERIALIZER;
+        return CapsuleRecipes.PREFABS_AGGREGATOR_SERIALIZER.get();
     }
 
     /**
@@ -114,7 +115,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             if (ingredientKey != null) {
                 // Add the key for the item
                 var keyOne = new JsonObject();
-                keyOne.addProperty("item", ingredientKey.itemStack.getItem().getRegistryName().toString());
+                keyOne.addProperty("item", ForgeRegistries.ITEMS.getKey(ingredientKey.itemStack.getItem()).toString());
                 template.getAsJsonObject("key").add(key, keyOne);
             } else {
                 // remove the pattern entry if no ingredient by replacing the key with an empty space
@@ -225,7 +226,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
     }
 
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
+    public static class Serializer implements RecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
 
         @Override
         public PrefabsBlueprintAggregatorRecipe fromJson(ResourceLocation recipeId, JsonObject json) {

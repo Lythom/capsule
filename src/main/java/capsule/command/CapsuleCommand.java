@@ -18,7 +18,6 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
@@ -28,8 +27,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.ClickEvent.Action;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,14 +40,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -116,7 +117,7 @@ public class CapsuleCommand {
                         .executes(ctx -> {
                             int count = 0;
                             if (!sentUsageURL.contains(ctx.getSource().getPlayerOrException())) {
-                                TextComponent msg = new TextComponent(
+                                Component msg = Component.literal(
                                         "see Capsule commands usages at " + ChatFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
                                 msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
                                 ctx.getSource().sendSuccess(msg, false);
@@ -126,7 +127,7 @@ public class CapsuleCommand {
                             Map<CommandNode<CommandSourceStack>, String> map = dispatcher.getSmartUsage(ctx.getRootNode().getChild("capsule"), ctx.getSource());
 
                             for (String s : map.values()) {
-                                ctx.getSource().sendSuccess(new TextComponent("/" + s), false);
+                                ctx.getSource().sendSuccess(Component.literal("/" + s), false);
                             }
 
                             return map.size() + count;
@@ -291,7 +292,7 @@ public class CapsuleCommand {
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
             } else {
-                throw new CommandRuntimeException(new TextComponent("Reward Capsule " + rewardTemplateName + " not found "));
+                throw new CommandRuntimeException(Component.literal("Reward Capsule " + rewardTemplateName + " not found "));
             }
             return 1;
         }
@@ -328,7 +329,7 @@ public class CapsuleCommand {
                 giveCapsule(capsule, player);
 
             } else {
-                throw new CommandRuntimeException(new TextComponent("Reward Capsule " + rewardTemplateName + " not found "));
+                throw new CommandRuntimeException(Component.literal("Reward Capsule " + rewardTemplateName + " not found "));
             }
         }
         return 0;
@@ -340,7 +341,7 @@ public class CapsuleCommand {
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool.addRandomItems(loots::add, lootcontext$builder.create(LootContextParamSets.COMMAND));
             if (loots.size() <= 0) {
-                player.sendMessage(new TextComponent("No loot this time !"), Util.NIL_UUID);
+                player.sendSystemMessage(Component.literal("No loot this time !"));
             } else {
                 for (ItemStack loot : loots) {
                     giveCapsule(loot, player);
@@ -372,7 +373,7 @@ public class CapsuleCommand {
                 giveCapsule(capsule, player);
 
             } else {
-                throw new CommandRuntimeException(new TextComponent("Reward Capsule \"" + templateName + "\" not found "));
+                throw new CommandRuntimeException(Component.literal("Reward Capsule \"" + templateName + "\" not found "));
             }
             return 1;
         }
@@ -386,7 +387,7 @@ public class CapsuleCommand {
             String author = null;
 
             // template
-            StructureManager templatemanager = player.getLevel().getStructureManager();
+            StructureTemplateManager templatemanager = player.getLevel().getStructureManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
             Optional<StructureTemplate> templateO = templatemanager.get(new ResourceLocation(path));
             if (templateO.isPresent()) {
@@ -424,7 +425,7 @@ public class CapsuleCommand {
                 giveCapsule(capsule, player);
                 return 1;
             } else {
-                throw new CommandRuntimeException(new TextComponent("Structure \"" + path + "\" not found "));
+                throw new CommandRuntimeException(Component.literal("Structure \"" + path + "\" not found "));
             }
         }
         return 0;
@@ -443,7 +444,7 @@ public class CapsuleCommand {
                     outputName = templateName;
                 }
                 if (StringUtil.isNullOrEmpty(outputName)) {
-                    throw new SimpleCommandExceptionType(new TextComponent(
+                    throw new SimpleCommandExceptionType(Component.literal(
                             "/capsule fromHeldCapsule [outputName]. Please label the held capsule or provide an output name to be used for output template."
                     )).create();
                 }
@@ -459,7 +460,7 @@ public class CapsuleCommand {
                 );
 
                 if (!created) {
-                    player.sendMessage(new TextComponent("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."), Util.NIL_UUID);
+                    player.sendSystemMessage(Component.literal("Could not duplicate the capsule template. Either the source template don't exist or the destination folder dont exist."));
                     return 0;
                 }
 
@@ -483,7 +484,7 @@ public class CapsuleCommand {
         try {
             color = Integer.decode(colorAsInt);
         } catch (NumberFormatException e) {
-            throw new SimpleCommandExceptionType(new TextComponent("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
+            throw new SimpleCommandExceptionType(Component.literal("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
         }
 
         if (player != null) {
@@ -501,7 +502,7 @@ public class CapsuleCommand {
         try {
             color = Integer.decode(colorAsInt);
         } catch (NumberFormatException e) {
-            throw new SimpleCommandExceptionType(new TextComponent("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
+            throw new SimpleCommandExceptionType(Component.literal("Color parameter must be a valid integer. ie. 0xCC3D2E or 123456")).create();
         }
 
         if (player != null) {
@@ -561,16 +562,16 @@ public class CapsuleCommand {
                     BlockEntity BlockEntity = player.getLevel().getBlockEntity(position);
 
                     String BlockEntityTag = BlockEntity == null ? "" : "{BlockEntityTag:" + BlockEntity.serializeNBT().toString() + "}";
-                    String command = "/give @p " + state.getBlock().getRegistryName() + BlockEntityTag + " 1 ";
-                    TextComponent msg = new TextComponent(command);
-                    player.sendMessage(msg.withStyle(style -> style
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent("Click to copy to clipboard")))
+                    String command = "/give @p " + ForgeRegistries.BLOCKS.getKey(state.getBlock()) + BlockEntityTag + " 1 ";
+                    MutableComponent msg = Component.literal(command);
+                    player.sendSystemMessage(msg.withStyle(style -> style
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy to clipboard")))
                             .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, command))
-                    ), Util.NIL_UUID);
+                    ));
                     return 1;
                 }
             } else {
-                player.sendMessage(new TextComponent("This command only works on an integrated server, not on an dedicated one"), Util.NIL_UUID);
+                player.sendSystemMessage(Component.literal("This command only works on an integrated server, not on an dedicated one"));
             }
         }
         return 0;
@@ -583,13 +584,12 @@ public class CapsuleCommand {
 
                 String tag = heldItem.hasTag() ? String.valueOf(heldItem.getTag()) : "";
 
-                String command = "/give @p " + heldItem.getItem().getRegistryName() + tag + " 1 ";
-                TextComponent msg = new TextComponent(command);
-                msg.getStyle()
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent("Copy/Paste from client log (click to open)")));
+                String command = "/give @p " + ForgeRegistries.ITEMS.getKey(heldItem.getItem()) + tag + " 1 ";
+                MutableComponent msg = Component.literal(command);
+                msg.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")));
                 msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
 
-                player.sendMessage(msg, Util.NIL_UUID);
+                player.sendSystemMessage(msg);
                 return 1;
             }
         }

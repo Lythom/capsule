@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -27,11 +27,11 @@ public class LabelGui extends Screen {
 
     private EditBox textInput;
     private Player player;
-    private TranslatableComponent gui_capsule_name = new TranslatableComponent("capsule.gui.capsuleName");
+    private Component gui_capsule_name = Component.translatable("capsule.gui.capsuleName");
     private final List<Button> buttons = Lists.newArrayList();
 
     public LabelGui(Player player) {
-        super(new TranslatableComponent("capsule.gui.capsuleName"));
+        super(Component.translatable("capsule.gui.capsuleName"));
         this.player = player;
     }
 

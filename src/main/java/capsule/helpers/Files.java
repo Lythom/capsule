@@ -106,9 +106,12 @@ public class Files {
                 // initial with example capsule the first time
                 LOGGER.info("First load: initializing the loots in " + data.path + ". You can change the content of folder with any nbt structure block, schematic, or capsule file. You can remove the folders from capsule.config to remove loots.");
                 String assetPath = null;
-                if (templateFolder.getPath().contains(File.separatorChar + "uncommon")) assetPath = "initialconfig/loot/uncommon";
-                if (templateFolder.getPath().contains(File.separatorChar + "rare")) assetPath = "initialconfig/loot/rare";
-                if (templateFolder.getPath().contains(File.separatorChar + "common")) assetPath = "initialconfig/loot/common";
+                if (templateFolder.getPath().contains(File.separatorChar + "uncommon"))
+                    assetPath = "initialconfig/loot/uncommon";
+                if (templateFolder.getPath().contains(File.separatorChar + "rare"))
+                    assetPath = "initialconfig/loot/rare";
+                if (templateFolder.getPath().contains(File.separatorChar + "common"))
+                    assetPath = "initialconfig/loot/common";
                 if (assetPath != null) populateFolder(templateFolder, assetPath, ressourceManager);
             }
 
@@ -134,11 +137,11 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath, ResourceManager ressourceManager) {
         try {
-            for (ResourceLocation ressourceLoc : ressourceManager.listResources(assetPath, s -> s.endsWith(".nbt") || s.endsWith(".json") || s.endsWith(".schematics"))) {
-                Resource ressource = ressourceManager.getResource(ressourceLoc);
+            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".nbt") || s.getPath().endsWith(".json") || s.getPath().endsWith(".schematics")).entrySet()) {
+                Resource resource = ressourceLoc.getValue();
                 // source path
-                InputStream sourceTemplate = ressource.getInputStream();
-                String sourcePath = ressourceLoc.getPath();
+                InputStream sourceTemplate = resource.open();
+                String sourcePath = ressourceLoc.getKey().getPath();
                 String fileName = sourcePath.replace(assetPath + "/", "");
                 Path assetFile = templateFolder.toPath().resolve(fileName);
                 LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());

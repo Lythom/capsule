@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -54,6 +55,7 @@ public class CapsuleTemplateRenderer {
     private StructurePlaceSettings lastPlacementSettings;
     private ModelBlockRenderer blockRenderer = new ModelBlockRenderer(BlockColors.createDefault());
     private LiquidBlockRenderer liquidBlockRenderer = new LiquidBlockRenderer();
+    private final RandomSource random = RandomSource.create();
 
     public void renderTemplate(PoseStack poseStack, Player player, BlockPos destPos) {
         if (player == null)
@@ -132,7 +134,8 @@ public class CapsuleTemplateRenderer {
             poseStack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ()); // handled by renderBatched
             try {
                 if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
-                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, new Random(Mth.getSeed(targetPos)), Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+                    random.setSeed(Mth.getSeed(targetPos));
+                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
                 } else {
                     FluidState ifluidstate = state.getFluidState();
                     if (!ifluidstate.isEmpty()) {

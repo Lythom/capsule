@@ -106,7 +106,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.UPGRADE_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.UPGRADE_CAPSULE_SERIALIZER.get();
     }
 
     @Override
@@ -119,7 +119,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
         return recipeId;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<UpgradeCapsuleRecipe> {
+    public static class Serializer implements RecipeSerializer<UpgradeCapsuleRecipe> {
 
         private static NonNullList<Ingredient> readIngredients(JsonArray p_199568_0_) {
             NonNullList<Ingredient> nonnulllist = NonNullList.create();

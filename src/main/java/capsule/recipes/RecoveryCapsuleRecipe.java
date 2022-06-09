@@ -75,7 +75,7 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.RECOVERY_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.RECOVERY_CAPSULE_SERIALIZER.get();
     }
 
     @Override
@@ -83,7 +83,7 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
         return true;
     }
 
-    public static class Serializer extends net.minecraftforge.registries.ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<RecoveryCapsuleRecipe> {
+    public static class Serializer implements RecipeSerializer<RecoveryCapsuleRecipe> {
 
         @Override
         public RecoveryCapsuleRecipe fromJson(ResourceLocation recipeId, JsonObject json) {

@@ -22,7 +22,7 @@ public class ClearCapsuleRecipe extends CustomRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.CLEAR_CAPSULE_SERIALIZER;
+        return CapsuleRecipes.CLEAR_CAPSULE_SERIALIZER.get();
     }
 
     /**

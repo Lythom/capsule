@@ -16,6 +16,7 @@ def build_version = "BUILD_ID"
 def capsule_version = "7.0"
 def minecraft_version = "1.19"
 def jei_version = "9.5.3.143"
+def rei_version = "9.0.472"
 
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
@@ -109,6 +110,9 @@ repositories {
     maven {
         url "https://www.cursemaven.com"
     }
+    maven {
+        url "https://maven.shedaniel.me"
+    }
 }
 
 dependencies {
@@ -134,10 +138,11 @@ dependencies {
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}:api")
-    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}")
+//    compileOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}:api")
+//    runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}")
+    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${rei_version}")
     // compileOnly fg.deobf("curse.maven:security-craft-64760:3577168") // 1.18.1
-    compileOnly fg.deobf("curse.maven:security-craft-64760:3696873") // 1.18.2
+//    compileOnly fg.deobf("curse.maven:security-craft-64760:3696873") // 1.18.2
 }
 
 jar {

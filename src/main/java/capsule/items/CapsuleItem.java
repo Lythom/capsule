@@ -3,6 +3,7 @@ package capsule.items;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
+import capsule.dispenser.DispenseCapsuleBehavior;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
 import capsule.helpers.Spacial;
@@ -22,8 +23,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -34,7 +33,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
@@ -45,6 +43,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -54,7 +53,6 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -143,6 +141,7 @@ public class CapsuleItem extends Item {
                 .stacksTo(1)
                 .durability(0)
                 .setNoRepair());
+        DispenserBlock.registerBehavior(this, new DispenseCapsuleBehavior());
     }
 
 
@@ -189,13 +188,13 @@ public class CapsuleItem extends Item {
             return null;
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
-            return new TranslatableComponent("items.capsule.content_empty");
+            return Component.translatable("items.capsule.content_empty");
         } else if (stack.hasTag() && stack.getTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
-            return new TextComponent("«")
-                    .append(new TextComponent(stack.getTag().getString("label")).withStyle(ChatFormatting.ITALIC))
+            return Component.literal("«")
+                    .append(Component.literal(stack.getTag().getString("label")).withStyle(ChatFormatting.ITALIC))
                     .append("»");
         }
-        return new TranslatableComponent("items.capsule.content_unlabeled");
+        return Component.translatable("items.capsule.content_unlabeled");
     }
 
     public static void setLabel(ItemStack capsule, String label) {
@@ -367,40 +366,40 @@ public class CapsuleItem extends Item {
     @Override
     @MethodsReturnNonnullByDefault
     public Component getName(ItemStack stack) {
-        MutableComponent name = new TranslatableComponent("items.capsule.name");
+        MutableComponent name = Component.translatable("items.capsule.name");
 
         MutableComponent state = null;
         switch (CapsuleItem.getState(stack)) {
             case ACTIVATED:
             case EMPTY_ACTIVATED:
             case ONE_USE_ACTIVATED:
-                state = new TranslatableComponent("items.capsule.state_activated").withStyle(ChatFormatting.DARK_GREEN);
+                state = Component.translatable("items.capsule.state_activated").withStyle(ChatFormatting.DARK_GREEN);
                 break;
             case LINKED:
                 state = null;
                 break;
             case DEPLOYED:
                 if (isBlueprint(stack)) {
-                    name = new TranslatableComponent("items.capsule.state_blueprint");
+                    name = Component.translatable("items.capsule.state_blueprint");
                 } else {
-                    state = new TranslatableComponent("items.capsule.state_deployed");
+                    state = Component.translatable("items.capsule.state_deployed");
                 }
                 break;
             case ONE_USE:
                 if (isReward(stack)) {
-                    state = new TranslatableComponent("items.capsule.state_one_use");
+                    state = Component.translatable("items.capsule.state_one_use");
                 } else {
-                    state = new TranslatableComponent("items.capsule.state_recovery");
+                    state = Component.translatable("items.capsule.state_recovery");
                 }
                 break;
             case BLUEPRINT:
-                name = new TranslatableComponent("items.capsule.state_blueprint");
+                name = Component.translatable("items.capsule.state_blueprint");
                 break;
         }
 
         Component content = getLabel(stack);
 
-        MutableComponent output = new TextComponent("");
+        MutableComponent output = Component.literal("");
 
         if (state != null) {
             output = output.append(state).append(" ");
@@ -439,15 +438,15 @@ public class CapsuleItem extends Item {
 
         String author = getAuthor(capsule);
         if (author != null) {
-            tooltip.add(new TextComponent(ChatFormatting.DARK_AQUA + "" + ChatFormatting.ITALIC + I18n.get("capsule.tooltip.author") + " " + author + ChatFormatting.RESET));
+            tooltip.add(Component.literal(ChatFormatting.DARK_AQUA + "" + ChatFormatting.ITALIC + I18n.get("capsule.tooltip.author") + " " + author + ChatFormatting.RESET));
         }
 
         if (CapsuleItem.hasState(capsule, CapsuleState.ONE_USE)) {
-            tooltip.add(new TextComponent(I18n.get("capsule.tooltip.one_use").trim()));
+            tooltip.add(Component.literal(I18n.get("capsule.tooltip.one_use").trim()));
         }
 
         if (isOverpowered(capsule)) {
-            tooltip.add(new TextComponent(ChatFormatting.DARK_PURPLE + I18n.get("capsule.tooltip.overpowered") + ChatFormatting.RESET));
+            tooltip.add(Component.literal(ChatFormatting.DARK_PURPLE + I18n.get("capsule.tooltip.overpowered") + ChatFormatting.RESET));
         }
 
         int size = getSize(capsule);
@@ -459,7 +458,7 @@ public class CapsuleItem extends Item {
         if (isInstantAndUndeployed(capsule) || isBlueprint(capsule)) {
             sizeTxt += " (" + I18n.get("capsule.tooltip.instant").trim() + ")";
         }
-        tooltip.add(new TextComponent(I18n.get("capsule.tooltip.size") + ": " + sizeTxt));
+        tooltip.add(Component.literal(I18n.get("capsule.tooltip.size") + ": " + sizeTxt));
 
 
         if (isBlueprint(capsule)) {
@@ -478,23 +477,23 @@ public class CapsuleItem extends Item {
             }
         }
         if (flagIn == TooltipFlag.Default.ADVANCED) {
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "structureName: " + getStructureName(capsule)));
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "oneUse: " + isOneUse(capsule)));
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "isReward: " + isReward(capsule)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "structureName: " + getStructureName(capsule)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "oneUse: " + isOneUse(capsule)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "isReward: " + isReward(capsule)));
             if (isBlueprint(capsule)) {
-                tooltip.add(new TextComponent(ChatFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule)));
+                tooltip.add(Component.literal(ChatFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule)));
             }
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule))));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule))));
             StructurePlaceSettings p = getPlacement(capsule);
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "⌯ Symmetry: " + Capsule.getMirrorLabel(p)));
-            tooltip.add(new TextComponent(ChatFormatting.GOLD + "⟳ Rotation: " + Capsule.getRotationLabel(p)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "⌯ Symmetry: " + Capsule.getMirrorLabel(p)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "⟳ Rotation: " + Capsule.getRotationLabel(p)));
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public void tooltipAddMultiline(List<Component> tooltip, String key, ChatFormatting formatting) {
         for (String s : I18n.get(key).trim().split("\\\\n")) {
-            tooltip.add(new TextComponent(formatting == null ? s : formatting + s));
+            tooltip.add(Component.literal(formatting == null ? s : formatting + s));
         }
     }
 
@@ -503,7 +502,7 @@ public class CapsuleItem extends Item {
      */
     @Override
     public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> subItems) {
-        if (this.allowdedIn(tab)) {
+        if (this.allowedIn(tab)) {
             // Add capsuleList items, loaded from json files
             subItems.addAll(CapsuleItems.capsuleList.keySet());
             subItems.addAll(CapsuleItems.opCapsuleList.keySet());
@@ -547,7 +546,7 @@ public class CapsuleItem extends Item {
                             askPreviewIfNeeded(stack);
                         }
                     } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
-                        event.getPlayer().sendMessage(new TranslatableComponent("capsule.tooltip.cannotRotate"), Util.NIL_UUID);
+                        event.getPlayer().sendSystemMessage(Component.translatable("capsule.tooltip.cannotRotate"));
                     }
                 }
             }

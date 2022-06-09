@@ -23,8 +23,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -114,13 +113,13 @@ public class CapsulePreviewHandler {
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
                         NbtIo.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
-                        mc.player.sendMessage(new TextComponent("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")), Util.NIL_UUID);
+                        mc.player.sendSystemMessage(Component.literal("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")));
                     } catch (Throwable var21) {
                         LOGGER.error(var21);
-                        mc.player.sendMessage(new TranslatableComponent("capsule.error.cantDownload"), Util.NIL_UUID);
+                        mc.player.sendSystemMessage(Component.translatable("capsule.error.cantDownload"));
                     }
                 } else {
-                    mc.player.sendMessage(new TranslatableComponent("capsule.error.cantDownload"), Util.NIL_UUID);
+                    mc.player.sendSystemMessage(Component.translatable("capsule.error.cantDownload"));
                 }
             }
         }

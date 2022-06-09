@@ -2,35 +2,28 @@ package capsule.recipes;
 
 import capsule.CapsuleMod;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SimpleRecipeSerializer;
 import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 public class CapsuleRecipes {
 
-    public static final BlueprintCapsuleRecipe.Serializer BLUEPRINT_CAPSULE_SERIALIZER = register("blueprint_capsule", new BlueprintCapsuleRecipe.Serializer());
-    public static final SimpleRecipeSerializer<BlueprintChangeRecipe> BLUEPRINT_CHANGE_SERIALIZER = register("blueprint_change", new SimpleRecipeSerializer<>(BlueprintChangeRecipe::new));
-    public static final SimpleRecipeSerializer<ClearCapsuleRecipe> CLEAR_CAPSULE_SERIALIZER = register("clear_capsule", new SimpleRecipeSerializer<>(ClearCapsuleRecipe::new));
-    public static final SimpleRecipeSerializer<DyeCapsuleRecipe> DYE_CAPSULE_SERIALIZER = register("dye_capsule", new SimpleRecipeSerializer<>(DyeCapsuleRecipe::new));
-    public static final RecoveryCapsuleRecipe.Serializer RECOVERY_CAPSULE_SERIALIZER = register("recovery_capsule", new RecoveryCapsuleRecipe.Serializer());
-    public static final UpgradeCapsuleRecipe.Serializer UPGRADE_CAPSULE_SERIALIZER = register("upgrade_capsule", new UpgradeCapsuleRecipe.Serializer());
-    public static final PrefabsBlueprintAggregatorRecipe.Serializer PREFABS_AGGREGATOR_SERIALIZER = register("aggregate_all_prefabs", new PrefabsBlueprintAggregatorRecipe.Serializer());
+    private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, CapsuleMod.MODID);
 
-    private static <T extends RecipeSerializer<? extends Recipe<?>>> T register(final String name, final T t) {
-        t.setRegistryName(new ResourceLocation(CapsuleMod.MODID, name));
-        return t;
-    }
+    public static final RegistryObject<BlueprintCapsuleRecipe.Serializer> BLUEPRINT_CAPSULE_SERIALIZER = RECIPE_SERIALIZERS.register("blueprint_capsule", BlueprintCapsuleRecipe.Serializer::new);
+    public static final RegistryObject<SimpleRecipeSerializer<BlueprintChangeRecipe>> BLUEPRINT_CHANGE_SERIALIZER = RECIPE_SERIALIZERS.register("blueprint_change", () -> new SimpleRecipeSerializer<>(BlueprintChangeRecipe::new));
+    public static final RegistryObject<SimpleRecipeSerializer<ClearCapsuleRecipe>> CLEAR_CAPSULE_SERIALIZER = RECIPE_SERIALIZERS.register("clear_capsule", () -> new SimpleRecipeSerializer<>(ClearCapsuleRecipe::new));
+    public static final RegistryObject<SimpleRecipeSerializer<DyeCapsuleRecipe>> DYE_CAPSULE_SERIALIZER = RECIPE_SERIALIZERS.register("dye_capsule", () -> new SimpleRecipeSerializer<>(DyeCapsuleRecipe::new));
+    public static final RegistryObject<RecoveryCapsuleRecipe.Serializer> RECOVERY_CAPSULE_SERIALIZER = RECIPE_SERIALIZERS.register("recovery_capsule", RecoveryCapsuleRecipe.Serializer::new);
+    public static final RegistryObject<UpgradeCapsuleRecipe.Serializer> UPGRADE_CAPSULE_SERIALIZER = RECIPE_SERIALIZERS.register("upgrade_capsule", UpgradeCapsuleRecipe.Serializer::new);
+    public static final RegistryObject<PrefabsBlueprintAggregatorRecipe.Serializer> PREFABS_AGGREGATOR_SERIALIZER = RECIPE_SERIALIZERS.register("aggregate_all_prefabs", PrefabsBlueprintAggregatorRecipe.Serializer::new);
 
-    public static void registerRecipeSerializers(RegistryEvent.Register<RecipeSerializer<?>> event) {
+    public static void registerRecipeSerializers(IEventBus event) {
+        RECIPE_SERIALIZERS.register(event);
         CraftingHelper.register(new ResourceLocation("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE);
-        event.getRegistry().register(BLUEPRINT_CAPSULE_SERIALIZER);
-        event.getRegistry().register(BLUEPRINT_CHANGE_SERIALIZER);
-        event.getRegistry().register(CLEAR_CAPSULE_SERIALIZER);
-        event.getRegistry().register(DYE_CAPSULE_SERIALIZER);
-        event.getRegistry().register(RECOVERY_CAPSULE_SERIALIZER);
-        event.getRegistry().register(UPGRADE_CAPSULE_SERIALIZER);
-        event.getRegistry().register(PREFABS_AGGREGATOR_SERIALIZER);
     }
 }

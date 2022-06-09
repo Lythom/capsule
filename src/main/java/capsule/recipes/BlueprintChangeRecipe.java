@@ -19,7 +19,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
     }
 
     public ItemStack getResultItem() {
-        ItemStack bp = new ItemStack(CapsuleItems.CAPSULE, 1);
+        ItemStack bp = new ItemStack(CapsuleItems.CAPSULE.get(), 1);
         CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
         CapsuleItem.setBaseColor(bp, 3949738);
@@ -29,7 +29,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER;
+        return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER.get();
     }
 
     public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
