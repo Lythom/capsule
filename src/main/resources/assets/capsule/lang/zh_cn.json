@@ -15,9 +15,9 @@
     "capsule.tooltip.upgraded": "升级",
     "capsule.tooltip.overpowered": "超强",
     "capsule.tooltip.author": "设计者：",
-    "capsule.tooltip.blueprintUseUncharged": "* Left click: charge from inventory\\n* Right click: undo last deploy\\n* Sneak+Right click: link inventory",
-    "capsule.tooltip.blueprintUseCharged": "* Right click: instant deploy\\n* Sneak+Right click: link inventory",
-    "capsule.tooltip.canRotate": "* Left click: rotate\\n* Sneak+Left click: mirror",
+    "capsule.tooltip.blueprintUseUncharged": "* Left click: charge from inventory\n* Right click: undo last deploy\n* Sneak+Right click: link inventory",
+    "capsule.tooltip.blueprintUseCharged": "* Right click: instant deploy\n* Sneak+Right click: link inventory",
+    "capsule.tooltip.canRotate": "* Left click: rotate\n* Sneak+Left click: mirror",
     "capsule.tooltip.cannotRotate": "Some complex blocks can't rotate",
     "capsule.tooltip.instant": "Instantaneous",
     "capsule.feedback.linkedToInventory": "Linked to \"%s\" at (x=%s, y=%s, z=%s)",
@@ -39,9 +39,9 @@
     "capsule.gui.capsuleName": "Capsule name",
     "capsule.gui.title": "Capsule renaming",
     "jei.capsule.desc.capsuleMarker": "放置在想要收纳的区域底下以便把区域截取到胶囊里，手持一个空的胶囊可预览截取区域。",
-    "jei.capsule.desc.capsule": "利用截取装置截取并收纳，使用右键激活，再次右键丢出并部署。\\n* 空胶囊可与爆裂紫颂果合成进行升级。",
-    "jei.capsule.desc.recoveryCapsule": "一次性的胶囊\\n与用来合成它的胶囊的内容相连接。\\n提示：如果原胶囊丢失，用此来复原内容物。",
-    "jei.capsule.desc.linkedCapsule": "利用截取装置将区域装入空胶囊后的产物。\\n使用右键激活，再次右键丢出并部署。在已部署的状态下右键回收。\\n* 可以用合成来清空（会给予一个复原胶囊）。\\n* 可以被染色。",
+    "jei.capsule.desc.capsule": "利用截取装置截取并收纳，使用右键激活，再次右键丢出并部署。\n* 空胶囊可与爆裂紫颂果合成进行升级。",
+    "jei.capsule.desc.recoveryCapsule": "一次性的胶囊\n与用来合成它的胶囊的内容相连接。\n提示：如果原胶囊丢失，用此来复原内容物。",
+    "jei.capsule.desc.linkedCapsule": "利用截取装置将区域装入空胶囊后的产物。\n使用右键激活，再次右键丢出并部署。在已部署的状态下右键回收。\n* 可以用合成来清空（会给予一个复原胶囊）。\n* 可以被染色。",
     "jei.capsule.desc.opCapsule": "特别的胶囊，它能截取一般胶囊所不能截取的方块。",
-    "jei.capsule.desc.blueprintCapsule": "Can deploy several times the structure by using materials from a linked inventory.\\nThe structure is copied from the capsule used in craft.\\n* Left click to charge\\n* Shift+right click an inventory to link.\\n* Craft with any capsule to update structure.\\n* Player's inventory will be used if material miss from linked inventory.\\n* Can be dyied."
+    "jei.capsule.desc.blueprintCapsule": "Can deploy several times the structure by using materials from a linked inventory.\nThe structure is copied from the capsule used in craft.\n* Left click to charge\n* Shift+right click an inventory to link.\n* Craft with any capsule to update structure.\n* Player's inventory will be used if material miss from linked inventory.\n* Can be dyied."
 }

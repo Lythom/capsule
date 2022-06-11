@@ -16,7 +16,7 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     public static final List<BlockEntityCapture> instances = new ArrayList<>();
 
     public BlockEntityCapture(BlockPos p_155490_, BlockState p_155491_) {
-        super(p_155490_, p_155491_);
+        super(CapsuleBlocks.MARKER_TE.get(), p_155490_, p_155491_);
         instances.add(this);
     }
 

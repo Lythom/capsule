@@ -33,6 +33,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
@@ -53,6 +54,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -492,7 +494,7 @@ public class CapsuleItem extends Item {
 
     @OnlyIn(Dist.CLIENT)
     public void tooltipAddMultiline(List<Component> tooltip, String key, ChatFormatting formatting) {
-        for (String s : I18n.get(key).trim().split("\\\\n")) {
+        for (String s : I18n.get(key).trim().split("\\\n")) {
             tooltip.add(Component.literal(formatting == null ? s : formatting + s));
         }
     }
@@ -553,6 +555,14 @@ public class CapsuleItem extends Item {
         }
     }
 
+    @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
+    public static void heldItemChange(LivingEquipmentChangeEvent event) {
+        if (event.getEntity() instanceof Player && event.getSlot().equals(EquipmentSlot.MAINHAND) && isInstantAndUndeployed(event.getTo())) {
+            askPreviewIfNeeded(event.getTo());
+        }
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static void askPreviewIfNeeded(ItemStack stack) {
         if (!capsule.client.CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
@@ -606,7 +616,7 @@ public class CapsuleItem extends Item {
 
         } else if (!worldIn.isClientSide) {
             // a capsule is activated on right click, except instant that are deployed immediatly
-            if (!isInstantAndUndeployed(capsule)) {
+            if (!isInstantAndUndeployed(capsule) && getUndeployDelay(capsule) < playerIn.tickCount) {
                 activateCapsule(capsule, (ServerLevel) worldIn, playerIn);
             }
         } else if (worldIn.isClientSide) {
@@ -670,6 +680,14 @@ public class CapsuleItem extends Item {
         CompoundTag timer = capsule.getOrCreateTagElement("activetimer");
         timer.putInt("starttime", playerIn.tickCount);
         worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.2F, 0.9F);
+    }
+
+    public static void setUndeployDelay(ItemStack capsule, Player playerIn) {
+        capsule.getOrCreateTag().putInt("undeployDelay", playerIn.tickCount + 5);
+    }
+
+    public static int getUndeployDelay(ItemStack capsule) {
+        return capsule.getTag().getInt("undeployDelay");
     }
 
 

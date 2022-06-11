@@ -15,9 +15,9 @@
     "capsule.tooltip.upgraded": "Améliorations",
     "capsule.tooltip.overpowered": "Surpuissante",
     "capsule.tooltip.author": "Conçu par",
-    "capsule.tooltip.blueprintUseUncharged": "* Clic gauche: charger depuis l'inventaire\\n* Clic droit: Annuler le dernier dépploiement\\n* Accroupis+Clic droit: lier l'inventaire",
-    "capsule.tooltip.blueprintUseCharged": "* Clic droit: déployer instantanément\\n* Accourpis+Clic droit: link inventory",
-    "capsule.tooltip.canRotate": "* Clic gauche: rotation\\n* Accourpis+Clic gauche: miroir",
+    "capsule.tooltip.blueprintUseUncharged": "* Clic gauche: charger depuis l'inventaire\n* Clic droit: Annuler le dernier dépploiement\n* Accroupis+Clic droit: lier l'inventaire",
+    "capsule.tooltip.blueprintUseCharged": "* Clic droit: déployer instantanément\n* Accourpis+Clic droit: link inventory",
+    "capsule.tooltip.canRotate": "* Clic gauche: rotation\n* Accourpis+Clic gauche: miroir",
     "capsule.tooltip.cannotRotate": "Des blocs trop complexes ne peuvent tourner",
     "capsule.tooltip.instant": "Instantané",
     "capsule.feedback.linkedToInventory": "Associé à \"%s\" (x=%s, y=%s, z=%s)",
@@ -40,8 +40,8 @@
     "capsule.gui.title": "Renomer la capsule",
     "jei.capsule.desc.capsuleMarker": "Positionnez le socle de capture sous la zone à capturer. Affiche un aperçu de la zone lorsqu'une capsule vide est en main.",
     "jei.capsule.desc.capsule": "Capture une zone à l'aide d'un socle de capture. Clic droit pour activer,  clic droit à nouveau pour lancer.",
-    "jei.capsule.desc.recoveryCapsule": "Capsule à usage unique.\\nLiée au même contenu que la capsule d'origine.\\nAstuce : faites une capsule de récupération de vos capsules importantes, en cas de perte…",
-    "jei.capsule.desc.linkedCapsule": "Créée en capturant une zone avec un socle de capture. Clic droit pour activer,clic droit à nouveau pour déployer. Clic droit enfin pour recapturer.\\n* Peut être vidée sur une table de craft (une capsule de récup est rendue).\\n* Peut être teinte avec des colorants.",
+    "jei.capsule.desc.recoveryCapsule": "Capsule à usage unique.\nLiée au même contenu que la capsule d'origine.\nAstuce : faites une capsule de récupération de vos capsules importantes, en cas de perte…",
+    "jei.capsule.desc.linkedCapsule": "Créée en capturant une zone avec un socle de capture. Clic droit pour activer,clic droit à nouveau pour déployer. Clic droit enfin pour recapturer.\n* Peut être vidée sur une table de craft (une capsule de récup est rendue).\n* Peut être teinte avec des colorants.",
     "jei.capsule.desc.opCapsule": "Capsule spéciale qui peut capturer des blocks que les capsules standard ignorent.",
-    "jei.capsule.desc.blueprintCapsule": "Déploie plusieurs fois la même structure en utilisant les matériaux d'un inventaire lié.\\nLa structure est copiée depuis la capsule utilisée dans le craft.\\nRecrafter avec une capsule pour changer la structure.\\n* Shift+clic droit pour lier un inventaire.\\n* L'inventaire du joueur sera utilisé s'il manque des matériaux.\\n* Peut être teinté."
+    "jei.capsule.desc.blueprintCapsule": "Déploie plusieurs fois la même structure en utilisant les matériaux d'un inventaire lié.\nLa structure est copiée depuis la capsule utilisée dans le craft.\nRecrafter avec une capsule pour changer la structure.\n* Shift+clic droit pour lier un inventaire.\n* L'inventaire du joueur sera utilisé s'il manque des matériaux.\n* Peut être teinté."
 }
