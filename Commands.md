@@ -18,6 +18,7 @@ Those commands are accessible only with the op permissions. They are designed to
   * [setBaseColor](#setbasecolor)
   * [setMaterialColor](#setmaterialcolor)
   * [setAuthor](#setauthor)
+  * [setYOffset](#setyoffset)
   * [downloadTemplate](#downloadTemplate)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -43,11 +44,11 @@ Give an empty capsule.
 Give an standard capsule with preloaded content.
 
 ```
-/capsule giveLinked <reward_name> [playerName]
+/capsule giveLinked <reward_name> [playerName] [withEnchantmant]
 ```
 * **reward_name*** Required. Name of the structure reward to load from.
-* **playerName*** Optional. Name of the player that will receive the reward.
-
+* **playerName** Optional. Name of the player that will receive the reward.
+* [since 7.0.91] **withEnchantmant** Optional. Default: false. Add the Recall enchant to the item if set to true.
 ---
 
 ## giveBlueprint ##
@@ -174,6 +175,18 @@ Save an author for both the capsule and the associated template. If the [author]
 /capsule setAuthor [author]
 ```
 * **author*** Author name or leave empty to remove.
+
+---
+## setYOffset ##
+
+[since 7.0.91]
+
+Configure a deployment Y offset on a capsule. Using aimed position as reference, negative values will make the deployment offset toward the ground and positive values will make the deployment offset toward the sky.
+
+```
+/capsule setYOffset [yOffset]
+```
+* **yOffset*** Integer. Offset to apply to the deployed position.
 
 
 ---
