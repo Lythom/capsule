@@ -12,6 +12,13 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.19-7.0.91 : Add yOffset nbt and withEnchantment option to command**
+
+- Add a "withEnchant" option to /giveLinked command so that the capsule is given with recall enchant.
+- Add a yOffset nbt option and a /setYOffset command to configure a deployment offset on a capsule (to be used by modpack makers).
+
+**1.19-7.0.90 : Update capsule for capsule 1.19 on forge 1.19-41.0.17**
+
 **1.16.5-5.0.76 : preview duration config and custom template load**
 
 - Add a client configuration for capsule activation duration (duration of the preview when right clicking). Default unchanged 120 tick (6 seconds).
