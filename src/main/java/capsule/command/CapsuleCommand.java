@@ -2,6 +2,7 @@ package capsule.command;
 
 import capsule.Config;
 import capsule.StructureSaver;
+import capsule.enchantments.CapsuleEnchantments;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.helpers.Spacial;
@@ -60,6 +61,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+import static com.mojang.brigadier.arguments.BoolArgumentType.bool;
 import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
@@ -143,14 +145,17 @@ public class CapsuleCommand {
                                 )
                         )
                 )
-                // giveLinked <rewardTemplateName> [playerName]
+                // giveLinked <rewardTemplateName> [playerName] [withRecall]
                 .then(Commands.literal("giveLinked")
                         .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
-                                .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName"), false))
                                 .then(Commands.argument("target", player())
-                                        .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                        .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), false))
+                                        .then(Commands.argument("withRecall", bool())
+                                                .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), getBool(ctx, "withRecall")))
+                                        )
                                 )
                         )
                 )
@@ -260,6 +265,13 @@ public class CapsuleCommand {
                         .requires((player) -> player.hasPermission(0))
                         .executes(ctx -> executeDownloadTemplate(ctx.getSource().getPlayerOrException()))
                 )
+                // setYOffset yOffset
+                .then(Commands.literal("setYOffset")
+                        .requires((player) -> player.hasPermission(2))
+                        .then(Commands.argument("yOffset", integer())
+                                .executes(ctx -> executeSetYOffset(ctx.getSource().getPlayerOrException(), getInteger(ctx, "yOffset")))
+                        )
+                )
         ;
 
         dispatcher.register(capsuleCommand);
@@ -285,10 +297,13 @@ public class CapsuleCommand {
         return 0;
     }
 
-    private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName) {
+    private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName, boolean withRecall) {
         String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
+            if (withRecall) {
+                capsule.enchant(CapsuleEnchantments.RECALL.get(), 1);
+            }
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
             } else {
@@ -473,6 +488,17 @@ public class CapsuleCommand {
                         CapsuleItem.getAuthor(heldItem));
                 CapsuleItem.setCanRotate(capsule, CapsuleItem.canRotate(heldItem));
                 giveCapsule(capsule, player);
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    private static int executeSetYOffset(ServerPlayer player, int yOffset) {
+        if (player != null) {
+            ItemStack heldItem = player.getMainHandItem();
+            if (heldItem.getItem() instanceof CapsuleItem) {
+                CapsuleItem.setYOffset(heldItem, yOffset);
                 return 1;
             }
         }

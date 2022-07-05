@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import joptsimple.internal.Strings;
-import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -173,7 +172,7 @@ public class CapsulePreviewHandler {
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
-                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, 0.01, -extendSize);
+                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, 0.01 + CapsuleItem.getYOffset(heldItemMainhand), -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 if (!structureName.equals(uncompletePreviewsCountStructure)) {

@@ -24,8 +24,7 @@ public class CapsuleEnchantments {
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleEnchantments.class);
 
-    public static Enchantment recallEnchant = null;
-    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getItemEnchantmentLevel(CapsuleEnchantments.recallEnchant, ((ItemEntity) entityIn).getItem()) > 0;
+    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> entityIn instanceof ItemEntity && EnchantmentHelper.getItemEnchantmentLevel(CapsuleEnchantments.RECALL.get(), ((ItemEntity) entityIn).getItem()) > 0;
 
     public static void registerEnchantments(IEventBus eventBus) {
         ENCHANTMENTS.register(eventBus);
