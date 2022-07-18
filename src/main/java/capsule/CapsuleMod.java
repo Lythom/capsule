@@ -3,7 +3,7 @@ package capsule;
 import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
 import capsule.dispenser.DispenseCapsuleBehavior;
-import capsule.enchantments.Enchantments;
+import capsule.enchantments.CapsuleEnchantments;
 import capsule.itemGroups.CapsuleItemGroups;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -37,6 +37,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -45,6 +46,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,10 +63,13 @@ public class CapsuleMod {
     public static MinecraftServer server = null;
 
     public CapsuleMod() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
+        CapsuleEnchantments.registerEnchantments(modEventBus);
     }
 
     public static void serverStarting(final ServerStartingEvent e) {
@@ -153,11 +158,6 @@ final class CapsuleModEventSubscriber {
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         CapsuleBlocks.registerBlockEntitiesRenderer(event);
-    }
-
-    @SubscribeEvent
-    public static void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
-        Enchantments.registerEnchantments(event);
     }
 
     @SubscribeEvent

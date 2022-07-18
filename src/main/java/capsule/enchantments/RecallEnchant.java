@@ -24,9 +24,8 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class RecallEnchant extends Enchantment {
 
-    protected RecallEnchant(ResourceLocation enchName, Rarity rarity, EnchantmentCategory enchType) {
+    protected RecallEnchant(Rarity rarity, EnchantmentCategory enchType) {
         super(rarity, enchType, EquipmentSlot.values());
-        this.setRegistryName(enchName);
     }
 
     @Override
@@ -68,7 +67,7 @@ public class RecallEnchant extends Enchantment {
             return;
 
         ServerLevel world = (ServerLevel) wte.world;
-        List<? extends ItemEntity> recallEntities = world.getEntities(EntityType.ITEM, Enchantments.hasRecallEnchant);
+        List<? extends ItemEntity> recallEntities = world.getEntities(EntityType.ITEM, CapsuleEnchantments.hasRecallEnchant);
         List<ItemEntity> recallItemEntities = recallEntities.stream()
                 .filter(Objects::nonNull)
                 .map(entity -> (ItemEntity) entity)
