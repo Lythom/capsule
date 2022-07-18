@@ -31,7 +31,7 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
             final int size = CapsuleItem.getSize(capsule);
             final int extendLength = (size - 1) / 2;
 
-            BlockPos anchor = Spacial.getAnchor(source.getPos(), source.getBlockState(), size);
+            BlockPos anchor = Spacial.getAnchor(source.getPos(), source.getBlockState(), size).offset(0, CapsuleItem.getYOffset(capsule), 0);
             boolean deployed = Capsule.deployCapsule(capsule, anchor, null, extendLength, serverWorld);
             if (deployed) {
                 source.getLevel().playSound(null, source.getPos(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.2F, 0.4F);
