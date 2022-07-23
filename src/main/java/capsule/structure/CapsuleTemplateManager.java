@@ -54,9 +54,9 @@ public class CapsuleTemplateManager {
     public CapsuleTemplate getTemplate(ResourceLocation templateLocation) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
         return this.templates.computeIfAbsent(capsuleTemplateLocation, (p_209204_1_) -> {
-            CapsuleTemplate template = this.loadTemplateFile(p_209204_1_, ".schematics");
+            CapsuleTemplate template = this.loadTemplateFile(p_209204_1_, ".schematic");
             if (template == null) template = this.loadTemplateFile(p_209204_1_, ".nbt");
-            if (template == null) template = this.loadTemplateResource(p_209204_1_, ".schematics");
+            if (template == null) template = this.loadTemplateResource(p_209204_1_, ".schematic");
             if (template == null) template = this.loadTemplateResource(p_209204_1_, ".nbt");
             return template;
         });
@@ -74,7 +74,7 @@ public class CapsuleTemplateManager {
         Optional<Resource> optionalTemplate = this.resourceManager.getResource(capsuleTemplateLocation);
         if (optionalTemplate.isPresent()) {
             try {
-                CapsuleTemplate template = this.loadTemplate(optionalTemplate.get().open(), ".schematics".equals(extension), capsuleTemplateLocation.toString());
+                CapsuleTemplate template = this.loadTemplate(optionalTemplate.get().open(), ".schematic".equals(extension), capsuleTemplateLocation.toString());
                 return template;
             } catch (FileNotFoundException var18) {
                 return null;
@@ -95,12 +95,15 @@ public class CapsuleTemplateManager {
                 Path path = this.resolvePath(locationIn, extension);
 
                 try (InputStream inputstream = new FileInputStream(path.toFile())) {
-                    CapsuleTemplate template = this.loadTemplate(inputstream, ".schematics".equals(extension), path.toString());
+                    CapsuleTemplate template = this.loadTemplate(inputstream, ".schematic".equals(extension), path.toString());
                     return template;
                 } catch (FileNotFoundException var18) {
                     return null;
                 } catch (IOException ioexception) {
                     LOGGER.error("Couldn't load structure from {}", path, ioexception);
+                    return null;
+                } catch (Exception exception) {
+                    LOGGER.error("Error while loading {}", path, exception);
                     return null;
                 }
             } catch (ResourceLocationException e) {
@@ -110,7 +113,7 @@ public class CapsuleTemplateManager {
         }
     }
 
-    private CapsuleTemplate loadTemplate(InputStream inputStreamIn, Boolean isSchematic, String location) throws IOException {
+    private CapsuleTemplate loadTemplate(InputStream inputStreamIn, Boolean isSchematic, String location) throws Exception {
         if (isSchematic) {
             return readTemplateFromSchematic(inputStreamIn, location);
         }
@@ -177,8 +180,7 @@ public class CapsuleTemplateManager {
         this.templates.remove(capsuleTemplateLocation);
     }
 
-    public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream, String location) {
-        try {
+    public CapsuleTemplate readTemplateFromSchematic(InputStream inputstream, String location) throws Exception {
             CompoundTag schematicNBT = NbtIo.readCompressed(inputstream);
             CapsuleTemplate template = new CapsuleTemplate();
             // first raw conversion
@@ -186,9 +188,6 @@ public class CapsuleTemplateManager {
             // second conversion with update of data if needed
             CompoundTag compoundnbt = template.save(new CompoundTag());
             return readFromNBT(compoundnbt, location);
-        } catch (Throwable var10) {
-            return null;
-        }
     }
 
     public boolean deleteTemplate(ResourceLocation templateLocation) {

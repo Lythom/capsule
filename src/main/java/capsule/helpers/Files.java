@@ -137,7 +137,7 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath, ResourceManager ressourceManager) {
         try {
-            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".nbt") || s.getPath().endsWith(".json") || s.getPath().endsWith(".schematics")).entrySet()) {
+            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".nbt") || s.getPath().endsWith(".json") || s.getPath().endsWith(".schematic")).entrySet()) {
                 Resource resource = ressourceLoc.getValue();
                 // source path
                 InputStream sourceTemplate = resource.open();
