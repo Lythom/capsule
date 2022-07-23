@@ -5,8 +5,11 @@ import capsule.tags.CapsuleTags;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.SharedConstants;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.IdMapper;
@@ -32,7 +35,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -789,13 +791,18 @@ public class CapsuleTemplate {
     // SCHEMATIC STUFF BELOW
 
     // inspired by https://github.com/maruohon/worldprimer/blob/master/src/main/java/fi/dy/masa/worldprimer/util/Schematic.java
-    // Also for schematic V2 See https://github.com/EngineHub/WorldEdit/blob/master/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java for version 2
-    public boolean readSchematic(CompoundTag nbt) {
-
-        if (!nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) ||
-                !nbt.contains("Data", Tag.TAG_BYTE_ARRAY)) {
-            LOGGER.error("Schematic: Missing block data in the schematic");
-            return false;
+    // schematic V2: https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-2.md
+    // schematic V3: https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-3.md
+    public void readSchematic(CompoundTag nbt) throws Exception {
+        int version = 1;
+        if (nbt.contains("Version", Tag.TAG_INT)) {
+            version = nbt.getInt("Version");
+        }
+        if (version > 3) {
+            throw new Exception("Schematic version >3 not supported");
+        }
+        if (version == 1 && !(nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) && nbt.contains("Data", Tag.TAG_BYTE_ARRAY))) {
+            throw new Exception("Schematic: Missing data in the schematic");
         }
 
         if (!nbt.contains("DataVersion", 99)) {
@@ -809,41 +816,40 @@ public class CapsuleTemplate {
         int width = nbt.getShort("Width");
         int height = nbt.getShort("Height");
         int length = nbt.getShort("Length");
-        byte[] blockIdsByte = nbt.getByteArray("Blocks");
-        byte[] metaArr = nbt.getByteArray("Data");
-        final int numBlocks = blockIdsByte.length;
+        int paletteSize = switch (version) {
+            case 2 -> nbt.getInt("PaletteMax");
+            case 3 -> nbt.getCompound("Blocks").getCompound("PaletteMax").size();
+            default -> 4095;
+        };
         this.author = "?";
-
-        if (numBlocks != (width * height * length)) {
-            LOGGER.error("Schematic: Mismatched block array size compared to the width/height/length, blocks: {}, W x H x L: {} x {} x {}",
-                    numBlocks, width, height, length);
-            return false;
+        try {
+            this.author = nbt.getCompound("Metadata").getString("Author");
+        } catch (Exception e) {
         }
 
-        if (numBlocks != metaArr.length) {
-            LOGGER.error("Schematic: Mismatched block ID and metadata array sizes, blocks: {}, meta: {}", numBlocks, metaArr.length);
-            return false;
-        }
-        Block[] palette = this.readSchematicPalette(nbt);
+
+        BlockState[] palette = this.readSchematicPalette(nbt, version, paletteSize);
         if (palette == null || palette.length == 0) {
-            LOGGER.error("Schematic: Failed to read the block palette");
-            return false;
+            throw new Exception("Schematic: Failed to read the block palette, see logs");
         }
 
         // get blocks informations
-        BlockState[] blocksById = getSchematicBlocks(nbt, blockIdsByte, metaArr, numBlocks, palette);
-        if (blocksById == null) return false;
+        BlockState[] blocksById = getSchematicBlocks(nbt, version, palette, width, height, length);
+        if (blocksById == null) {
+            throw new Exception("Schematic: Failed to read the block stats, see logs");
+        }
 
         // get tile entities
-        Map<BlockPos, CompoundTag> tiles = getSchematicTiles(nbt);
+        Map<BlockPos, CompoundTag> tiles = getSchematicBlockEntities(nbt, version);
 
         // get entities
         this.entities.clear();
         ListTag tagList = nbt.getList("Entities", Tag.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); ++i) {
-            CompoundTag entityNBT = tagList.getCompound(i);
+            CompoundTag entityNBT = tagList.getCompound(i).copy();
             ListTag posList = entityNBT.getList("Pos", Tag.TAG_DOUBLE);
             Vec3 vec3d = new Vec3(posList.getDouble(0), posList.getDouble(1), posList.getDouble(2));
+            entityNBT.remove("Pos");
             this.entities.add(new StructureTemplate.StructureEntityInfo(vec3d, new BlockPos(vec3d), entityNBT));
         }
 
@@ -870,25 +876,75 @@ public class CapsuleTemplate {
         int size = Math.max(sizeX, Math.max(sizeY, sizeZ));
         if (size % 2 == 0) size++;
         this.size = new BlockPos(size, size, size);
-
-        return true;
     }
 
-    private Map<BlockPos, CompoundTag> getSchematicTiles(CompoundTag nbt) {
-        Map<BlockPos, CompoundTag> tiles = new HashMap<>();
-        ListTag tagList = nbt.getList("TileEntities", Tag.TAG_COMPOUND);
-        for (int i = 0; i < tagList.size(); ++i) {
-            CompoundTag tag = tagList.getCompound(i);
-            BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
-            tiles.put(pos, tag);
+    private Map<BlockPos, CompoundTag> getSchematicBlockEntities(CompoundTag nbt, int version) {
+        Map<BlockPos, CompoundTag> blockEntities = new HashMap<>();
+        if (version == 1) {
+            ListTag tagList = nbt.getList("TileEntities", Tag.TAG_COMPOUND);
+            for (int i = 0; i < tagList.size(); ++i) {
+                CompoundTag tag = tagList.getCompound(i);
+                BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
+                blockEntities.put(pos, tag);
+            }
+        } else if (version == 2 || version == 3) {
+            ListTag tagList = version == 2 ? nbt.getList("BlockEntities", Tag.TAG_COMPOUND) : nbt.getCompound("Blocks").getList("BlockEntities", Tag.TAG_COMPOUND);
+            for (int i = 0; i < tagList.size(); ++i) {
+                CompoundTag tag = tagList.getCompound(i).copy();
+                int[] positions = tag.getIntArray("Pos");
+                BlockPos pos = new BlockPos(positions[0], positions[1], positions[2]);
+                tag.remove("Pos");
+                blockEntities.put(pos, tag);
+            }
         }
-        return tiles;
+        return blockEntities;
     }
 
     @Nullable
-    private BlockState[] getSchematicBlocks(CompoundTag nbt, byte[] blockIdsByte, byte[] metaArr, int numBlocks, Block[] palette) {
+    private BlockState[] getSchematicBlocks(CompoundTag nbt, int version, BlockState[] palette, int width, int height,
+                                            int length) throws Exception {
+        byte[] blockIdsByte = switch (version) {
+            case 1 -> nbt.getByteArray("Blocks");
+            case 2 -> nbt.getByteArray("BlockData");
+            case 3 -> nbt.getCompound("Blocks").getByteArray("Data");
+            default -> null;
+        };
+        final int numBlocks = blockIdsByte.length;
+//        if (numBlocks != (width * height * length)) {
+//            LOGGER.error("Schematic: Mismatched block array size compared to the width/height/length, blocks: {}, W x H x L: {} x {} x {}",
+//                    numBlocks, width, height, length);
+//            return null;
+//        }
         BlockState[] blocksById = new BlockState[numBlocks];
-        if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
+        if (version == 2 || version == 3) {
+            int index = 0;
+            int i = 0;
+            int value = 0;
+            int varint_length = 0;
+            while (i < numBlocks) {
+                value = 0;
+                varint_length = 0;
+
+                while (true) {
+                    value |= (blockIdsByte[i] & 127) << (varint_length++ * 7);
+                    if (varint_length > 5) {
+                        throw new RuntimeException("VarInt too big (probably corrupted data)");
+                    }
+                    if ((blockIdsByte[i] & 128) != 128) {
+                        i++;
+                        break;
+                    }
+                    i++;
+                }
+                // index = (y * length + z) * width + x
+                int y = index / (width * length);
+                int z = (index % (width * length)) / width;
+                int x = (index % (width * length)) % width;
+                BlockState state = palette[value];
+                blocksById[index] = state;
+                index++;
+            }
+        } else if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
             byte[] add = nbt.getByteArray("AddBlocks");
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);
 
@@ -907,7 +963,7 @@ public class CapsuleTemplate {
                 loopMax = numBlocks - 2;
             }
 
-            Block block;
+            BlockState block;
             int byteId;
             int bi, ai;
 
@@ -917,11 +973,11 @@ public class CapsuleTemplate {
 
                 byteId = ((int) blockIdsByte[bi]) & 0xFF;
                 block = palette[(addValue & 0xF0) << 4 | byteId];
-                blocksById[bi] = block.defaultBlockState();
+                blocksById[bi] = block;
 
                 byteId = ((int) blockIdsByte[bi + 1]) & 0xFF;
                 block = palette[(addValue & 0x0F) << 8 | byteId];
-                blocksById[bi + 1] = block.defaultBlockState();
+                blocksById[bi + 1] = block;
             }
 
             // Odd number of blocks, handle the last position
@@ -929,7 +985,7 @@ public class CapsuleTemplate {
                 final int addValue = ((int) add[ai]) & 0xFF;
                 byteId = ((int) blockIdsByte[bi]) & 0xFF;
                 block = palette[(addValue & 0xF0) << 4 | byteId];
-                blocksById[bi] = block.defaultBlockState();
+                blocksById[bi] = block;
             }
         }
         // Old Schematica format
@@ -937,51 +993,24 @@ public class CapsuleTemplate {
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
-        // V2 Schematica format
-        else if (nbt.contains("Version", Tag.TAG_INT)) {
-            LOGGER.error("Schematic: Newer Schematica format {} detected, not implemented", nbt.getInt("Version"));
-            return null;
-        }
         // No palette, use the registry IDs directly
         else {
             for (int i = 0; i < numBlocks; i++) {
-                Block block = palette[((int) blockIdsByte[i]) & 0xFF];
-                blocksById[i] = block.defaultBlockState();
+                BlockState block = palette[((int) blockIdsByte[i]) & 0xFF];
+                blocksById[i] = block;
             }
         }
         return blocksById;
     }
 
     @Nullable
-    private Block[] readSchematicPalette(CompoundTag nbt) {
-        final Block air = Blocks.AIR;
-        Block[] palette = new Block[4096];
+    private BlockState[] readSchematicPalette(CompoundTag nbt, int version, int paletteSize) throws Exception {
+        final BlockState air = Blocks.AIR.defaultBlockState();
+        BlockState[] palette = new BlockState[paletteSize];
         Arrays.fill(palette, air);
 
-        // Schematica palette
-        if (nbt.contains("SchematicaMapping", Tag.TAG_COMPOUND)) {
-            CompoundTag tag = nbt.getCompound("SchematicaMapping");
-            Set<String> keys = tag.getAllKeys();
-
-            for (String key : keys) {
-                int id = tag.getShort(key);
-
-                if (id >= palette.length) {
-                    LOGGER.error("Schematic: Invalid ID '{}' in SchematicaMapping for block '{}', max = 4095", id, key);
-                    return null;
-                }
-
-                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(key));
-
-                if (block != null) {
-                    palette[id] = block;
-                } else {
-                    LOGGER.error("Schematic: Missing/non-existing block '{}' in SchematicaMapping", key);
-                }
-            }
-        }
-        // MCEdit2 palette
-        else if (nbt.contains("BlockIDs", Tag.TAG_COMPOUND)) {
+        // MCEdit2 palette (Legacy)
+        if (nbt.contains("BlockIDs", Tag.TAG_COMPOUND)) {
             CompoundTag tag = nbt.getCompound("BlockIDs");
             Set<String> keys = tag.getAllKeys();
 
@@ -1001,31 +1030,52 @@ public class CapsuleTemplate {
                     return null;
                 }
 
-                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(key));
-
+                BlockState block = parseBlockState(key);
                 if (block != null) {
                     palette[id] = block;
                 } else {
                     LOGGER.error("Schematic: Missing/non-existing block '{}' in MCEdit2 palette", key);
                 }
             }
-        }
-        // No palette, use the current registry IDs directly
-        else {
-            for (Block block : ForgeRegistries.BLOCKS.getValues()) {
-                if (block != null) {
-                    int id = Block.getId(block.defaultBlockState());
+        } else {
+            // other type of palettes have different locations but works the same
+            CompoundTag tag = null;
+            if (version == 2) {
+                tag = nbt.getCompound("Palette");
+            } else if (version == 3) {
+                tag = nbt.getCompound("Blocks").getCompound("Palette");
+            } else if (nbt.contains("SchematicaMapping", Tag.TAG_COMPOUND)) {
+                tag = nbt.getCompound("SchematicaMapping");
+            }
+            Set<String> keys = tag.getAllKeys();
 
-                    if (id >= 0 && id < palette.length) {
-                        palette[id] = block;
-                    } else {
-                        LOGGER.error("Schematic: Invalid ID {} for block '{}' from the registry", id, block.getRegistryName());
-                    }
+            for (String key : keys) {
+                int idx = tag.getShort(key);
+
+                if (idx >= palette.length) {
+                    LOGGER.error("Schematic: Invalid ID '{}' in MCEdit2 palette for block '{}', max = {}", idx, key, paletteSize);
+                    return null;
                 }
+
+                palette[idx] = parseBlockState(key);
             }
         }
 
         return palette;
+    }
+
+    private BlockState parseBlockState(String key) {
+        BlockStateParser blockstateparser = new BlockStateParser(new StringReader(key), false);
+        try {
+            blockstateparser.parse(false);
+        } catch (CommandSyntaxException ignored) {
+        }
+        BlockState state = blockstateparser.getState();
+        if (state == null) {
+            LOGGER.error("Could not parse {}. Block not found.", key);
+            return Blocks.AIR.defaultBlockState();
+        }
+        return state;
     }
 
     public static final class Palette {
