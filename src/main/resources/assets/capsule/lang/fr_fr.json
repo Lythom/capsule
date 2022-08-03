@@ -35,6 +35,7 @@
     "capsule.error.cantDownload": "Impossible de télécharger le template nbt: la capsule doit être tenue en main, non déployée et non vide. Essayez de prévisualiser le déploiement (sans déployer) avant de réessayer cette commande.",
     "capsule.tooltip.size": "Taille",
     "enchantment.capsule.recall": "Rappel",
+    "enchantment.capsule.recall.desc": "Au déploiement, la capsule est instantanément renvoyée dans la main.",
     "itemGroup.capsule": "Capsules",
     "capsule.gui.capsuleName": "Nom de la capsule",
     "capsule.gui.title": "Renomer la capsule",
