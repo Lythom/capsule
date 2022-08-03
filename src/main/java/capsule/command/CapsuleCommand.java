@@ -2,6 +2,8 @@ package capsule.command;
 
 import capsule.Config;
 import capsule.StructureSaver;
+import capsule.enchantments.Enchantments;
+import capsule.enchantments.RecallEnchant;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.helpers.Spacial;
@@ -58,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
+import static com.mojang.brigadier.arguments.BoolArgumentType.bool;
 import static com.mojang.brigadier.arguments.BoolArgumentType.getBool;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
 import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
@@ -136,7 +139,7 @@ public class CapsuleCommand {
                         .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), 3, false))
                         .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
                                 .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), getInteger(ctx, "size"), false))
-                                .then(Commands.argument("overpowered", BoolArgumentType.bool())
+                                .then(Commands.argument("overpowered", bool())
                                         .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), getInteger(ctx, "size"), getBool(ctx, "overpowered")))
                                 )
                         )
@@ -146,9 +149,12 @@ public class CapsuleCommand {
                         .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
-                                .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
+                                .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName"), false))
                                 .then(Commands.argument("target", player())
-                                        .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName")))
+                                        .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), false))
+                                        .then(Commands.argument("withRecall", bool())
+                                                .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), getBool(ctx, "withRecall")))
+                                        )
                                 )
                         )
                 )
@@ -283,10 +289,13 @@ public class CapsuleCommand {
         return 0;
     }
 
-    private static int executeGiveLinked(ServerPlayerEntity player, String rewardTemplateName) {
+    private static int executeGiveLinked(ServerPlayerEntity player, String rewardTemplateName, boolean withRecall) {
         String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
         if (player != null && !StringUtils.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
+            if (withRecall) {
+                capsule.enchant(Enchantments.recallEnchant, 1);
+            }
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
             } else {
