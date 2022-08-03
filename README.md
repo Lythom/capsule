@@ -12,6 +12,18 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.16.5-5.0.94 : Blueprint reload fix**
+
+- Fix bug that would prevent reloading a blueprint
+- Add a "withEnchant" option to /giveLinked command so that the capsule is given with recall enchant.
+- Fix recall enchantment description translation
+
+**1.16.5-5.0.86 : Fix height deployment limits and activation time as client config**
+
+- Fix bug that would prevent capsules from deploying above or under certain height in world
+- Fix activation configuation that cannot be client side: activation duration is now a common config, client configuration was removed.
+
+
 **1.16.5-5.0.76 : preview duration config and custom template load**
 
 - Add a client configuration for capsule activation duration (duration of the preview when right clicking). Default unchanged 120 tick (6 seconds).
