@@ -698,7 +698,8 @@ public class StructureSaver {
         }
 
         public int hashCode() {
-            int val = itemStack.getItem().hashCode() * 29 + CapsuleItem.getState(itemStack).getValue();
+            if (itemStack == null) return 0;
+            int val = itemStack.getItem().hashCode() * 8 + CapsuleItem.getState(itemStack).getValue();
             return val;
         }
 
