@@ -99,7 +99,9 @@ public class CapsuleItem extends Item {
         }
 
         public static CapsuleState valueOf(int state) {
-            return map.get(state);
+            if (map.containsKey(state)) return map.get(state);
+            LOGGER.error("Capsule with state " + state + " should not exist. The item you are using is corrupted!");
+            return CapsuleState.DEPLOYED;
         }
 
         public int getValue() {
