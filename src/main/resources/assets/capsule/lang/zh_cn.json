@@ -35,6 +35,7 @@
     "capsule.error.cantDownload": "Can't download nbt template: take the capsule item in hand and make sure it is undeployed and not empty. Try to preview deploy (without deploying) before retrying this command.",
     "capsule.tooltip.size": "大小",
     "enchantment.capsule.recall": "失而复得",
+    "enchantment.capsule.recall.desc": "When deployed, the capsule is immediately sent back to player.",
     "itemGroup.capsule": "胶囊",
     "capsule.gui.capsuleName": "Capsule name",
     "capsule.gui.title": "Capsule renaming",
