@@ -12,6 +12,18 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Changelog ##
 
+**1.18.2-6.0.95 : blueprint reload, schematics**
+
+- Fix bug that would prevent reloading a blueprint
+- Fix recall enchantment description translation
+- Add support for schematics V2 and maybe 3 (untested due to no files)
+
+**1.18.2-6.0.92 : Add yOffset nbt and withEnchantment option to command**
+
+Add a "withEnchant" option to /giveLinked command so that the capsule is given with recall enchant.
+Add a yOffset nbt option and a /setYOffset command to configure a deployment offset on a capsule (to be used by modpack makers).
+Thanks @Saereth on discord for the backport PR 🙏
+
 **1.16.5-5.0.76 : preview duration config and custom template load**
 
 - Add a client configuration for capsule activation duration (duration of the preview when right clicking). Default unchanged 120 tick (6 seconds).
