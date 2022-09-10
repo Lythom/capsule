@@ -91,6 +91,11 @@ public class Spacial {
 
     public static List<AABB> mergeVoxels(List<StructureTemplate.StructureBlockInfo> blocks) {
 
+        if (blocks.size() > 8000) {
+            // too big, use a simplified view of max size
+            return new ArrayList<>();
+        }
+
         Map<BlockPos, StructureTemplate.StructureBlockInfo> blocksByPos = new HashMap<>();
         Map<BlockPos, BoundingBox> bbByPos = new HashMap<>();
         blocks.forEach(b -> blocksByPos.put(b.pos, b));

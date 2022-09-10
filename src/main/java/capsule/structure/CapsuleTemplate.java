@@ -13,6 +13,7 @@ import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.IdMapper;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Clearable;
@@ -35,6 +36,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -1065,17 +1068,13 @@ public class CapsuleTemplate {
     }
 
     private BlockState parseBlockState(String key) {
-        BlockStateParser blockstateparser = new BlockStateParser(new StringReader(key), false);
         try {
-            blockstateparser.parse(false);
-        } catch (CommandSyntaxException ignored) {
-        }
-        BlockState state = blockstateparser.getState();
-        if (state == null) {
-            LOGGER.error("Could not parse {}. Block not found.", key);
+            BlockState state = BlockStateParser.parseForBlock(Registry.BLOCK, key, true).blockState();
+            return state;
+        } catch (CommandSyntaxException exception) {
+            LOGGER.error("Could not parse {}. {}", key, exception);
             return Blocks.AIR.defaultBlockState();
         }
-        return state;
     }
 
     public static final class Palette {

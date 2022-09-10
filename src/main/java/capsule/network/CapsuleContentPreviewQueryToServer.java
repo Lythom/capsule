@@ -65,8 +65,10 @@ public class CapsuleContentPreviewQueryToServer {
             CapsuleTemplate template = templatepair.getRight();
 
             if (template != null) {
-                List<AABB> blockspos = Spacial.mergeVoxels(template.getPalette());
-                CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
+                ctx.get().enqueueWork(() -> {
+                    List<AABB> blockspos = Spacial.mergeVoxels(template.getPalette());
+                    CapsuleNetwork.wrapper.reply(new CapsuleContentPreviewAnswerToClient(blockspos, this.getStructureName()), ctx.get());
+                });
                 CapsuleNetwork.wrapper.reply(new CapsuleFullContentAnswerToClient(template, this.getStructureName()), ctx.get());
             } else if (heldItem.hasTag()) {
                 //noinspection ConstantConditions
