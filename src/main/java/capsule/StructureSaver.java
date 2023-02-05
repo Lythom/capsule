@@ -33,8 +33,8 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -75,7 +75,7 @@ public class StructureSaver {
     private static boolean preventItemDrop = false;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void handleEntityJoinWorldEvent(final EntityJoinWorldEvent e) {
+    public static void handleEntityJoinWorldEvent(final EntityJoinLevelEvent e) {
         if (preventItemDrop && e.getEntity() instanceof ItemEntity) {
             e.setCanceled(true);
         }
@@ -85,10 +85,6 @@ public class StructureSaver {
                                            Map<BlockPos, Block> legacyItemOccupied) {
 
         MinecraftServer minecraftserver = worldserver.getServer();
-        if (minecraftserver == null) {
-            LOGGER.error("worldserver.getServer() returned null");
-            return null;
-        }
         List<Entity> outCapturedEntities = new ArrayList<>();
 
         CapsuleTemplateManager templatemanager = getTemplateManager(worldserver.getServer());
@@ -111,8 +107,7 @@ public class StructureSaver {
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             for (Entity e : outCapturedEntities) {
-                if (e instanceof AbstractMinecartContainer) {
-                    AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
+                if (e instanceof AbstractMinecartContainer eMinecart) {
                     eMinecart.clearContent();
                 }
                 e.remove(Entity.RemovalReason.DISCARDED);
@@ -313,20 +308,19 @@ public class StructureSaver {
             return false;
         }
 
-        final Map<BlockPos, Block> occupiedPositions = outOccupiedSpawnPositions;
         List<BlockPos> spawnedBlocks = new ArrayList<>();
         List<Entity> spawnedEntities = new ArrayList<>();
 
         CapsuleTemplateManager templateManager = templatepair.getLeft();
         String capsuleStructureId = CapsuleItem.getStructureName(capsule);
-        template.saveOccupiedPositions(occupiedPositions);
+        template.saveOccupiedPositions(outOccupiedSpawnPositions);
         if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
             printWriteTemplateError(player, capsuleStructureId);
             return false;
         }
 
         try {
-            template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+            template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, outOccupiedSpawnPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
             placePlayerOnTop(playerWorld, dest, size);
 
             return true;
@@ -340,8 +334,7 @@ public class StructureSaver {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
-                if (e instanceof AbstractMinecartContainer) {
-                    AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
+                if (e instanceof AbstractMinecartContainer eMinecart) {
                     eMinecart.clearContent();
                 }
                 e.remove(Entity.RemovalReason.DISCARDED);

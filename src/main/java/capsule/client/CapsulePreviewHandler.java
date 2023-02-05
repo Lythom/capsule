@@ -33,7 +33,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientChatEvent;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -78,7 +78,7 @@ public class CapsulePreviewHandler {
      * Render recall preview when deployed capsule in hand
      */
     @SubscribeEvent
-    public static void onLevelRenderLast(RenderLevelLastEvent event) {
+    public static void onLevelRenderLast(RenderLevelStageEvent event) {
         Minecraft mc = Minecraft.getInstance();
         time += 1;
         if (mc.player != null) {
@@ -392,10 +392,10 @@ public class CapsulePreviewHandler {
         // remember it's client side only
         for (BlockEntityCapture te : new ArrayList<>(BlockEntityCapture.instances)) {
             if (te.getLevel() == worldIn) {
-                CompoundTag teData = te.getTileData();
+                CompoundTag teData = te.getPersistentData();
                 if (teData.getInt("size") != size || teData.getInt("color") != color) {
-                    te.getTileData().putInt("size", size);
-                    te.getTileData().putInt("color", color);
+                    te.getPersistentData().putInt("size", size);
+                    te.getPersistentData().putInt("color", color);
                     if (te.getBlockState().hasProperty(BlockCapsuleMarker.TRIGGERED)) {
                         worldIn.setBlock(te.getBlockPos(), te.getBlockState().setValue(BlockCapsuleMarker.TRIGGERED, size <= 0), 2);
                     }

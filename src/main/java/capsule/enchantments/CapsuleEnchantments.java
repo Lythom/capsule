@@ -32,17 +32,8 @@ public class CapsuleEnchantments {
 
     public static RecallEnchant CreateRecall() {
         Rarity enchantRarity = Rarity.RARE;
-        try {
-            enchantRarity = Rarity.valueOf(Config.enchantRarity.get());
-        } catch (Exception e) {
-            LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity.get() + ". Using RARE instead.");
-        }
 
         EnchantmentCategory recallEnchantTypeEnumValue = null;
-        try {
-            recallEnchantTypeEnumValue = EnchantmentCategory.valueOf(Config.recallEnchantType.get());
-        } catch (IllegalArgumentException ignored) {
-        }
 
         return new RecallEnchant(// name
                 enchantRarity, // weight (chances to appear)

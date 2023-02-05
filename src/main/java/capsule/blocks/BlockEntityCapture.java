@@ -44,16 +44,16 @@ public class BlockEntityCapture extends DispenserBlockEntity {
 
     public int getSize() {
         int size = 0;
-        if (this.getTileData().contains("size")) {
-            size = this.getTileData().getInt("size");
+        if (this.getPersistentData().contains("size")) {
+            size = this.getPersistentData().getInt("size");
         }
         return size;
     }
 
     public int getColor() {
         int color = 0;
-        if (this.getTileData().contains("color")) {
-            color = this.getTileData().getInt("color");
+        if (this.getPersistentData().contains("color")) {
+            color = this.getPersistentData().getInt("color");
         }
         return color;
     }
@@ -64,9 +64,7 @@ public class BlockEntityCapture extends DispenserBlockEntity {
         BlockPos source = this.getBlockPos().offset(-size, -size, -size);
         BlockPos end = this.getBlockPos().offset(size, size, size);
 
-        AABB box = new AABB(source.getX(), source.getY(), source.getZ(), end.getX(),
+        return new AABB(source.getX(), source.getY(), source.getZ(), end.getX(),
                 end.getY(), end.getZ());
-
-        return box;
     }
 }

@@ -146,7 +146,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getItem(i);
-                nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+                //nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+                nonnulllist.set(i, itemstack);
                 if (itemstack.getItem() instanceof CapsuleItem) {
                     nonnulllist.set(i, itemstack.copy());
                 } else if (i == ingredientOneIndex || i == ingredientTwoIndex || i == ingredientThreeIndex) {

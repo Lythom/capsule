@@ -56,15 +56,19 @@ public class CapsuleMod {
 
     public CapsuleMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+
         CapsuleBlocks.registerBlocks(modEventBus);
         CapsuleItems.registerItems(modEventBus);
         CapsuleRecipes.registerRecipeSerializers(modEventBus);
         CapsuleEnchantments.registerEnchantments(modEventBus);
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
+
     }
 
     public static void serverStarting(final ServerStartingEvent e) {

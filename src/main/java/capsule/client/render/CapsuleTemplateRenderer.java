@@ -10,6 +10,7 @@ import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -39,6 +40,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.minecraftforge.client.model.data.ModelData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -135,7 +138,8 @@ public class CapsuleTemplateRenderer {
             try {
                 if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
                     random.setSeed(Mth.getSeed(targetPos));
-                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.EmptyModelData.INSTANCE);
+                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos),
+                            OverlayTexture.NO_OVERLAY, ModelData.EMPTY, RenderType.LINES);
                 } else {
                     FluidState ifluidstate = state.getFluidState();
                     if (!ifluidstate.isEmpty()) {
@@ -153,13 +157,14 @@ public class CapsuleTemplateRenderer {
     }
 
     private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(ifluidstate.getType().getAttributes().getStillTexture());
+        TextureAtlasSprite sprite =
+                Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(IClientFluidTypeExtensions.of(ifluidstate.getType()).getStillTexture());
 
         float minU = sprite.getU0();
         float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
         float minV = sprite.getV0();
         float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
-        int waterColor = ifluidstate.getType().getAttributes().getColor(world, destOriginPos);
+        int waterColor = IClientFluidTypeExtensions.of(ifluidstate.getType()).getTintColor(ifluidstate, world, destOriginPos);
         float red = (float) (waterColor >> 16 & 255) / 255.0F;
         float green = (float) (waterColor >> 8 & 255) / 255.0F;
         float blue = (float) (waterColor & 255) / 255.0F;
@@ -186,16 +191,16 @@ public class CapsuleTemplateRenderer {
             float f2;
 
             if (bakedquad.isTinted()) {
-                f = red * 1f;
-                f1 = green * 1f;
-                f2 = blue * 1f;
+                f = red;
+                f1 = green;
+                f2 = blue;
             } else {
                 f = 1f;
                 f1 = 1f;
                 f2 = 1f;
             }
 
-            builder.putBulkData(matrixEntry, bakedquad, f, f1, f2, alpha, combinedLightsIn, combinedOverlayIn);
+            builder.putBulkData(matrixEntry, bakedquad, f, f1, f2, alpha, combinedLightsIn, combinedOverlayIn, false);
         }
     }
 
@@ -296,16 +301,13 @@ public class CapsuleTemplateRenderer {
                 if (i <= l) {
                     if (!placementSettings.getKnownShape()) {
                         DiscreteVoxelShape voxelshapepart = new BitSetDiscreteVoxelShape(l - i + 1, i1 - j + 1, j1 - k + 1);
-                        int l1 = i;
-                        int i2 = j;
-                        int j2 = k;
 
                         for (Pair<BlockPos, CompoundTag> pair1 : list2) {
                             BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
+                            voxelshapepart.fill(blockpos5.getX() - i, blockpos5.getY() - j, blockpos5.getZ() - k);
                         }
 
-                        StructureTemplate.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);
+                        StructureTemplate.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, i, j, k);
                     }
 
                     for (Pair<BlockPos, CompoundTag> pair : list2) {

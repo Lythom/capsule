@@ -11,6 +11,9 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.extensions.IForgeItem;
+import net.minecraftforge.items.IItemHandler;
 
 public class RecoveryCapsuleRecipe implements CraftingRecipe {
     public final ShapelessRecipe recipe;
@@ -31,7 +34,8 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
-            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+            //nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+            nonnulllist.set(i, itemstack);
             if (itemstack.getItem() instanceof CapsuleItem) {
                 nonnulllist.set(i, itemstack.copy());
             }

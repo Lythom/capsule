@@ -34,8 +34,7 @@ public class RecallEnchant extends Enchantment {
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack) {
-        return (stack.getItem() instanceof CapsuleItem && !CapsuleItem.isBlueprint(stack) && !CapsuleItem.isOneUse(stack))
-                || (this.category != null && super.canApplyAtEnchantingTable(stack));
+        return stack.getItem() instanceof CapsuleItem && !CapsuleItem.isBlueprint(stack) && !CapsuleItem.isOneUse(stack) || super.canApplyAtEnchantingTable(stack);
     }
 
     @Override
@@ -61,11 +60,11 @@ public class RecallEnchant extends Enchantment {
     }
 
     @SubscribeEvent
-    public static void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
+    public static void onWorldTickEvent(TickEvent.LevelTickEvent wte) {
         if (wte.side == LogicalSide.CLIENT || wte.phase != TickEvent.Phase.END)
             return;
 
-        ServerLevel world = (ServerLevel) wte.world;
+        ServerLevel world = (ServerLevel) wte.level;
         List<? extends ItemEntity> recallEntities = world.getEntities(EntityType.ITEM, CapsuleEnchantments.hasRecallEnchant);
         List<ItemEntity> recallItemEntities = recallEntities.stream()
                 .filter(Objects::nonNull)

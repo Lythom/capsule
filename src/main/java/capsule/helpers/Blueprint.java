@@ -25,8 +25,8 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fml.ModList;
 import org.apache.commons.lang3.tuple.Triple;
@@ -69,7 +69,7 @@ public class Blueprint {
             } else if (block instanceof LiquidBlock) {
                 LiquidBlock fblock = (LiquidBlock) block;
                 if (isLiquidSource(state, fblock)) {
-                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidAttributes.BUCKET_VOLUME));
+                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidType.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
                 }
                 return ItemStack.EMPTY; //flowing liquid is free

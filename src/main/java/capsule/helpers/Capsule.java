@@ -12,7 +12,6 @@ import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -37,7 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.lang3.text.WordUtils;
@@ -45,35 +44,27 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Capsule {
 
     protected static final Logger LOGGER = LogManager.getLogger(Capsule.class);
 
     static public String getMirrorLabel(StructurePlaceSettings placement) {
-        switch (placement.getMirror()) {
-            case FRONT_BACK:
-                return ChatFormatting.STRIKETHROUGH + "[ ]";
-            case LEFT_RIGHT:
-                return "[I]";
-        }
-        return "[ ]";
+        return switch (placement.getMirror()) {
+            case FRONT_BACK -> ChatFormatting.STRIKETHROUGH + "[ ]";
+            case LEFT_RIGHT -> "[I]";
+            default -> "[ ]";
+        };
     }
 
     static public String getRotationLabel(StructurePlaceSettings placement) {
-        switch (placement.getRotation()) {
-            case CLOCKWISE_90:
-                return "90";
-            case CLOCKWISE_180:
-                return "180";
-            case COUNTERCLOCKWISE_90:
-                return "270";
-        }
-        return "0";
+        return switch (placement.getRotation()) {
+            case CLOCKWISE_90 -> "90";
+            case CLOCKWISE_180 -> "180";
+            case COUNTERCLOCKWISE_90 -> "270";
+            default -> "0";
+        };
     }
 
     public static void resentToCapsule(final ItemStack capsule, final ServerLevel world, @Nullable final Player playerIn) {
@@ -190,9 +181,10 @@ public class Capsule {
 
     public static boolean captureAtPosition(ItemStack capsule, UUID thrower, int size, ServerLevel playerWorld, BlockPos source) {
         String throwerId = "CapsuleMod";
-        Player player = null;
+        Player player;
         if (thrower != null) {
             player = playerWorld.getPlayerByUUID(thrower);
+            assert player != null;
             throwerId = player.getGameProfile().getName();
         }
         String capsuleID = StructureSaver.getUniqueName(playerWorld, throwerId);
@@ -256,7 +248,8 @@ public class Capsule {
         }
         // try to provision the materials from linked inventory or player inventory
         IItemHandler inv = CapsuleItem.getSourceInventory(blueprint, world);
-        IItemHandler inv2 = player == null ? null : player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
+        //TODO Fix this null being passed to the orElse
+        IItemHandler inv2 = player == null ? null : player.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
         Map<Integer, Integer> inv1SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv);
         Map<Integer, Integer> inv2SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv2);
 
@@ -277,8 +270,8 @@ public class Capsule {
 
     public static void extractItemOrFluid(IItemHandler inv, Integer slot, Integer qty) {
         ItemStack item = inv.extractItem(slot, qty, false);
-        ItemStack container = net.minecraftforge.common.ForgeHooks.getContainerItem(item);
-        inv.insertItem(slot, container, false);
+        //ItemStack container = net.minecraftforge.common.ForgeHooks.getContainerItem(item);
+        inv.insertItem(slot, item, false);
     }
 
     /**
@@ -310,7 +303,7 @@ public class Capsule {
      * Throw an item and return the new ItemEntity created. Simulated a drop
      * with stronger throw.
      */
-    public static ItemEntity throwCapsule(ItemStack capsule, Player playerIn, BlockPos destination) {
+    public static void throwCapsule(ItemStack capsule, Player playerIn, BlockPos destination) {
         // startPosition from EntityThrowable
         double startPosition = playerIn.getY() - 0.3D + (double) playerIn.getEyeHeight();
         ItemEntity ItemEntity = new ItemEntity(playerIn.getCommandSenderWorld(), playerIn.getX(), startPosition, playerIn.getZ(), capsule);
@@ -344,7 +337,6 @@ public class Capsule {
         playerIn.getInventory().setItem(playerIn.getInventory().selected, ItemStack.EMPTY);
         playerIn.getCommandSenderWorld().playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.2F, 0.1f);
         playerIn.getCommandSenderWorld().addFreshEntity(ItemEntity);
-        return ItemEntity;
     }
 
     public static ItemStack newRewardCapsuleItemStack(String structureName, int baseColor, int materialColor, int size, @Nullable String label, @Nullable String author) {
@@ -438,7 +430,7 @@ public class Capsule {
     public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, ServerPlayer player) {
         if (player == null) return ItemStack.EMPTY;
 
-        CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.getServer());
+        CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, Objects.requireNonNull(player.getServer()));
         if (srcTemplate == null) return ItemStack.EMPTY;
 
         int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
