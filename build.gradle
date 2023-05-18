@@ -14,7 +14,7 @@ apply plugin: 'net.minecraftforge.gradle'
 // EDIT AFTER THIS
 def build_version = "BUILD_ID"
 def capsule_version = "7.0"
-def minecraft_version = "1.19"
+def minecraft_version = "1.19.2"
 def jei_version = "11.6.0.1015"
 def rei_version = "9.1.530"
 def architectury_version = "6.3.49"
