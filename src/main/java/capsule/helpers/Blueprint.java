@@ -6,7 +6,6 @@ import capsule.StructureSaver.ItemStackKey;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
-import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -25,8 +24,8 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidType;
 import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fml.ModList;
 import org.apache.commons.lang3.tuple.Triple;
@@ -66,10 +65,9 @@ public class Blueprint {
             } else if (block instanceof FarmBlock) {
                 return new ItemStack(Blocks.DIRT);
 
-            } else if (block instanceof LiquidBlock) {
-                LiquidBlock fblock = (LiquidBlock) block;
+            } else if (block instanceof LiquidBlock fblock) {
                 if (isLiquidSource(state, fblock)) {
-                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidAttributes.BUCKET_VOLUME));
+                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidType.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
                 }
                 return ItemStack.EMPTY; //flowing liquid is free
@@ -96,7 +94,7 @@ public class Blueprint {
             }
             return item;
         } catch (Exception e) {
-            // some items requires world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
+            // some items require world to have getItem work, here it produces NullPointerException. fallback to default break state of block.
             return new ItemStack(Item.byBlock(block), 1);
         }
     }

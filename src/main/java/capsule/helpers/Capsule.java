@@ -12,7 +12,6 @@ import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -37,7 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.network.PacketDistributor;
 import org.apache.commons.lang3.text.WordUtils;
@@ -55,25 +54,20 @@ public class Capsule {
     protected static final Logger LOGGER = LogManager.getLogger(Capsule.class);
 
     static public String getMirrorLabel(StructurePlaceSettings placement) {
-        switch (placement.getMirror()) {
-            case FRONT_BACK:
-                return ChatFormatting.STRIKETHROUGH + "[ ]";
-            case LEFT_RIGHT:
-                return "[I]";
-        }
-        return "[ ]";
+        return switch (placement.getMirror()) {
+            case FRONT_BACK -> ChatFormatting.STRIKETHROUGH + "[ ]";
+            case LEFT_RIGHT -> "[I]";
+            default -> "[ ]";
+        };
     }
 
     static public String getRotationLabel(StructurePlaceSettings placement) {
-        switch (placement.getRotation()) {
-            case CLOCKWISE_90:
-                return "90";
-            case CLOCKWISE_180:
-                return "180";
-            case COUNTERCLOCKWISE_90:
-                return "270";
-        }
-        return "0";
+        return switch (placement.getRotation()) {
+            case CLOCKWISE_90 -> "90";
+            case CLOCKWISE_180 -> "180";
+            case COUNTERCLOCKWISE_90 -> "270";
+            default -> "0";
+        };
     }
 
     public static void resentToCapsule(final ItemStack capsule, final ServerLevel world, @Nullable final Player playerIn) {
@@ -256,7 +250,7 @@ public class Capsule {
         }
         // try to provision the materials from linked inventory or player inventory
         IItemHandler inv = CapsuleItem.getSourceInventory(blueprint, world);
-        IItemHandler inv2 = player == null ? null : player.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
+        IItemHandler inv2 = player == null ? null : player.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
         Map<Integer, Integer> inv1SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv);
         Map<Integer, Integer> inv2SlotQuantityProvisions = recordSlotQuantityProvisions(missingMaterials, inv2);
 
@@ -277,7 +271,7 @@ public class Capsule {
 
     public static void extractItemOrFluid(IItemHandler inv, Integer slot, Integer qty) {
         ItemStack item = inv.extractItem(slot, qty, false);
-        ItemStack container = net.minecraftforge.common.ForgeHooks.getContainerItem(item);
+        ItemStack container = net.minecraftforge.common.ForgeHooks.getCraftingRemainingItem(item);
         inv.insertItem(slot, container, false);
     }
 

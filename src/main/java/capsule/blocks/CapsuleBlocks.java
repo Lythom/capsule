@@ -17,7 +17,7 @@ public class CapsuleBlocks {
 
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, CapsuleMod.MODID);
     private static final DeferredRegister<Item> BLOCKITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, CapsuleMod.MODID);
-    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITIES, CapsuleMod.MODID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, CapsuleMod.MODID);
 
     public static final RegistryObject<Block> CAPSULE_MARKER = BLOCKS.register("capsulemarker", BlockCapsuleMarker::new);
     public static final RegistryObject<BlockItem> CAPSULE_MARKER_ITEM = BLOCKITEMS.register("capsulemarker", () -> new BlockItem(CAPSULE_MARKER.get(), new Item.Properties().tab(CapsuleMod.tabCapsule)));
