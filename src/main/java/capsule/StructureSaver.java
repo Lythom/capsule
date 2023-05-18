@@ -4,7 +4,6 @@ import capsule.items.CapsuleItem;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -33,8 +32,8 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -75,7 +74,7 @@ public class StructureSaver {
     private static boolean preventItemDrop = false;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void handleEntityJoinWorldEvent(final EntityJoinWorldEvent e) {
+    public static void handleEntityJoinWorldEvent(final EntityJoinLevelEvent e) {
         if (preventItemDrop && e.getEntity() instanceof ItemEntity) {
             e.setCanceled(true);
         }

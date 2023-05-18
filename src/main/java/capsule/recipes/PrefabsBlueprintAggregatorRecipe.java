@@ -146,7 +146,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getItem(i);
-                nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+                nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getCraftingRemainingItem(itemstack));
                 if (itemstack.getItem() instanceof CapsuleItem) {
                     nonnulllist.set(i, itemstack.copy());
                 } else if (i == ingredientOneIndex || i == ingredientTwoIndex || i == ingredientThreeIndex) {
@@ -240,11 +240,10 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             }
             instance.recipes.clear();
 
-            RecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
             int size = buffer.readInt();
             for (int i = 0; i < size; i++) {
                 ResourceLocation id = new ResourceLocation(buffer.readUtf());
-                ShapedRecipe recipe = serializer.fromNetwork(id, buffer);
+                ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.fromNetwork(id, buffer);
                 instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe));
             }
 
@@ -253,11 +252,10 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, PrefabsBlueprintAggregatorRecipe recipe) {
-            RecipeSerializer<ShapedRecipe> serializer = ShapedRecipe.Serializer.SHAPED_RECIPE;
             buffer.writeInt(recipe.recipes.size());
             for (PrefabsBlueprintCapsuleRecipe subRecipe : recipe.recipes) {
                 buffer.writeUtf(subRecipe.id.toString());
-                serializer.toNetwork(buffer, subRecipe.recipe);
+                ShapedRecipe.Serializer.SHAPED_RECIPE.toNetwork(buffer, subRecipe.recipe);
             }
         }
     }

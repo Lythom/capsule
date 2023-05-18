@@ -1,6 +1,7 @@
 package capsule.enchantments;
 
 import capsule.CapsuleMod;
+import capsule.Config;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import net.minecraft.server.level.ServerLevel;
@@ -15,16 +16,49 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class RecallEnchant extends Enchantment {
+    protected static final Logger LOGGER = LogManager.getLogger(RecallEnchant.class);
 
-    protected RecallEnchant(Rarity rarity, EnchantmentCategory enchType) {
-        super(rarity, enchType, EquipmentSlot.values());
+    // rarity and category now have to be lazily-inited, since config is not valid at time of enchantment registration
+    // querying config then will lead to an IllegalStateException
+    private Rarity actualRarity;  // from config
+    private boolean categoryInited = false;
+    private EnchantmentCategory actualCategory;  // from config
+
+    protected RecallEnchant() {
+        // note: rarity & category not important here; we'll lazy-get the actual values from config later
+        super(Rarity.COMMON, EnchantmentCategory.WEAPON, EquipmentSlot.values());
+    }
+
+    @Override
+    public Rarity getRarity() {
+        if (actualRarity == null) {
+            try {
+                actualRarity = Rarity.valueOf(Config.enchantRarity.get());
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Couldn't find the rarity " + Config.enchantRarity.get() + ". Using RARE instead.");
+                actualRarity = Rarity.RARE;
+            }
+        }
+        return actualRarity;
+    }
+
+    private EnchantmentCategory getActualCategory() {
+        if (!categoryInited) {
+            try {
+                actualCategory = EnchantmentCategory.valueOf(Config.recallEnchantType.get());
+            } catch (IllegalArgumentException ignored) {
+            }
+            categoryInited = true;
+        }
+        return actualCategory;
     }
 
     @Override
@@ -35,7 +69,7 @@ public class RecallEnchant extends Enchantment {
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack) {
         return (stack.getItem() instanceof CapsuleItem && !CapsuleItem.isBlueprint(stack) && !CapsuleItem.isOneUse(stack))
-                || (this.category != null && super.canApplyAtEnchantingTable(stack));
+                || (this.getActualCategory() != null && this.getActualCategory().canEnchant(stack.getItem()));
     }
 
     @Override
@@ -61,16 +95,16 @@ public class RecallEnchant extends Enchantment {
     }
 
     @SubscribeEvent
-    public static void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
+    public static void onWorldTickEvent(TickEvent.LevelTickEvent wte) {
         if (wte.side == LogicalSide.CLIENT || wte.phase != TickEvent.Phase.END)
             return;
 
-        ServerLevel world = (ServerLevel) wte.world;
+        ServerLevel world = (ServerLevel) wte.level;
         List<? extends ItemEntity> recallEntities = world.getEntities(EntityType.ITEM, CapsuleEnchantments.hasRecallEnchant);
         List<ItemEntity> recallItemEntities = recallEntities.stream()
                 .filter(Objects::nonNull)
                 .map(entity -> (ItemEntity) entity)
-                .collect(Collectors.toList());
+                .toList();
 
         for (ItemEntity entity : recallItemEntities) {
             if (entity.getThrower() != null && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {

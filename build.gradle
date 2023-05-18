@@ -15,10 +15,10 @@ apply plugin: 'net.minecraftforge.gradle'
 def build_version = "BUILD_ID"
 def capsule_version = "7.0"
 def minecraft_version = "1.19"
-def jei_version = "9.5.3.143"
-def rei_version = "9.0.475"
-def architectury_version = "5.6.21"
-def cloth_config_version = "7.0.69"
+def jei_version = "11.6.0.1015"
+def rei_version = "9.1.530"
+def architectury_version = "6.3.49"
+def cloth_config_version = "8.2.88"
 
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
@@ -111,11 +111,18 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
     maven {
-        url = "https://dvs1.progwml6.com/files/maven"
+		name 'Crafttweaker/Patchouli/Botania/Immersive Engineering/Gamestages'
+		url 'https://maven.blamejared.com/'
+		content {
+			includeGroup "mezz.jei"
+		}
     }
-    maven {
-        url "https://www.cursemaven.com"
-    }
+    //maven {
+        //url = "https://dvs1.progwml6.com/files/maven"
+    //}
+    //maven {
+        //url "https://www.cursemaven.com"
+    //}
     maven {
         url "https://maven.shedaniel.me"
     }
@@ -125,7 +132,7 @@ dependencies {
     // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.19-41.0.17'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.2.11'
 
     // You may put jars on which you depend on in ./libs or you may define them like so..
     // compile "some.group:artifact:version:classifier"
@@ -144,11 +151,12 @@ dependencies {
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
-    implementation fg.deobf("dev.architectury:architectury-forge:5.6.22")
-    implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:7.0.69")
+    implementation fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
+    implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
     compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}")
     implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${rei_version}")
-    compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}")
+    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}")
+    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-plugin-compatibilities-forge:${rei_version}")
 
 //    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}"
 //    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-forge:${rei_version}"

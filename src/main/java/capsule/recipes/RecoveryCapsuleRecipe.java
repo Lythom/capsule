@@ -31,7 +31,7 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
-            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getCraftingRemainingItem(itemstack));
             if (itemstack.getItem() instanceof CapsuleItem) {
                 nonnulllist.set(i, itemstack.copy());
             }

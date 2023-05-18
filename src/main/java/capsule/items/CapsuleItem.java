@@ -53,6 +53,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -433,11 +434,6 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public int getItemEnchantability(ItemStack stack) {
-        return getEnchantmentValue();
-    }
-
-    @Override
     public boolean isEnchantable(ItemStack stack) {
         return !CapsuleItem.hasState(stack, CapsuleState.ONE_USE);
     }
@@ -539,8 +535,8 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
-        ItemStack stack = event.getPlayer().getMainHandItem();
-        if (event.getWorld().isClientSide && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
+        ItemStack stack = event.getEntity().getMainHandItem();
+        if (event.getLevel().isClientSide && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
             CapsuleNetwork.wrapper.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -549,10 +545,10 @@ public class CapsuleItem extends Item {
     @SubscribeEvent
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!event.isCanceled()) {
-            ItemStack stack = event.getPlayer().getMainHandItem();
+            ItemStack stack = event.getEntity().getMainHandItem();
             if (stack.getItem() instanceof CapsuleItem) {
                 event.setCanceled(true);
-                if (event.getWorld().isClientSide) {
+                if (event.getLevel().isClientSide) {
                     if (CapsuleItem.canRotate(stack)) {
                         if (lastRotationTime + 60 < Util.getMillis()) {
                             lastRotationTime = Util.getMillis();
@@ -561,7 +557,7 @@ public class CapsuleItem extends Item {
                             askPreviewIfNeeded(stack);
                         }
                     } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
-                        event.getPlayer().sendSystemMessage(Component.translatable("capsule.tooltip.cannotRotate"));
+                        event.getEntity().sendSystemMessage(Component.translatable("capsule.tooltip.cannotRotate"));
                     }
                 }
             }
@@ -598,7 +594,7 @@ public class CapsuleItem extends Item {
         ItemStack capsule = player.getItemInHand(hand);
         if (player.isShiftKeyDown() && isBlueprint(capsule)) {
             BlockEntity te = world.getBlockEntity(pos);
-            if (te != null && te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).isPresent()) {
+            if (te != null && te.getCapability(ForgeCapabilities.ITEM_HANDLER, null).isPresent()) {
                 if (hasSourceInventory(capsule) && pos.equals(getSourceInventoryLocation(capsule)) && getSourceInventoryDimension(capsule).equals(world.dimension())) {
                     // remove if it was the same
                     saveSourceInventory(capsule, null, null);
@@ -911,7 +907,7 @@ public class CapsuleItem extends Item {
 
         BlockEntity te = inventoryWorld.getBlockEntity(location);
         if (te != null) {
-            return te.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
+            return te.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
         }
         return null;
     }
@@ -926,11 +922,10 @@ public class CapsuleItem extends Item {
 
     public static StructurePlaceSettings getPlacement(ItemStack capsule) {
         if (hasPlacement(capsule)) {
-            StructurePlaceSettings placementSettings = new StructurePlaceSettings()
+            return new StructurePlaceSettings()
                     .setMirror(Mirror.valueOf(capsule.getTag().getString("mirror")))
                     .setRotation(Rotation.valueOf(capsule.getTag().getString("rotation")))
                     .setIgnoreEntities(false);
-            return placementSettings;
         }
         return new StructurePlaceSettings();
     }
