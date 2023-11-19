@@ -8,6 +8,7 @@ import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import capsule.tags.CapsuleTags;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -174,7 +175,7 @@ public class CapsulePreviewHandler {
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
-                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, 0.01 + CapsuleItem.getYOffset(heldItemMainhand), -extendSize);
+                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, (int)(0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 if (!structureName.equals(uncompletePreviewsCountStructure)) {
@@ -283,8 +284,8 @@ public class CapsulePreviewHandler {
                 for (double j = dest.minZ; j < dest.maxZ; ++j) {
                     for (double k = dest.minY; k < dest.maxY; ++k) {
                         for (double l = dest.minX; l < dest.maxX; ++l) {
-                            BlockPos pos = new BlockPos(l, k, j);
-                            if (!Config.overridableBlocks.contains(thePlayer.getCommandSenderWorld().getBlockState(pos).getBlock())) {
+                            BlockPos pos = BlockPos.containing(l, k, j);
+                            if (!thePlayer.getCommandSenderWorld().getBlockState(pos).is(CapsuleTags.overridable)) {
                                 RenderSystem.lineWidth(5.0F);
                                 bufferBuilder.begin(VertexFormat.Mode.LINE_STRIP, DefaultVertexFormat.POSITION);
                                 setColor(0xaa0000, 255);

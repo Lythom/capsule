@@ -7,15 +7,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.MapColor;
 
 /**
  * Will crash if placed at y > 70
  */
 public class BlockDeployCrasher extends Block {
     public BlockDeployCrasher() {
-        super(Block.Properties.of(Material.STONE, MaterialColor.STONE)
+        super(Block.Properties.of().mapColor(MapColor.STONE)
                 .sound(SoundType.STONE));
     }
 

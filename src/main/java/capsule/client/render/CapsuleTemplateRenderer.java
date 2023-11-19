@@ -6,7 +6,6 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -44,11 +43,11 @@ import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.client.model.data.ModelData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joml.Matrix4f;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class CapsuleTemplateRenderer {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -157,23 +156,22 @@ public class CapsuleTemplateRenderer {
 
     private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
         IClientFluidTypeExtensions fluidTypeExtensions = IClientFluidTypeExtensions.of(ifluidstate);
-        try (TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(fluidTypeExtensions.getStillTexture())) {
-            float minU = sprite.getU0();
-            float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
-            float minV = sprite.getV0();
-            float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
-            int waterColor =  fluidTypeExtensions.getTintColor(ifluidstate, world, destOriginPos);
-            float red = (float) (waterColor >> 16 & 255) / 255.0F;
-            float green = (float) (waterColor >> 8 & 255) / 255.0F;
-            float blue = (float) (waterColor & 255) / 255.0F;
+        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(fluidTypeExtensions.getStillTexture());
+        float minU = sprite.getU0();
+        float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
+        float minV = sprite.getV0();
+        float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
+        int waterColor =  fluidTypeExtensions.getTintColor(ifluidstate, world, destOriginPos);
+        float red = (float) (waterColor >> 16 & 255) / 255.0F;
+        float green = (float) (waterColor >> 8 & 255) / 255.0F;
+        float blue = (float) (waterColor & 255) / 255.0F;
 
-            Matrix4f matrix = matrixStack.last().pose();
+        Matrix4f matrix = matrixStack.last().pose();
 
-            vertex(buffer, maxU, minV, red, green, blue, matrix, 0, 1, 0);
-            vertex(buffer, minU, minV, red, green, blue, matrix, 0, 1, 1);
-            vertex(buffer, minU, maxV, red, green, blue, matrix, 1, 1, 1);
-            vertex(buffer, maxU, maxV, red, green, blue, matrix, 1, 1, 0);
-        }
+        vertex(buffer, maxU, minV, red, green, blue, matrix, 0, 1, 0);
+        vertex(buffer, minU, minV, red, green, blue, matrix, 0, 1, 1);
+        vertex(buffer, minU, maxV, red, green, blue, matrix, 1, 1, 1);
+        vertex(buffer, maxU, maxV, red, green, blue, matrix, 1, 1, 0);
     }
 
     private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green,
@@ -234,11 +232,11 @@ public class CapsuleTemplateRenderer {
                 int j1 = Integer.MIN_VALUE;
 
                 for (StructureTemplate.StructureBlockInfo template$blockinfo : CapsuleTemplate.processBlockInfos(template, templateWorld, offPos, placementSettings, list)) {
-                    BlockPos blockpos = template$blockinfo.pos;
+                    BlockPos blockpos = template$blockinfo.pos();
                     if (mutableboundingbox == null || mutableboundingbox.isInside(blockpos)) {
                         FluidState fluidstate = placementSettings.shouldKeepLiquids() ? templateWorld.getFluidState(blockpos) : null;
-                        BlockState blockstate = template$blockinfo.state.mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
-                        if (template$blockinfo.nbt != null) {
+                        BlockState blockstate = template$blockinfo.state().mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
+                        if (template$blockinfo.nbt() != null) {
                             BlockEntity BlockEntity = templateWorld.getBlockEntity(blockpos);
                             Clearable.tryClear(BlockEntity);
                             templateWorld.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
@@ -251,7 +249,7 @@ public class CapsuleTemplateRenderer {
                             l = Math.max(l, blockpos.getX());
                             i1 = Math.max(i1, blockpos.getY());
                             j1 = Math.max(j1, blockpos.getZ());
-                            list2.add(Pair.of(blockpos, template$blockinfo.nbt));
+                            list2.add(Pair.of(blockpos, template$blockinfo.nbt()));
 
                             if (fluidstate != null && blockstate.getBlock() instanceof LiquidBlockContainer) {
                                 ((LiquidBlockContainer) blockstate.getBlock()).placeLiquid(templateWorld, blockpos, blockstate, fluidstate);

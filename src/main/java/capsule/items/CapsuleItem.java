@@ -17,8 +17,7 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -36,12 +35,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DispenserBlock;
@@ -59,9 +56,7 @@ import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -70,7 +65,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static capsule.items.CapsuleItem.CapsuleState.*;
+import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
+import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
+import static capsule.items.CapsuleItem.CapsuleState.LINKED;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 @SuppressWarnings({"ConstantConditions"})
@@ -141,7 +138,7 @@ public class CapsuleItem extends Item {
      * arr ench:[0:{lvl:1s,id:101s}]
      */
     public CapsuleItem() {
-        super((new Item.Properties().tab(CapsuleMod.tabCapsule))
+        super((new Item.Properties())
                 .stacksTo(1)
                 .durability(0)
                 .setNoRepair());
@@ -322,7 +319,7 @@ public class CapsuleItem extends Item {
     public static ResourceKey<Level> getDimension(ItemStack capsule) {
         ResourceKey<Level> dim = null;
         if (capsule != null && capsule.hasTag() && capsule.getTag().contains("spawnPosition")) {
-            dim = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(
+            dim = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(
                     capsule.getTag().getCompound("spawnPosition").getString("dim")
             ));
         }
@@ -507,30 +504,6 @@ public class CapsuleItem extends Item {
             tooltip.add(Component.literal(formatting == null ? s : formatting + s));
         }
     }
-
-    /**
-     * Register items in the creative tab
-     */
-    @Override
-    public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> subItems) {
-        if (this.allowedIn(tab)) {
-            // Add capsuleList items, loaded from json files
-            subItems.addAll(CapsuleItems.capsuleList.keySet());
-            subItems.addAll(CapsuleItems.opCapsuleList.keySet());
-            if (CapsuleItems.unlabelledCapsule != null) subItems.add(CapsuleItems.unlabelledCapsule.getKey());
-            if (CapsuleItems.deployedCapsule != null) subItems.add(CapsuleItems.deployedCapsule.getKey());
-            if (CapsuleItems.recoveryCapsule != null) subItems.add(CapsuleItems.recoveryCapsule.getKey());
-            if (CapsuleItems.blueprintChangedCapsule != null)
-                subItems.add(CapsuleItems.blueprintChangedCapsule.getKey());
-            for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintCapsules) {
-                subItems.add(blueprintCapsule.getKey());
-            }
-            for (Pair<ItemStack, CraftingRecipe> blueprintCapsule : CapsuleItems.blueprintPrefabs) {
-                subItems.add(blueprintCapsule.getKey());
-            }
-        }
-    }
-
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
@@ -757,11 +730,11 @@ public class CapsuleItem extends Item {
      */
     @SubscribeEvent
     public static void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
-        if (!event.player.level.isClientSide) {
+        if (!event.player.level().isClientSide) {
             for (int i = 0; i < event.player.getInventory().getContainerSize(); ++i) {
                 ItemStack itemstack = event.player.getInventory().getItem(i);
                 if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied")) {
-                    duplicateBlueprintTemplate(itemstack, event.player.level, event.player);
+                    duplicateBlueprintTemplate(itemstack, event.player.level(), event.player);
                 }
             }
         }
@@ -891,7 +864,7 @@ public class CapsuleItem extends Item {
     @Nullable
     public static ResourceKey<Level> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            return ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(
+            return ResourceKey.create(Registries.DIMENSION, new ResourceLocation(
                     capsule.getTag().getCompound("sourceInventory").getString("dim")
             ));
         }

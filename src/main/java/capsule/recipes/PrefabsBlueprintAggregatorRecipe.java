@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -33,8 +34,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
     public List<PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe> recipes = new ArrayList<>();
 
-    public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn) {
-        super(idIn);
+    public PrefabsBlueprintAggregatorRecipe(ResourceLocation idIn, CraftingBookCategory craftingCategory) {
+        super(idIn, craftingCategory);
         instance = this;
     }
 
@@ -74,9 +75,9 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer inv) {
+    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
-        if (recipe.isPresent()) return recipe.get().assemble(inv);
+        if (recipe.isPresent()) return recipe.get().assemble(inv, registryAccess);
         return ItemStack.EMPTY;
     }
 
@@ -85,7 +86,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
         return width * height >= 2;
     }
 
-    public ItemStack getResultItem() {
+    public ItemStack getResultItem(RegistryAccess registryAccess) {
         return CapsuleItems.withState(BLUEPRINT);
     }
 
@@ -134,8 +135,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             this.recipe = serializedRecipe;
         }
 
-        public ItemStack getResultItem() {
-            return recipe.getResultItem();
+        public ItemStack getResultItem(RegistryAccess registryAccess) {
+            return recipe.getResultItem(registryAccess);
         }
 
         /**
@@ -215,13 +216,18 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             return true;
         }
 
-        public ItemStack assemble(CraftingContainer invC) {
-            return recipe.assemble(invC);
+        public ItemStack assemble(CraftingContainer invC, RegistryAccess registryAccess) {
+            return recipe.assemble(invC, registryAccess);
         }
 
         @Override
         public boolean canCraftInDimensions(int width, int height) {
             return recipe.canCraftInDimensions(width, height);
+        }
+
+        @Override
+        public CraftingBookCategory category() {
+            return CraftingBookCategory.MISC;
         }
     }
 
@@ -230,13 +236,13 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
         @Override
         public PrefabsBlueprintAggregatorRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            return instance != null ? instance : new PrefabsBlueprintAggregatorRecipe(recipeId);
+            return instance != null ? instance : new PrefabsBlueprintAggregatorRecipe(recipeId, CraftingBookCategory.MISC);
         }
 
         @Override
         public PrefabsBlueprintAggregatorRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             if (instance == null) {
-                instance = new PrefabsBlueprintAggregatorRecipe(recipeId);
+                instance = new PrefabsBlueprintAggregatorRecipe(recipeId, CraftingBookCategory.MISC);
             }
             instance.recipes.clear();
 

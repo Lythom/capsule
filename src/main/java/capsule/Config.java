@@ -7,9 +7,10 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
@@ -22,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Bus.MOD)
@@ -69,7 +71,6 @@ public class Config {
     public static List<String> prefabsTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
     public static List<Block> excludedBlocks;
-    public static List<Block> overridableBlocks;
     public static List<Block> opExcludedBlocks;
 
     public static String starterTemplatesPath;
@@ -87,7 +88,6 @@ public class Config {
 
     // provided by spec
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> excludedBlocksIdsCfg;
-    private static ForgeConfigSpec.ConfigValue<List<? extends String>> overridableBlocksIdsCfg;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> opExcludedBlocksIdsCfg;
     private static ForgeConfigSpec.ConfigValue<List<CommentedConfig>> lootTemplatesPathsCfg;
     private static ForgeConfigSpec.ConfigValue<List<? extends String>> lootTablesListCfg;
@@ -117,7 +117,6 @@ public class Config {
 
         Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIdsCfg.get());
         Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIdsCfg.get());
-        Config.overridableBlocks = Serialization.deserializeBlockList(overridableBlocksIdsCfg.get());
         Config.lootTablesList = lootTablesListCfg.get();
         Config.starterTemplatesPath = starterTemplatesPathCfg.get();
         Config.prefabsTemplatesPath = prefabsTemplatesPathCfg.get();
@@ -178,16 +177,6 @@ public class Config {
         opExcludedBlocksIdsCfg = configBuild.comment("List of block ids or tags that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.\nMod prefix usually indicate an incompatibility, remove at your own risk. See https://github.com/Lythom/capsule/wiki/Known-incompatibilities. \n Ex: minecraft:spawner")
                 .worldRestart()
                 .defineList("opExcludedBlocks", Arrays.asList(excludedBlocksOPArray), item -> item instanceof String);
-
-        // Overridable
-        List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.REPLACEABLE_PLANT, Material.SNOW);
-        Block[] overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
-                .filter(block -> overridableMaterials.contains(block.defaultBlockState().getMaterial()))
-                .toArray(Block[]::new);
-
-        overridableBlocksIdsCfg = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
-                .worldRestart()
-                .defineList("overridableBlocks", Arrays.asList(Serialization.serializeBlockArray(overridableBlocksList)), item -> item instanceof String);
     }
 
     public static void configureLoot(ForgeConfigSpec.Builder configBuild) {

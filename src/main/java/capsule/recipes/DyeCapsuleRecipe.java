@@ -5,11 +5,13 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -21,10 +23,9 @@ import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class DyeCapsuleRecipe extends CustomRecipe {
 
-    public DyeCapsuleRecipe(ResourceLocation idIn) {
-        super(idIn);
+    public DyeCapsuleRecipe(ResourceLocation id, CraftingBookCategory category) {
+        super(id, category);
     }
-
 
     @Override
     public RecipeSerializer<?> getSerializer() {
@@ -60,7 +61,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer inv) {
+    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
         List<DyeItem> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
@@ -146,7 +147,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
         return width * height >= 2;
     }
 
-    public ItemStack getResultItem() {
+    public ItemStack getResultItem(RegistryAccess registryAccess) {
         return CapsuleItems.withState(EMPTY);
     }
 

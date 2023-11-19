@@ -4,6 +4,7 @@ import capsule.items.CapsuleItem;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import capsule.tags.CapsuleTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -163,7 +164,7 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt == null || !b.nbt.contains("Items") || b.nbt.getList("Items", TAG_COMPOUND).isEmpty());
+        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt() == null || !b.nbt().contains("Items") || b.nbt().getList("Items", TAG_COMPOUND).isEmpty());
 
         if (blueprintMatch) {
             blueprintTemplate.removeOccupiedPositions();
@@ -184,15 +185,15 @@ public class StructureSaver {
     }
 
     public static String serializeComparable(StructureTemplate.StructureBlockInfo b) {
-        return b.state.getBlock().getDescriptionId()
+        return b.state().getBlock().getDescriptionId()
                 + "@"
-                + b.state.getBlock().defaultBlockState()
-                + (b.nbt == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
+                + b.state().getBlock().defaultBlockState()
+                + (b.nbt() == null ? "" : nbtStringNotEmpty(filterIdentityNBT(b)));
     }
 
     public static CompoundTag filterIdentityNBT(StructureTemplate.StructureBlockInfo b) {
-        CompoundTag nbt = b.nbt.copy();
-        List<String> converted = Config.getBlueprintIdentityNBT(b.state.getBlock());
+        CompoundTag nbt = b.nbt().copy();
+        List<String> converted = Config.getBlueprintIdentityNBT(b.state().getBlock());
         nbt.getAllKeys().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
     }
@@ -203,7 +204,7 @@ public class StructureSaver {
     }
 
     public static boolean isFlowingLiquid(StructureTemplate.StructureBlockInfo b) {
-        return b.state.getBlock() instanceof LiquidBlock && b.state.getValue(LiquidBlock.LEVEL) != 0;
+        return b.state().getBlock() instanceof LiquidBlock && b.state().getValue(LiquidBlock.LEVEL) != 0;
     }
 
 
@@ -284,7 +285,7 @@ public class StructureSaver {
 
 
     public static boolean deploy(ItemStack capsule, ServerLevel playerWorld, @Nullable UUID thrower, BlockPos
-            dest, List<Block> overridableBlocks, StructurePlaceSettings placementsettings) {
+            dest, StructurePlaceSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
@@ -300,7 +301,7 @@ public class StructureSaver {
         int size = CapsuleItem.getSize(capsule);
         // check if the destination is valid : no unoverwritable block and no entities in the way.
         List<Component> outErrors = new ArrayList<>();
-        checkDestination(template, placementsettings, playerWorld, dest, size, overridableBlocks, outOccupiedSpawnPositions, outErrors);
+        checkDestination(template, placementsettings, playerWorld, dest, size, outOccupiedSpawnPositions, outErrors);
         if (outErrors.size() > 0) {
             if (player != null) printDeployFailure(player, outErrors);
             return false;
@@ -325,7 +326,7 @@ public class StructureSaver {
         }
 
         try {
-            template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
+            template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, spawnedBlocks, spawnedEntities);
             placePlayerOnTop(playerWorld, dest, size);
 
             return true;
@@ -377,7 +378,7 @@ public class StructureSaver {
 
     private static boolean checkBlockCollision(Entity entity) {
         return BlockPos.betweenClosedStream(entity.getBoundingBox()).allMatch(p -> {
-            BlockState state = entity.level.getBlockState(p);
+            BlockState state = entity.level().getBlockState(p);
             return state.isAir();
         });
     }
@@ -474,7 +475,7 @@ public class StructureSaver {
      */
     public static void checkDestination(CapsuleTemplate template, StructurePlaceSettings placementIn, ServerLevel
             destWorld, BlockPos destOriginPos, int size,
-                                        List<Block> overridable, Map<BlockPos, Block> outOccupiedPositions, List<Component> outErrors) {
+                                        Map<BlockPos, Block> outOccupiedPositions, List<Component> outErrors) {
 
         BlockState air = Blocks.AIR.defaultBlockState();
 
@@ -482,7 +483,7 @@ public class StructureSaver {
 
         Map<BlockPos, StructureTemplate.StructureBlockInfo> blockInfoByPosition = new HashMap<>();
         for (StructureTemplate.StructureBlockInfo template$blockinfo : srcblocks) {
-            BlockPos blockpos = CapsuleTemplate.calculateRelativePosition(placementIn, template$blockinfo.pos).offset(destOriginPos).offset(CapsuleTemplate.recenterRotation((size - 1) / 2, placementIn));
+            BlockPos blockpos = CapsuleTemplate.calculateRelativePosition(placementIn, template$blockinfo.pos()).offset(destOriginPos).offset(CapsuleTemplate.recenterRotation((size - 1) / 2, placementIn));
             blockInfoByPosition.put(blockpos, template$blockinfo);
         }
 
@@ -495,7 +496,7 @@ public class StructureSaver {
                     StructureTemplate.StructureBlockInfo srcInfo = blockInfoByPosition.get(destPos);
                     BlockState templateBlockState = air;
                     if (srcInfo != null) {
-                        templateBlockState = srcInfo.state;
+                        templateBlockState = srcInfo.state();
                     }
 
                     if (!destWorld.hasChunkAt(destPos)) {
@@ -504,12 +505,12 @@ public class StructureSaver {
                     }
                     BlockState worldDestState = destWorld.getBlockState(destPos);
 
-                    boolean worldDestOccupied = (!worldDestState.isAir() && !overridable.contains(worldDestState.getBlock()));
+                    boolean worldDestOccupied = (!worldDestState.isAir() && !worldDestState.is(CapsuleTags.overridable));
                     if (!worldDestState.isAir() && outOccupiedPositions != null) {
                         outOccupiedPositions.put(destPos, worldDestState.getBlock());
                     }
 
-                    boolean srcOccupied = (!templateBlockState.isAir() && !overridable.contains(templateBlockState.getBlock()));
+                    boolean srcOccupied = (!templateBlockState.isAir() && !templateBlockState.is(CapsuleTags.overridable));
 
                     List<LivingEntity> entities = destWorld.getEntitiesOfClass(
                             LivingEntity.class,
@@ -535,7 +536,7 @@ public class StructureSaver {
 
                         return;
                     }
-                    if (worldDestOccupied && !overridable.contains(templateBlockState.getBlock())) {
+                    if (worldDestOccupied && !templateBlockState.is(CapsuleTags.overridable)) {
                         outErrors.add(Component.translatable("capsule.error.cantMergeWithDestination", destPos.toString()));
                         return;
                     }
@@ -695,7 +696,7 @@ public class StructureSaver {
         public boolean equals(Object someOther) {
             if (!(someOther instanceof ItemStackKey)) return false;
             final ItemStack otherStack = ((ItemStackKey) someOther).itemStack;
-            return otherStack.sameItem(this.itemStack) && (!otherStack.hasTag() && !this.itemStack.hasTag() || otherStack.getTag().equals(this.itemStack.getTag()));
+            return ItemStack.isSameItem(otherStack, this.itemStack) && (!otherStack.hasTag() && !this.itemStack.hasTag() || otherStack.getTag().equals(this.itemStack.getTag()));
         }
 
         public int hashCode() {

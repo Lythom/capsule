@@ -42,9 +42,9 @@ public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
 
     public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo) {
-        final BlockState state = blockInfo.state;
+        final BlockState state = blockInfo.state();
         Block block = state.getBlock();
-        CompoundTag blockNBT = blockInfo.nbt;
+        CompoundTag blockNBT = blockInfo.nbt();
         try {
             // prevent door to beeing counted twice
             if (block instanceof DoorBlock) {
@@ -120,7 +120,7 @@ public class Blueprint {
             if (itemStack == null) {
                 if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
                 if (player != null)
-                    LOGGER.error("Unknown item during blueprint undo for " + block.state.getBlock().toString());
+                    LOGGER.error("Unknown item during blueprint undo for " + block.state().getBlock().toString());
                 return null;
             } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
                 Integer currValue = list.get(stackKey);

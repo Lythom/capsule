@@ -26,7 +26,7 @@ public class StarterLoot {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void playerLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!event.getEntity().level.isClientSide) {
+        if (!event.getEntity().level().isClientSide) {
             if (StringUtil.isNullOrEmpty(Config.starterMode) || Config.starterTemplatesList == null || Config.starterTemplatesList.isEmpty()) {
                 LOGGER.info("Capsule starters are disabled in capsule.cfg. To enable, set starterMode to 'all' or 'random' and set a directory path with structures for starterTemplatesPath.");
                 return;

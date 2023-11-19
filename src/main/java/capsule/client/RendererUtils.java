@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
@@ -12,8 +12,8 @@ import net.minecraft.world.phys.AABB;
 public class RendererUtils {
     public static void doPositionPrologue(Camera camera, PoseStack poseStack) {
         poseStack.pushPose();
-        poseStack.mulPose(Vector3f.XP.rotationDegrees(camera.getXRot()));
-        poseStack.mulPose(Vector3f.YP.rotationDegrees(camera.getYRot() + 180.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
         poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
     }
 
@@ -22,26 +22,26 @@ public class RendererUtils {
     }
 
     public static void doOverlayPrologue() {
-        RenderSystem.disableTexture();
+//        RenderSystem.disableTexture();
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
     }
 
     public static void doOverlayEpilogue() {
-        RenderSystem.enableTexture();
+//        RenderSystem.enableTexture();
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
     }
 
     public static void doWirePrologue() {
         RenderSystem.disableCull();
-        RenderSystem.disableTexture();
+//        RenderSystem.disableTexture();
         RenderSystem.lineWidth(3.0F);
     }
 
     public static void doWireEpilogue() {
         RenderSystem.lineWidth(1.0F);
-        RenderSystem.enableTexture();
+//        RenderSystem.enableTexture();
         RenderSystem.enableCull();
 
     }

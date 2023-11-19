@@ -136,7 +136,7 @@ public class Capsule {
         String structureName = capsule.getTag().getString("structureName");
 
         // do the transportation
-        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, CapsuleItem.getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, CapsuleItem.getPlacement(capsule));
 
         if (result) {
             // register the link in the capsule
@@ -375,28 +375,28 @@ public class Capsule {
         return capsule;
     }
 
-    public static void handleItemEntityOnGround(ItemEntity ItemEntity, ItemStack capsule) {
+    public static void handleItemEntityOnGround(ItemEntity itemEntity, ItemStack capsule) {
         // stop the capsule where it collided
-        ItemEntity.setDeltaMovement(0, 0, 0);
+        itemEntity.setDeltaMovement(0, 0, 0);
 
         final int size = CapsuleItem.getSize(capsule);
         final int extendLength = (size - 1) / 2;
 
         // get destination world available position
-        final ServerLevel itemWorld = (ServerLevel) ItemEntity.getCommandSenderWorld();
+        final ServerLevel itemWorld = (ServerLevel) itemEntity.getCommandSenderWorld();
 
         if (CapsuleItem.hasStructureLink(capsule)) {
 
             // DEPLOY
             // is linked, deploy
-            BlockPos throwPos = Spacial.findBottomBlock(ItemEntity);
-            boolean deployed = deployCapsule(capsule, throwPos, ItemEntity.getThrower(), extendLength, itemWorld);
+            BlockPos throwPos = Spacial.findBottomBlock(itemEntity);
+            boolean deployed = deployCapsule(capsule, throwPos, itemEntity.thrower, extendLength, itemWorld);
             if (deployed) {
-                itemWorld.playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
-                showDeployParticules(itemWorld, ItemEntity.blockPosition(), size);
+                itemWorld.playSound(null, itemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
+                showDeployParticules(itemWorld, itemEntity.blockPosition(), size);
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {
-                ItemEntity.remove(Entity.RemovalReason.DISCARDED);
+                itemEntity.remove(Entity.RemovalReason.DISCARDED);
             }
 
         } else {
@@ -404,15 +404,15 @@ public class Capsule {
             // CAPTURE
             // is not linked, capture
             try {
-                BlockPos captureBasePosition = Spacial.findSpecificBlock(ItemEntity, size + 2, BlockCapsuleMarker.class);
+                BlockPos captureBasePosition = Spacial.findSpecificBlock(itemEntity, size + 2, BlockCapsuleMarker.class);
                 BlockPos anchor = Spacial.getAnchor(captureBasePosition, itemWorld.getBlockState(captureBasePosition), size);
 
-                boolean captured = captureContentIntoCapsule(capsule, anchor, ItemEntity.getThrower(), size, extendLength, itemWorld);
+                boolean captured = captureContentIntoCapsule(capsule, anchor, itemEntity.thrower, size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.offset(0, size / 2, 0);
                     CapsuleNetwork.wrapper.send(
                             PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(center.getX(), center.getY(), center.getZ(), 200 + size, itemWorld.dimension())),
-                            new CapsuleUndeployNotifToClient(center, ItemEntity.blockPosition(), size, CapsuleItem.getStructureName(capsule))
+                            new CapsuleUndeployNotifToClient(center, itemEntity.blockPosition(), size, CapsuleItem.getStructureName(capsule))
                     );
                 }
             } catch (Exception e) {
@@ -439,7 +439,7 @@ public class Capsule {
         if (size % 2 == 0)
             size++;
 
-        String destStructureName = StructureSaver.getUniqueName(player.getLevel(), player.getGameProfile().getName() + "-" + srcStructurePath.replace("/", "_"));
+        String destStructureName = StructureSaver.getUniqueName(player.serverLevel(), player.getGameProfile().getName() + "-" + srcStructurePath.replace("/", "_"));
         ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
                 destStructureName,
                 CapsuleLootEntry.getRandomColor(),
@@ -455,7 +455,7 @@ public class Capsule {
         StructureSaver.duplicateTemplate(
                 srcData,
                 destStructureName,
-                StructureSaver.getTemplateManager(player.getLevel().getServer()),
+                StructureSaver.getTemplateManager(player.serverLevel().getServer()),
                 player.getServer()
         );
         CapsuleItem.setCanRotate(capsule, srcTemplate.canRotate());

@@ -3,7 +3,7 @@ package capsule;
 import capsule.blocks.CapsuleBlocks;
 import capsule.command.CapsuleCommand;
 import capsule.enchantments.CapsuleEnchantments;
-import capsule.itemGroups.CapsuleItemGroups;
+import capsule.itemGroups.CapsuleCreativeTabs;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.network.CapsuleNetwork;
@@ -18,7 +18,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -40,7 +39,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
@@ -49,7 +47,6 @@ public class CapsuleMod {
     protected static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(CapsuleMod.class);
 
     public static final String MODID = "capsule";
-    public static CreativeModeTab tabCapsule = new CapsuleItemGroups(CreativeModeTab.getGroupCountSafe(), "capsule");
 
     public static Consumer<Player> openGuiScreenCommon = DistExecutor.unsafeRunForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
     public static MinecraftServer server = null;
@@ -60,6 +57,7 @@ public class CapsuleMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         CapsuleBlocks.registerBlocks(modEventBus);
         CapsuleItems.registerItems(modEventBus);
+        CapsuleCreativeTabs.registerTabs(modEventBus);
         CapsuleRecipes.registerRecipeSerializers(modEventBus);
         CapsuleEnchantments.registerEnchantments(modEventBus);
 
@@ -85,7 +83,7 @@ public class CapsuleMod {
 
     @OnlyIn(Dist.CLIENT)
     public static void openGuiScreenClient(Player player) {
-        if (player.level.isClientSide) {
+        if (player.level().isClientSide) {
             capsule.gui.LabelGui screen = new capsule.gui.LabelGui(player);
             Minecraft.getInstance().setScreen(screen);
         }
@@ -154,7 +152,7 @@ final class CapsuleForgeSubscriber {
 }
 
 class StructureSaverReloadListener extends SimplePreparableReloadListener<Void> {
-    protected @NotNull Void prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    protected Void prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         StructureSaver.getRewardManager(pResourceManager).onResourceManagerReload(pResourceManager);
         for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
             ctm.onResourceManagerReload(pResourceManager);

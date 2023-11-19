@@ -65,9 +65,9 @@ public class CapsuleContentPreviewAnswerToClient {
             AABB bb = boundingBoxes.get(i);
             boolean isSingleBlock = bb.getSize() == 0;
             buf.writeBoolean(isSingleBlock);
-            buf.writeLong(new BlockPos(bb.minX, bb.minY, bb.minZ).asLong());
+            buf.writeLong(BlockPos.containing(bb.minX, bb.minY, bb.minZ).asLong());
             if (!isSingleBlock) {
-                buf.writeLong(new BlockPos(bb.maxX, bb.maxY, bb.maxZ).asLong());
+                buf.writeLong(BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ).asLong());
             }
         }
     }

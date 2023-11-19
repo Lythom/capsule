@@ -107,14 +107,14 @@ public class RecallEnchant extends Enchantment {
                 .toList();
 
         for (ItemEntity entity : recallItemEntities) {
-            if (entity.getThrower() != null && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
+            if (entity.thrower != null && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.tick();
                 }
                 // then recall to inventory
                 if (entity.isAlive()) {
-                    pickupItemBack(entity, world.getPlayerByUUID(entity.getThrower()));
+                    pickupItemBack(entity, world.getPlayerByUUID(entity.thrower));
                 }
             }
         }

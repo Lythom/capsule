@@ -3,10 +3,12 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
@@ -19,8 +21,8 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
         this.recipe = recipe;
     }
 
-    public ItemStack getResultItem() {
-        return recipe.getResultItem();
+    public ItemStack getResultItem(RegistryAccess registryAccess) {
+        return recipe.getResultItem(registryAccess);
     }
 
     /**
@@ -50,7 +52,7 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingContainer invC) {
+    public ItemStack assemble(CraftingContainer invC, RegistryAccess registryAccess) {
         for (int i = 0; i < invC.getContainerSize(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 
@@ -81,6 +83,11 @@ public class RecoveryCapsuleRecipe implements CraftingRecipe {
     @Override
     public boolean isSpecial() {
         return true;
+    }
+
+    @Override
+    public CraftingBookCategory category() {
+        return CraftingBookCategory.MISC;
     }
 
     public static class Serializer implements RecipeSerializer<RecoveryCapsuleRecipe> {

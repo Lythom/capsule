@@ -3,6 +3,9 @@ package capsule.items;
 import capsule.CapsuleMod;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -60,25 +63,32 @@ public class CapsuleItems {
         blueprintChangedCapsule = null;
         upgradedCapsule = null;
 
+        Minecraft minecraft = Minecraft.getInstance();
+        ClientLevel level = minecraft.level;
+        if (level == null) {
+            throw new NullPointerException("level must not be null.");
+        }
+        RegistryAccess registryAccess = level.registryAccess();
+
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
         for (Recipe<?> recipe : manager.getRecipes()) {
             if (recipe.getId().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
                 if (recipe instanceof BlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getResultItem(), ((BlueprintCapsuleRecipe) recipe).recipe));
+                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getResultItem(registryAccess), ((BlueprintCapsuleRecipe) recipe).recipe));
                 } else if (recipe instanceof RecoveryCapsuleRecipe) {
-                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getResultItem(), (RecoveryCapsuleRecipe) recipe);
+                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getResultItem(registryAccess), (RecoveryCapsuleRecipe) recipe);
                 } else if (recipe instanceof UpgradeCapsuleRecipe) {
-                    upgradedCapsule = Pair.of(recipe.getResultItem(), (UpgradeCapsuleRecipe) recipe);
+                    upgradedCapsule = Pair.of(recipe.getResultItem(registryAccess), (UpgradeCapsuleRecipe) recipe);
                 } else if (recipe instanceof BlueprintChangeRecipe) {
-                    blueprintChangedCapsule = Pair.of(recipe.getResultItem(), (BlueprintChangeRecipe) recipe);
+                    blueprintChangedCapsule = Pair.of(recipe.getResultItem(registryAccess), (BlueprintChangeRecipe) recipe);
                 } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe) {
                     PrefabsBlueprintAggregatorRecipe agg = (PrefabsBlueprintAggregatorRecipe) recipe;
                     for (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe aggregatorRecipe : agg.recipes) {
-                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getResultItem(), aggregatorRecipe.recipe));
+                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getResultItem(registryAccess), aggregatorRecipe.recipe));
                     }
                 } else {
-                    ItemStack output = recipe.getResultItem();
+                    ItemStack output = recipe.getResultItem(registryAccess);
                     if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
                         if (CapsuleItem.isOverpowered(output)) {
                             CapsuleItems.opCapsuleList.put(output, (ShapedRecipe) recipe);

@@ -13,7 +13,7 @@ public class CustomRenderType extends RenderType {
     public static final RenderType VISUAL_BLOCK = create("structurevisualizer:block",
             DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS, 256, false, false,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.BLOCK_SHADER)
+                    .setShaderState(RenderStateShard.RENDERTYPE_SOLID_SHADER)
                     .setLightmapState(LIGHTMAP)
                     .setTextureState(BLOCK_SHEET_MIPPED)
                     .setLayeringState(VIEW_OFFSET_Z_LAYERING)
@@ -27,7 +27,7 @@ public class CustomRenderType extends RenderType {
     public static final RenderType VISUAL_BLOCK_NO_DEPTH = create("structurevisualizer:block_no_depth",
             DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS, 256, false, false,
             RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.BLOCK_SHADER)
+                    .setShaderState(RenderStateShard.RENDERTYPE_SOLID_SHADER)
                     .setLightmapState(LIGHTMAP)
                     .setTextureState(BLOCK_SHEET_MIPPED)
                     .setLayeringState(VIEW_OFFSET_Z_LAYERING)

@@ -127,7 +127,7 @@ public class CapsuleTemplateManager {
         }
 
         CapsuleTemplate template = new CapsuleTemplate();
-        template.load(NbtUtils.update(this.fixer, DataFixTypes.STRUCTURE, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
+        template.load(DataFixTypes.STRUCTURE.updateToCurrentVersion(this.fixer, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
         return template;
     }
 

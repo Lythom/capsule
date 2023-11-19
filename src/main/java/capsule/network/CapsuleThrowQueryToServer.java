@@ -39,7 +39,7 @@ public class CapsuleThrowQueryToServer {
         }
 
         ItemStack heldItem = sendingPlayer.getMainHandItem();
-        ServerLevel world = sendingPlayer.getLevel();
+        ServerLevel world = sendingPlayer.serverLevel();
         ctx.get().enqueueWork(() -> {
             if (heldItem.getItem() instanceof CapsuleItem) {
                 if (instant && pos != null) {
@@ -47,7 +47,7 @@ public class CapsuleThrowQueryToServer {
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
                     if (CapsuleItem.hasState(heldItem, EMPTY)) {
-                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUUID(), size, sendingPlayer.getLevel(), pos);
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUUID(), size, sendingPlayer.serverLevel(), pos);
                         if (captured) {
                             BlockPos center = pos.offset(0, size / 2, 0);
                             CapsuleNetwork.wrapper.send(

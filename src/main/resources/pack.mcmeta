@@ -1,8 +1,6 @@
 {
   "pack": {
-    "pack_format": 9,
-    "description": "Resources used for Capsule mod",
-    "forge:resource_pack_format": 9,
-    "forge:data_pack_format": 10
+    "pack_format": 15,
+    "description": "Resources used for Capsule mod"
   }
 }

@@ -3,9 +3,11 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -15,8 +17,8 @@ import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class ClearCapsuleRecipe extends CustomRecipe {
 
-    public ClearCapsuleRecipe(ResourceLocation idIn) {
-        super(idIn);
+    public ClearCapsuleRecipe(ResourceLocation id, CraftingBookCategory category) {
+        super(id, category);
     }
 
 
@@ -48,7 +50,7 @@ public class ClearCapsuleRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer inv) {
+    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -74,7 +76,7 @@ public class ClearCapsuleRecipe extends CustomRecipe {
         return width * height >= 1;
     }
 
-    public ItemStack getResultItem() {
+    public ItemStack getResultItem(RegistryAccess registryAccess) {
         return CapsuleItems.withState(EMPTY);
     }
 

@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Block;
 
 public class CapsuleTags {
     public static final TagKey<Block> excludedBlocks = capsuleTag("excluded");
+    public static final TagKey<Block> overridable = capsuleTag("overridable");
 
     private static TagKey<Block> capsuleTag(String name) {
         return BlockTags.create(new ResourceLocation(CapsuleMod.MODID, name));

@@ -4,6 +4,7 @@ import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -44,16 +45,13 @@ public class LabelGui extends Screen {
 
         textInput = new EditBox(this.font, this.width / 2 - GUI_WIDTH / 2, this.height / 2 - GUI_HEIGHT / 2, GUI_WIDTH, GUI_HEIGHT, gui_capsule_name);
         textInput.setMaxLength(32);
-        textInput.changeFocus(true);
+        textInput.setFocused(true);
 
-        buttons.add(new Button(
-                textInput.x + textInput.getWidth() - 200,
-                textInput.y + textInput.getHeight() + 10,
-                200,
-                20,
-                CommonComponents.GUI_DONE,
-                (p_212984_1_) -> this.onClose())
-        );
+        buttons.add(Button.builder(CommonComponents.GUI_DONE, (button) -> this.onClose())
+                .bounds(textInput.getX() + textInput.getWidth() - 200,
+                        textInput.getY() + textInput.getHeight() + 10,
+                        200,
+                        20).build());
 
         String label = "";
         ItemStack itemStack = this.getItemStack();
@@ -100,10 +98,10 @@ public class LabelGui extends Screen {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
-        this.drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 70, 16777215);
-        textInput.render(matrixStack, mouseX, mouseY, partialTicks);
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(guiGraphics);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 70, 16777215);
+        textInput.render(guiGraphics, mouseX, mouseY, partialTicks);
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
     }
 }

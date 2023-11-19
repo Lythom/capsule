@@ -31,7 +31,7 @@ public class Spacial {
     }
 
     public static BlockPos findBottomBlock(double x, double y, double z) {
-        return BlockPos.betweenClosedStream(new BlockPos(x, y - 1, z), new BlockPos(x + 1, y + 1, z + 1))
+        return BlockPos.betweenClosedStream(BlockPos.containing(x, y - 1, z), BlockPos.containing(x + 1, y + 1, z + 1))
                 .min(Comparator.comparingDouble((BlockPos pos) -> pos.distToLowCornerSqr(x, y, z))).orElse(null);
     }
 
@@ -61,8 +61,8 @@ public class Spacial {
         double k = ItemEntity.getZ();
 
         for (int range = 1; range < maxRange; range++) {
-            Iterable<BlockPos> blockPoss = BlockPos.betweenClosed(new BlockPos(i - range, j - range, k - range),
-                    new BlockPos(i + range, j + range, k + range));
+            Iterable<BlockPos> blockPoss = BlockPos.betweenClosed(BlockPos.containing(i - range, j - range, k - range),
+                    BlockPos.containing(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
                 Block block = ItemEntity.getCommandSenderWorld().hasChunkAt(pos) ? ItemEntity.getCommandSenderWorld().getBlockState(pos).getBlock() : null;
                 if (block != null && block.getClass().equals(searchedBlock)) {
@@ -82,7 +82,7 @@ public class Spacial {
             LOGGER.error("Could not get BlockCapsuleMarker.FACING in blockstate at " + captureBasePosition);
             return captureBasePosition;
         }
-        return new BlockPos(
+        return BlockPos.containing(
                 captureBasePosition.getX() + (double) direction.getStepX() * (0.5 + size * 0.5),
                 captureBasePosition.getY() + (double) direction.getStepY() + (direction.getStepY() < 0 ? -size : -1),
                 captureBasePosition.getZ() + (double) direction.getStepZ() * (0.5 + size * 0.5)
@@ -98,18 +98,18 @@ public class Spacial {
 
         Map<BlockPos, StructureTemplate.StructureBlockInfo> blocksByPos = new HashMap<>();
         Map<BlockPos, BoundingBox> bbByPos = new HashMap<>();
-        blocks.forEach(b -> blocksByPos.put(b.pos, b));
+        blocks.forEach(b -> blocksByPos.put(b.pos(), b));
 
         blocks.forEach(block -> {
-            BlockPos destPos = block.pos;
-            BlockPos below = block.pos.offset(0, -1, 0);
-            if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state.getBlock() == block.state.getBlock()) {
+            BlockPos destPos = block.pos();
+            BlockPos below = block.pos().offset(0, -1, 0);
+            if (bbByPos.containsKey(below) && blocksByPos.containsKey(below) && blocksByPos.get(below).state().getBlock() == block.state().getBlock()) {
                 // extend the below BB to current
                 BoundingBox bb = bbByPos.get(below);
                 bbByPos.put(destPos, new BoundingBox(bb.minX(), bb.minY(), bb.minZ(), bb.maxX(), bb.maxY() + 1, bb.maxZ()));
             } else {
                 // start a new column
-                BoundingBox column = new BoundingBox(block.pos);
+                BoundingBox column = new BoundingBox(block.pos());
                 bbByPos.put(destPos, column);
             }
         });
@@ -163,10 +163,10 @@ public class Spacial {
                 .orElse(null);
     }
 
-    public static boolean isThrowerUnderLiquid(final ItemEntity ItemEntity) {
-        UUID thrower = ItemEntity.getThrower();
+    public static boolean isThrowerUnderLiquid(final ItemEntity itemEntity) {
+        UUID thrower = itemEntity.thrower;
         if (thrower == null) return false;
-        Player player = ItemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
+        Player player = itemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
         boolean underLiquid = isImmergedInLiquid(player);
         return underLiquid;
     }

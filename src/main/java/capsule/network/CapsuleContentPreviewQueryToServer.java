@@ -60,7 +60,7 @@ public class CapsuleContentPreviewQueryToServer {
                 return;
             }
 
-            ServerLevel serverworld = sendingPlayer.getLevel();
+            ServerLevel serverworld = sendingPlayer.serverLevel();
             Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
             CapsuleTemplate template = templatepair.getRight();
 

@@ -44,7 +44,7 @@ public class CapsuleLeftClickQueryToServer {
             ItemStack stack = sendingPlayer.getMainHandItem();
             if (stack.getItem() instanceof CapsuleItem && CapsuleItem.isBlueprint(stack) && CapsuleItem.hasState(stack, DEPLOYED)) {
                 // Reload if no missing materials
-                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.getLevel(), sendingPlayer);
+                Map<StructureSaver.ItemStackKey, Integer> missing = Capsule.reloadBlueprint(stack, sendingPlayer.serverLevel(), sendingPlayer);
                 if (missing != null && missing.size() > 0) {
                     MutableComponent message = Component.literal("Missing :");
                     for (Map.Entry<StructureSaver.ItemStackKey, Integer> entry : missing.entrySet()) {
