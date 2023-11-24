@@ -13,6 +13,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
   * [Recall](#recall)
   * [Blueprints](#blueprints)
   * [Overpowered Capsules](#overpowered-capsules)
+  * [Overridable blocks](#overridable-blocks)
 - [FAQ](#faq)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -151,6 +152,24 @@ ic2:te
 ```
 
 That means that by default a standard capsule cannot capture bedrock, mob spawners or end portals whereas overpowered capsules can. OP Capsules can be crafted using a netherstar instead of an ender pearl.
+
+## Overridable blocks ##
+
+Overridable blocks are blocks that would just be delete if on the path of a capsule deployment like grass or snow.
+- Before 1.20.1 there is an entry in the config to list the materials and blocks that are overridable by capsules.
+- Since 1.20.1, the config entry doesn't exists anymore and is replaced by the tag `capsule:overridable` to apply on the materials.
+Défault value :
+```js
+// file:capsule/src/main/resources/data/capsule/tags/blocks/overridable.json
+{
+    "replace": false,
+    "values": [
+        "#minecraft:leaves",
+        "#minecraft:replaceable",
+        "#minecraft:snow"
+    ]
+}
+```
 
 # FAQ
 
