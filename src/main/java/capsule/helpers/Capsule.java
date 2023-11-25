@@ -1,6 +1,5 @@
 package capsule.helpers;
 
-import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;

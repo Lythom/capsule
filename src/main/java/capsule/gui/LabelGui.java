@@ -3,7 +3,6 @@ package capsule.gui;
 import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;

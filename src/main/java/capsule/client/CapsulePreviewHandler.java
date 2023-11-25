@@ -1,7 +1,6 @@
 package capsule.client;
 
 import capsule.CapsuleMod;
-import capsule.Config;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
 import capsule.client.render.CapsuleTemplateRenderer;

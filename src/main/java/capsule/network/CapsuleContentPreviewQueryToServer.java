@@ -5,7 +5,6 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.Util;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;

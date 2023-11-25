@@ -4,7 +4,6 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
-import net.minecraft.Util;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
