@@ -643,10 +643,11 @@ public class CapsuleTemplate {
                             list2.add(Pair.of(blockpos, template$blockinfo.nbt()));
                             BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
                             if (blockentity1 != null) {
-                                template$blockinfo.nbt().putInt("x", blockpos.getX());
-                                template$blockinfo.nbt().putInt("y", blockpos.getY());
-                                template$blockinfo.nbt().putInt("z", blockpos.getZ());
-                                blockentity1.load(template$blockinfo.nbt());
+                                CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt();
+                                templateTag.putInt("x", blockpos.getX());
+                                templateTag.putInt("y", blockpos.getY());
+                                templateTag.putInt("z", blockpos.getZ());
+                                blockentity1.load(templateTag);
                                 blockentity1.getBlockState().mirror(placementIn.getMirror());
                                 blockentity1.getBlockState().rotate(worldIn, placementIn.getRotationPivot(), placementIn.getRotation());
                             }

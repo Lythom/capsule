@@ -192,7 +192,7 @@ public class StructureSaver {
     }
 
     public static CompoundTag filterIdentityNBT(StructureTemplate.StructureBlockInfo b) {
-        CompoundTag nbt = b.nbt().copy();
+        CompoundTag nbt = b.nbt() != null ? b.nbt().copy() : new CompoundTag();
         List<String> converted = Config.getBlueprintIdentityNBT(b.state().getBlock());
         nbt.getAllKeys().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
