@@ -165,7 +165,7 @@ public class CapsuleTemplateManager {
             throw new ResourceLocationException("Invalid resource path: " + locationIn);
         } else {
             String ext = locationIn.getPath().endsWith(extIn) ? "" : extIn;
-            Path p = this.pathGenerated.resolve(locationIn.getPath() + ext);
+            Path p = this.pathGenerated.toAbsolutePath().resolve(locationIn.getPath() + ext).normalize();
             if (FileUtil.isPathNormalized(p) && FileUtil.isPathPortable(p)) {
                 return p;
             } else {
