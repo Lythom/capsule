@@ -190,7 +190,7 @@ public class CapsuleItem extends Item {
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
             return Component.translatable("items.capsule.content_empty");
-        } else if (stack.hasTag() && stack.getTag().contains("label") && !"".equals(stack.getTag().getString("label"))) {
+        } else if (stack.hasTag() && stack.getTag().contains("label") && !stack.getTag().getString("label").isEmpty()) {
             return Component.literal("«")
                     .append(Component.literal(stack.getTag().getString("label")).withStyle(ChatFormatting.ITALIC))
                     .append("»");
