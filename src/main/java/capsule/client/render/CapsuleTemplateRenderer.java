@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
@@ -55,7 +54,7 @@ public class CapsuleTemplateRenderer {
     public FakeWorld templateWorld = null;
     private boolean isWorldDirty = true;
     private StructurePlaceSettings lastPlacementSettings;
-    private ModelBlockRenderer blockRenderer = new ModelBlockRenderer(BlockColors.createDefault());
+    private ModelBlockRenderer blockRenderer = Minecraft.getInstance().getBlockRenderer().getModelRenderer();
     private LiquidBlockRenderer liquidBlockRenderer = new LiquidBlockRenderer();
     private final RandomSource random = RandomSource.create();
 
