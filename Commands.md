@@ -46,7 +46,7 @@ Give an standard capsule with preloaded content.
 ```
 /capsule giveLinked <reward_name> [playerName] [withEnchantmant]
 ```
-* **reward_name*** Required. Name of the structure reward to load from.
+* **reward_name*** Required. Name of the structure reward to load from. The template is expected to be in the `config/capsule/rewards`, use tab for auto-completion.
 * **playerName** Optional. Name of the player that will receive the reward.
 * [since 7.0.91] **withEnchantmant** Optional. Default: false. Add the Recall enchant to the item if set to true.
 ---
@@ -60,7 +60,7 @@ Give an uncharged blueprint capsule with preconfigured structure.
 ```
 /capsule giveBlueprint <reward_name> [playerName]
 ```
-* **reward_name*** Required. Name of the structure reward to load from. Use tab for auto-completion from the reward folder.
+* **reward_name*** Required. Name of the structure reward to load from. The template is expected to be in the `config/capsule/rewards`, use tab for auto-completion.
 * **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
@@ -113,7 +113,7 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 ```
 /capsule fromStructure <structure_name> [playerName]
 ```
-* **structure_name*** Required. Name of the structure Template to load from.
+* **structure_name*** Required. Name of the structure Template to load from. The template is expected to be in the minecraft default structure blocks saves folder, use tab for auto-completion.
 * [since 3.2.91] **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
@@ -124,7 +124,7 @@ Give a One Use Capsule linked to the reward template named <templateName> from t
 ```
 /capsule fromExistingReward <reward_name> [playerName]
 ```
-* **reward_name*** Required. Name of the reward Template to load from.
+* **reward_name*** Required. Name of the reward Template to load from. The template is expected to be in the `config/capsule/rewards`, use tab for auto-completion.
 * [since 3.2.91] **playerName*** Optional. Name of the player that will receive the reward.
 
 ---
