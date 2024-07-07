@@ -173,6 +173,14 @@ Défault value :
 
 # FAQ
 
+**About rotations**
+
+Standard capsules can be rotated and mirrored by players using left click / shift+left click while previewing deloyment. All vanilla blocks, tileEntities and non-living entities (minecarts,etc) are supported but modded tileEntities will prevent a rotation by default. This is to prevent messing with modded tileEntities that have specific considerations with their orientation that capsule cannot know.
+
+The "canRotate" state might need to be updated when you first acquire a standard capsule (blueprints will always rotate), if rotation is locked and you think it should work, deploy and undeploy the capsule to update it and be able to rotate. If it still can't: there is a special block in the content that does not support rotation.
+
+As a modpack maker, if you want capsule to still try to rotate some specific block, you can whitelist them for blueprints and it will allow the block both to rotate in regular capsules and be used in blueprints. Checkout the [Blueprint whitelist section](https://github.com/Lythom/capsule/wiki/Modpack-making#whitelist).
+
 **Will block X from mod Y work with capsules ?**
 
 If compatible with vanilla structure blocks : yes.    
