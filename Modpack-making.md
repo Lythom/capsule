@@ -191,6 +191,8 @@ Steps :
     * a. [Submit your creation](#submit-your-templates-) to be distributed with the capsule mod !
     * b. Copy/paste the Template file from "config/capsule/rewards/<CapsuleName.nbt>" to a valid capsule loot folder (ie. "config/capsule/loots/common/<CapsuleName.nbt>").
 
+Note: in most cases, schematic templates can be loaded just like nbt templates. Just put your schematic file in the rewards or starters folder to have it work.
+
 Your template now have a chance to spawn in a loot chest !
 
 ### Test looting system
