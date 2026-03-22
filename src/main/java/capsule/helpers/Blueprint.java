@@ -88,8 +88,6 @@ public class Blueprint {
             }
             ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {
-//                if (blockNBT.contains("dummy") && blockNBT.getBoolean("dummy"))
-//                    return ItemStack.EMPTY; // second part of Immersive engineering extended block.
                 CompoundTag itemNBT = new CompoundTag();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
                 for (String key : blockNBT.getAllKeys()) {
@@ -99,7 +97,7 @@ public class Blueprint {
                     }
                 }
                 if (itemNBT.size() > 0) {
-                    item.setTag(itemNBT);
+                    NBTHelper.setTag(item, itemNBT);
                 }
             }
             return item;
@@ -146,7 +144,7 @@ public class Blueprint {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
-                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(ResourceLocation.parse(templateName));
                 if (template != null) {
                     Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
                     if (fullList != null) {
@@ -222,7 +220,7 @@ public class Blueprint {
             reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
-                CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(ResourceLocation.parse(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (ingredients.getLeft() == null && ingredients.getMiddle() == null && ingredients.getRight() == null) {
                     LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");
@@ -232,7 +230,7 @@ public class Blueprint {
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                     jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("size", size);
-                    parseTemplate.accept(new ResourceLocation(templateName), jsonRecipe, ingredients);
+                    parseTemplate.accept(ResourceLocation.parse(templateName), jsonRecipe, ingredients);
                 }
             });
         }

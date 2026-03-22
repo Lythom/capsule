@@ -5,6 +5,7 @@ import capsule.StructureSaver;
 import capsule.enchantments.CapsuleEnchantments;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
+import capsule.helpers.NBTHelper;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.loot.CapsuleLootEntry;
@@ -378,7 +379,7 @@ public class CapsuleCommand {
         if (player != null && !StringUtil.isNullOrEmpty(templateName) && player.level() instanceof ServerLevel) {
             String structurePath = Config.getRewardPathFromName(templateName);
             CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
-            CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(structurePath));
+            CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -411,7 +412,7 @@ public class CapsuleCommand {
             // template
             StructureTemplateManager templatemanager = player.serverLevel().getStructureManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
-            Optional<StructureTemplate> templateO = templatemanager.get(new ResourceLocation(path));
+            Optional<StructureTemplate> templateO = templatemanager.get(ResourceLocation.parse(path));
             if (templateO.isPresent()) {
                 StructureTemplate template = templateO.get();
                 size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
@@ -419,7 +420,7 @@ public class CapsuleCommand {
                 template.save(data);
             } else {
                 CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.serverLevel().getServer());
-                CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(new ResourceLocation(path));
+                CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
                 ctemplate.save(data);
@@ -429,7 +430,7 @@ public class CapsuleCommand {
                 if (size % 2 == 0)
                     size++;
                 // create a destination template
-                ResourceLocation destinationLocation = new ResourceLocation(Config.rewardTemplatesPath + "/" + path);
+                ResourceLocation destinationLocation = ResourceLocation.parse(Config.rewardTemplatesPath + "/" + path);
                 CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
                 // write template from source data
@@ -456,12 +457,12 @@ public class CapsuleCommand {
     private static int executeFromHeldCapsule(ServerPlayer player, String templateName) throws CommandSyntaxException {
         if (player != null) {
             ItemStack heldItem = player.getMainHandItem();
-            if (heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
+            if (heldItem.getItem() instanceof CapsuleItem && NBTHelper.hasTag(heldItem)) {
 
                 String outputName;
                 if (StringUtil.isNullOrEmpty(templateName)) {
-                    //noinspection ConstantConditions
-                    outputName = heldItem.getTag().getString("label");
+                    CompoundTag tag = NBTHelper.getTag(heldItem);
+                    outputName = tag != null ? tag.getString("label") : "";
                 } else {
                     outputName = templateName;
                 }
@@ -551,30 +552,28 @@ public class CapsuleCommand {
     private static int executeSetAuthor(ServerPlayer player, String authorName) {
         if (player != null) {
             ItemStack heldItem = player.getMainHandItem();
-            if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && heldItem.hasTag()) {
+            if (!heldItem.isEmpty() && heldItem.getItem() instanceof CapsuleItem && NBTHelper.hasTag(heldItem)) {
 
                 if (!StringUtil.isNullOrEmpty(authorName)) {
                     // set a new author
-                    //noinspection ConstantConditions
-                    heldItem.getTag().putString("author", authorName);
+                    NBTHelper.updateTag(heldItem, tag -> tag.putString("author", authorName));
                     Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.serverLevel());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor(authorName);
-                        templatemanager.writeToFile(new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(ResourceLocation.parse(CapsuleItem.getStructureName(heldItem)));
                     }
 
                 } else {
                     // called with one parameter = remove author information
-                    //noinspection ConstantConditions
-                    heldItem.getTag().remove("author");
+                    NBTHelper.updateTag(heldItem, tag -> tag.remove("author"));
                     Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.serverLevel());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor("?");
-                        templatemanager.writeToFile(new ResourceLocation(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(ResourceLocation.parse(CapsuleItem.getStructureName(heldItem)));
                     }
                 }
                 return 1;
@@ -592,10 +591,10 @@ public class CapsuleCommand {
 
                     BlockPos position = rtc.getBlockPos();
                     BlockState state = player.serverLevel().getBlockState(position);
-                    BlockEntity BlockEntity = player.serverLevel().getBlockEntity(position);
+                    BlockEntity blockEntity = player.serverLevel().getBlockEntity(position);
 
-                    String BlockEntityTag = BlockEntity == null ? "" : "{BlockEntityTag:" + BlockEntity.serializeNBT().toString() + "}";
-                    String command = "/give @p " + BuiltInRegistries.BLOCK.getKey(state.getBlock()) + BlockEntityTag + " 1 ";
+                    String blockEntityTag = blockEntity == null ? "" : "{BlockEntityTag:" + blockEntity.saveWithoutMetadata(player.registryAccess()).toString() + "}";
+                    String command = "/give @p " + BuiltInRegistries.BLOCK.getKey(state.getBlock()) + blockEntityTag + " 1 ";
                     MutableComponent msg = Component.literal(command);
                     player.sendSystemMessage(msg.withStyle(style -> style
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy to clipboard")))
@@ -615,9 +614,10 @@ public class CapsuleCommand {
             ItemStack heldItem = player.getMainHandItem();
             if (!heldItem.isEmpty()) {
 
-                String tag = heldItem.hasTag() ? String.valueOf(heldItem.getTag()) : "";
+                CompoundTag tag = NBTHelper.getTag(heldItem);
+                String tagStr = tag != null ? String.valueOf(tag) : "";
 
-                String command = "/give @p " + BuiltInRegistries.ITEM.getKey(heldItem.getItem()) + tag + " 1 ";
+                String command = "/give @p " + BuiltInRegistries.ITEM.getKey(heldItem.getItem()) + tagStr + " 1 ";
                 MutableComponent msg = Component.literal(command);
                 msg.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")));
                 msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));

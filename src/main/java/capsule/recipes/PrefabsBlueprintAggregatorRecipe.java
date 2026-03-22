@@ -259,7 +259,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
             int size = buffer.readInt();
             for (int i = 0; i < size; i++) {
-                ResourceLocation id = new ResourceLocation(buffer.readUtf());
+                ResourceLocation id = ResourceLocation.parse(buffer.readUtf());
                 ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.fromNetwork(buffer);
                 instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe));
             }

@@ -1,5 +1,6 @@
 package capsule;
 
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
@@ -35,6 +36,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
@@ -57,7 +59,7 @@ import java.util.stream.IntStream;
 
 import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = CapsuleMod.MODID)
 public class StructureSaver {
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
     public static final String BLUEPRINT_PREFIX = "b-";
@@ -102,7 +104,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return null;
         }
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(capsuleStructureId));
         Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
@@ -113,7 +115,7 @@ public class StructureSaver {
             player = worldserver.getPlayerByUUID(playerID);
             if (player != null) template.setAuthor(player.getGameProfile().getName());
         }
-        boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
+        boolean writingOK = templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
             for (Entity e : outCapturedEntities) {
@@ -124,7 +126,7 @@ public class StructureSaver {
             if (couldNotBeRemoved != null) {
                 template.removeBlocks(couldNotBeRemoved, startPos);
             }
-            templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
+            templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
 
         } else {
             printWriteTemplateError(player, capsuleStructureId);
@@ -172,7 +174,7 @@ public class StructureSaver {
         if (blueprintMatch) {
             blueprintTemplate.removeOccupiedPositions();
             String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
-            boolean written = blueprint.getLeft().writeToFile(new ResourceLocation(capsuleStructureId));
+            boolean written = blueprint.getLeft().writeToFile(ResourceLocation.parse(capsuleStructureId));
             if (written) {
                 List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
                 // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -323,7 +325,7 @@ public class StructureSaver {
         CapsuleTemplateManager templateManager = templatepair.getLeft();
         String capsuleStructureId = CapsuleItem.getStructureName(capsule);
         template.saveOccupiedPositions(occupiedPositions);
-        if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
+        if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
             printWriteTemplateError(player, capsuleStructureId);
             return false;
         }
@@ -339,7 +341,7 @@ public class StructureSaver {
             // rollback
             removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
             template.removeOccupiedPositions();
-            if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
+            if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
@@ -454,7 +456,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -465,7 +467,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(new ResourceLocation(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -564,7 +566,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "cexception-" + p + "-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplate(ResourceLocation.parse(capsuleID)) != null) {
             capsuleID = "c-" + p + "-" + csd.getNextCount();
         }
 
@@ -582,7 +584,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "bexception-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplate(new ResourceLocation(capsuleID)) != null) {
+        while (templatemanager.getTemplate(ResourceLocation.parse(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -604,7 +606,7 @@ public class StructureSaver {
     public static boolean duplicateTemplate(CompoundTag templateData, String destinationStructureName, CapsuleTemplateManager destManager, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         String sanitized = destinationStructureName.toLowerCase();
-        ResourceLocation destinationLocation = new ResourceLocation(sanitized);
+        ResourceLocation destinationLocation = ResourceLocation.parse(sanitized);
         CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
         // populate template from source data
         destTemplate.load(templateData, destinationLocation.toString());
@@ -670,10 +672,10 @@ public class StructureSaver {
         );
 
         // try to cleanup previous template to save disk space on the long run
-        if (destCapsule.getTag() != null && destCapsule.getTag().contains("prevStructureName")) {
+        if (destCapsule.getTag() != null && NBTHelper.getOrCreateTag(destCapsule).contains("prevStructureName")) {
             if (templateManager != null) {
                 try {
-                    templateManager.deleteTemplate(new ResourceLocation(destCapsule.getTag().getString("prevStructureName")));
+                    templateManager.deleteTemplate(ResourceLocation.parse(NBTHelper.getOrCreateTag(destCapsule).getString("prevStructureName")));
                 } catch (Exception e) {
                     LOGGER.error(e);
                 }
@@ -699,7 +701,7 @@ public class StructureSaver {
         public boolean equals(Object someOther) {
             if (!(someOther instanceof ItemStackKey)) return false;
             final ItemStack otherStack = ((ItemStackKey) someOther).itemStack;
-            return ItemStack.isSameItem(otherStack, this.itemStack) && (!otherStack.hasTag() && !this.itemStack.hasTag() || otherStack.getTag().equals(this.itemStack.getTag()));
+            return ItemStack.isSameItem(otherStack, this.itemStack) && (!NBTHelper.hasTag(otherStack) && !this.NBTHelper.hasTag(itemStack) || otherStack.getTag().equals(this.itemStack.getTag()));
         }
 
         public int hashCode() {

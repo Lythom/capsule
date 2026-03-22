@@ -1,5 +1,6 @@
 package capsule.recipes;
 
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.core.NonNullList;
@@ -98,8 +99,8 @@ public class BlueprintChangeRecipe extends CustomRecipe {
         }
         if (templateStructure != null && blueprintCapsule != null) {
             if (blueprintCapsule.getTag() != null) {
-                blueprintCapsule.getTag().putString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
-                blueprintCapsule.getTag().putBoolean("templateShouldBeCopied", true);
+                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
+                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putBoolean("templateShouldBeCopied", true);
             }
             CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
             CapsuleItem.setState(blueprintCapsule, DEPLOYED);

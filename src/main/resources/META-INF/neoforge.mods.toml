@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT License"
+issueTrackerURL="https://github.com/Lythom/capsule/issues"
+
+[[mods]]
+modId="capsule"
+version="${file.jarVersion}"
+displayName="Capsule"
+updateJSONURL="https://mc-curse-update-checker.herokuapp.com/235338"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/capsule"
+logoFile="capsule_base.png"
+authors="Lythom"
+description='''
+Bring your base!
+Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will.
+Inspired by Dragon Ball capsules.
+'''
+
+[[dependencies.capsule]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.capsule]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,)"
+ordering="NONE"
+side="BOTH"

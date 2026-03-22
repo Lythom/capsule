@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "capsule",
+  "result": {
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 0,
+        "color": 16777215,
+        "size": 1,
+        "overpowered": 1
+      }
+    }
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "key": {
+    "#": {
+      "tag": "c:ingots/iron"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "item": "minecraft:nether_star"
+    },
+    "i": {
+      "tag": "c:ingots/iron"
+    }
+  }
+}

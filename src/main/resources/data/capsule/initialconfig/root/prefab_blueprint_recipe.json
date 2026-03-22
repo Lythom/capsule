@@ -3,16 +3,20 @@
   "type": "capsule:blueprint_prefabs",
   "conditions": [],
   "result": {
-    "item": "capsule:capsule",
-    "nbt": {
-      "state": 3,
-      "display": {
-        "color": 2963801
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 3,
+        "sourceInventory": {},
+        "structureName": "",
+        "label": "",
+        "size": 1
       },
-      "sourceInventory": {},
-      "structureName": "",
-      "label": "",
-      "size": 1
+      "minecraft:dyed_color": {
+        "rgb": 2963801,
+        "show_in_tooltip": false
+      }
     }
   },
   "pattern": [

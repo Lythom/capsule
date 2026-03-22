@@ -3,6 +3,7 @@ package capsule.network;
 import capsule.CapsuleMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
@@ -14,23 +15,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This Network Message is sent from the client to the server
+ * This Network Message is sent from the server to the client
  */
 public record CapsuleContentPreviewAnswerToClient(String structureName, List<AABB> boundingBoxes) implements CustomPacketPayload {
-    public static final ResourceLocation ID = new ResourceLocation(CapsuleMod.MODID, "content_preview_answer");
+    public static final CustomPacketPayload.Type<CapsuleContentPreviewAnswerToClient> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "content_preview_answer"));
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleContentPreviewAnswerToClient.class);
 
+    public static final StreamCodec<FriendlyByteBuf, CapsuleContentPreviewAnswerToClient> STREAM_CODEC =
+            StreamCodec.of(CapsuleContentPreviewAnswerToClient::encode, CapsuleContentPreviewAnswerToClient::decode);
 
     public CapsuleContentPreviewAnswerToClient(List<AABB> boundingBoxes, String structureName) {
         this(structureName, boundingBoxes);
     }
 
-    public CapsuleContentPreviewAnswerToClient(FriendlyByteBuf buf) {
-        this(buf.readUtf(), getAABBList(buf));
-    }
-
-    private static List<AABB> getAABBList(FriendlyByteBuf buf) {
+    private static CapsuleContentPreviewAnswerToClient decode(FriendlyByteBuf buf) {
+        String structureName = buf.readUtf();
         int size = buf.readShort();
         List<AABB> list = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
@@ -42,15 +43,15 @@ public record CapsuleContentPreviewAnswerToClient(String structureName, List<AAB
                 list.add(new AABB(Vec3.atLowerCornerOf(BlockPos.of(buf.readLong())), Vec3.atLowerCornerOf(BlockPos.of(buf.readLong()))));
             }
         }
-        return list;
+        return new CapsuleContentPreviewAnswerToClient(structureName, list);
     }
 
-    public void write(FriendlyByteBuf buf) {
-        buf.writeUtf(structureName);
-        int size = Math.min(boundingBoxes.size(), Short.MAX_VALUE);
+    private static void encode(FriendlyByteBuf buf, CapsuleContentPreviewAnswerToClient msg) {
+        buf.writeUtf(msg.structureName);
+        int size = Math.min(msg.boundingBoxes.size(), Short.MAX_VALUE);
         buf.writeShort(size);
         for (int i = 0; i < size; i++) {
-            AABB bb = boundingBoxes.get(i);
+            AABB bb = msg.boundingBoxes.get(i);
             boolean isSingleBlock = bb.getSize() == 0;
             buf.writeBoolean(isSingleBlock);
             buf.writeLong(BlockPos.containing(bb.minX, bb.minY, bb.minZ).asLong());
@@ -61,8 +62,8 @@ public record CapsuleContentPreviewAnswerToClient(String structureName, List<AAB
     }
 
     @Override
-    public ResourceLocation id() {
-        return ID;
+    public CustomPacketPayload.Type<CapsuleContentPreviewAnswerToClient> type() {
+        return TYPE;
     }
 
     @Override

@@ -1,0 +1,36 @@
+{
+  "parent": "capsule:recipes/root",
+  "rewards": {
+    "recipes": [
+      "capsule:capsule_iron",
+      "capsule:capsule_gold",
+      "capsule:capsule_diamond",
+      "capsule:capsule_obsidian",
+      "capsule:capsule_emerald"
+    ]
+  },
+  "criteria": {
+    "has_ender_pearl": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "tag": "c:ender_pearls"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "capsule:capsule_iron"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_ender_pearl",
+      "has_the_recipe"
+    ]
+  ]
+}

@@ -7,14 +7,12 @@ import capsule.network.CapsuleContentPreviewAnswerToClient;
 import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleFullContentAnswerToClient;
 import capsule.network.CapsuleUndeployNotifToClient;
-import capsule.network.LabelEditedMessageToServer;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.PlayPayloadContext;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public class ClientPayloadHandler {
 	private static final ClientPayloadHandler INSTANCE = new ClientPayloadHandler();
@@ -23,41 +21,39 @@ public class ClientPayloadHandler {
 		return INSTANCE;
 	}
 
-	public void handleContentPreviewAnswer(final CapsuleContentPreviewAnswerToClient data, final PlayPayloadContext context) {
-		context.workHandler().submitAsync(() -> {
-					synchronized (capsule.client.CapsulePreviewHandler.currentPreview) {
-						capsule.client.CapsulePreviewHandler.currentPreview.put(data.structureName(), data.boundingBoxes());
+	public static void handleContentPreviewAnswer(final CapsuleContentPreviewAnswerToClient data, final IPayloadContext context) {
+		context.enqueueWork(() -> {
+					synchronized (CapsulePreviewHandler.currentPreview) {
+						CapsulePreviewHandler.currentPreview.put(data.structureName(), data.boundingBoxes());
 					}
 				})
 				.exceptionally(e -> {
 					// Handle exception
-					context.packetHandler().disconnect(Component.translatable("capsule.networking.content_preview_answer.failed", e.getMessage()));
 					return null;
 				});
 	}
 
-	public void handleFullContentAnswer(final CapsuleFullContentAnswerToClient data, final PlayPayloadContext context) {
-		context.workHandler().submitAsync(() -> {
-					synchronized (capsule.client.CapsulePreviewHandler.currentFullPreview) {
+	public static void handleFullContentAnswer(final CapsuleFullContentAnswerToClient data, final IPayloadContext context) {
+		context.enqueueWork(() -> {
+					synchronized (CapsulePreviewHandler.currentFullPreview) {
 						String structureName = data.structureName();
 						CapsuleTemplate template = data.template();
-						capsule.client.CapsulePreviewHandler.currentFullPreview.put(structureName, template);
-						if (capsule.client.CapsulePreviewHandler.cachedFullPreview.containsKey(structureName)) {
-							capsule.client.CapsulePreviewHandler.cachedFullPreview.get(structureName).setWorldDirty();
+						CapsulePreviewHandler.currentFullPreview.put(structureName, template);
+						if (CapsulePreviewHandler.cachedFullPreview.containsKey(structureName)) {
+							CapsulePreviewHandler.cachedFullPreview.get(structureName).setWorldDirty();
 						} else {
-							capsule.client.CapsulePreviewHandler.cachedFullPreview.put(structureName, new CapsuleTemplateRenderer());
+							CapsulePreviewHandler.cachedFullPreview.put(structureName, new CapsuleTemplateRenderer());
 						}
 					}
 				})
 				.exceptionally(e -> {
 					// Handle exception
-					context.packetHandler().disconnect(Component.translatable("capsule.networking.full_content_answer.failed", e.getMessage()));
 					return null;
 				});
 	}
 
-	public void handleUndeployNotif(final CapsuleUndeployNotifToClient data, final PlayPayloadContext context) {
-		context.workHandler().submitAsync(() -> {
+	public static void handleUndeployNotif(final CapsuleUndeployNotifToClient data, final IPayloadContext context) {
+		context.enqueueWork(() -> {
 					BlockPos posFrom = data.posFrom();
 					BlockPos posTo = data.posTo();
 					int size = data.size();
@@ -68,12 +64,11 @@ public class ClientPayloadHandler {
 						CapsulePreviewHandler.currentPreview.remove(templateName);
 						CapsulePreviewHandler.currentFullPreview.remove(templateName);
 						// ask a preview refresh
-						PacketDistributor.SERVER.noArg().send(new CapsuleContentPreviewQueryToServer(templateName));
+						PacketDistributor.sendToServer(new CapsuleContentPreviewQueryToServer(templateName));
 					}
 				})
 				.exceptionally(e -> {
 					// Handle exception
-					context.packetHandler().disconnect(Component.translatable("capsule.networking.undeploy_notif.failed", e.getMessage()));
 					return null;
 				});
 	}

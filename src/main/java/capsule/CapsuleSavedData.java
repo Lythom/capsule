@@ -1,5 +1,6 @@
 package capsule;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -14,7 +15,7 @@ public class CapsuleSavedData extends SavedData {
         super();
     }
 
-    public static CapsuleSavedData load(CompoundTag nbt) {
+    public static CapsuleSavedData load(CompoundTag nbt, HolderLookup.Provider registries) {
         // retrieve lastReservedPosition
         CapsuleSavedData data = new CapsuleSavedData();
         data.capsuleCounter = nbt.getInt("counter");
@@ -22,7 +23,7 @@ public class CapsuleSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag nbt) {
+    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
         nbt.putInt("counter", capsuleCounter);
         return nbt;
     }

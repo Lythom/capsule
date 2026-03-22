@@ -1,7 +1,9 @@
 package capsule.network;
 
 import capsule.CapsuleMod;
-import net.minecraft.network.FriendlyByteBuf;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
@@ -9,19 +11,15 @@ import net.minecraft.resources.ResourceLocation;
  * This Network Message is sent from the client to the server
  */
 public record LabelEditedMessageToServer(String label) implements CustomPacketPayload {
-    public static final ResourceLocation ID = new ResourceLocation(CapsuleMod.MODID, "label_edited_message");
+    public static final CustomPacketPayload.Type<LabelEditedMessageToServer> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "label_edited_message"));
 
-    public LabelEditedMessageToServer(FriendlyByteBuf buf) {
-        this(buf.readUtf(32767));
-    }
-
-    public void write(FriendlyByteBuf buf) {
-        buf.writeUtf(this.label);
-    }
+    public static final StreamCodec<ByteBuf, LabelEditedMessageToServer> STREAM_CODEC =
+            ByteBufCodecs.STRING_UTF8.map(LabelEditedMessageToServer::new, LabelEditedMessageToServer::label);
 
     @Override
-    public ResourceLocation id() {
-        return ID;
+    public CustomPacketPayload.Type<LabelEditedMessageToServer> type() {
+        return TYPE;
     }
 
     @Override

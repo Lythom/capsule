@@ -23,6 +23,6 @@ public class CapsuleRecipes {
 
     public static void registerRecipeSerializers(IEventBus event) {
         RECIPE_SERIALIZERS.register(event);
-//        CraftingHelper.register(new ResourceLocation("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE); //TODO: Re-implement capsule ingredient
+//        CraftingHelper.register(ResourceLocation.fromNamespaceAndPath("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE); //TODO: Re-implement capsule ingredient
     }
 }

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "result": {
+    "id": "capsule:capsulemarker",
+    "count": 1
+  },
+  "pattern": [
+    "#C#",
+    "#T#",
+    "#D#"
+  ],
+  "key": {
+    "#": {
+      "tag": "c:cobblestones"
+    },
+    "D": {
+      "item": "minecraft:dispenser"
+    },
+    "C": {
+      "item": "minecraft:compass"
+    },
+    "T": {
+      "item": "minecraft:torch"
+    }
+  }
+}

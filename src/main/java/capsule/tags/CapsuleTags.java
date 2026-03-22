@@ -11,6 +11,6 @@ public class CapsuleTags {
     public static final TagKey<Block> overridable = capsuleTag("overridable");
 
     private static TagKey<Block> capsuleTag(String name) {
-        return BlockTags.create(new ResourceLocation(CapsuleMod.MODID, name));
+        return BlockTags.create(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, name));
     }
 }

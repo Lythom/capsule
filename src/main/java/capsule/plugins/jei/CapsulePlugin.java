@@ -3,6 +3,7 @@ package capsule.plugins.jei;
 import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.blocks.CapsuleBlocks;
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import mezz.jei.api.IModPlugin;
@@ -15,7 +16,7 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -63,7 +64,7 @@ public class CapsulePlugin implements IModPlugin {
                 recipes.add(new RecipeHolder<>(id, new ShapelessRecipe("capsule", CraftingBookCategory.MISC, capsuleUp, ingredients)));
             }
             // clear
-            recipes.add(new RecipeHolder<>(new ResourceLocation(CapsuleMod.MODID, "capsule_clear"),
+            recipes.add(new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "capsule_clear"),
                     new ShapelessRecipe("capsule", CraftingBookCategory.MISC, capsule, NonNullList.of(Ingredient.EMPTY, Ingredient.of(CapsuleItems.getUnlabelledCapsule(capsule))))));
         }
 
@@ -82,7 +83,7 @@ public class CapsulePlugin implements IModPlugin {
         Ingredient anyBlueprint = Ingredient.of(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
         Ingredient unlabelledIng = Ingredient.fromValues(Arrays.asList(Ingredient.of(unlabelled), anyBlueprint, Ingredient.of(recoveryCapsule)).stream().flatMap(i -> Arrays.stream(i.values)));
         // recovery
-        recipes.add(new RecipeHolder<>(new ResourceLocation(CapsuleMod.MODID, "recovery_capsule"), CapsuleItems.recoveryCapsule.getValue()));
+        recipes.add(new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "recovery_capsule"), CapsuleItems.recoveryCapsule.getValue()));
         for (Pair<ItemStack, CraftingRecipe> r : CapsuleItems.blueprintCapsules) {
             ResourceLocation blueprintId = BuiltInRegistries.ITEM.getKey(r.getKey().getItem());
             recipes.add(new RecipeHolder<>(blueprintId, r.getValue()));
@@ -94,7 +95,7 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack withNewTemplate = CapsuleItems.blueprintChangedCapsule.getKey();
         CapsuleItem.setStructureName(withNewTemplate, "newTemplate");
         CapsuleItem.setLabel(withNewTemplate, "Changed Template");
-        recipes.add((new RecipeHolder<>(new ResourceLocation(CapsuleMod.MODID, "capsule"),
+        recipes.add((new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "capsule"),
                 new ShapelessRecipe("capsule", CraftingBookCategory.MISC, withNewTemplate, NonNullList.of(Ingredient.EMPTY, anyBlueprint, unlabelledIng)))));
 
         registry.addRecipes(RecipeTypes.CRAFTING, recipes);
@@ -110,14 +111,14 @@ public class CapsulePlugin implements IModPlugin {
             registry.addIngredientInfo(blueprintCapsule.getKey(), VanillaTypes.ITEM_STACK, Component.translatable("jei.capsule.desc.blueprintCapsule"));
         }
         ItemStack opCapsule = CapsuleItems.withState(EMPTY);
-        opCapsule.addTagElement("overpowered", ByteTag.valueOf(true));
+        NBTHelper.updateTag(opCapsule, tag -> tag.putBoolean("overpowered", true));
         registry.addIngredientInfo(opCapsule, VanillaTypes.ITEM_STACK, Component.translatable("jei.capsule.desc.opCapsule"));
         registry.addIngredientInfo(new ItemStack(CapsuleBlocks.CAPSULE_MARKER.get()), VanillaTypes.ITEM_STACK, Component.translatable("jei.capsule.desc.capsuleMarker"));
     }
 
     @Override
     public ResourceLocation getPluginUid() {
-        return new ResourceLocation(CapsuleMod.MODID, "main");
+        return ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "main");
     }
 
 
@@ -126,7 +127,8 @@ public class CapsulePlugin implements IModPlugin {
         @Override
         public String apply(ItemStack itemStack, UidContext context) {
             if (!(itemStack.getItem() instanceof CapsuleItem)) return null;
-            String isOP = String.valueOf(itemStack.hasTag() && itemStack.getTag().getBoolean("overpowered"));
+            CompoundTag tag = NBTHelper.getTag(itemStack);
+            String isOP = String.valueOf(tag != null && tag.getBoolean("overpowered"));
             String capsuleState = String.valueOf(CapsuleItem.getState(itemStack));
             String capsuleColor = String.valueOf(CapsuleItem.getMaterialColor(itemStack));
             String capsuleBlueprint = String.valueOf(CapsuleItem.isBlueprint(itemStack));

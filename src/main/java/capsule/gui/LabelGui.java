@@ -1,5 +1,6 @@
 package capsule.gui;
 
+import capsule.helpers.NBTHelper;
 import capsule.network.CapsuleNetwork;
 import capsule.network.LabelEditedMessageToServer;
 import com.google.common.collect.Lists;
@@ -7,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -51,9 +53,11 @@ public class LabelGui extends Screen {
 
         String label = "";
         ItemStack itemStack = this.getItemStack();
-        if (!itemStack.isEmpty() && itemStack.hasTag()) {
-            //noinspection ConstantConditions
-            label = itemStack.getTag().getString("label");
+        if (!itemStack.isEmpty() && NBTHelper.hasTag(itemStack)) {
+            CompoundTag tag = NBTHelper.getTag(itemStack);
+            if (tag != null) {
+                label = tag.getString("label");
+            }
         }
         textInput.setValue(label);
     }
@@ -86,7 +90,7 @@ public class LabelGui extends Screen {
     }
 
     public void setCurrentItemLabel(String label) {
-        PacketDistributor.SERVER.noArg().send(new LabelEditedMessageToServer(label));
+        PacketDistributor.sendToServer(new LabelEditedMessageToServer(label));
     }
 
     public ItemStack getItemStack() {

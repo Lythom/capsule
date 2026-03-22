@@ -3,16 +3,13 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.153'
+    id 'net.neoforged.gradle.userdev' version '7.0.165'
 }
 // EDIT AFTER THIS
 def build_version = "BUILD_ID"
-def capsule_version = "8.1"
-def minecraft_version = "1.20.4"
-def jei_version = "17.3.1.3"
-def rei_version = "12.0.674"
-def architectury_version = "9.1.12"
-def cloth_config_version = "11.1.106"
+def capsule_version = "9.0"
+def minecraft_version = "1.21.1"
+def jei_version = "19.21.0.247"
 
 compileJava.options.encoding = 'UTF-8'
 
@@ -20,10 +17,9 @@ version = minecraft_version + "-" + capsule_version + "." + build_version
 group = "fr.samuelbouchet.capsule" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "Capsule"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17) // Mojang ships Java 17 to end users since 1.18
+java.toolchain.languageVersion = JavaLanguageVersion.of(21) // Mojang ships Java 21 to end users since 1.21
 
 minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
-//minecraft.accessTransformers.entry public net.minecraft.client.Minecraft textureManager # textureManager
 
 runs {
     // applies to all the run configs below
@@ -47,15 +43,12 @@ runs {
 
     server {
         systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
-        programArgument '--nogui'
+        argument '--nogui'
     }
 
     data {
-        // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-        // workingDirectory project.file('run-data')
-
         // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-        programArguments.addAll '--mod', 'capsule', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        arguments.addAll '--mod', 'capsule', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
     }
 }
 
@@ -70,9 +63,6 @@ repositories {
 			includeGroup "mezz.jei"
 		}
     }
-    //maven {
-        //url = "https://dvs1.progwml6.com/files/maven"
-    //}
     maven {
         url "https://www.cursemaven.com"
     }
@@ -82,45 +72,12 @@ repositories {
 }
 
 dependencies {
-    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    implementation "net.neoforged:neoforge:20.4.214"
-
-    // You may put jars on which you depend on in ./libs or you may define them like so..
-    // compile "some.group:artifact:version:classifier"
-    // compile "some.group:artifact:version"
-
-    // Real examples
-    // compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-    // compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-    // The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-    // provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // These dependencies get remapped to your current MCP mappings
-    // deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // For more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
-//    implementation fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
-//    implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}")
-//    compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}")
-//    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:${rei_version}")
-//    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}")
-//    implementation fg.deobf("me.shedaniel:RoughlyEnoughItems-plugin-compatibilities-forge:${rei_version}") //Doesn't exist for 1.20.1
+    implementation "net.neoforged:neoforge:21.1.77"
 
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
 
     runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-
-//    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}"
-//    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-forge:${rei_version}"
-//    modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}"
-
-    compileOnly "curse.maven:security-craft-64760:5424866"
 }
 
 jar {
@@ -136,21 +93,3 @@ jar {
         ])
     }
 }
-
-// Example configuration to allow publishing using the maven-publish task
-// This is the preferred method to reobfuscate your jar file
-//jar.finalizedBy('reobfJar')
-//
-//publishing {
-//    publications {
-//        mavenJava(MavenPublication) {
-//            artifact jar
-//        }
-//    }
-//    repositories {
-//        maven {
-//            url "file:///${project.projectDir}/mcmodsrepo"
-//        }
-//    }
-//}
-//

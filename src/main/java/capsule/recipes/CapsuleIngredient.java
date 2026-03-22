@@ -46,7 +46,7 @@
 //        json.addProperty("type", CraftingHelper.getID(Serializer.INSTANCE).toString());
 //        json.addProperty("item", ForgeRegistries.ITEMS.getKey(referenceStack.getItem()).toString());
 //        json.addProperty("count", referenceStack.getCount());
-//        if (referenceStack.hasTag()) json.addProperty("nbt", referenceStack.getTag().toString());
+//        if (NBTHelper.hasTag(referenceStack)) json.addProperty("nbt", referenceStack.getTag().toString());
 //        return json;
 //    }
 //

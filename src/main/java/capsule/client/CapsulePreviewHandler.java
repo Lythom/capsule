@@ -1,5 +1,6 @@
 package capsule.client;
 
+import capsule.helpers.NBTHelper;
 import capsule.CapsuleMod;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
@@ -34,11 +35,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ClientChatEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,7 +66,7 @@ import static capsule.items.CapsuleItem.CapsuleState.EMPTY_ACTIVATED;
 import static capsule.items.CapsuleItem.CapsuleState.ONE_USE_ACTIVATED;
 import static capsule.structure.CapsuleTemplate.recenterRotation;
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CapsuleMod.MODID, value = Dist.CLIENT)
 public class CapsulePreviewHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -154,8 +156,8 @@ public class CapsulePreviewHandler {
             // it's an empty capsule : show capture zones
             if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
                 //noinspection ConstantConditions
-                if (heldItem.hasTag() && heldItem.getTag().contains("size")) {
-                    setCaptureTESizeColor(heldItem.getTag().getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
+                if (NBTHelper.hasTag(heldItem) && NBTHelper.getOrCreateTag(heldItem).contains("size")) {
+                    setCaptureTESizeColor(NBTHelper.getOrCreateTag(heldItem).getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
                     return true;
                 }
 
@@ -173,16 +175,16 @@ public class CapsulePreviewHandler {
     @SuppressWarnings("ConstantConditions")
     private static void tryPreviewDeploy(LocalPlayer thePlayer, float partialTicks, ItemStack heldItemMainhand, PoseStack poseStack) {
         if (heldItemMainhand.getItem() instanceof CapsuleItem
-                && heldItemMainhand.hasTag()
+                && NBTHelper.hasTag(heldItemMainhand)
                 && isDeployable(heldItemMainhand)
-                && !Strings.isNullOrEmpty(heldItemMainhand.getTag().getString("structureName"))
+                && !Strings.isNullOrEmpty(NBTHelper.getOrCreateTag(heldItemMainhand).getString("structureName"))
         ) {
             int size = CapsuleItem.getSize(heldItemMainhand);
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, (int) (0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
-                String structureName = heldItemMainhand.getTag().getString("structureName");
+                String structureName = NBTHelper.getOrCreateTag(heldItemMainhand).getString("structureName");
 
                 AABB errorBoundingBox = new AABB(
                         0,
@@ -327,8 +329,8 @@ public class CapsulePreviewHandler {
             //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
                     && (CapsuleItem.hasState(heldItem, DEPLOYED) || CapsuleItem.hasState(heldItem, BLUEPRINT))
-                    && heldItem.hasTag()
-                    && heldItem.getTag().contains("spawnPosition")) {
+                    && NBTHelper.hasTag(heldItem)
+                    && NBTHelper.getOrCreateTag(heldItem).contains("spawnPosition")) {
                 previewRecall(heldItem, poseStack);
             }
         }
@@ -366,7 +368,7 @@ public class CapsulePreviewHandler {
 
     private static void previewRecall(ItemStack capsule, PoseStack poseStack) {
         if (capsule.getTag() == null) return;
-        CompoundTag linkPos = capsule.getTag().getCompound("spawnPosition");
+        CompoundTag linkPos = NBTHelper.getOrCreateTag(capsule).getCompound("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;

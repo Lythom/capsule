@@ -50,10 +50,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import capsule.helpers.NBTHelper;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -70,7 +70,7 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 import static capsule.items.CapsuleItem.CapsuleState.LINKED;
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = CapsuleMod.MODID)
 @SuppressWarnings({"ConstantConditions"})
 public class CapsuleItem extends Item {
     public enum CapsuleState {
@@ -148,16 +148,16 @@ public class CapsuleItem extends Item {
 
 
     public static boolean isOneUse(ItemStack stack) {
-        return !stack.isEmpty() && stack.hasTag() && stack.getTag().contains("oneUse") && stack.getTag().getBoolean("oneUse");
+        return !stack.isEmpty() && NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("oneUse") && NBTHelper.getOrCreateTag(stack).getBoolean("oneUse");
     }
 
     public static void setOneUse(ItemStack capsule) {
         CapsuleItem.setState(capsule, CapsuleState.ONE_USE);
-        capsule.getOrCreateTag().putBoolean("oneUse", true);
+        NBTHelper.updateTag(capsule, tag -> tag.putBoolean("oneUse", true));
     }
 
     public static boolean isBlueprint(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof CapsuleItem && stack.hasTag() && stack.getTag().contains("sourceInventory");
+        return !stack.isEmpty() && stack.getItem() instanceof CapsuleItem && NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("sourceInventory");
     }
 
     public static void setBlueprint(ItemStack capsule) {
@@ -165,11 +165,11 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isReward(ItemStack stack) {
-        return !stack.isEmpty() && (stack.hasTag() && stack.getTag().contains("isReward") && stack.getTag().getBoolean("isReward") && isOneUse(stack));
+        return !stack.isEmpty() && (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("isReward") && NBTHelper.getOrCreateTag(stack).getBoolean("isReward") && isOneUse(stack));
     }
 
     public static void setIsReward(ItemStack capsule) {
-        capsule.getOrCreateTag().putBoolean("isReward", true);
+        NBTHelper.updateTag(capsule, tag -> tag.putBoolean("isReward", true));
         setOneUse(capsule);
     }
 
@@ -178,7 +178,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean hasStructureLink(ItemStack stack) {
-        return !stack.isEmpty() && stack.hasTag() && stack.getTag().contains("structureName");
+        return !stack.isEmpty() && NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("structureName");
     }
 
     public static boolean isLinkedStateCapsule(ItemStack itemstack) {
@@ -191,16 +191,16 @@ public class CapsuleItem extends Item {
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
             return Component.translatable("items.capsule.content_empty");
-        } else if (stack.hasTag() && stack.getTag().contains("label") && !stack.getTag().getString("label").isEmpty()) {
+        } else if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("label") && !NBTHelper.getOrCreateTag(stack).getString("label").isEmpty()) {
             return Component.literal("«")
-                    .append(Component.literal(stack.getTag().getString("label")).withStyle(ChatFormatting.ITALIC))
+                    .append(Component.literal(NBTHelper.getOrCreateTag(stack).getString("label")).withStyle(ChatFormatting.ITALIC))
                     .append("»");
         }
         return Component.translatable("items.capsule.content_unlabeled");
     }
 
     public static void setLabel(ItemStack capsule, String label) {
-        capsule.getOrCreateTag().putString("label", label);
+        NBTHelper.updateTag(capsule, tag -> tag.putString("label", label));
     }
 
     /**
@@ -208,16 +208,16 @@ public class CapsuleItem extends Item {
      */
     public static int getSize(ItemStack capsule) {
         int size = 1;
-        if (!capsule.isEmpty() && capsule.hasTag() && capsule.getTag().contains("size")) {
-            size = capsule.getTag().getInt("size");
+        if (!capsule.isEmpty() && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("size")) {
+            size = NBTHelper.getOrCreateTag(capsule).getInt("size");
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
-            capsule.getTag().putInt("size", size);
+            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
             LOGGER.error("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
             size++;
-            capsule.getTag().putInt("size", size);
+            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
             LOGGER.error("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
 
@@ -232,50 +232,44 @@ public class CapsuleItem extends Item {
             size++;
             LOGGER.warn("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
-        capsule.getOrCreateTag().putInt("size", size);
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
     }
 
 
     public static int getYOffset(ItemStack capsule) {
         int yOffset = 0;
-        if (!capsule.isEmpty() && capsule.hasTag() && capsule.getTag().contains("yOffset")) {
-            yOffset = capsule.getTag().getInt("yOffset");
+        if (!capsule.isEmpty() && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("yOffset")) {
+            yOffset = NBTHelper.getOrCreateTag(capsule).getInt("yOffset");
         }
         return yOffset;
     }
 
     public static void setYOffset(ItemStack capsule, int yOffset) {
-        capsule.getOrCreateTag().putInt("yOffset", yOffset);
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("yOffset", yOffset));
     }
 
     public static String getStructureName(ItemStack capsule) {
         String name = null;
-        if (capsule != null && capsule.hasTag() && capsule.getTag().contains("structureName")) {
-            name = capsule.getTag().getString("structureName");
+        if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("structureName")) {
+            name = NBTHelper.getOrCreateTag(capsule).getString("structureName");
         }
         return name;
     }
 
     public static void setStructureName(ItemStack capsule, String structureName) {
-        if (!capsule.hasTag()) {
-            capsule.setTag(new CompoundTag());
-        }
-        capsule.getTag().putString("structureName", structureName);
+        NBTHelper.updateTag(capsule, tag -> tag.putString("structureName", structureName));
     }
 
     public static String getAuthor(ItemStack capsule) {
         String name = null;
-        if (capsule != null && capsule.hasTag() && capsule.getTag().contains("author")) {
-            name = capsule.getTag().getString("author");
+        if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("author")) {
+            name = NBTHelper.getOrCreateTag(capsule).getString("author");
         }
         return name;
     }
 
     public static void setAuthor(ItemStack capsule, String author) {
-        if (!capsule.hasTag()) {
-            capsule.setTag(new CompoundTag());
-        }
-        if (!StringUtil.isNullOrEmpty(author)) capsule.getTag().putString("author", author);
+        if (!StringUtil.isNullOrEmpty(author)) NBTHelper.updateTag(capsule, tag -> tag.putString("author", author));
     }
 
 
@@ -289,50 +283,44 @@ public class CapsuleItem extends Item {
 
     public static int getMaterialColor(ItemStack capsule) {
         int color = 0;
-        if (capsule != null && capsule.hasTag() && capsule.getTag().contains("color")) {
-            color = capsule.getTag().getInt("color");
+        if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("color")) {
+            color = NBTHelper.getOrCreateTag(capsule).getInt("color");
         }
         return color;
     }
 
     public static void setMaterialColor(ItemStack capsule, int color) {
-        if (!capsule.hasTag()) {
-            capsule.setTag(new CompoundTag());
-        }
-        capsule.getTag().putInt("color", color);
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("color", color));
     }
 
     public static int getUpgradeLevel(ItemStack stack) {
         int upgradeLevel = 0;
-        if (stack.hasTag() && stack.getTag().contains("upgraded")) {
-            upgradeLevel = stack.getTag().getInt("upgraded");
+        if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("upgraded")) {
+            upgradeLevel = NBTHelper.getOrCreateTag(stack).getInt("upgraded");
         }
         return upgradeLevel;
     }
 
     public static void setUpgradeLevel(ItemStack capsule, int upgrades) {
-        if (!capsule.hasTag()) {
-            capsule.setTag(new CompoundTag());
-        }
-        capsule.getTag().putInt("upgraded", upgrades);
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("upgraded", upgrades));
     }
 
     public static ResourceKey<Level> getDimension(ItemStack capsule) {
         ResourceKey<Level> dim = null;
-        if (capsule != null && capsule.hasTag() && capsule.getTag().contains("spawnPosition")) {
-            dim = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(
-                    capsule.getTag().getCompound("spawnPosition").getString("dim")
+        if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("spawnPosition")) {
+            dim = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(
+                    NBTHelper.getOrCreateTag(capsule).getCompound("spawnPosition").getString("dim")
             ));
         }
         return dim;
     }
 
     public static void setState(ItemStack stack, CapsuleState state) {
-        stack.getOrCreateTag().putInt("state", state.getValue());
+        NBTHelper.updateTag(stack, tag -> tag.putInt("state", state.getValue()));
     }
 
     public static boolean isOverpowered(ItemStack stack) {
-        return stack.hasTag() && stack.getTag().contains("overpowered") && stack.getTag().getByte("overpowered") == (byte) 1;
+        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("overpowered") && NBTHelper.getOrCreateTag(stack).getByte("overpowered") == (byte) 1;
     }
 
     private static boolean isActivated(ItemStack capsule) {
@@ -341,14 +329,11 @@ public class CapsuleItem extends Item {
     }
 
     public static void setCanRotate(ItemStack capsule, boolean canRotate) {
-        if (!capsule.hasTag()) {
-            capsule.setTag(new CompoundTag());
-        }
-        capsule.getTag().putBoolean("canRotate", canRotate);
+        NBTHelper.updateTag(capsule, tag -> tag.putBoolean("canRotate", canRotate));
     }
 
     public static boolean canRotate(ItemStack capsule) {
-        return isBlueprint(capsule) || !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && capsule.hasTag() && capsule.getTag().contains("canRotate") && capsule.getTag().getBoolean("canRotate");
+        return isBlueprint(capsule) || !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("canRotate") && NBTHelper.getOrCreateTag(capsule).getBoolean("canRotate");
     }
 
     public static void revertStateFromActivated(ItemStack capsule) {
@@ -361,20 +346,20 @@ public class CapsuleItem extends Item {
         } else {
             setState(capsule, CapsuleState.EMPTY);
         }
-        if (capsule.hasTag()) {
-            capsule.getTag().remove("activetimer");
+        if (NBTHelper.hasTag(capsule)) {
+            NBTHelper.getOrCreateTag(capsule).remove("activetimer");
         }
     }
 
     public static CapsuleState getState(ItemStack stack) {
-        if (!stack.hasTag()) return CapsuleState.valueOf(0);
-        if (stack.getTag().contains("state")) return CapsuleState.valueOf(stack.getTag().getInt("state"));
+        if (!NBTHelper.hasTag(stack)) return CapsuleState.valueOf(0);
+        if (NBTHelper.getOrCreateTag(stack).contains("state")) return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getInt("state"));
         // compatibility fallback
-        return CapsuleState.valueOf(stack.getTag().getInt("Damage"));
+        return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getInt("Damage"));
     }
 
     public static boolean hasState(ItemStack stack, CapsuleState state) {
-        return stack.hasTag() && stack.getTag().getInt("state") == state.getValue();
+        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).getInt("state") == state.getValue();
     }
 
     @Override
@@ -443,7 +428,7 @@ public class CapsuleItem extends Item {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack capsule, @Nullable Level worldIn, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack capsule, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
 
         String author = getAuthor(capsule);
         if (author != null) {
@@ -481,7 +466,7 @@ public class CapsuleItem extends Item {
         } else {
             if (canRotate(capsule)) {
                 tooltipAddMultiline(tooltip, "capsule.tooltip.canRotate", ChatFormatting.WHITE);
-            } else if (capsule.hasTag() && capsule.getTag().contains("canRotate")) {
+            } else if (NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("canRotate")) {
                 tooltipAddMultiline(tooltip, "capsule.tooltip.cannotRotate", ChatFormatting.DARK_GRAY);
             }
         }
@@ -511,7 +496,7 @@ public class CapsuleItem extends Item {
     public static void onLeftClick(PlayerInteractEvent.LeftClickEmpty event) {
         ItemStack stack = event.getEntity().getMainHandItem();
         if (event.getLevel().isClientSide && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
-            PacketDistributor.SERVER.noArg().send(new CapsuleLeftClickQueryToServer());
+            PacketDistributor.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
     }
@@ -527,7 +512,7 @@ public class CapsuleItem extends Item {
                         if (lastRotationTime + 60 < Util.getMillis()) {
                             lastRotationTime = Util.getMillis();
                             // prevent action to be triggered on server + on client
-                            PacketDistributor.SERVER.noArg().send(new CapsuleLeftClickQueryToServer());
+                            PacketDistributor.sendToServer(new CapsuleLeftClickQueryToServer());
                             askPreviewIfNeeded(stack);
                         }
                     } else if (!CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
@@ -551,7 +536,7 @@ public class CapsuleItem extends Item {
         if (!capsule.client.CapsulePreviewHandler.currentPreview.containsKey(getStructureName(stack))) {
             if (Minecraft.getInstance().getConnection() != null)
                 // try to get the preview from server
-                PacketDistributor.SERVER.noArg().send(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
+                PacketDistributor.sendToServer(new CapsuleContentPreviewQueryToServer(getStructureName(stack)));
         }
     }
 
@@ -609,7 +594,7 @@ public class CapsuleItem extends Item {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
                 if (dest != null) {
-                    PacketDistributor.SERVER.noArg().send(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
+                    PacketDistributor.sendToServer(new CapsuleContentPreviewQueryToServer(NBTHelper.getOrCreateTag(capsule).getString("structureName")));
                 }
             }
 
@@ -626,12 +611,12 @@ public class CapsuleItem extends Item {
                     dest = dest.offset(0, CapsuleItem.getYOffset(capsule), 0);
                 }
                 if (dest != null) {
-                    PacketDistributor.SERVER.noArg().send(new CapsuleThrowQueryToServer(dest, true));
+                    PacketDistributor.sendToServer(new CapsuleThrowQueryToServer(dest, true));
                 }
             } else if (isActivated(capsule)) {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
-                PacketDistributor.SERVER.noArg().send(new CapsuleThrowQueryToServer(dest, false));
+                PacketDistributor.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
 
@@ -661,17 +646,17 @@ public class CapsuleItem extends Item {
     }
 
     private void startTimer(Level worldIn, Player playerIn, ItemStack capsule) {
-        CompoundTag timer = capsule.getOrCreateTagElement("activetimer");
+        CompoundTag timer = NBTHelper.getOrCreateTag(capsule).getCompound("activetimer");
         timer.putInt("starttime", playerIn.tickCount);
         worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.2F, 0.9F);
     }
 
     public static void setUndeployDelay(ItemStack capsule, Player playerIn) {
-        capsule.getOrCreateTag().putInt("undeployDelay", playerIn.tickCount + 5);
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("undeployDelay", playerIn.tickCount + 5));
     }
 
     public static int getUndeployDelay(ItemStack capsule) {
-        return capsule.getTag().getInt("undeployDelay");
+        return NBTHelper.getOrCreateTag(capsule).getInt("undeployDelay");
     }
 
 
@@ -685,7 +670,7 @@ public class CapsuleItem extends Item {
         if (!worldIn.isClientSide) {
 
             // disable capsule after some time
-            CompoundTag timer = stack.getTagElement("activetimer");
+            CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
 
             if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + Config.previewDisplayDuration) {
                 revertStateFromActivated(stack);
@@ -718,7 +703,7 @@ public class CapsuleItem extends Item {
         // throwing the capsule toward the right place
         if (!entity.getCommandSenderWorld().isClientSide
                 && isActivated(capsule)
-                && capsule.hasTag() && capsule.getTag().contains("deployAt")
+                && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("deployAt")
                 && !entity.verticalCollision || entity.horizontalCollision && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
             Spacial.moveItemEntityToDeployPos(entity, capsule, true);
         }
@@ -734,7 +719,7 @@ public class CapsuleItem extends Item {
         if (!event.player.level().isClientSide) {
             for (int i = 0; i < event.player.getInventory().getContainerSize(); ++i) {
                 ItemStack itemstack = event.player.getInventory().getItem(i);
-                if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied")) {
+                if (NBTHelper.hasTag(itemstack) && NBTHelper.getOrCreateTag(itemstack).contains("templateShouldBeCopied")) {
                     duplicateBlueprintTemplate(itemstack, event.player.level(), event.player);
                 }
             }
@@ -754,8 +739,8 @@ public class CapsuleItem extends Item {
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
                 CapsuleItem.setStructureName(capsule, templateName);
-                if (capsule.getTag() != null) {
-                    capsule.getTag().remove("templateShouldBeCopied");
+                if (NBTHelper.getOrCreateTag(capsule) != null) {
+                    NBTHelper.getOrCreateTag(capsule).remove("templateShouldBeCopied");
                 }
             }
         }
@@ -763,9 +748,9 @@ public class CapsuleItem extends Item {
 
     public static Map<BlockPos, Block> getOccupiedSourcePos(ItemStack capsule) {
         Map<BlockPos, Block> occupiedSources = null;
-        if (capsule.hasTag() && capsule.getTag().contains("occupiedSpawnPositions")) {
+        if (NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("occupiedSpawnPositions")) {
             occupiedSources = new HashMap<>();
-            ListTag list = capsule.getTag().getList("occupiedSpawnPositions", 10);
+            ListTag list = NBTHelper.getOrCreateTag(capsule).getList("occupiedSpawnPositions", 10);
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag entry = list.getCompound(i);
                 occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
@@ -775,8 +760,8 @@ public class CapsuleItem extends Item {
     }
 
     public static void cleanDeploymentTags(ItemStack capsule) {
-        capsule.getTag().remove("spawnPosition");
-        capsule.getTag().remove("occupiedSpawnPositions"); // don't need anymore those data
+        NBTHelper.getOrCreateTag(capsule).remove("spawnPosition");
+        NBTHelper.getOrCreateTag(capsule).remove("occupiedSpawnPositions"); // don't need anymore those data
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {
@@ -801,8 +786,8 @@ public class CapsuleItem extends Item {
             if (isBlueprint(stack) && CapsuleItem.hasState(stack, CapsuleState.DEPLOYED)) {
                 color = 0x7CC4EA; // trick for blueprint to reuse the "deployed" item model and get okish label color
             } else {
-                if (stack.hasTag() && stack.getTag().contains("color")) {
-                    color = stack.getTag().getInt("color");
+                if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("color")) {
+                    color = NBTHelper.getOrCreateTag(stack).getInt("color");
                 }
             }
         } else if (renderPass == 2) {
@@ -850,13 +835,13 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean hasSourceInventory(ItemStack capsule) {
-        return capsule.hasTag() && capsule.getTag().contains("sourceInventory") && capsule.getTag().getCompound("sourceInventory").contains("x");
+        return NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("sourceInventory") && NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory").contains("x");
     }
 
     @Nullable
     public static BlockPos getSourceInventoryLocation(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            CompoundTag sourceInventory = capsule.getTag().getCompound("sourceInventory");
+            CompoundTag sourceInventory = NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory");
             return new BlockPos(sourceInventory.getInt("x"), sourceInventory.getInt("y"), sourceInventory.getInt("z"));
         }
         return null;
@@ -865,8 +850,8 @@ public class CapsuleItem extends Item {
     @Nullable
     public static ResourceKey<Level> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            return ResourceKey.create(Registries.DIMENSION, new ResourceLocation(
-                    capsule.getTag().getCompound("sourceInventory").getString("dim")
+            return ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(
+                    NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory").getString("dim")
             ));
         }
         return null;
@@ -887,35 +872,29 @@ public class CapsuleItem extends Item {
     }
 
     public static void setPlacement(ItemStack blueprint, StructurePlaceSettings placementSettings) {
-        if (!blueprint.hasTag()) {
-            blueprint.setTag(new CompoundTag());
-        }
-        blueprint.getTag().putString("rotation", placementSettings == null ? Rotation.NONE.name() : placementSettings.getRotation().name());
-        blueprint.getTag().putString("mirror", placementSettings == null ? Mirror.NONE.name() : placementSettings.getMirror().name());
+        NBTHelper.updateTag(blueprint, tag -> tag.putString("rotation", placementSettings == null ? Rotation.NONE.name()) : placementSettings.getRotation().name());
+        NBTHelper.updateTag(blueprint, tag -> tag.putString("mirror", placementSettings == null ? Mirror.NONE.name()) : placementSettings.getMirror().name());
     }
 
     public static StructurePlaceSettings getPlacement(ItemStack capsule) {
         if (hasPlacement(capsule)) {
             return new StructurePlaceSettings()
-                    .setMirror(Mirror.valueOf(capsule.getTag().getString("mirror")))
-                    .setRotation(Rotation.valueOf(capsule.getTag().getString("rotation")))
+                    .setMirror(Mirror.valueOf(NBTHelper.getOrCreateTag(capsule).getString("mirror")))
+                    .setRotation(Rotation.valueOf(NBTHelper.getOrCreateTag(capsule).getString("rotation")))
                     .setIgnoreEntities(false);
         }
         return new StructurePlaceSettings();
     }
 
     public static boolean hasPlacement(ItemStack blueprint) {
-        if (!blueprint.hasTag()) {
-            blueprint.setTag(new CompoundTag());
-        }
-        return blueprint.getTag().contains("mirror") && blueprint.getTag().contains("rotation");
+        return NBTHelper.getOrCreateTag(blueprint).contains("mirror") && NBTHelper.getOrCreateTag(blueprint).contains("rotation");
     }
 
     public static void clearCapsule(ItemStack capsule) {
         setState(capsule, CapsuleState.EMPTY);
-        if (!capsule.hasTag()) return;
-        capsule.getTag().remove("structureName");
-        capsule.getTag().remove("sourceInventory");
-        capsule.getTag().remove("canRotate");
+        if (!NBTHelper.hasTag(capsule)) return;
+        NBTHelper.getOrCreateTag(capsule).remove("structureName");
+        NBTHelper.getOrCreateTag(capsule).remove("sourceInventory");
+        NBTHelper.getOrCreateTag(capsule).remove("canRotate");
     }
 }

@@ -1,0 +1,24 @@
+{
+  "type": "capsule:recovery_capsule",
+  "result": {
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 5,
+        "isReward": true,
+        "oneUse": true,
+        "structureName": "config/capsule/rewards/example",
+        "size": 3
+      }
+    }
+  },
+  "ingredients": [
+    {
+      "item": "capsule:capsule"
+    },
+    {
+      "item": "minecraft:glass_bottle"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "capsule",
+  "result": {
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 0,
+        "color": 15200960,
+        "size": 11
+      }
+    }
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "key": {
+    "#": {
+      "tag": "c:ingots/lumium"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "tag": "c:ender_pearls"
+    },
+    "i": {
+      "tag": "c:ingots/iron"
+    }
+  }
+}

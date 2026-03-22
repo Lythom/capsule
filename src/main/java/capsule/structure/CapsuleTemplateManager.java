@@ -46,7 +46,7 @@ public class CapsuleTemplateManager {
     }
 
     public CapsuleTemplate getOrCreateTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         CapsuleTemplate template = this.getTemplate(capsuleTemplateLocation);
         if (template == null) {
             template = new CapsuleTemplate();
@@ -58,7 +58,7 @@ public class CapsuleTemplateManager {
 
     @Nullable
     public CapsuleTemplate getTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         return this.templates.computeIfAbsent(capsuleTemplateLocation, (p_209204_1_) -> {
             CapsuleTemplate template = this.loadTemplateFile(p_209204_1_, ".schematic");
             if (template == null) template = this.loadTemplateFile(p_209204_1_, ".nbt");
@@ -75,7 +75,7 @@ public class CapsuleTemplateManager {
 
     @Nullable
     private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation("capsule", p_209201_1_.getPath() + extension);
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath("capsule", p_209201_1_.getPath() + extension);
 
         Optional<Resource> optionalTemplate = this.resourceManager.getResource(capsuleTemplateLocation);
         if (optionalTemplate.isPresent()) {
@@ -138,7 +138,7 @@ public class CapsuleTemplateManager {
     }
 
     public boolean writeToFile(ResourceLocation templateName) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateName.getPath());
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateName.getPath());
         CapsuleTemplate template = this.templates.get(capsuleTemplateLocation);
         if (template == null) {
             return false;
@@ -182,7 +182,7 @@ public class CapsuleTemplateManager {
     }
 
     public void remove(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         this.templates.remove(capsuleTemplateLocation);
     }
 
@@ -197,7 +197,7 @@ public class CapsuleTemplateManager {
     }
 
     public boolean deleteTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
+        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         if (this.templates.containsKey(capsuleTemplateLocation)) {
             File file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
 

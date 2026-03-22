@@ -1,5 +1,6 @@
 package capsule.recipes;
 
+import capsule.helpers.NBTHelper;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import com.google.gson.JsonObject;
@@ -116,13 +117,13 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
                     0xFFFFFF,
                     CapsuleItem.getSize(referenceCapsule),
                     CapsuleItem.isOverpowered(referenceCapsule),
-                    referenceCapsule.getTag() != null ? referenceCapsule.getTag().getString("label") : null,
+                    referenceCapsule.getTag() != null ? NBTHelper.getOrCreateTag(referenceCapsule).getString("label") : null,
                     0
             );
             CapsuleItem.setBlueprint(blueprintItem);
             // hack to force a tempalte copy if it's not done after craft
             if (blueprintItem.getTag() != null) {
-                blueprintItem.getTag().putBoolean("templateShouldBeCopied", true);
+                NBTHelper.updateTag(blueprintItem, tag -> tag.putBoolean("templateShouldBeCopied", true);
             }
             CapsuleItem.setState(blueprintItem, DEPLOYED);
             return blueprintItem;

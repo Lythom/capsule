@@ -10,10 +10,10 @@ import net.neoforged.fml.ModList;
 public class SecurityCraftOwnerCheck {
     public static boolean canTakeBlock(ServerLevel worldserver, BlockPos blockPos, Player player) {
         if (!ModList.get().isLoaded("securitycraft")) return true;
-        BlockEntity BlockEntity = worldserver.getBlockEntity(blockPos);
+        BlockEntity blockEntity = worldserver.getBlockEntity(blockPos);
         // if not an IOwnable, SecurityCraft should not prevent taking
-        if (!(BlockEntity instanceof IOwnable)) return true;
+        if (!(blockEntity instanceof IOwnable)) return true;
         // can take the block if owner
-        return ((IOwnable) BlockEntity).getOwner().getUUID() == player.getStringUUID();
+        return ((IOwnable) blockEntity).getOwner().getUUID() == player.getStringUUID();
     }
 }

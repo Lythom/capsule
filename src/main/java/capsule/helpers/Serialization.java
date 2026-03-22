@@ -24,7 +24,7 @@ public class Serialization {
         ArrayList<String> notfound = new ArrayList<>();
 
         for (String blockId : blockIds) {
-            ResourceLocation excludedLocation = new ResourceLocation(blockId);
+            ResourceLocation excludedLocation = ResourceLocation.parse(blockId);
             // is it a whole registryName to exclude ?
             if (StringUtil.isNullOrEmpty(excludedLocation.getPath())) {
                 List<Block> blockIdsList = BuiltInRegistries.BLOCK.entrySet().stream()

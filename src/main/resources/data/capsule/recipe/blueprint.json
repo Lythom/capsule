@@ -1,0 +1,50 @@
+{
+  "type": "capsule:blueprint_capsule",
+  "result": {
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 3,
+        "sourceInventory": {},
+        "structureName": "generated_blueprint_copy_path",
+        "label": "Copy Any Capsule",
+        "size": 1
+      },
+      "minecraft:dyed_color": {
+        "rgb": 3949738,
+        "show_in_tooltip": false
+      }
+    }
+  },
+  "pattern": [
+    " b ",
+    "lcl",
+    " p "
+  ],
+  "key": {
+    "c": [
+      {
+        "item": "capsule:capsule"
+      },
+      {
+        "item": "capsule:capsule"
+      },
+      {
+        "item": "capsule:capsule"
+      },
+      {
+        "item": "capsule:capsule"
+      }
+    ],
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "p": {
+      "item": "minecraft:paper"
+    },
+    "l": {
+      "tag": "c:dyes/blue"
+    }
+  }
+}

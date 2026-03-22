@@ -23,12 +23,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.DistExecutor;
-import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
@@ -47,17 +48,24 @@ public class CapsuleMod {
 
     public static final String MODID = "capsule";
 
-    public static Consumer<Player> openGuiScreenCommon = DistExecutor.unsafeRunForDist(() -> () -> CapsuleMod::openGuiScreenClient, () -> () -> CapsuleMod::openGuiScreenServer);
+    public static Consumer<Player> openGuiScreenCommon;
     public static MinecraftServer server = null;
 
-    public CapsuleMod(IEventBus modEventBus) {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
+    static {
+        if (FMLLoader.getDist() == Dist.CLIENT) {
+            openGuiScreenCommon = CapsuleMod::openGuiScreenClient;
+        } else {
+            openGuiScreenCommon = CapsuleMod::openGuiScreenServer;
+        }
+    }
+
+    public CapsuleMod(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_CONFIG);
 
         CapsuleBlocks.registerBlocks(modEventBus);
         CapsuleItems.registerItems(modEventBus);
         CapsuleCreativeTabs.registerTabs(modEventBus);
         CapsuleRecipes.registerRecipeSerializers(modEventBus);
-        CapsuleEnchantments.registerEnchantments(modEventBus);
 
         modEventBus.addListener(CapsuleNetwork::setupPackets);
 
@@ -93,7 +101,7 @@ public class CapsuleMod {
     }
 }
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = CapsuleMod.MODID)
 final class CapsuleModEventSubscriber {
 
     @SubscribeEvent
@@ -101,7 +109,7 @@ final class CapsuleModEventSubscriber {
     public static void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> ItemProperties.register(
                 CapsuleItems.CAPSULE.get(),
-                new ResourceLocation(CapsuleMod.MODID, "state"),
+                ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
                 (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
         ));
     }
@@ -136,7 +144,7 @@ final class CapsuleModEventSubscriber {
     }
 }
 
-@Mod.EventBusSubscriber(modid = CapsuleMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = CapsuleMod.MODID, value = Dist.CLIENT)
 final class CapsuleForgeSubscriber {
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)

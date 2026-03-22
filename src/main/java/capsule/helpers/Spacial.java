@@ -15,6 +15,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.nbt.CompoundTag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -169,11 +170,13 @@ public class Spacial {
     }
 
     public static boolean isThrowerUnderLiquid(final ItemEntity itemEntity) {
-        UUID thrower = itemEntity.thrower;
+        Entity thrower = itemEntity.getOwner();
         if (thrower == null) return false;
-        Player player = itemEntity.getCommandSenderWorld().getPlayerByUUID(thrower);
-        boolean underLiquid = isImmergedInLiquid(player);
-        return underLiquid;
+        if (thrower instanceof Player player) {
+            boolean underLiquid = isImmergedInLiquid(player);
+            return underLiquid;
+        }
+        return false;
     }
 
     public static boolean isEntityCollidingLiquid(final ItemEntity ItemEntity) {
@@ -187,8 +190,9 @@ public class Spacial {
     }
 
     public static void moveItemEntityToDeployPos(final ItemEntity ItemEntity, final ItemStack capsule, boolean keepMomentum) {
-        if (capsule.getTag() == null) return;
-        BlockPos dest = BlockPos.of(capsule.getTag().getLong("deployAt"));
+        CompoundTag tag = NBTHelper.getTag(capsule);
+        if (tag == null) return;
+        BlockPos dest = BlockPos.of(tag.getLong("deployAt"));
         // +0.5 to aim the center of the block
         double diffX = (dest.getX() + 0.5 - ItemEntity.getX());
         double diffZ = (dest.getZ() + 0.5 - ItemEntity.getZ());

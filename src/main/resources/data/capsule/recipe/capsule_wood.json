@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "capsule",
+  "result": {
+    "id": "capsule:capsule",
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "state": 0,
+        "color": 12359778,
+        "size": 1
+      },
+      "minecraft:dyed_color": {
+        "rgb": 11833434,
+        "show_in_tooltip": false
+      }
+    }
+  },
+  "pattern": [
+    " b ",
+    "#e#",
+    " i "
+  ],
+  "key": {
+    "#": {
+      "tag": "minecraft:planks"
+    },
+    "b": {
+      "item": "minecraft:stone_button"
+    },
+    "e": {
+      "tag": "c:chests/wooden"
+    },
+    "i": {
+      "tag": "minecraft:wooden_slabs"
+    }
+  }
+}

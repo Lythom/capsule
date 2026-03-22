@@ -1,28 +1,31 @@
 package capsule.enchantments;
 
 import capsule.CapsuleMod;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class CapsuleEnchantments {
-    private static final DeferredRegister<Enchantment> ENCHANTMENTS = DeferredRegister.create(BuiltInRegistries.ENCHANTMENT, CapsuleMod.MODID);
-    public static final Supplier<Enchantment> RECALL = ENCHANTMENTS.register("recall", RecallEnchant::new);
+    public static final ResourceKey<Enchantment> RECALL = ResourceKey.create(
+            Registries.ENCHANTMENT,
+            ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "recall")
+    );
 
-    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) ->
-            entityIn instanceof ItemEntity itemEntity && itemEntity.getItem().getEnchantmentLevel(CapsuleEnchantments.RECALL.get()) > 0;
-
-    public static void registerEnchantments(IEventBus eventBus) {
-        ENCHANTMENTS.register(eventBus);
-    }
-
-    public static RecallEnchant CreateRecall() {
-        return new RecallEnchant();
-    }
+    public static final Predicate<Entity> hasRecallEnchant = (Entity entityIn) -> {
+        if (entityIn instanceof ItemEntity itemEntity) {
+            ItemStack stack = itemEntity.getItem();
+            return EnchantmentHelper.getItemEnchantmentLevel(
+                    entityIn.level().holderOrThrow(RECALL),
+                    stack
+            ) > 0;
+        }
+        return false;
+    };
 }
