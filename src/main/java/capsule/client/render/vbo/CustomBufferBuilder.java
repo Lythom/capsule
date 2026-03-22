@@ -4,9 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Floats;
 import com.mojang.blaze3d.platform.MemoryTracker;
-import com.mojang.blaze3d.vertex.BufferVertexConsumer;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.DefaultedVertexConsumer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -23,7 +21,7 @@ import java.nio.FloatBuffer;
 import java.util.BitSet;
 import java.util.List;
 
-public class CustomBufferBuilder extends DefaultedVertexConsumer implements BufferVertexConsumer {
+public class CustomBufferBuilder implements VertexConsumer {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private ByteBuffer byteBuffer;
 	private final List<CustomBufferBuilder.DrawState> drawStates = Lists.newArrayList();
@@ -42,7 +40,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	private boolean isDrawing;
 
 	public CustomBufferBuilder(int bufferSizeIn) {
-		this.byteBuffer = MemoryTracker.create(bufferSizeIn * 4); // TODO: might need to remove or change to 6
+		this.byteBuffer = MemoryTracker.create(bufferSizeIn * 4);
 	}
 
 	protected void growBuffer() {
@@ -188,7 +186,7 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 	private void setVertexFormat(VertexFormat vertexFormatIn) {
 		if (this.vertexFormat != vertexFormatIn) {
 			this.vertexFormat = vertexFormatIn;
-			boolean flag = vertexFormatIn == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP; //POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL;
+			boolean flag = vertexFormatIn == DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP;
 			boolean flag1 = vertexFormatIn == DefaultVertexFormat.BLOCK;
 			this.fastFormat = flag || flag1;
 			this.fullFormat = flag;
@@ -235,56 +233,77 @@ public class CustomBufferBuilder extends DefaultedVertexConsumer implements Buff
 		this.nextElementBytes += this.vertexFormatElement.getByteSize();
 		VertexFormatElement vertexformatelement = immutablelist.get(this.vertexFormatIndex);
 		this.vertexFormatElement = vertexformatelement;
-		if (vertexformatelement.getUsage() == VertexFormatElement.Usage.PADDING) {
+		if (vertexformatelement.usage() == VertexFormatElement.Usage.PADDING) {
 			this.nextElement();
 		}
-
-		if (this.defaultColorSet && this.vertexFormatElement.getUsage() == VertexFormatElement.Usage.COLOR) {
-			BufferVertexConsumer.super.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
-		}
-
 	}
 
-	public VertexConsumer color(int red, int green, int blue, int alpha) {
-		if (this.defaultColorSet) {
-			throw new IllegalStateException();
-		} else {
-			return BufferVertexConsumer.super.color(red, green, blue, alpha);
-		}
-	}
-
-	public void vertex(float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {
-		if (this.defaultColorSet) {
-			throw new IllegalStateException();
-		} else if (this.fastFormat) {
+	@Override
+	public VertexConsumer addVertex(float x, float y, float z) {
+		if (this.fastFormat) {
 			this.putFloat(0, x);
 			this.putFloat(4, y);
 			this.putFloat(8, z);
-			this.putByte(12, (byte) ((int) (red * 255.0F)));
-			this.putByte(13, (byte) ((int) (green * 255.0F)));
-			this.putByte(14, (byte) ((int) (blue * 255.0F)));
-			this.putByte(15, (byte) ((int) (alpha * 255.0F)));
-			this.putFloat(16, texU);
-			this.putFloat(20, texV);
-			int i;
-			if (this.fullFormat) {
-				this.putShort(24, (short) (overlayUV & '\uffff'));
-				this.putShort(26, (short) (overlayUV >> 16 & '\uffff'));
-				i = 28;
-			} else {
-				i = 24;
-			}
-
-			this.putShort(i + 0, (short) (lightmapUV & '\uffff'));
-			this.putShort(i + 2, (short) (lightmapUV >> 16 & '\uffff'));
-			this.putByte(i + 4, BufferVertexConsumer.normalIntValue(normalX)); // @mcp: normalIntValue = normalInt
-			this.putByte(i + 5, BufferVertexConsumer.normalIntValue(normalY));
-			this.putByte(i + 6, BufferVertexConsumer.normalIntValue(normalZ));
-			this.nextElementBytes += i + 8;
-			this.endVertex();
-		} else {
-			super.vertex(x, y, z, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, normalX, normalY, normalZ);
+			this.nextElementBytes += 12;
+			return this;
 		}
+		this.putFloat(0, x);
+		this.putFloat(4, y);
+		this.putFloat(8, z);
+		this.nextElement();
+		return this;
+	}
+
+	@Override
+	public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+		if (this.fastFormat) {
+			this.putByte(0, (byte) red);
+			this.putByte(1, (byte) green);
+			this.putByte(2, (byte) blue);
+			this.putByte(3, (byte) alpha);
+			this.nextElementBytes += 4;
+			return this;
+		}
+		this.putByte(0, (byte) red);
+		this.putByte(1, (byte) green);
+		this.putByte(2, (byte) blue);
+		this.putByte(3, (byte) alpha);
+		this.nextElement();
+		return this;
+	}
+
+	@Override
+	public VertexConsumer setUv(float u, float v) {
+		this.putFloat(0, u);
+		this.putFloat(4, v);
+		this.nextElement();
+		return this;
+	}
+
+	@Override
+	public VertexConsumer setUv1(int u, int v) {
+		this.putShort(0, (short) u);
+		this.putShort(2, (short) v);
+		this.nextElement();
+		return this;
+	}
+
+	@Override
+	public VertexConsumer setUv2(int u, int v) {
+		this.putShort(0, (short) u);
+		this.putShort(2, (short) v);
+		this.nextElement();
+		return this;
+	}
+
+	@Override
+	public VertexConsumer setNormal(float x, float y, float z) {
+		this.putByte(0, (byte) ((int) (x * 127.0F) & 0xFF));
+		this.putByte(1, (byte) ((int) (y * 127.0F) & 0xFF));
+		this.putByte(2, (byte) ((int) (z * 127.0F) & 0xFF));
+		this.nextElement();
+		this.endVertex();
+		return this;
 	}
 
 	public Pair<CustomBufferBuilder.DrawState, ByteBuffer> getNextBuffer() {
