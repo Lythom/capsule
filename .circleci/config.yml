@@ -3,30 +3,21 @@ version: 2.1
 jobs:
   build:
     docker:
-      # specify the version you desire here
-      - image: eclipse-temurin:17-jdk
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
+      - image: eclipse-temurin:21-jdk
 
     working_directory: ~/repo
 
     environment:
-      # Customize the JVM maximum heap limit
-      JVM_OPTS: -Xmx3200mk
+      JVM_OPTS: -Xmx3200m
       TERM: dumb
 
     steps:
       - checkout
 
-      # Download and cache dependencies
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "build.gradle" }}
-            # fallback to using the latest cache if no exact match is found
-            - v2-dependencies-
+            - v3-dependencies-{{ checksum "build.gradle" }}
+            - v3-dependencies-
 
       - run: echo 'export GRADLE_OPTS="-Dfile.encoding=UTF-8"' >> $BASH_ENV
       - run: rm -rf build/libs
@@ -37,7 +28,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: v2-dependencies-{{ checksum "build.gradle" }}
+          key: v3-dependencies-{{ checksum "build.gradle" }}
 
       - store_artifacts:
           path: build/libs
