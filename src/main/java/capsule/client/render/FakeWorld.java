@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -101,7 +101,7 @@ public class FakeWorld implements LevelAccessor {
 
     @Override
     public <T extends Entity> List<T> getEntities(EntityTypeTest<Entity, T> pEntityTypeTest, AABB pArea, Predicate<? super T> pPredicate) {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -127,12 +127,12 @@ public class FakeWorld implements LevelAccessor {
 
     @Override
     public RegistryAccess registryAccess() {
-        return null;
+        return delegate.registryAccess();
     }
 
     @Override
     public FeatureFlagSet enabledFeatures() {
-        return null;
+        return delegate.enabledFeatures();
     }
 
     @Override
@@ -230,7 +230,7 @@ public class FakeWorld implements LevelAccessor {
 
     @Override
     public Holder<Biome> getUncachedNoiseBiome(int x, int y, int z) {
-        return null;
+        return delegate.getUncachedNoiseBiome(x, y, z);
     }
 
     @Override
@@ -245,7 +245,7 @@ public class FakeWorld implements LevelAccessor {
 
     @Override
     public BiomeManager getBiomeManager() {
-        return null;
+        return delegate.getBiomeManager();
     }
 
     @Override
@@ -386,4 +386,3 @@ public class FakeWorld implements LevelAccessor {
     }
 
 }
-

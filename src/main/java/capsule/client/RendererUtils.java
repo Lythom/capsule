@@ -13,8 +13,6 @@ import org.joml.Matrix4f;
 public class RendererUtils {
     public static void doPositionPrologue(Camera camera, PoseStack poseStack) {
         poseStack.pushPose();
-        //poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
-        //poseStack.mulPose(Axis.YP.rotationDegrees(camera.getYRot() + 180.0F));
         poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
     }
 
@@ -23,7 +21,6 @@ public class RendererUtils {
     }
 
     public static void doOverlayPrologue() {
-//        RenderSystem.disableTexture();
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -31,20 +28,17 @@ public class RendererUtils {
     }
 
     public static void doOverlayEpilogue() {
-//        RenderSystem.enableTexture();
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
     }
 
     public static void doWirePrologue() {
         RenderSystem.disableCull();
-//        RenderSystem.disableTexture();
         RenderSystem.lineWidth(3.0F);
     }
 
     public static void doWireEpilogue() {
         RenderSystem.lineWidth(1.0F);
-//        RenderSystem.enableTexture();
         RenderSystem.enableCull();
 
     }
@@ -71,10 +65,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, x, minY, minZ).color(r, g, b, a).normal(matrix3f, -1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, minY, maxZ).color(r, g, b, a).normal(matrix3f, -1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, maxY, maxZ).color(r, g, b, a).normal(matrix3f, -1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, maxY, minZ).color(r, g, b, a).normal(matrix3f, -1, 0, 0).endVertex();
+        buffer.addVertex(matrix4f, x, minY, minZ).setColor(r, g, b, a).setNormal(matrix3f, -1, 0, 0);
+        buffer.addVertex(matrix4f, x, minY, maxZ).setColor(r, g, b, a).setNormal(matrix3f, -1, 0, 0);
+        buffer.addVertex(matrix4f, x, maxY, maxZ).setColor(r, g, b, a).setNormal(matrix3f, -1, 0, 0);
+        buffer.addVertex(matrix4f, x, maxY, minZ).setColor(r, g, b, a).setNormal(matrix3f, -1, 0, 0);
     }
 
     public static void drawPlanePosX(PoseStack poseStack, final float x, final float minY, final float maxY,
@@ -82,10 +76,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, x, minY, minZ).color(r, g, b, a).normal(matrix3f, 1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, maxY, minZ).color(r, g, b, a).normal(matrix3f, 1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, maxY, maxZ).color(r, g, b, a).normal(matrix3f, 1, 0, 0).endVertex();
-        buffer.vertex(matrix4f, x, minY, maxZ).color(r, g, b, a).normal(matrix3f, 1, 0, 0).endVertex();
+        buffer.addVertex(matrix4f, x, minY, minZ).setColor(r, g, b, a).setNormal(matrix3f, 1, 0, 0);
+        buffer.addVertex(matrix4f, x, maxY, minZ).setColor(r, g, b, a).setNormal(matrix3f, 1, 0, 0);
+        buffer.addVertex(matrix4f, x, maxY, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 1, 0, 0);
+        buffer.addVertex(matrix4f, x, minY, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 1, 0, 0);
     }
 
     public static void drawPlaneNegY(PoseStack poseStack, final float y, final float minX, final float maxX,
@@ -93,10 +87,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, minX, y, minZ).color(r, g, b, a).normal(matrix3f, 0, -1, 0).endVertex();
-        buffer.vertex(matrix4f, maxX, y, minZ).color(r, g, b, a).normal(matrix3f, 0, -1, 0).endVertex();
-        buffer.vertex(matrix4f, maxX, y, maxZ).color(r, g, b, a).normal(matrix3f, 0, -1, 0).endVertex();
-        buffer.vertex(matrix4f, minX, y, maxZ).color(r, g, b, a).normal(matrix3f, 0, -1, 0).endVertex();
+        buffer.addVertex(matrix4f, minX, y, minZ).setColor(r, g, b, a).setNormal(matrix3f, 0, -1, 0);
+        buffer.addVertex(matrix4f, maxX, y, minZ).setColor(r, g, b, a).setNormal(matrix3f, 0, -1, 0);
+        buffer.addVertex(matrix4f, maxX, y, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 0, -1, 0);
+        buffer.addVertex(matrix4f, minX, y, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 0, -1, 0);
     }
 
     public static void drawPlanePosY(PoseStack poseStack, final float y, final float minX, final float maxX,
@@ -104,10 +98,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, minX, y, minZ).color(r, g, b, a).normal(matrix3f, 0, 1, 0).endVertex();
-        buffer.vertex(matrix4f, minX, y, maxZ).color(r, g, b, a).normal(matrix3f, 0, 1, 0).endVertex();
-        buffer.vertex(matrix4f, maxX, y, maxZ).color(r, g, b, a).normal(matrix3f, 0, 1, 0).endVertex();
-        buffer.vertex(matrix4f, maxX, y, minZ).color(r, g, b, a).normal(matrix3f, 0, 1, 0).endVertex();
+        buffer.addVertex(matrix4f, minX, y, minZ).setColor(r, g, b, a).setNormal(matrix3f, 0, 1, 0);
+        buffer.addVertex(matrix4f, minX, y, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 0, 1, 0);
+        buffer.addVertex(matrix4f, maxX, y, maxZ).setColor(r, g, b, a).setNormal(matrix3f, 0, 1, 0);
+        buffer.addVertex(matrix4f, maxX, y, minZ).setColor(r, g, b, a).setNormal(matrix3f, 0, 1, 0);
     }
 
     public static void drawPlaneNegZ(PoseStack poseStack, final float z, final float minX, final float maxX,
@@ -115,10 +109,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, minX, minY, z).color(r, g, b, a).normal(matrix3f, 0, 0, -1).endVertex();
-        buffer.vertex(matrix4f, minX, maxY, z).color(r, g, b, a).normal(matrix3f, 0, 0, -1).endVertex();
-        buffer.vertex(matrix4f, maxX, maxY, z).color(r, g, b, a).normal(matrix3f, 0, 0, -1).endVertex();
-        buffer.vertex(matrix4f, maxX, minY, z).color(r, g, b, a).normal(matrix3f, 0, 0, -1).endVertex();
+        buffer.addVertex(matrix4f, minX, minY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, -1);
+        buffer.addVertex(matrix4f, minX, maxY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, -1);
+        buffer.addVertex(matrix4f, maxX, maxY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, -1);
+        buffer.addVertex(matrix4f, maxX, minY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, -1);
     }
 
     public static void drawPlanePosZ(PoseStack poseStack, final float z, final float minX, final float maxX,
@@ -126,10 +120,10 @@ public class RendererUtils {
                                      int r, int g, int b, int a) {
         Matrix4f matrix4f = poseStack.last().pose();
         Matrix3f matrix3f = poseStack.last().normal();
-        buffer.vertex(matrix4f, minX, minY, z).color(r, g, b, a).normal(matrix3f, 0, 0, 1).endVertex();
-        buffer.vertex(matrix4f, maxX, minY, z).color(r, g, b, a).normal(matrix3f, 0, 0, 1).endVertex();
-        buffer.vertex(matrix4f, maxX, maxY, z).color(r, g, b, a).normal(matrix3f, 0, 0, 1).endVertex();
-        buffer.vertex(matrix4f, minX, maxY, z).color(r, g, b, a).normal(matrix3f, 0, 0, 1).endVertex();
+        buffer.addVertex(matrix4f, minX, minY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, 1);
+        buffer.addVertex(matrix4f, maxX, minY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, 1);
+        buffer.addVertex(matrix4f, maxX, maxY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, 1);
+        buffer.addVertex(matrix4f, minX, maxY, z).setColor(r, g, b, a).setNormal(matrix3f, 0, 0, 1);
     }
 
     public static void drawCapsuleCube(PoseStack poseStack, AABB boundingBox, VertexConsumer bufferBuilder, int r, int g, int b, int a) {

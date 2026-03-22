@@ -347,7 +347,7 @@ public class CapsuleItem extends Item {
             setState(capsule, CapsuleState.EMPTY);
         }
         if (NBTHelper.hasTag(capsule)) {
-            NBTHelper.getOrCreateTag(capsule).remove("activetimer");
+            NBTHelper.updateTag(capsule, tag -> tag.remove("activetimer"));
         }
     }
 
@@ -646,8 +646,11 @@ public class CapsuleItem extends Item {
     }
 
     private void startTimer(Level worldIn, Player playerIn, ItemStack capsule) {
-        CompoundTag timer = NBTHelper.getOrCreateTag(capsule).getCompound("activetimer");
-        timer.putInt("starttime", playerIn.tickCount);
+        NBTHelper.updateTag(capsule, tag -> {
+            CompoundTag timer = tag.getCompound("activetimer");
+            timer.putInt("starttime", playerIn.tickCount);
+            tag.put("activetimer", timer);
+        });
         worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.2F, 0.9F);
     }
 
@@ -715,12 +718,13 @@ public class CapsuleItem extends Item {
      * Hack: constantly check for player inventory to create a template if not exists.
      */
     @SubscribeEvent
-    public static void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
-        if (!event.player.level().isClientSide) {
-            for (int i = 0; i < event.player.getInventory().getContainerSize(); ++i) {
-                ItemStack itemstack = event.player.getInventory().getItem(i);
+    public static void onTickPlayerEvent(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+        if (!player.level().isClientSide) {
+            for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
+                ItemStack itemstack = player.getInventory().getItem(i);
                 if (NBTHelper.hasTag(itemstack) && NBTHelper.getOrCreateTag(itemstack).contains("templateShouldBeCopied")) {
-                    duplicateBlueprintTemplate(itemstack, event.player.level(), event.player);
+                    duplicateBlueprintTemplate(itemstack, player.level(), player);
                 }
             }
         }
@@ -739,9 +743,7 @@ public class CapsuleItem extends Item {
                 // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
                 CapsuleItem.setStructureName(capsule, templateName);
-                if (NBTHelper.getOrCreateTag(capsule) != null) {
-                    NBTHelper.getOrCreateTag(capsule).remove("templateShouldBeCopied");
-                }
+                NBTHelper.updateTag(capsule, tag -> tag.remove("templateShouldBeCopied"));
             }
         }
     }
@@ -760,8 +762,10 @@ public class CapsuleItem extends Item {
     }
 
     public static void cleanDeploymentTags(ItemStack capsule) {
-        NBTHelper.getOrCreateTag(capsule).remove("spawnPosition");
-        NBTHelper.getOrCreateTag(capsule).remove("occupiedSpawnPositions"); // don't need anymore those data
+        NBTHelper.updateTag(capsule, tag -> {
+            tag.remove("spawnPosition");
+            tag.remove("occupiedSpawnPositions"); // don't need anymore those data
+        });
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {
@@ -893,8 +897,10 @@ public class CapsuleItem extends Item {
     public static void clearCapsule(ItemStack capsule) {
         setState(capsule, CapsuleState.EMPTY);
         if (!NBTHelper.hasTag(capsule)) return;
-        NBTHelper.getOrCreateTag(capsule).remove("structureName");
-        NBTHelper.getOrCreateTag(capsule).remove("sourceInventory");
-        NBTHelper.getOrCreateTag(capsule).remove("canRotate");
+        NBTHelper.updateTag(capsule, tag -> {
+            tag.remove("structureName");
+            tag.remove("sourceInventory");
+            tag.remove("canRotate");
+        });
     }
 }

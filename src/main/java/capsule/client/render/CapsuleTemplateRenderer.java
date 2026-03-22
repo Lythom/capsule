@@ -123,7 +123,7 @@ public class CapsuleTemplateRenderer {
 
     private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green,
                                float blue, Matrix4f matrix, int x, int y, int z) {
-        buffer.vertex(matrix, x, y, z).color(red, green, blue, 1.0F).uv(maxU, minV).uv2(256).normal(0.0F, 1.0F, 0.0F).endVertex();
+        buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, 1.0F).setUv(maxU, minV).setUv2(256).setNormal(0.0F, 1.0F, 0.0F);
     }
 
     public boolean changeTemplateIfDirty(CapsuleTemplate template, Level world, BlockPos destPos, BlockPos
