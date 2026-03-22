@@ -133,6 +133,6 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
     @Override
     public LootPoolEntryType getType() {
-        return LootPoolEntries.REFERENCE;
+        return LootPoolEntries.LOOT_TABLE;
     }
 }

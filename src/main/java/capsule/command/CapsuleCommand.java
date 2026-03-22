@@ -309,7 +309,7 @@ public class CapsuleCommand {
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (withRecall) {
-                capsule.enchant(CapsuleEnchantments.RECALL.get(), 1);
+                capsule.enchant(player.serverLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(CapsuleEnchantments.RECALL), 1);
             }
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
@@ -585,7 +585,7 @@ public class CapsuleCommand {
     private static int executeExportSeenBlock(ServerPlayer player) {
         if (player != null) {
             if (player.getServer() != null && !player.getServer().isDedicatedServer()) {
-                BlockHitResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getFrameTime(), 50);
+                BlockHitResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), 50);
 
                 if (rtc.getType() == HitResult.Type.BLOCK) {
 

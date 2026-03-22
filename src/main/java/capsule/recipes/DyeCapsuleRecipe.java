@@ -112,10 +112,10 @@ public class DyeCapsuleRecipe extends CustomRecipe {
             }
 
             for (DyeItem dyeitem : dyes) {
-                float[] afloat = dyeitem.getDyeColor().getTextureDiffuseColors();
-                int i2 = (int) (afloat[0] * 255.0F);
-                int l = (int) (afloat[1] * 255.0F);
-                int i1 = (int) (afloat[2] * 255.0F);
+                int texColor = dyeitem.getDyeColor().getTextureDiffuseColor();
+                int i2 = (texColor >> 16) & 0xFF;
+                int l = (texColor >> 8) & 0xFF;
+                int i1 = texColor & 0xFF;
                 i += Math.max(i2, Math.max(l, i1));
                 aint[0] += i2;
                 aint[1] += l;

@@ -98,9 +98,10 @@ public class BlueprintChangeRecipe extends CustomRecipe {
             }
         }
         if (templateStructure != null && blueprintCapsule != null) {
-            if (blueprintCapsule.getTag() != null) {
-                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putString("prevStructureName", CapsuleItem.getStructureName(blueprintCapsule));
-                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putBoolean("templateShouldBeCopied", true);
+            final ItemStack finalBlueprintCapsule = blueprintCapsule;
+            if (NBTHelper.hasTag(blueprintCapsule)) {
+                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putString("prevStructureName", CapsuleItem.getStructureName(finalBlueprintCapsule)));
+                NBTHelper.updateTag(blueprintCapsule, tag -> tag.putBoolean("templateShouldBeCopied", true));
             }
             CapsuleItem.setStructureName(blueprintCapsule, templateStructure);
             CapsuleItem.setState(blueprintCapsule, DEPLOYED);

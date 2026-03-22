@@ -8,6 +8,10 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public record CapsuleContentPreviewQueryToServer(String structureName) implements CustomPacketPayload {
+	public CapsuleContentPreviewQueryToServer {
+		if (structureName == null) structureName = "";
+	}
+
 	public static final CustomPacketPayload.Type<CapsuleContentPreviewQueryToServer> TYPE =
 			new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "content_preview_query"));
 

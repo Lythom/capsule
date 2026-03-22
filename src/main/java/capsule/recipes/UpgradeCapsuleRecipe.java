@@ -4,10 +4,11 @@ package capsule.recipes;
 import capsule.Config;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -39,7 +40,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
 
         ItemStack sourceCapsule = ItemStack.EMPTY;
         int material = 0;
-        for (int i = 0; i < invC.getContainerSize(); ++i) {
+        for (int i = 0; i < invC.size(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 
             if (!itemstack.isEmpty()
@@ -64,7 +65,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
         ItemStack input = ItemStack.EMPTY;
         int material = 0;
-        for (int i = 0; i < invC.getContainerSize(); ++i) {
+        for (int i = 0; i < invC.size(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 
             if (!itemstack.isEmpty()
@@ -116,26 +117,27 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     }
 
     public static class Serializer implements RecipeSerializer<UpgradeCapsuleRecipe> {
-        public static final Codec<UpgradeCapsuleRecipe> CODEC = RecordCodecBuilder.create(
+        public static final MapCodec<UpgradeCapsuleRecipe> CODEC = RecordCodecBuilder.mapCodec(
                 instance -> instance.group(
                                 Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(recipe -> recipe.upgradeIngredient)
                         )
                         .apply(instance, UpgradeCapsuleRecipe::new)
         );
 
+        public static final StreamCodec<RegistryFriendlyByteBuf, UpgradeCapsuleRecipe> STREAM_CODEC =
+                StreamCodec.composite(
+                        Ingredient.CONTENTS_STREAM_CODEC, recipe -> recipe.upgradeIngredient,
+                        UpgradeCapsuleRecipe::new
+                );
+
         @Override
-        public Codec<UpgradeCapsuleRecipe> codec() {
+        public MapCodec<UpgradeCapsuleRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public UpgradeCapsuleRecipe fromNetwork(FriendlyByteBuf buffer) {
-            return new UpgradeCapsuleRecipe(Ingredient.fromNetwork(buffer));
-        }
-
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, UpgradeCapsuleRecipe recipe) {
-            recipe.upgradeIngredient.toNetwork(buffer);
+        public StreamCodec<RegistryFriendlyByteBuf, UpgradeCapsuleRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

@@ -101,29 +101,8 @@ public class CapsuleMod {
     }
 }
 
-@EventBusSubscriber(modid = CapsuleMod.MODID)
+@EventBusSubscriber(modid = CapsuleMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 final class CapsuleModEventSubscriber {
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void clientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> ItemProperties.register(
-                CapsuleItems.CAPSULE.get(),
-                ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
-                (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
-        ));
-    }
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void registerColor(RegisterColorHandlersEvent.Item event) {
-        event.register((stack, tintIndex) -> {
-            if (stack.getItem() instanceof CapsuleItem) {
-                return CapsuleItem.getColorFromItemstack(stack, tintIndex);
-            }
-            return 0xFFFFFF;
-        }, CapsuleItems.CAPSULE.get());
-    }
 
     /**
      * This method will be called by Forge when a config changes.
@@ -136,6 +115,29 @@ final class CapsuleModEventSubscriber {
             Config.bakeConfig(config);
             CapsuleMod.LOGGER.debug("Baked COMMON_CONFIG");
         }
+    }
+}
+
+@EventBusSubscriber(modid = CapsuleMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+final class CapsuleClientModEventSubscriber {
+
+    @SubscribeEvent
+    public static void clientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> ItemProperties.register(
+                CapsuleItems.CAPSULE.get(),
+                ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
+                (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
+        ));
+    }
+
+    @SubscribeEvent
+    public static void registerColor(RegisterColorHandlersEvent.Item event) {
+        event.register((stack, tintIndex) -> {
+            if (stack.getItem() instanceof CapsuleItem) {
+                return CapsuleItem.getColorFromItemstack(stack, tintIndex);
+            }
+            return 0xFFFFFFFF;
+        }, CapsuleItems.CAPSULE.get());
     }
 
     @SubscribeEvent

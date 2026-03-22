@@ -86,12 +86,7 @@ public class FakeWorld implements LevelAccessor {
     }
 
     @Override
-    public void gameEvent(GameEvent p_220404_, Vec3 p_220405_, GameEvent.Context p_220406_) {
-    }
-
-    @Override
-    public void gameEvent(@org.jetbrains.annotations.Nullable Entity pEntity, GameEvent pEvent, BlockPos pPos) {
-
+    public void gameEvent(Holder<GameEvent> p_220404_, Vec3 p_220405_, GameEvent.Context p_220406_) {
     }
 
     @Override

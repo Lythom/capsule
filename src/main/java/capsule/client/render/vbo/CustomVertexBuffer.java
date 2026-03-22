@@ -26,7 +26,7 @@ public class CustomVertexBuffer implements AutoCloseable {
 	}
 
 	public void bindBuffer() {
-		RenderSystem.glBindBuffer(34962, () -> this.glBufferId);
+		RenderSystem.glBindBuffer(34962, this.glBufferId);
 	}
 
 	public void upload(CustomBufferBuilder bufferIn) {
@@ -74,7 +74,7 @@ public class CustomVertexBuffer implements AutoCloseable {
 	}
 
 	public static void unbindBuffer() {
-		RenderSystem.glBindBuffer(34962, () -> 0);
+		RenderSystem.glBindBuffer(34962, 0);
 	}
 
 	public void close() {

@@ -672,7 +672,7 @@ public class StructureSaver {
         );
 
         // try to cleanup previous template to save disk space on the long run
-        if (destCapsule.getTag() != null && NBTHelper.getOrCreateTag(destCapsule).contains("prevStructureName")) {
+        if (NBTHelper.hasTag(destCapsule) && NBTHelper.getOrCreateTag(destCapsule).contains("prevStructureName")) {
             if (templateManager != null) {
                 try {
                     templateManager.deleteTemplate(ResourceLocation.parse(NBTHelper.getOrCreateTag(destCapsule).getString("prevStructureName")));
@@ -701,7 +701,7 @@ public class StructureSaver {
         public boolean equals(Object someOther) {
             if (!(someOther instanceof ItemStackKey)) return false;
             final ItemStack otherStack = ((ItemStackKey) someOther).itemStack;
-            return ItemStack.isSameItem(otherStack, this.itemStack) && (!NBTHelper.hasTag(otherStack) && !this.NBTHelper.hasTag(itemStack) || otherStack.getTag().equals(this.itemStack.getTag()));
+            return ItemStack.isSameItem(otherStack, this.itemStack) && (!NBTHelper.hasTag(otherStack) && !NBTHelper.hasTag(itemStack) || java.util.Objects.equals(NBTHelper.getTag(otherStack), NBTHelper.getTag(this.itemStack)));
         }
 
         public int hashCode() {

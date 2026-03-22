@@ -3,11 +3,12 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.ExtraCodecs;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -64,7 +65,7 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
      * Returns a copy built from the original capsule.
      */
     public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
-        for (int i = 0; i < invC.getContainerSize(); ++i) {
+        for (int i = 0; i < invC.size(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 
             if (CapsuleItem.isLinkedStateCapsule(itemstack)) {
@@ -98,18 +99,18 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
 
     public static class Serializer implements RecipeSerializer<RecoveryCapsuleRecipe> {
 
-        private static final Codec<RecoveryCapsuleRecipe> CODEC = RecordCodecBuilder.create(
+        private static final MapCodec<RecoveryCapsuleRecipe> CODEC = RecordCodecBuilder.mapCodec(
                 instance -> instance.group(
-                                ExtraCodecs.strictOptionalField(Codec.STRING, "group", "").forGetter(p_301127_ -> p_301127_.group),
+                                Codec.STRING.optionalFieldOf("group", "").forGetter(p_301127_ -> p_301127_.group),
                                 CraftingBookCategory.CODEC.fieldOf("category").orElse(CraftingBookCategory.MISC).forGetter(p_301133_ -> p_301133_.category),
-                                ItemStack.ITEM_WITH_COUNT_CODEC.fieldOf("result").forGetter(p_301142_ -> p_301142_.result),
+                                ItemStack.STRICT_CODEC.fieldOf("result").forGetter(p_301142_ -> p_301142_.result),
                                 Ingredient.CODEC_NONEMPTY
                                         .listOf()
                                         .fieldOf("ingredients")
                                         .flatXmap(
                                                 p_301021_ -> {
                                                     Ingredient[] aingredient = p_301021_
-                                                            .toArray(Ingredient[]::new); //Forge skip the empty check and immediatly create the array.
+                                                            .toArray(Ingredient[]::new);
                                                     if (aingredient.length == 0) {
                                                         return DataResult.error(() -> "No ingredients for shapeless recipe");
                                                     } else {
@@ -125,37 +126,43 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
                         .apply(instance, RecoveryCapsuleRecipe::new)
         );
 
-        @Override
-        public Codec<RecoveryCapsuleRecipe> codec() {
-            return CODEC;
-        }
+        private static final StreamCodec<RegistryFriendlyByteBuf, RecoveryCapsuleRecipe> STREAM_CODEC =
+                StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
-        @Override
-        public RecoveryCapsuleRecipe fromNetwork(FriendlyByteBuf buffer) {
+        private static RecoveryCapsuleRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
             String s = buffer.readUtf();
-            CraftingBookCategory craftingbookcategory = buffer.readEnum(CraftingBookCategory.class);
+            CraftingBookCategory category = buffer.readEnum(CraftingBookCategory.class);
             int i = buffer.readVarInt();
-            NonNullList<Ingredient> nonnulllist = NonNullList.withSize(i, Ingredient.EMPTY);
+            NonNullList<Ingredient> ingredients = NonNullList.withSize(i, Ingredient.EMPTY);
 
-            for(int j = 0; j < nonnulllist.size(); ++j) {
-                nonnulllist.set(j, Ingredient.fromNetwork(buffer));
+            for (int j = 0; j < ingredients.size(); ++j) {
+                ingredients.set(j, Ingredient.CONTENTS_STREAM_CODEC.decode(buffer));
             }
 
-            ItemStack itemstack = buffer.readItem();
-            return new RecoveryCapsuleRecipe(s, craftingbookcategory, itemstack, nonnulllist);
+            ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
+            return new RecoveryCapsuleRecipe(s, category, result, ingredients);
         }
 
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, RecoveryCapsuleRecipe recipe) {
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, RecoveryCapsuleRecipe recipe) {
             buffer.writeUtf(recipe.group);
             buffer.writeEnum(recipe.category);
             buffer.writeVarInt(recipe.ingredients.size());
 
-            for(Ingredient ingredient : recipe.ingredients) {
-                ingredient.toNetwork(buffer);
+            for (Ingredient ingredient : recipe.ingredients) {
+                Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient);
             }
 
-            buffer.writeItem(recipe.result);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
+        }
+
+        @Override
+        public MapCodec<RecoveryCapsuleRecipe> codec() {
+            return CODEC;
+        }
+
+        @Override
+        public StreamCodec<RegistryFriendlyByteBuf, RecoveryCapsuleRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

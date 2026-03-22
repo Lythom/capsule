@@ -77,7 +77,7 @@ public class Blueprint {
 
             } else if (block instanceof LiquidBlock fblock) {
                 if (isLiquidSource(state, fblock)) {
-                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.getFluid(), FluidType.BUCKET_VOLUME));
+                    ItemStack item = FluidUtil.getFilledBucket(new FluidStack(fblock.fluid, FluidType.BUCKET_VOLUME));
                     return item.isEmpty() ? null : item; // return null to indicate error
                 }
                 return ItemStack.EMPTY; //flowing liquid is free
@@ -108,7 +108,7 @@ public class Blueprint {
     }
 
     public static boolean isLiquidSource(BlockState state, LiquidBlock block) {
-        return block.getFluidState(state).isSource();
+        return state.getFluidState().isSource();
     }
 
     @Nullable
@@ -226,10 +226,39 @@ public class Blueprint {
                     LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");
                 }
                 else if (jsonRecipe != null && template != null) {
-                    jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("structureName", templateName);
-                    jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("label", Capsule.labelFromPath(templateName));
+                    JsonObject result = jsonRecipe.getAsJsonObject("result");
+                    JsonObject customData;
+                    if (result.has("components")) {
+                        customData = result.getAsJsonObject("components").getAsJsonObject("minecraft:custom_data");
+                    } else if (result.has("nbt")) {
+                        // Legacy format migration: convert old "item"/"nbt" to new "id"/"components" format
+                        LOGGER.warn("prefab_blueprint_recipe.json uses legacy format. Please update to 1.21.1 format with 'id' and 'components'.");
+                        String itemId = result.get("item").getAsString();
+                        JsonObject nbt = result.getAsJsonObject("nbt");
+                        result.remove("item");
+                        result.remove("nbt");
+                        result.addProperty("id", itemId);
+                        result.addProperty("count", 1);
+                        JsonObject components = new JsonObject();
+                        // Extract display.color for dyed_color component
+                        if (nbt.has("display") && nbt.getAsJsonObject("display").has("color")) {
+                            JsonObject dyedColor = new JsonObject();
+                            dyedColor.addProperty("rgb", nbt.getAsJsonObject("display").get("color").getAsInt());
+                            dyedColor.addProperty("show_in_tooltip", false);
+                            components.add("minecraft:dyed_color", dyedColor);
+                            nbt.remove("display");
+                        }
+                        components.add("minecraft:custom_data", nbt);
+                        result.add("components", components);
+                        customData = nbt;
+                    } else {
+                        LOGGER.error("Invalid prefab_blueprint_recipe.json format for template " + templateName);
+                        return;
+                    }
+                    customData.addProperty("structureName", templateName);
+                    customData.addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
-                    jsonRecipe.getAsJsonObject("result").getAsJsonObject("nbt").addProperty("size", size);
+                    customData.addProperty("size", size);
                     parseTemplate.accept(ResourceLocation.parse(templateName), jsonRecipe, ingredients);
                 }
             });

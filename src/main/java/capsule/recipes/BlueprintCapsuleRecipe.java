@@ -3,14 +3,14 @@ package capsule.recipes;
 import capsule.helpers.NBTHelper;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -117,13 +117,13 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
                     0xFFFFFF,
                     CapsuleItem.getSize(referenceCapsule),
                     CapsuleItem.isOverpowered(referenceCapsule),
-                    referenceCapsule.getTag() != null ? NBTHelper.getOrCreateTag(referenceCapsule).getString("label") : null,
+                    NBTHelper.hasTag(referenceCapsule) ? NBTHelper.getOrCreateTag(referenceCapsule).getString("label") : null,
                     0
             );
             CapsuleItem.setBlueprint(blueprintItem);
             // hack to force a tempalte copy if it's not done after craft
-            if (blueprintItem.getTag() != null) {
-                NBTHelper.updateTag(blueprintItem, tag -> tag.putBoolean("templateShouldBeCopied", true);
+            if (NBTHelper.hasTag(blueprintItem)) {
+                NBTHelper.updateTag(blueprintItem, tag -> tag.putBoolean("templateShouldBeCopied", true));
             }
             CapsuleItem.setState(blueprintItem, DEPLOYED);
             return blueprintItem;
@@ -159,39 +159,45 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     }
 
     public static class Serializer implements RecipeSerializer<BlueprintCapsuleRecipe> {
-        public static final Codec<BlueprintCapsuleRecipe> CODEC = RecordCodecBuilder.create(
+        public static final MapCodec<BlueprintCapsuleRecipe> CODEC = RecordCodecBuilder.mapCodec(
                 instance -> instance.group(
-                                ExtraCodecs.strictOptionalField(Codec.STRING, "group", "").forGetter(recipe -> recipe.group),
+                                Codec.STRING.optionalFieldOf("group", "").forGetter(recipe -> recipe.group),
                                 CraftingBookCategory.CODEC.fieldOf("category").orElse(CraftingBookCategory.MISC).forGetter(recipe -> recipe.category),
                                 ShapedRecipePattern.MAP_CODEC.forGetter(recipe -> recipe.pattern),
-                                ItemStack.ITEM_WITH_COUNT_CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
-                                ExtraCodecs.strictOptionalField(Codec.BOOL, "show_notification", true).forGetter(recipe -> recipe.showNotification)
+                                ItemStack.STRICT_CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
+                                Codec.BOOL.optionalFieldOf("show_notification", true).forGetter(recipe -> recipe.showNotification)
                         )
                         .apply(instance, BlueprintCapsuleRecipe::new)
         );
 
+        public static final StreamCodec<RegistryFriendlyByteBuf, BlueprintCapsuleRecipe> STREAM_CODEC =
+                StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
+
+        private static BlueprintCapsuleRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
+            String s = buffer.readUtf();
+            CraftingBookCategory category = buffer.readEnum(CraftingBookCategory.class);
+            ShapedRecipePattern pattern = ShapedRecipePattern.STREAM_CODEC.decode(buffer);
+            ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
+            boolean showNotification = buffer.readBoolean();
+            return new BlueprintCapsuleRecipe(s, category, pattern, result, showNotification);
+        }
+
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, BlueprintCapsuleRecipe recipe) {
+            buffer.writeUtf(recipe.group);
+            buffer.writeEnum(recipe.category);
+            ShapedRecipePattern.STREAM_CODEC.encode(buffer, recipe.pattern);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
+            buffer.writeBoolean(recipe.showNotification);
+        }
+
         @Override
-        public Codec<BlueprintCapsuleRecipe> codec() {
+        public MapCodec<BlueprintCapsuleRecipe> codec() {
             return CODEC;
         }
 
         @Override
-        public BlueprintCapsuleRecipe fromNetwork(FriendlyByteBuf pBuffer) {
-            String s = pBuffer.readUtf();
-            CraftingBookCategory craftingbookcategory = pBuffer.readEnum(CraftingBookCategory.class);
-            ShapedRecipePattern shapedrecipepattern = ShapedRecipePattern.fromNetwork(pBuffer);
-            ItemStack itemstack = pBuffer.readItem();
-            boolean flag = pBuffer.readBoolean();
-            return new BlueprintCapsuleRecipe(s, craftingbookcategory, shapedrecipepattern, itemstack, flag);
-        }
-
-        @Override
-        public void toNetwork(FriendlyByteBuf pBuffer, BlueprintCapsuleRecipe pRecipe) {
-            pBuffer.writeUtf(pRecipe.group);
-            pBuffer.writeEnum(pRecipe.category);
-            pRecipe.pattern.toNetwork(pBuffer);
-            pBuffer.writeItem(pRecipe.result);
-            pBuffer.writeBoolean(pRecipe.showNotification);
+        public StreamCodec<RegistryFriendlyByteBuf, BlueprintCapsuleRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

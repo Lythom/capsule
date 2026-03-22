@@ -123,7 +123,7 @@ public class CapsuleTemplateRenderer {
 
     private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green,
                                float blue, Matrix4f matrix, int x, int y, int z) {
-        buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, 1.0F).setUv(maxU, minV).setUv2(256).setNormal(0.0F, 1.0F, 0.0F);
+        buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, 1.0F).setUv(maxU, minV).setLight(256).setNormal(0.0F, 1.0F, 0.0F);
     }
 
     public boolean changeTemplateIfDirty(CapsuleTemplate template, Level world, BlockPos destPos, BlockPos
@@ -147,7 +147,7 @@ public class CapsuleTemplateRenderer {
             List<StructureTemplate.StructureBlockInfo> list = CapsuleTemplate.Palette.getRandomPalette(placementSettings, template.palettes, destPos).blocks();
             if (!list.isEmpty() && template.size.getX() >= 1 && template.size.getY() >= 1 && template.size.getZ() >= 1) {
                 BoundingBox mutableboundingbox = placementSettings.getBoundingBox();
-                List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementSettings.shouldKeepLiquids() ? list.size() : 0);
+                List<BlockPos> list1 = Lists.newArrayListWithCapacity(0);
                 List<Pair<BlockPos, CompoundTag>> list2 = Lists.newArrayListWithCapacity(list.size());
                 int i = Integer.MAX_VALUE;
                 int j = Integer.MAX_VALUE;
@@ -159,7 +159,7 @@ public class CapsuleTemplateRenderer {
                 for (StructureTemplate.StructureBlockInfo template$blockinfo : CapsuleTemplate.processBlockInfos(template, templateWorld, offPos, placementSettings, list)) {
                     BlockPos blockpos = template$blockinfo.pos();
                     if (mutableboundingbox == null || mutableboundingbox.isInside(blockpos)) {
-                        FluidState fluidstate = placementSettings.shouldKeepLiquids() ? templateWorld.getFluidState(blockpos) : null;
+                        FluidState fluidstate = null;
                         BlockState blockstate = template$blockinfo.state().mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
                         if (template$blockinfo.nbt() != null) {
                             BlockEntity BlockEntity = templateWorld.getBlockEntity(blockpos);

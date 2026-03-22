@@ -1,6 +1,7 @@
 package capsule.items;
 
 import capsule.CapsuleMod;
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.recipes.BlueprintCapsuleRecipe;
 import capsule.recipes.BlueprintChangeRecipe;
@@ -136,7 +137,7 @@ public class CapsuleItems {
         ItemStack capsuleUp = ironCapsule.copy();
         CapsuleItem.setSize(capsuleUp, CapsuleItem.getSize(ironCapsule) + upLevel * UPGRADE_STEP);
         CapsuleItem.setUpgradeLevel(capsuleUp, upLevel);
-        capsuleUp.addTagElement("upgraded", IntTag.valueOf(upLevel));
+        NBTHelper.addTagElement(capsuleUp, "upgraded", IntTag.valueOf(upLevel));
         return capsuleUp;
     }
 

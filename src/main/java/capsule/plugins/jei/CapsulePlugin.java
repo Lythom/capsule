@@ -81,7 +81,10 @@ public class CapsulePlugin implements IModPlugin {
         ItemStack unlabelledDeployed = CapsuleItems.deployedCapsule.getKey();
         CapsuleItem.setState(unlabelledDeployed, DEPLOYED);
         Ingredient anyBlueprint = Ingredient.of(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
-        Ingredient unlabelledIng = Ingredient.fromValues(Arrays.asList(Ingredient.of(unlabelled), anyBlueprint, Ingredient.of(recoveryCapsule)).stream().flatMap(i -> Arrays.stream(i.values)));
+        ItemStack[] allItems = java.util.stream.Stream.of(Ingredient.of(unlabelled), anyBlueprint, Ingredient.of(recoveryCapsule))
+                .flatMap(i -> Arrays.stream(i.getItems()))
+                .toArray(ItemStack[]::new);
+        Ingredient unlabelledIng = Ingredient.of(allItems);
         // recovery
         recipes.add(new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "recovery_capsule"), CapsuleItems.recoveryCapsule.getValue()));
         for (Pair<ItemStack, CraftingRecipe> r : CapsuleItems.blueprintCapsules) {

@@ -1,9 +1,8 @@
 package capsule.client.render.vbo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Floats;
-import com.mojang.blaze3d.platform.MemoryTracker;
+import org.lwjgl.system.MemoryUtil;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -40,7 +39,7 @@ public class CustomBufferBuilder implements VertexConsumer {
 	private boolean isDrawing;
 
 	public CustomBufferBuilder(int bufferSizeIn) {
-		this.byteBuffer = MemoryTracker.create(bufferSizeIn * 4);
+		this.byteBuffer = MemoryUtil.memAlloc(bufferSizeIn * 4);
 	}
 
 	protected void growBuffer() {
@@ -52,7 +51,7 @@ public class CustomBufferBuilder implements VertexConsumer {
 			int i = this.byteBuffer.capacity();
 			int j = i + roundUpPositive(increaseAmount);
 			LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", i, j);
-			ByteBuffer bytebuffer = MemoryTracker.create(j);
+			ByteBuffer bytebuffer = MemoryUtil.memAlloc(j);
 			this.byteBuffer.position(0);
 			bytebuffer.put(this.byteBuffer);
 			bytebuffer.rewind();
@@ -81,7 +80,7 @@ public class CustomBufferBuilder implements VertexConsumer {
 		float[] afloat = new float[i];
 
 		for (int j = 0; j < i; ++j) {
-			afloat[j] = getDistanceSq(floatbuffer, cameraX, cameraY, cameraZ, this.vertexFormat.getIntegerSize(), this.renderedBytes / 4 + j * this.vertexFormat.getVertexSize());
+			afloat[j] = getDistanceSq(floatbuffer, cameraX, cameraY, cameraZ, this.vertexFormat.getVertexSize() / 4, this.renderedBytes / 4 + j * this.vertexFormat.getVertexSize());
 		}
 
 		int[] aint = new int[i];
@@ -94,7 +93,7 @@ public class CustomBufferBuilder implements VertexConsumer {
 			return Floats.compare(afloat[p_227830_1_], afloat[p_227830_2_]);
 		});
 		BitSet bitset = new BitSet();
-		FloatBuffer floatbuffer1 = FloatBuffer.allocate(this.vertexFormat.getIntegerSize() * 6);
+		FloatBuffer floatbuffer1 = FloatBuffer.allocate(this.vertexFormat.getVertexSize() / 4 * 6);
 
 		for (int l = bitset.nextClearBit(0); l < aint.length; l = bitset.nextClearBit(l + 1)) {
 			int i1 = aint[l];
@@ -123,7 +122,7 @@ public class CustomBufferBuilder implements VertexConsumer {
 	}
 
 	private void limitToVertex(FloatBuffer floatBufferIn, int indexIn) {
-		int i = this.vertexFormat.getIntegerSize() * 4;
+		int i = this.vertexFormat.getVertexSize() / 4 * 4;
 		floatBufferIn.limit(this.renderedBytes / 4 + (indexIn + 1) * i);
 		floatBufferIn.position(this.renderedBytes / 4 + indexIn * i);
 	}
@@ -228,14 +227,11 @@ public class CustomBufferBuilder implements VertexConsumer {
 	}
 
 	public void nextElement() {
-		ImmutableList<VertexFormatElement> immutablelist = this.vertexFormat.getElements();
-		this.vertexFormatIndex = (this.vertexFormatIndex + 1) % immutablelist.size();
-		this.nextElementBytes += this.vertexFormatElement.getByteSize();
-		VertexFormatElement vertexformatelement = immutablelist.get(this.vertexFormatIndex);
+		List<VertexFormatElement> elementList = this.vertexFormat.getElements();
+		this.vertexFormatIndex = (this.vertexFormatIndex + 1) % elementList.size();
+		this.nextElementBytes += this.vertexFormatElement.byteSize();
+		VertexFormatElement vertexformatelement = elementList.get(this.vertexFormatIndex);
 		this.vertexFormatElement = vertexformatelement;
-		if (vertexformatelement.usage() == VertexFormatElement.Usage.PADDING) {
-			this.nextElement();
-		}
 	}
 
 	@Override

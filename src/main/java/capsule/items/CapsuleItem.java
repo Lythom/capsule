@@ -213,11 +213,13 @@ public class CapsuleItem extends Item {
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
-            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
+            final int finalSize = size;
+            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", finalSize));
             LOGGER.error("Capsule sizes are capped to " + CAPSULE_MAX_CAPTURE_SIZE + ". Resized to : " + size);
         } else if (size % 2 == 0) {
             size++;
-            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
+            final int finalSize = size;
+            NBTHelper.updateTag(capsule, tag -> tag.putInt("size", finalSize));
             LOGGER.error("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
 
@@ -232,7 +234,8 @@ public class CapsuleItem extends Item {
             size++;
             LOGGER.warn("Capsule size must be an odd number to achieve consistency on deployment. Resized to : " + size);
         }
-        NBTHelper.updateTag(capsule, tag -> tag.putInt("size", size));
+        final int finalSize = size;
+        NBTHelper.updateTag(capsule, tag -> tag.putInt("size", finalSize));
     }
 
 
@@ -594,7 +597,10 @@ public class CapsuleItem extends Item {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
                 if (dest != null) {
-                    PacketDistributor.sendToServer(new CapsuleContentPreviewQueryToServer(NBTHelper.getOrCreateTag(capsule).getString("structureName")));
+                    String structureName = NBTHelper.getOrCreateTag(capsule).getString("structureName");
+                    if (structureName != null && !structureName.isEmpty()) {
+                        PacketDistributor.sendToServer(new CapsuleContentPreviewQueryToServer(structureName));
+                    }
                 }
             }
 
@@ -801,7 +807,8 @@ public class CapsuleItem extends Item {
                 color = 0xFFFFFF;
             }
         }
-        return color;
+        // NeoForge 1.21.1 interprets color as ARGB - ensure full alpha
+        return 0xFF000000 | color;
     }
 
     /**
@@ -817,7 +824,7 @@ public class CapsuleItem extends Item {
         pos.putInt("y", dest.getY());
         pos.putInt("z", dest.getZ());
         pos.putString("dim", dimID);
-        capsule.getOrCreateTag().put("spawnPosition", pos);
+        NBTHelper.addTagElement(capsule, "spawnPosition", pos);
     }
 
     /**
@@ -835,7 +842,7 @@ public class CapsuleItem extends Item {
             pos.putInt("z", dest.getZ());
             pos.putString("dim", dimID.location().toString());
         }
-        capsule.getOrCreateTag().put("sourceInventory", pos);
+        NBTHelper.addTagElement(capsule, "sourceInventory", pos);
     }
 
     public static boolean hasSourceInventory(ItemStack capsule) {
@@ -876,8 +883,8 @@ public class CapsuleItem extends Item {
     }
 
     public static void setPlacement(ItemStack blueprint, StructurePlaceSettings placementSettings) {
-        NBTHelper.updateTag(blueprint, tag -> tag.putString("rotation", placementSettings == null ? Rotation.NONE.name()) : placementSettings.getRotation().name());
-        NBTHelper.updateTag(blueprint, tag -> tag.putString("mirror", placementSettings == null ? Mirror.NONE.name()) : placementSettings.getMirror().name());
+        NBTHelper.updateTag(blueprint, tag -> tag.putString("rotation", placementSettings == null ? Rotation.NONE.name() : placementSettings.getRotation().name()));
+        NBTHelper.updateTag(blueprint, tag -> tag.putString("mirror", placementSettings == null ? Mirror.NONE.name() : placementSettings.getMirror().name()));
     }
 
     public static StructurePlaceSettings getPlacement(ItemStack capsule) {

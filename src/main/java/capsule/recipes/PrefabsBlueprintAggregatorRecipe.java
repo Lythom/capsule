@@ -9,13 +9,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
@@ -120,7 +120,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             FixIngredient(template, ingredients.getLeft(), "1");
             FixIngredient(template, ingredients.getMiddle(), "2");
             FixIngredient(template, ingredients.getRight(), "3");
-            this.recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.codec().parse(JsonOps.INSTANCE, template).getOrThrow(false, null);
+            this.recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.codec().codec().parse(JsonOps.INSTANCE, template).getOrThrow();
 //            Optional<RecipeHolder<?>> holder = RecipeManager.fromJson(id, template, JsonOps.INSTANCE);
 //	        this.recipe = holder.map(recipeHolder -> (ShapedRecipe) recipeHolder.value()).orElse(null);
         }
@@ -179,8 +179,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
         }
 
         public boolean matches(CraftingInput inv) {
-            for (int i = 0; i <= inv.getWidth() - recipe.getWidth(); ++i) {
-                for (int j = 0; j <= inv.getHeight() - recipe.getHeight(); ++j) {
+            for (int i = 0; i <= inv.width() - recipe.getWidth(); ++i) {
+                for (int j = 0; j <= inv.height() - recipe.getHeight(); ++j) {
                     if (this.checkMatch(inv, i, j, true)) {
                         return true;
                     }
@@ -202,8 +202,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
          * Checks if the region of a crafting inventory is match for the recipe.
          */
         private boolean checkMatch(CraftingInput craftingInventory, int p_77573_2_, int p_77573_3_, boolean p_77573_4_) {
-            for (int i = 0; i < craftingInventory.getWidth(); ++i) {
-                for (int j = 0; j < craftingInventory.getHeight(); ++j) {
+            for (int i = 0; i < craftingInventory.width(); ++i) {
+                for (int j = 0; j < craftingInventory.height(); ++j) {
                     int k = i - p_77573_2_;
                     int l = j - p_77573_3_;
                     Ingredient ingredient = Ingredient.EMPTY;
@@ -215,7 +215,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
                         }
                     }
 
-                    if (!ingredient.test(craftingInventory.getItem(i + j * craftingInventory.getWidth()))) {
+                    if (!ingredient.test(craftingInventory.getItem(i + j * craftingInventory.width()))) {
                         return false;
                     }
                 }
@@ -242,16 +242,13 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
     public static class Serializer implements RecipeSerializer<PrefabsBlueprintAggregatorRecipe> {
 
-        private static final Codec<PrefabsBlueprintAggregatorRecipe> CODEC =
-                MapCodec.unit(() -> instance != null ? instance : new PrefabsBlueprintAggregatorRecipe()).stable().codec();
+        private static final MapCodec<PrefabsBlueprintAggregatorRecipe> CODEC =
+                MapCodec.unit(() -> instance != null ? instance : new PrefabsBlueprintAggregatorRecipe());
 
-        @Override
-        public Codec<PrefabsBlueprintAggregatorRecipe> codec() {
-            return CODEC;
-        }
+        private static final StreamCodec<RegistryFriendlyByteBuf, PrefabsBlueprintAggregatorRecipe> STREAM_CODEC =
+                StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
 
-        @Override
-        public PrefabsBlueprintAggregatorRecipe fromNetwork(FriendlyByteBuf buffer) {
+        private static PrefabsBlueprintAggregatorRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
             if (instance == null) {
                 instance = new PrefabsBlueprintAggregatorRecipe();
             }
@@ -260,20 +257,29 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             int size = buffer.readInt();
             for (int i = 0; i < size; i++) {
                 ResourceLocation id = ResourceLocation.parse(buffer.readUtf());
-                ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.fromNetwork(buffer);
+                ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.streamCodec().decode(buffer);
                 instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe));
             }
 
             return instance;
         }
 
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, PrefabsBlueprintAggregatorRecipe recipe) {
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, PrefabsBlueprintAggregatorRecipe recipe) {
             buffer.writeInt(recipe.recipes.size());
             for (PrefabsBlueprintCapsuleRecipe subRecipe : recipe.recipes) {
                 buffer.writeUtf(subRecipe.id.toString());
-                ShapedRecipe.Serializer.SHAPED_RECIPE.toNetwork(buffer, subRecipe.recipe);
+                ShapedRecipe.Serializer.SHAPED_RECIPE.streamCodec().encode(buffer, subRecipe.recipe);
             }
+        }
+
+        @Override
+        public MapCodec<PrefabsBlueprintAggregatorRecipe> codec() {
+            return CODEC;
+        }
+
+        @Override
+        public StreamCodec<RegistryFriendlyByteBuf, PrefabsBlueprintAggregatorRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

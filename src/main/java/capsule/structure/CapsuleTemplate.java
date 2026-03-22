@@ -175,7 +175,7 @@ public class CapsuleTemplate {
                     f = f + (p_242927_6_.getYRot() - p_242927_6_.rotate(placementIn.getRotation()));
                     p_242927_6_.moveTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.getXRot());
                     if (placementIn.shouldFinalizeEntities() && p_242927_6_ instanceof Mob) {
-                        ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(BlockPos.containing(vector3d1)), MobSpawnType.STRUCTURE, (SpawnGroupData) null, compoundnbt);
+                        ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(BlockPos.containing(vector3d1)), MobSpawnType.STRUCTURE, (SpawnGroupData) null);
                     }
                     worldIn.addFreshEntityWithPassengers(p_242927_6_);
                     if (spawnedEntities != null) spawnedEntities.add(p_242927_6_);
@@ -545,7 +545,7 @@ public class CapsuleTemplate {
                     BlockEntity blockentity = worldIn.getBlockEntity(blockpos3);
                     StructureTemplate.StructureBlockInfo template$blockinfo;
                     if (blockentity != null) {
-                        CompoundTag compoundnbt = blockentity.saveWithId();
+                        CompoundTag compoundnbt = blockentity.saveWithId(worldIn.registryAccess());
                         compoundnbt.remove("x");
                         compoundnbt.remove("y");
                         compoundnbt.remove("z");
@@ -630,7 +630,7 @@ public class CapsuleTemplate {
             }
             if ((!list.isEmpty() || !placementIn.isIgnoreEntities() && !this.entities.isEmpty()) && this.size.getX() >= 1 && this.size.getY() >= 1 && this.size.getZ() >= 1) {
                 BoundingBox mutableboundingbox = placementIn.getBoundingBox();
-                List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.shouldKeepLiquids() ? list.size() : 0);
+                List<BlockPos> list1 = Lists.newArrayListWithCapacity(placementIn.shouldApplyWaterlogging() ? list.size() : 0);
                 List<Pair<BlockPos, CompoundTag>> list2 = Lists.newArrayListWithCapacity(list.size());
                 int i = Integer.MAX_VALUE;
                 int j = Integer.MAX_VALUE;
@@ -648,7 +648,7 @@ public class CapsuleTemplate {
                         // CAPSULE capsule addition to allow a rollback in case of error while deploying
                         if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
-                        FluidState ifluidstate = placementIn.shouldKeepLiquids() ? worldIn.getFluidState(blockpos) : null;
+                        FluidState ifluidstate = placementIn.shouldApplyWaterlogging() ? worldIn.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state().mirror(placementIn.getMirror()).rotate(worldIn, blockpos, placementIn.getRotation());
                         BlockEntity blockentity = worldIn.getBlockEntity(blockpos);
                         Clearable.tryClear(blockentity);
@@ -668,7 +668,7 @@ public class CapsuleTemplate {
                                 templateTag.putInt("x", blockpos.getX());
                                 templateTag.putInt("y", blockpos.getY());
                                 templateTag.putInt("z", blockpos.getZ());
-                                blockentity1.load(templateTag);
+                                blockentity1.loadWithComponents(templateTag, worldIn.getLevel().registryAccess());
                                 blockentity1.getBlockState().mirror(placementIn.getMirror());
                                 blockentity1.getBlockState().rotate(worldIn, placementIn.getRotationPivot(), placementIn.getRotation());
                             }
