@@ -6,9 +6,9 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -28,14 +28,14 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
         this.upgradeIngredient = upgradeIngredient;
     }
 
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         return CapsuleItems.getUpgradedCapsule(CapsuleItems.withState(EMPTY), 1);
     }
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingContainer invC, Level worldIn) {
+    public boolean matches(CraftingInput invC, Level worldIn) {
 
         ItemStack sourceCapsule = ItemStack.EMPTY;
         int material = 0;
@@ -61,7 +61,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer invC, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
         ItemStack input = ItemStack.EMPTY;
         int material = 0;
         for (int i = 0; i < invC.getContainerSize(); ++i) {

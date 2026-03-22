@@ -4,9 +4,9 @@ import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
@@ -21,7 +21,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
         super(category);
     }
 
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         ItemStack bp = new ItemStack(CapsuleItems.CAPSULE.get(), 1);
         CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
@@ -35,8 +35,8 @@ public class BlueprintChangeRecipe extends CustomRecipe {
         return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER.get();
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
         ItemStack blueprintCapsule = null;
         ItemStack templateCapsule = null;
@@ -58,10 +58,10 @@ public class BlueprintChangeRecipe extends CustomRecipe {
      * Used to check if a recipe matches current crafting inventory
      */
     @Override
-    public boolean matches(CraftingContainer inv, Level worldIn) {
+    public boolean matches(CraftingInput inv, Level worldIn) {
         int sourceCapsule = 0;
         int blueprint = 0;
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
 
@@ -83,11 +83,11 @@ public class BlueprintChangeRecipe extends CustomRecipe {
      * Returns an Item that is the result of this recipe
      */
     @Override
-    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
         String templateStructure = null;
         Integer templateSize = null;
         ItemStack blueprintCapsule = null;
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
             if (blueprintCapsule == null && CapsuleItem.isBlueprint(itemstack)) {

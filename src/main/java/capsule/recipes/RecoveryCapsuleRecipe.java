@@ -5,10 +5,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -32,15 +32,15 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
         this.ingredients = ingredients;
     }
 
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         return super.getResultItem(registryAccess);
     }
 
     /**
      * The original capsule remains in the crafting grid
      */
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
@@ -56,14 +56,14 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingContainer inv, Level level) {
+    public boolean matches(CraftingInput inv, Level level) {
         return super.matches(inv, level);
     }
 
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingContainer invC, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
         for (int i = 0; i < invC.getContainerSize(); ++i) {
             ItemStack itemstack = invC.getItem(i);
 

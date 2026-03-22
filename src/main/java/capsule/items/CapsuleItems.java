@@ -9,7 +9,7 @@ import capsule.recipes.RecoveryCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipe;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -75,7 +75,7 @@ public class CapsuleItems {
         if (level == null) {
             throw new NullPointerException("level must not be null.");
         }
-        RegistryAccess registryAccess = level.registryAccess();
+        HolderLookup.Provider registryAccess = level.registryAccess();
 
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here

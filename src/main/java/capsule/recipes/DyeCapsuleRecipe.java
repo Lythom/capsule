@@ -5,8 +5,8 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.google.common.collect.Lists;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -35,11 +35,11 @@ public class DyeCapsuleRecipe extends CustomRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingContainer inv, Level worldIn) {
+    public boolean matches(CraftingInput inv, Level worldIn) {
         ItemStack itemstack = ItemStack.EMPTY;
         ArrayList<ItemStack> arraylist = Lists.newArrayList();
 
-        for (int i = 0; i < inv.getContainerSize(); ++i) {
+        for (int i = 0; i < inv.size(); ++i) {
             ItemStack itemstack1 = inv.getItem(i);
 
             if (!itemstack1.isEmpty()) {
@@ -61,11 +61,11 @@ public class DyeCapsuleRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
         List<DyeItem> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
-        for (int i = 0; i < inv.getContainerSize(); ++i) {
+        for (int i = 0; i < inv.size(); ++i) {
             ItemStack itemstack1 = inv.getItem(i);
             if (!itemstack1.isEmpty()) {
                 Item item = itemstack1.getItem();
@@ -147,12 +147,12 @@ public class DyeCapsuleRecipe extends CustomRecipe {
         return width * height >= 2;
     }
 
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         return CapsuleItems.withState(EMPTY);
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);

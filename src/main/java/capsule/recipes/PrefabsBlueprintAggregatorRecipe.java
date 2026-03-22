@@ -13,13 +13,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -79,14 +79,14 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingContainer inv, Level worldIn) {
+    public boolean matches(CraftingInput inv, Level worldIn) {
         return recipes.stream().anyMatch(r -> r.matches(inv));
     }
 
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
         if (recipe.isPresent()) return recipe.get().assemble(inv, registryAccess);
         return ItemStack.EMPTY;
@@ -97,14 +97,14 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
         return width * height >= 2;
     }
 
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         return CapsuleItems.withState(BLUEPRINT);
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
         Optional<PrefabsBlueprintCapsuleRecipe> recipe = recipes.stream().filter(r -> r.matches(inv)).findFirst();
         if (recipe.isPresent()) return recipe.get().getRemainingItems(inv);
-        return NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        return NonNullList.withSize(inv.size(), ItemStack.EMPTY);
     }
 
     public static class PrefabsBlueprintCapsuleRecipe implements CraftingRecipe {
@@ -148,15 +148,15 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             this.recipe = serializedRecipe;
         }
 
-        public ItemStack getResultItem(RegistryAccess registryAccess) {
+        public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
             return recipe.getResultItem(registryAccess);
         }
 
         /**
          * Only blueprint material is consumed. Materials used inside blueprint are given back.
          */
-        public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
-            NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
+            NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getItem(i);
@@ -178,7 +178,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             return ShapedRecipe.Serializer.SHAPED_RECIPE;
         }
 
-        public boolean matches(CraftingContainer inv) {
+        public boolean matches(CraftingInput inv) {
             for (int i = 0; i <= inv.getWidth() - recipe.getWidth(); ++i) {
                 for (int j = 0; j <= inv.getHeight() - recipe.getHeight(); ++j) {
                     if (this.checkMatch(inv, i, j, true)) {
@@ -194,14 +194,14 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             return false;
         }
 
-        public boolean matches(CraftingContainer inv, Level worldIn) {
+        public boolean matches(CraftingInput inv, Level worldIn) {
             return matches(inv);
         }
 
         /**
          * Checks if the region of a crafting inventory is match for the recipe.
          */
-        private boolean checkMatch(CraftingContainer craftingInventory, int p_77573_2_, int p_77573_3_, boolean p_77573_4_) {
+        private boolean checkMatch(CraftingInput craftingInventory, int p_77573_2_, int p_77573_3_, boolean p_77573_4_) {
             for (int i = 0; i < craftingInventory.getWidth(); ++i) {
                 for (int j = 0; j < craftingInventory.getHeight(); ++j) {
                     int k = i - p_77573_2_;
@@ -224,7 +224,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             return true;
         }
 
-        public ItemStack assemble(CraftingContainer invC, RegistryAccess registryAccess) {
+        public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
             return recipe.assemble(invC, registryAccess);
         }
 

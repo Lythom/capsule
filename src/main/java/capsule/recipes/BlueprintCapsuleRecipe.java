@@ -7,11 +7,11 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -46,7 +46,7 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
         return super.getResultItem(registryAccess);
     }
 
@@ -58,8 +58,8 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     /**
      * The original capsule remains in the crafting grid
      */
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
@@ -79,13 +79,13 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
-    public boolean matches(CraftingContainer inv, Level worldIn) {
+    public boolean matches(CraftingInput inv, Level worldIn) {
         if (!super.matches(inv, worldIn)) {
             return false;
         }
 
         // in case it's not a prefab but a copy template recipe
-        for (int i = 0; i < inv.getContainerSize(); ++i) {
+        for (int i = 0; i < inv.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
             if (itemstack.getItem() instanceof CapsuleItem && !IsCopyable(itemstack)) {
                 return false;
@@ -98,9 +98,9 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingContainer inv, RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
         ItemStack referenceCapsule = super.getResultItem(registryAccess);
-        for (int i = 0; i < inv.getContainerSize(); ++i) {
+        for (int i = 0; i < inv.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
             if (IsCopyable(itemstack)) {
                 // This blueprint will take the source structure name by copying it here

@@ -1,17 +1,16 @@
 package capsule.client;
 
-import capsule.helpers.NBTHelper;
 import capsule.CapsuleMod;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
 import capsule.client.render.CapsuleTemplateRenderer;
+import capsule.helpers.NBTHelper;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.tags.CapsuleTags;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import joptsimple.internal.Strings;
 import net.minecraft.client.Camera;
@@ -36,11 +35,9 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.ClientChatEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -94,7 +91,7 @@ public class CapsulePreviewHandler {
             if (mc.player != null) {
                 dispatcher = event.getLevelRenderer().getSectionRenderDispatcher();
                 tryPreviewRecall(mc.player.getMainHandItem(), event.getPoseStack());
-                tryPreviewDeploy(mc.player, event.getPartialTick(), mc.player.getMainHandItem(), event.getPoseStack());
+                tryPreviewDeploy(mc.player, event.getPartialTick().getGameTimeDeltaPartialTick(true), mc.player.getMainHandItem(), event.getPoseStack());
                 tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), event.getPoseStack());
             }
         }
@@ -141,10 +138,10 @@ public class CapsulePreviewHandler {
      * set captureBlock data (clientside only ) when capsule is in hand.
      */
     @SubscribeEvent
-    public static void onLivingUpdateEvent(TickEvent.PlayerTickEvent event) {
+    public static void onLivingUpdateEvent(PlayerTickEvent.Pre event) {
         // do something to player every update tick:
-        if (event.player instanceof LocalPlayer && event.phase.equals(TickEvent.Phase.START)) {
-            LocalPlayer player = (LocalPlayer) event.player;
+        if (event.getEntity() instanceof LocalPlayer) {
+            LocalPlayer player = (LocalPlayer) event.getEntity();
             tryPreviewCapture(player, player.getMainHandItem());
         }
     }
@@ -155,9 +152,9 @@ public class CapsulePreviewHandler {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
             if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
-                //noinspection ConstantConditions
-                if (NBTHelper.hasTag(heldItem) && NBTHelper.getOrCreateTag(heldItem).contains("size")) {
-                    setCaptureTESizeColor(NBTHelper.getOrCreateTag(heldItem).getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
+                CompoundTag tag = NBTHelper.getTag(heldItem);
+                if (tag != null && tag.contains("size")) {
+                    setCaptureTESizeColor(tag.getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
                     return true;
                 }
 
@@ -177,14 +174,16 @@ public class CapsulePreviewHandler {
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && NBTHelper.hasTag(heldItemMainhand)
                 && isDeployable(heldItemMainhand)
-                && !Strings.isNullOrEmpty(NBTHelper.getOrCreateTag(heldItemMainhand).getString("structureName"))
         ) {
+            CompoundTag tag = NBTHelper.getTag(heldItemMainhand);
+            if (tag == null || Strings.isNullOrEmpty(tag.getString("structureName"))) return;
+
             int size = CapsuleItem.getSize(heldItemMainhand);
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, (int) (0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
-                String structureName = NBTHelper.getOrCreateTag(heldItemMainhand).getString("structureName");
+                String structureName = tag.getString("structureName");
 
                 AABB errorBoundingBox = new AABB(
                         0,
@@ -284,7 +283,7 @@ public class CapsulePreviewHandler {
                         for (double l = dest.minX; l < dest.maxX; ++l) {
                             BlockPos pos = BlockPos.containing(l, k, j);
                             if (!thePlayer.getCommandSenderWorld().getBlockState(pos).is(CapsuleTags.overridable)) {
-                                MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+                                MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
                                 VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
                                 LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.move(pos), 0.8f, 0, 0, 1);
                                 LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.inflate(0.005).move(pos), 0.8f, 0, 0, 1);
@@ -303,7 +302,7 @@ public class CapsulePreviewHandler {
                 final int r = (color >> 16) & 0xFF;
                 final int g = (color >> 8) & 0xFF;
                 final int b = color & 0xFF;
-                MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+                MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
                 VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
                 LevelRenderer.renderLineBox(poseStack, buffer, dest, r / 255f, g / 255f, b / 255f, 1);
                 bufferSource.endBatch(RenderType.lines());
@@ -326,12 +325,13 @@ public class CapsulePreviewHandler {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             // it's an empty capsule : show capture zones
-            //noinspection ConstantConditions
             if (heldItemItem instanceof CapsuleItem
                     && (CapsuleItem.hasState(heldItem, DEPLOYED) || CapsuleItem.hasState(heldItem, BLUEPRINT))
-                    && NBTHelper.hasTag(heldItem)
-                    && NBTHelper.getOrCreateTag(heldItem).contains("spawnPosition")) {
-                previewRecall(heldItem, poseStack);
+                    && NBTHelper.hasTag(heldItem)) {
+                CompoundTag tag = NBTHelper.getTag(heldItem);
+                if (tag != null && tag.contains("spawnPosition")) {
+                    previewRecall(heldItem, poseStack);
+                }
             }
         }
     }
@@ -356,7 +356,7 @@ public class CapsulePreviewHandler {
 
     private static void previewLinkedInventory(BlockPos location, PoseStack poseStack) {
         Camera cam = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.debugQuads());
         poseStack.pushPose();
         poseStack.translate(-cam.getPosition().x, -cam.getPosition().y, -cam.getPosition().z);
@@ -367,8 +367,9 @@ public class CapsulePreviewHandler {
     }
 
     private static void previewRecall(ItemStack capsule, PoseStack poseStack) {
-        if (capsule.getTag() == null) return;
-        CompoundTag linkPos = NBTHelper.getOrCreateTag(capsule).getCompound("spawnPosition");
+        CompoundTag tag = NBTHelper.getTag(capsule);
+        if (tag == null) return;
+        CompoundTag linkPos = tag.getCompound("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
@@ -376,7 +377,7 @@ public class CapsulePreviewHandler {
 
         Camera cam = Minecraft.getInstance().getEntityRenderDispatcher().camera;
         AABB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
-        MultiBufferSource.BufferSource impl = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        MultiBufferSource.BufferSource impl = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer ivertexbuilder = impl.getBuffer(RenderType.lines());
         poseStack.pushPose();
         poseStack.translate(-cam.getPosition().x, -cam.getPosition().y, -cam.getPosition().z);
