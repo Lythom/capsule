@@ -8,7 +8,8 @@ set -euo pipefail
 # Prerequisites:
 #   - Set environment variables:
 #       CURSEFORGE_TOKEN  - API token from https://authors-old.curseforge.com/account/api-tokens
-#       MODRINTH_TOKEN    - API token from https://modrinth.com/settings/pats
+#       MODRINTH_TOKEN    - PAT from https://modrinth.com/settings/pats
+#                           Required scopes: CREATE_VERSION, VERSION_WRITE
 #       CURSEFORGE_PROJECT_ID - Numeric project ID (found on CurseForge project page sidebar)
 #
 # Usage:

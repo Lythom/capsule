@@ -4,6 +4,7 @@ jobs:
   build:
     docker:
       - image: cimg/openjdk:21.0.8
+    resource_class: large
 
     working_directory: ~/repo
 
