@@ -962,6 +962,11 @@ public class CapsuleTemplate {
                 int y = index / (width * length);
                 int z = (index % (width * length)) / width;
                 int x = (index % (width * length)) % width;
+                if (value < 0 || value >= palette.length) {
+                    LOGGER.warn("Schematic: palette index {} out of bounds (palette size {}), skipping block at index {}", value, palette.length, index);
+                    index++;
+                    continue;
+                }
                 BlockState state = palette[value];
                 blocksById[index] = state;
                 index++;
@@ -1068,6 +1073,10 @@ public class CapsuleTemplate {
                 tag = nbt.getCompound("Blocks").getCompound("Palette");
             } else if (nbt.contains("SchematicaMapping", Tag.TAG_COMPOUND)) {
                 tag = nbt.getCompound("SchematicaMapping");
+            }
+            if (tag == null) {
+                LOGGER.error("Schematic: Unsupported palette format, no recognized palette tag found.");
+                return null;
             }
             Set<String> keys = tag.getAllKeys();
 

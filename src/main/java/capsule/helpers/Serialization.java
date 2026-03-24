@@ -63,7 +63,6 @@ public class Serialization {
             ));
         }
 
-        Block[] output = new Block[states.size()];
         return states;
     }
 

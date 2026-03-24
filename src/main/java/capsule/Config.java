@@ -202,7 +202,6 @@ public class Config {
                 BuiltInLootTables.BURIED_TREASURE.toString(),
                 BuiltInLootTables.JUNGLE_TEMPLE_DISPENSER.toString(),
                 BuiltInLootTables.PILLAGER_OUTPOST.toString(),
-                BuiltInLootTables.SHIPWRECK_TREASURE.toString(),
                 BuiltInLootTables.UNDERWATER_RUIN_BIG.toString(),
                 BuiltInLootTables.UNDERWATER_RUIN_SMALL.toString(),
                 BuiltInLootTables.WOODLAND_MANSION.toString());

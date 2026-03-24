@@ -45,10 +45,10 @@ public class StarterLoot {
                     giveAllStarters(player, Config.starterTemplatesList);
                     data.putBoolean("capsule:receivedStarter", true);
 
-                } else if ("random".equals(Config.starterMode)) {
+                } else if ("random".equalsIgnoreCase(Config.starterMode)) {
                     giveAllStarters(player, Collections.singletonList(
                             Config.starterTemplatesList.get(
-                                    (int) (Math.random() * Config.starterTemplatesList.size())
+                                    new java.util.Random().nextInt(Config.starterTemplatesList.size())
                             )
                     ));
                     data.putBoolean("capsule:receivedStarter", true);

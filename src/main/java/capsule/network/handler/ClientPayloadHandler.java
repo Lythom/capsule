@@ -13,8 +13,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.StringUtil;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ClientPayloadHandler {
+	private static final Logger LOGGER = LogManager.getLogger(ClientPayloadHandler.class);
 	private static final ClientPayloadHandler INSTANCE = new ClientPayloadHandler();
 
 	public static ClientPayloadHandler getInstance() {
@@ -28,7 +31,7 @@ public class ClientPayloadHandler {
 					}
 				})
 				.exceptionally(e -> {
-					// Handle exception
+					LOGGER.error("Error handling content preview answer packet", e);
 					return null;
 				});
 	}
@@ -47,7 +50,7 @@ public class ClientPayloadHandler {
 					}
 				})
 				.exceptionally(e -> {
-					// Handle exception
+					LOGGER.error("Error handling full content answer packet", e);
 					return null;
 				});
 	}
@@ -68,7 +71,7 @@ public class ClientPayloadHandler {
 					}
 				})
 				.exceptionally(e -> {
-					// Handle exception
+					LOGGER.error("Error handling undeploy notification packet", e);
 					return null;
 				});
 	}

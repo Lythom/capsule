@@ -56,7 +56,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
 
         }
 
-        return sourceCapsule != ItemStack.EMPTY && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit;
+        return !sourceCapsule.isEmpty() && material > 0 && CapsuleItem.getUpgradeLevel(sourceCapsule) + material <= Config.upgradeLimit;
     }
 
     /**
@@ -81,7 +81,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
 
         }
 
-        if (input == ItemStack.EMPTY) return ItemStack.EMPTY;
+        if (input.isEmpty()) return ItemStack.EMPTY;
 
         ItemStack copy = input.copy();
         int newSize = CapsuleItem.getSize(input) + material * 2;

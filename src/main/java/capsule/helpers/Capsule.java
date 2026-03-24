@@ -193,7 +193,7 @@ public class Capsule {
         Player player = null;
         if (thrower != null) {
             player = playerWorld.getPlayerByUUID(thrower);
-            throwerId = player.getGameProfile().getName();
+            if (player != null) throwerId = player.getGameProfile().getName();
         }
         String capsuleID = StructureSaver.getUniqueName(playerWorld, throwerId);
         CapsuleTemplate template = StructureSaver.undeploy(playerWorld, thrower, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
@@ -320,7 +320,7 @@ public class Capsule {
 
         if (destination != null) {
             CompoundTag tag = NBTHelper.getTag(capsule);
-            if (tag != null || true) { // always set deployAt
+            if (tag != null) {
                 NBTHelper.updateTag(capsule, t -> t.putLong("deployAt", destination.asLong()));
 
                 Spacial.moveItemEntityToDeployPos(ItemEntity, capsule, false);
@@ -415,6 +415,10 @@ public class Capsule {
             // is not linked, capture
             try {
                 BlockPos captureBasePosition = Spacial.findSpecificBlock(itemEntity, size + 2, BlockCapsuleMarker.class);
+                if (captureBasePosition == null) {
+                    LOGGER.warn("Capsule: could not find a Capsule Marker block nearby to capture.");
+                    return;
+                }
                 BlockPos anchor = Spacial.getAnchor(captureBasePosition, itemWorld.getBlockState(captureBasePosition), size);
 
                 UUID throwerUUID = itemEntity.getOwner() != null ? itemEntity.getOwner().getUUID() : null;

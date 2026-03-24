@@ -97,7 +97,8 @@ public class CapsuleItem extends Item {
         }
 
         public static CapsuleState valueOf(int state) {
-            return map.get(state);
+            CapsuleState result = map.get(state);
+            return result != null ? result : EMPTY;
         }
 
         public int getValue() {
@@ -713,7 +714,7 @@ public class CapsuleItem extends Item {
         if (!entity.getCommandSenderWorld().isClientSide
                 && isActivated(capsule)
                 && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("deployAt")
-                && !entity.verticalCollision || entity.horizontalCollision && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
+                && (!entity.verticalCollision || entity.horizontalCollision) && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
             Spacial.moveItemEntityToDeployPos(entity, capsule, true);
         }
 
@@ -874,6 +875,7 @@ public class CapsuleItem extends Item {
         ResourceKey<Level> dimension = CapsuleItem.getSourceInventoryDimension(blueprint);
         if (location == null || dimension == null) return null;
         ServerLevel inventoryWorld = w.getServer().getLevel(dimension);
+        if (inventoryWorld == null) return null;
 
         BlockEntity te = inventoryWorld.getBlockEntity(location);
         if (te != null) {

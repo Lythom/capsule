@@ -21,17 +21,15 @@ public class CapsuleLootTableHook {
         if (!Config.lootTablesList.contains(event.getName().toString()))
             return;
 
-        // create a capsule loot entry per folder
-        if (capsulePool == null) {
-            LootPool.Builder capsulePoolBuilder = LootPool.lootPool()
-                    .setBonusRolls(ConstantValue.exactly(0))
-                    .name("capsulePool")
-                    .setRolls(ConstantValue.exactly(1));
-            for (Config.LootPathData data : Config.lootTemplatesData.values()) {
-                capsulePoolBuilder.add(CapsuleLootEntry.builder(data.path));
-            }
-            capsulePool = capsulePoolBuilder.build();
+        // create a capsule loot entry per folder — rebuild each time to pick up config reloads
+        LootPool.Builder capsulePoolBuilder = LootPool.lootPool()
+                .setBonusRolls(ConstantValue.exactly(0))
+                .name("capsulePool")
+                .setRolls(ConstantValue.exactly(1));
+        for (Config.LootPathData data : Config.lootTemplatesData.values()) {
+            capsulePoolBuilder.add(CapsuleLootEntry.builder(data.path));
         }
+        capsulePool = capsulePoolBuilder.build();
 
         // add a new pool containing all weighted entries
         event.getTable().addPool(capsulePool);

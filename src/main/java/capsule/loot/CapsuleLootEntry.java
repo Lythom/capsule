@@ -58,7 +58,7 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
     }
 
     public static int getRandomColor() {
-        return Integer.decode(COLOR_PALETTE[(int) (Math.random() * COLOR_PALETTE.length)]);
+        return Integer.decode(COLOR_PALETTE[new java.util.Random().nextInt(COLOR_PALETTE.length)]);
     }
 
     /**

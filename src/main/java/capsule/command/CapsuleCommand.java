@@ -57,10 +57,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static com.mojang.brigadier.arguments.BoolArgumentType.bool;
@@ -78,7 +75,7 @@ import static net.minecraft.commands.arguments.EntityArgument.player;
 public class CapsuleCommand {
     private static final DynamicCommandExceptionType ERROR_NO_ACTION_PERFORMED = new DynamicCommandExceptionType(p_311534_ -> (Component) p_311534_);
 
-    public static List<ServerPlayer> sentUsageURL = new ArrayList<>();
+    public static Set<UUID> sentUsageURL = new HashSet<>();
 
     public static String[] getStructuresList(ServerLevel world) {
         Path capsuleStructuresPath = world.getServer().getWorldPath(new LevelResource("generated/capsules/structures"));
@@ -121,12 +118,12 @@ public class CapsuleCommand {
                 .then(Commands.literal("help")
                         .executes(ctx -> {
                             int count = 0;
-                            if (!sentUsageURL.contains(ctx.getSource().getPlayerOrException())) {
-                                Component msg = Component.literal(
-                                        "see Capsule commands usages at " + ChatFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands");
-                                msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands"));
+                            if (!sentUsageURL.contains(ctx.getSource().getPlayerOrException().getUUID())) {
+                                final MutableComponent msg = Component.literal(
+                                        "see Capsule commands usages at " + ChatFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands")
+                                        .withStyle(style -> style.withClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands")));
                                 ctx.getSource().sendSuccess(() -> msg, false);
-                                sentUsageURL.add(ctx.getSource().getPlayerOrException());
+                                sentUsageURL.add(ctx.getSource().getPlayerOrException().getUUID());
                                 count++;
                             }
                             Map<CommandNode<CommandSourceStack>, String> map = dispatcher.getSmartUsage(ctx.getRootNode().getChild("capsule"), ctx.getSource());
@@ -305,7 +302,7 @@ public class CapsuleCommand {
     }
 
     private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName, boolean withRecall) throws CommandSyntaxException {
-        String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
+        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (withRecall) {
@@ -322,7 +319,7 @@ public class CapsuleCommand {
     }
 
     private static int executeGiveBlueprint(ServerPlayer player, String rewardTemplateName) throws CommandSyntaxException {
-        String templateName = rewardTemplateName.replaceAll(".nbt", "").replaceAll(".schematic", "");
+        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
 
             CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.getServer());
@@ -403,7 +400,7 @@ public class CapsuleCommand {
         return 0;
     }
 
-    private static int executeFromStructure(ServerPlayer player, String templateName) throws CommandSyntaxException, CommandSyntaxException {
+    private static int executeFromStructure(ServerPlayer player, String templateName) throws CommandSyntaxException {
         if (player != null && !StringUtil.isNullOrEmpty(templateName) && player.level() instanceof ServerLevel) {
             CompoundTag data = new CompoundTag();
             int size = -1;
@@ -619,10 +616,10 @@ public class CapsuleCommand {
 
                 String command = "/give @p " + BuiltInRegistries.ITEM.getKey(heldItem.getItem()) + tagStr + " 1 ";
                 MutableComponent msg = Component.literal(command);
-                msg.getStyle().withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")));
-                msg.getStyle().withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"));
-
-                player.sendSystemMessage(msg);
+                player.sendSystemMessage(msg.withStyle(style -> style
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")))
+                        .withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"))
+                ));
                 return 1;
             }
         }
@@ -631,6 +628,7 @@ public class CapsuleCommand {
 
     private static void giveCapsule(ItemStack capsule, Player player) {
         ItemEntity entity = player.drop(capsule, false);
+        if (entity == null) return;
         entity.setNoPickUpDelay();
         entity.setThrower(player);
     }

@@ -58,17 +58,18 @@ public record CapsuleFullContentAnswerToClient(String structureName, CapsuleTemp
         buf.writeUtf(msg.structureName);
         CompoundTag nbt = StructureSaver.getTemplateNBTData(msg.template);
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
+        boolean success = false;
         try {
             NbtIo.writeCompressed(nbt, bytearrayoutputstream);
+            success = true;
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (bytearrayoutputstream.size() < BUFFER_MAX_SIZE) {
-                buf.writeBoolean(true);
-                buf.writeByteArray(bytearrayoutputstream.toByteArray());
-            } else {
-                buf.writeBoolean(false);
-            }
+            LOGGER.error("Failed to compress template NBT data for structure '{}'", msg.structureName, e);
+        }
+        if (success && bytearrayoutputstream.size() < BUFFER_MAX_SIZE) {
+            buf.writeBoolean(true);
+            buf.writeByteArray(bytearrayoutputstream.toByteArray());
+        } else {
+            buf.writeBoolean(false);
         }
     }
 

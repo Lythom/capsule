@@ -6,12 +6,12 @@ import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockEntityCapture extends DispenserBlockEntity {
 
-    public static final List<BlockEntityCapture> instances = new ArrayList<>();
+    public static final List<BlockEntityCapture> instances = new CopyOnWriteArrayList<>();
 
     public BlockEntityCapture(BlockPos p_155490_, BlockState p_155491_) {
         super(CapsuleBlocks.MARKER_TE.get(), p_155490_, p_155491_);

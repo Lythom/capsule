@@ -148,12 +148,11 @@ public class Files {
             for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".nbt") || s.getPath().endsWith(".json") || s.getPath().endsWith(".schematic")).entrySet()) {
                 Resource resource = ressourceLoc.getValue();
                 // source path
-                InputStream sourceTemplate = resource.open();
                 String sourcePath = ressourceLoc.getKey().getPath();
                 String fileName = sourcePath.replace(assetPath + "/", "");
                 Path assetFile = templateFolder.toPath().resolve(fileName);
                 LOGGER.debug("copying asset " + assetPath + "/" + fileName + " to " + assetFile.toString());
-                try {
+                try (InputStream sourceTemplate = resource.open()) {
                     File assetAsFile = assetFile.toFile();
                     if (assetAsFile.isDirectory()) {
                         if (!assetAsFile.exists()) assetAsFile.mkdirs();
@@ -168,16 +167,15 @@ public class Files {
                 }
 
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Error while copying initial capsule templates, there will be no loots, prefabs or starters!", e);
         }
     }
 
     public static void iterateTemplates(File templateFolder, Consumer<String> onTemplateFound) {
         if (templateFolder.exists() && templateFolder.isDirectory()) {
-            Iterator<Path> iterator = null;
-            try {
-                iterator = java.nio.file.Files.walk(templateFolder.toPath()).iterator();
+            try (java.util.stream.Stream<Path> walkStream = java.nio.file.Files.walk(templateFolder.toPath())) {
+                Iterator<Path> iterator = walkStream.iterator();
                 while (iterator.hasNext()) {
                     Path path = iterator.next();
                     File file = path.toFile();

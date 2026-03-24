@@ -65,7 +65,7 @@ public class StructureSaver {
     public static final String BLUEPRINT_PREFIX = "b-";
     public static Map<String, CapsuleTemplateManager> CapsulesManagers = new HashMap<>();
     private static CapsuleTemplateManager RewardManager = null;
-    private static final List<String> outExcluded = new ArrayList<>();
+
 
     public static CapsuleTemplateManager getRewardManager(ResourceManager resourceManager) {
         if (RewardManager == null) {
@@ -80,7 +80,7 @@ public class StructureSaver {
 
     // very powerfull high level cut to prevent any drop during capturing phase
     // it is synchronized so it should not create any side effect
-    private static boolean preventItemDrop = false;
+    private static volatile boolean preventItemDrop = false;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void handleEntityJoinWorldEvent(final EntityJoinLevelEvent e) {
@@ -662,7 +662,7 @@ public class StructureSaver {
         String destStructureName = getBlueprintUniqueName(worldServer) + "-" + srcStructurePath.replace("/", "_");
 
         CapsuleTemplateManager templateManager = getTemplateManager(worldServer.getServer());
-        outExcluded.clear();
+        List<String> outExcluded = new ArrayList<>();
         boolean created = templateManager != null && duplicateTemplate(
                 getTemplateNBTData(srcStructurePath, worldServer),
                 destStructureName,

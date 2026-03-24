@@ -87,7 +87,7 @@ public class CapsulePreviewHandler {
     public static void onLevelRenderLast(RenderLevelStageEvent event) {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             Minecraft mc = Minecraft.getInstance();
-            time += 1;
+            time = (time + 1) % 100000;
             if (mc.player != null) {
                 dispatcher = event.getLevelRenderer().getSectionRenderDispatcher();
                 tryPreviewRecall(mc.player.getMainHandItem(), event.getPoseStack());
@@ -119,7 +119,9 @@ public class CapsulePreviewHandler {
                         CompoundTag compoundnbt = template.save(new CompoundTag());
                         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
                         Path filePath = path.resolve(df.format(new Date()) + "-" + structureName + ".nbt");
-                        NbtIo.writeCompressed(compoundnbt, new DataOutputStream(new FileOutputStream(filePath.toFile())));
+                        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(filePath.toFile()))) {
+                            NbtIo.writeCompressed(compoundnbt, dos);
+                        }
                         mc.player.sendSystemMessage(Component.literal("→ <minecraftInstance>/" + filePath.toString().replace("\\", "/")));
                     } catch (Throwable var21) {
                         LOGGER.error(var21);

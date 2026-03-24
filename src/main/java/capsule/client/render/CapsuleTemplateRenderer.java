@@ -1,6 +1,5 @@
 package capsule.client.render;
 
-import capsule.client.render.vbo.MultiVBORenderer;
 import capsule.structure.CapsuleTemplate;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -49,7 +48,6 @@ import java.util.Map;
 
 public class CapsuleTemplateRenderer {
     private static final Logger LOGGER = LogManager.getLogger();
-    public MultiVBORenderer renderBuffer;
     public FakeWorld templateWorld = null;
     private boolean isWorldDirty = true;
     private StructurePlaceSettings lastPlacementSettings;
@@ -136,8 +134,6 @@ public class CapsuleTemplateRenderer {
             isWorldDirty = true;
         }
         if (!isWorldDirty) return true;
-        if (renderBuffer != null) renderBuffer.close();
-        renderBuffer = null;
         lastPlacementSettings = placementSettings;
         if (template.palettes.isEmpty()) {
             return false;
