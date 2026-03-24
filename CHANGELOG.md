@@ -1,11 +1,11 @@
 # Changelog
 
-**1.21.1-9.0.114 : Bug fixes and code cleanup**
+**1.21.1-9.0.117 : Bug fixes and code cleanup**
 
 - Fix Capture Base not working as a dispenser (typed block entity lookup change in 1.21.1)
 - Other code cleanup and performance improvements
 
-**1.21.1-9.0.113 : Port to NeoForge 1.21.1**
+**1.21.1-9.0.114 : Port to NeoForge 1.21.1**
 
 - Port mod from Forge 1.20.4 to NeoForge 1.21.1
 - Now requires NeoForge (Forge is no longer supported from this version)
