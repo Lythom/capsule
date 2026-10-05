@@ -214,3 +214,11 @@ skip the write. Effort: S.
 ### Item frames log "Block-attached entity at invalid position"
 Deploying templates with item frames logs this error once per frame: the entity is created from its saved `TileX/Y/Z`
 before being moved. Update the tile position in the entity NBT before creating it. Effort: S.
+
+### Experience can merge into an orb already near a capture
+Issues: https://github.com/Lythom/capsule/issues/122
+
+Capture suppresses new `ExperienceOrb` entities, but `ExperienceOrb.award` first tries to merge the experience into an
+orb already lying nearby (`tryMergeToExisting`), which bypasses the entity suppression. Rare (needs an orb on the
+ground next to a captured furnace). A fix would clear the furnace `recipesUsed` before removal for every
+`AbstractFurnaceBlockEntity`, or suppress `ExperienceOrb.award` itself during capture. Effort: S.

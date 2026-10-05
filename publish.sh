@@ -240,6 +240,7 @@ for v in json.load(sys.stdin):
 METAEOF
     )
 
+    UPLOAD_FAILED=false
     CF_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "X-Api-Token: $CURSEFORGE_TOKEN" \
         -F "metadata=$CF_METADATA;type=application/json" \
@@ -255,6 +256,7 @@ METAEOF
     else
         echo "CurseForge: FAILED (HTTP $CF_HTTP_CODE)"
         echo "Response: $CF_BODY"
+        UPLOAD_FAILED=true
     fi
 
     # ---- Upload to Modrinth ----
@@ -293,10 +295,15 @@ MREOF
     else
         echo "Modrinth: FAILED (HTTP $MR_HTTP_CODE)"
         echo "Response: $MR_BODY"
+        UPLOAD_FAILED=true
     fi
 
     echo ""
     echo "Done! Check your mod pages:"
     echo "  CurseForge: https://www.curseforge.com/minecraft/mc-mods/capsule/files"
     echo "  Modrinth:   https://modrinth.com/mod/capsule/versions"
+
+    if [ "$UPLOAD_FAILED" = true ]; then
+        exit 1
+    fi
 fi
