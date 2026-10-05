@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.HashMap;
+
 public class CapsuleFabricClient implements ClientModInitializer {
 
     @Override
@@ -23,8 +25,8 @@ public class CapsuleFabricClient implements ClientModInitializer {
         CapsuleMod.openGuiScreenCommon = LabelGui::open;
         FabricPayloadRegistrar.registerClientReceivers();
 
-        ItemProperties.register(
-                CapsuleItems.CAPSULE.get(),
+        // unclamped, as on NeoForge: capsule states go above 1
+        ItemProperties.PROPERTIES.computeIfAbsent(CapsuleItems.CAPSULE.get(), item -> new HashMap<>()).put(
                 ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
                 (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
         );

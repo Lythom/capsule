@@ -1,5 +1,6 @@
 package capsule.clientsmoke;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
@@ -25,12 +26,15 @@ import net.minecraft.client.gui.screens.GenericMessageScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.client.renderer.item.ItemPropertyFunction;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -170,6 +174,7 @@ public class ClientSmokeTest {
         scenario.async("give capsules of every kind", 200, () -> onServer(this::giveDisplayCapsules))
                 .sleep(20)
                 .run("screenshot", () -> screenshot("05-hotbar"))
+                .run("check the item models", this::checkItemModelStates)
                 .async("survival mode", 100, () -> onServer(p -> p.setGameMode(GameType.SURVIVAL)))
                 .await("survival mode on the client", 40, () -> !mc().gameMode.hasInfiniteItems())
                 .run("open the inventory on the linked capsule", () -> mc().setScreen(new HoverInventoryScreen(0)))
@@ -358,6 +363,18 @@ public class ClientSmokeTest {
      * Hotbar: linked (captured), wood, dyed iron, OP, deployed, one-use reward, recovery, blueprint, capture base.
      * Inventory: the other materials, the 16 dye colors, an uncharged blueprint, an upgraded and an enchanted capsule.
      */
+    private void checkItemModelStates() {
+        ResourceLocation stateProperty = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state");
+        for (int slot = 0; slot < Inventory.getSelectionSize(); slot++) {
+            ItemStack stack = mc().player.getInventory().getItem(slot);
+            if (!(stack.getItem() instanceof CapsuleItem)) continue;
+            CapsuleState state = CapsuleItem.getState(stack);
+            ItemPropertyFunction property = ItemProperties.getProperty(stack, stateProperty);
+            float value = property == null ? -1 : property.call(stack, mc().level, mc().player, 0);
+            scenario.check("hotbar slot " + slot + " uses the " + state + " model", value == state.getValue(), "capsule:state is " + value);
+        }
+    }
+
     private void giveDisplayCapsules(ServerPlayer player) {
         Inventory inventory = player.getInventory();
         ItemStack linked = inventory.getItem(0);
