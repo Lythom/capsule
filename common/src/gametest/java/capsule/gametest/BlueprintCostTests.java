@@ -8,7 +8,10 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
@@ -29,5 +32,18 @@ public class BlueprintCostTests {
         assertTrue(helper, Integer.valueOf(1).equals(cost.get(new StructureSaver.ItemStackKey(new ItemStack(Items.DANDELION)))), "a dandelion should be required, got " + cost);
         assertTrue(helper, Integer.valueOf(1).equals(cost.get(new StructureSaver.ItemStackKey(new ItemStack(Items.MELON_SEEDS)))), "melon seeds should be required, got " + cost);
         helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void liquidSourcesAndPistonHeadsKeepTheirCost(GameTestHelper helper) {
+        assertCost(helper, Blocks.LAVA.defaultBlockState(), List.of(new ItemStack(Items.LAVA_BUCKET)));
+        assertCost(helper, Blocks.WATER.defaultBlockState(), List.of(new ItemStack(Items.WATER_BUCKET)));
+        assertCost(helper, Blocks.PISTON_HEAD.defaultBlockState(), List.of(ItemStack.EMPTY));
+        helper.succeed();
+    }
+
+    private static void assertCost(GameTestHelper helper, BlockState state, List<ItemStack> expected) {
+        List<ItemStack> cost = Blueprint.getBlockItemCosts(new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, state, null), helper.getLevel());
+        assertTrue(helper, cost != null && ItemStack.listMatches(cost, expected), state + " should cost " + expected + ", got " + cost);
     }
 }

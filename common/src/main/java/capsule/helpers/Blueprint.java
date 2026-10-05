@@ -60,15 +60,11 @@ public class Blueprint {
         if (state.getBlock() instanceof FlowerPotBlock pot && pot.getPotted() != Blocks.AIR) {
             return List.of(new ItemStack(Items.FLOWER_POT), new ItemStack(pot.getPotted()));
         }
-        if (level != null && !state.isAir() && state.getBlock().asItem() == Items.AIR) {
-            // blocks without item (attached stems, plant bodies...) cost what they are picked as
-            return List.of(state.getBlock().getCloneItemStack(level, BlockPos.ZERO, state));
-        }
-        ItemStack cost = getBlockItemCost(blockInfo);
+        ItemStack cost = getBlockItemCost(blockInfo, level);
         return cost == null ? null : List.of(cost);
     }
 
-    public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo) {
+    public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo, @Nullable LevelReader level) {
         final BlockState state = blockInfo.state();
         Block block = state.getBlock();
         CompoundTag blockNBT = blockInfo.nbt();
@@ -102,6 +98,10 @@ public class Blueprint {
             } else if (block instanceof PistonHeadBlock
                     || block instanceof MovingPistonBlock) {
                 return ItemStack.EMPTY; // Piston extension is free
+
+            } else if (level != null && !state.isAir() && block.asItem() == Items.AIR) {
+                // blocks without item (attached stems, plant bodies...) cost what they are picked as
+                return block.getCloneItemStack(level, BlockPos.ZERO, state);
             }
             ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {
