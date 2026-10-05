@@ -79,7 +79,7 @@ jobs:
               ./publish.sh "$JAR_FILE" "${RELEASE_TYPE:-beta}"
             done
 
-# Only the 1.21.1 branch is built; other branches are built and tested locally (see docs/TESTING.md).
+# Only version branches (1.21.1, 1.20.1...) are built; other branches are built and tested locally (see docs/TESTING.md).
 workflows:
   version: 2
   build_and_publish:
@@ -87,17 +87,17 @@ workflows:
       - build:
           filters:
             branches:
-              only: 1.21.1
+              only: /[0-9]+\..*/
       - hold:
           type: approval
           requires:
             - build
           filters:
             branches:
-              only: 1.21.1
+              only: /[0-9]+\..*/
       - publish:
           requires:
             - hold
           filters:
             branches:
-              only: 1.21.1
+              only: /[0-9]+\..*/
