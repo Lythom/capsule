@@ -88,6 +88,13 @@ neoForge.addModdingDependenciesTo(sourceSets.gametest)
 
 repositories {
     maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+    maven {
         name = 'Jared (JEI)'
         url = 'https://maven.blamejared.com/'
         content {
@@ -106,6 +113,9 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // mods Capsule integrates with, exercised by the GameTests
+    gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
