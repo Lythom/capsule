@@ -314,7 +314,10 @@ public class Capsule {
         if (!(heldItem.getItem() instanceof CapsuleItem)) return;
         // the query comes from the client: it must match what the held capsule allows
         if (instant && !CapsuleItem.isInstantAndUndeployed(heldItem)) return;
-        if (pos != null && !Spacial.isInPreviewRange(sendingPlayer, pos, CapsuleItem.getSize(heldItem), CapsuleItem.getYOffset(heldItem))) return;
+        if (pos != null && !Spacial.isInPreviewRange(sendingPlayer, pos, CapsuleItem.getSize(heldItem), CapsuleItem.getYOffset(heldItem))) {
+            if (instant) return;
+            pos = null; // an out of range throw lands where it falls
+        }
         if (instant && pos != null) {
             int size = CapsuleItem.getSize(heldItem);
             int extendLength = (size - 1) / 2;

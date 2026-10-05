@@ -1,6 +1,7 @@
 package capsule.gametest;
 
 import capsule.helpers.Capsule;
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
@@ -61,6 +62,20 @@ public class ThrowQueryTests {
         assertTrue(helper, CapsuleItem.hasState(capsule, CapsuleState.EMPTY), "a block 100 blocks away must not be captured");
         helper.assertBlockPresent(Blocks.STONE, 2, 1, 2);
         CapsuleTestUtils.removePlayer(player);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void throwOutOfRangeFallsWhereItLands(GameTestHelper helper) {
+        ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
+        ServerPlayer player = playerHolding(helper, capsule);
+
+        Capsule.handleThrowQuery(player, helper.absolutePos(new BlockPos(2, 1, 2)).offset(100, 0, 0), false);
+
+        assertTrue(helper, player.getMainHandItem().isEmpty(), "the capsule should be thrown");
+        assertTrue(helper, !NBTHelper.getOrCreateTag(capsule).contains("deployAt"), "an out of range target must be ignored");
+        CapsuleTestUtils.removePlayer(player);
+        helper.killAllEntities();
         helper.succeed();
     }
 }
