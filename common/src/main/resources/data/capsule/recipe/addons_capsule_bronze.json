@@ -9,6 +9,14 @@
       }
     }
   ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:tags_populated",
+      "values": [
+        "c:ingots/bronze"
+      ]
+    }
+  ],
   "group": "capsule",
   "result": {
     "id": "capsule:capsule",

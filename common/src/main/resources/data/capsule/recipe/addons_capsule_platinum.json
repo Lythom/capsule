@@ -9,6 +9,14 @@
       }
     }
   ],
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:tags_populated",
+      "values": [
+        "c:ingots/platinum"
+      ]
+    }
+  ],
   "group": "capsule",
   "result": {
     "id": "capsule:capsule",

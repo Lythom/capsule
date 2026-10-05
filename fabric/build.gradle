@@ -52,9 +52,14 @@ loom {
         capsule {
             sourceSet sourceSets.main
         }
+        // dev only mod holding the GameTests, see src/gametest/resources/fabric.mod.json
+        'capsule-gametest' {
+            sourceSet sourceSets.gametest
+        }
     }
     runs {
         configureEach {
+            source sourceSets.gametest
             vmArg '-Xmx4G'
         }
         client {
@@ -65,6 +70,13 @@ loom {
             server()
             runDir 'runs/server'
         }
+        // Runs every capsule GameTest headless then exits, non-zero if a required test failed.
+        gameTestServer {
+            server()
+            runDir 'runs/gameTestServer'
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=${project.file('build/gametest/report.xml')}"
+        }
     }
 }
 
@@ -74,4 +86,15 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand properties
     }
+}
+
+tasks.named('runGameTestServer') {
+    // a fresh world and config on every run keeps results reproducible
+    doFirst {
+        delete 'runs/gameTestServer/world', 'runs/gameTestServer/config/capsule', 'runs/gameTestServer/initialconfig'
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'runGameTestServer'
 }
