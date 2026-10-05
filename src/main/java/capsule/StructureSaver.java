@@ -17,6 +17,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -84,9 +85,16 @@ public class StructureSaver {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void handleEntityJoinWorldEvent(final EntityJoinLevelEvent e) {
-        if (preventItemDrop && e.getEntity() instanceof ItemEntity) {
+        if (isPreventedDrop(e.getEntity())) {
             e.setCanceled(true);
         }
+    }
+
+    /**
+     * Items and experience popped by blocks removed during a capture are already stored in the capsule.
+     */
+    public static boolean isPreventedDrop(Entity entity) {
+        return preventItemDrop && (entity instanceof ItemEntity || entity instanceof ExperienceOrb);
     }
 
     public static CapsuleTemplate undeploy(ServerLevel worldserver, @Nullable UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
