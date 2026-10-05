@@ -11,25 +11,20 @@ import capsule.network.CapsuleContentPreviewQueryToServer;
 import capsule.network.CapsuleFullContentAnswerToClient;
 import capsule.network.CapsuleLeftClickQueryToServer;
 import capsule.network.CapsuleThrowQueryToServer;
-import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.network.LabelEditedMessageToServer;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
-import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class ServerPayloadHandler {
 	protected static final Logger LOGGER = LogManager.getLogger(ServerPayloadHandler.class);
@@ -97,44 +91,7 @@ public class ServerPayloadHandler {
 	}
 
 	public static void handleThrowQuery(final CapsuleThrowQueryToServer data, final IPayloadContext context) {
-		context.enqueueWork(() -> {
-					Player sendingPlayer = context.player();
-					ItemStack heldItem = sendingPlayer.getMainHandItem();
-					ServerLevel serverLevel = (ServerLevel) sendingPlayer.level();
-					if (heldItem.getItem() instanceof CapsuleItem) {
-						BlockPos pos = data.pos();
-						boolean instant = data.instant();
-						if (instant && pos != null) {
-							int size = CapsuleItem.getSize(heldItem);
-							int extendLength = (size - 1) / 2;
-							// instant capsule initial capture
-							if (CapsuleItem.hasState(heldItem, EMPTY)) {
-								boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUUID(), size, serverLevel, pos);
-								if (captured) {
-									BlockPos center = pos.offset(0, size / 2, 0);
-									PacketDistributor.sendToPlayersNear(serverLevel, null,
-											center.getX(), center.getY(), center.getZ(), 200 + size,
-											new CapsuleUndeployNotifToClient(center, sendingPlayer.blockPosition(), size, CapsuleItem.getStructureName(heldItem)));
-								}
-							}
-							// instant deployment
-							else {
-								boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, serverLevel);
-								if (deployed) {
-									CapsuleItem.setUndeployDelay(heldItem, serverLevel);
-									serverLevel.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
-									Capsule.showDeployParticules(serverLevel, pos, size);
-								}
-								if (deployed && CapsuleItem.isOneUse(heldItem)) {
-									heldItem.shrink(1);
-								}
-							}
-						}
-						if (!instant) {
-							Capsule.throwCapsule(heldItem, sendingPlayer, pos);
-						}
-					}
-				})
+		context.enqueueWork(() -> Capsule.handleThrowQuery(context.player(), data.pos(), data.instant()))
 				.exceptionally(e -> {
 					LOGGER.error("Failed to handle throw query", e);
 					return null;

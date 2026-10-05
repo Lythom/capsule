@@ -307,6 +307,47 @@ public class Capsule {
     }
 
     /**
+     * A player threw the capsule in main hand toward pos, or used an instant capsule (size 1 or blueprint) at pos.
+     */
+    public static void handleThrowQuery(Player sendingPlayer, @Nullable BlockPos pos, boolean instant) {
+        ItemStack heldItem = sendingPlayer.getMainHandItem();
+        ServerLevel serverLevel = (ServerLevel) sendingPlayer.level();
+        if (!(heldItem.getItem() instanceof CapsuleItem)) return;
+        // the query comes from the client: it must match what the held capsule allows
+        if (instant && !CapsuleItem.isInstantAndUndeployed(heldItem)) return;
+        if (pos != null && !Spacial.isInPreviewRange(sendingPlayer, pos, CapsuleItem.getSize(heldItem), CapsuleItem.getYOffset(heldItem))) return;
+        if (instant && pos != null) {
+            int size = CapsuleItem.getSize(heldItem);
+            int extendLength = (size - 1) / 2;
+            // instant capsule initial capture
+            if (CapsuleItem.hasState(heldItem, CapsuleState.EMPTY)) {
+                boolean captured = captureAtPosition(heldItem, sendingPlayer.getUUID(), size, serverLevel, pos);
+                if (captured) {
+                    BlockPos center = pos.offset(0, size / 2, 0);
+                    PacketDistributor.sendToPlayersNear(serverLevel, null,
+                            center.getX(), center.getY(), center.getZ(), 200 + size,
+                            new CapsuleUndeployNotifToClient(center, sendingPlayer.blockPosition(), size, CapsuleItem.getStructureName(heldItem)));
+                }
+            }
+            // instant deployment
+            else {
+                boolean deployed = deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, serverLevel);
+                if (deployed) {
+                    CapsuleItem.setUndeployDelay(heldItem, serverLevel);
+                    serverLevel.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
+                    showDeployParticules(serverLevel, pos, size);
+                }
+                if (deployed && CapsuleItem.isOneUse(heldItem)) {
+                    heldItem.shrink(1);
+                }
+            }
+        }
+        if (!instant) {
+            throwCapsule(heldItem, sendingPlayer, pos);
+        }
+    }
+
+    /**
      * Throw an item and return the new ItemEntity created. Simulated a drop
      * with stronger throw.
      */
