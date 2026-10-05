@@ -1,0 +1,59 @@
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev'
+}
+
+// Vanilla Minecraft only: loader specific code lives in the loader projects, behind capsule.platform.
+neoForge {
+    neoFormVersion = neo_form_version
+    accessTransformers.from(file('accesstransformer.cfg'))
+    parchment {
+        minecraftVersion = parchment_minecraft_version
+        mappingsVersion = parchment_mappings_version
+    }
+    addModdingDependenciesTo(sourceSets.gametest)
+    addModdingDependenciesTo(sourceSets.test)
+}
+
+dependencies {
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    // shipped by NeoForge, and on Fabric by Forge Config API Port
+    compileOnly "com.electronwill.night-config:core:${night_config_version}"
+}
+
+configurations {
+    commonJava { canBeResolved = false; canBeConsumed = true }
+    commonResources { canBeResolved = false; canBeConsumed = true }
+    commonTestJava { canBeResolved = false; canBeConsumed = true }
+    commonGametestJava { canBeResolved = false; canBeConsumed = true }
+    commonGametestResources { canBeResolved = false; canBeConsumed = true }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+    commonTestJava sourceSets.test.java.sourceDirectories.singleFile
+    commonGametestJava sourceSets.gametest.java.sourceDirectories.singleFile
+    commonGametestResources sourceSets.gametest.resources.sourceDirectories.singleFile
+}
+
+// common is shared by every loader: it must not depend on one
+def checkLoaderImports = tasks.register('checkLoaderImports') {
+    def sources = fileTree('src') { include '**/*.java' }
+    inputs.files(sources)
+    doLast {
+        def offenders = sources.files.findAll { it.text =~ /\bnet\.(neoforged|fabricmc)\./ }
+        if (!offenders.isEmpty()) {
+            throw new GradleException("common must not use loader classes (net.neoforged, net.fabricmc):\n" + offenders.join('\n'))
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn checkLoaderImports
+}
+
+// the tests run in the loader projects
+tasks.named('test') {
+    enabled = false
+}

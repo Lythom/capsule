@@ -1,0 +1,46 @@
+// A loader project compiles the sources of common with its own glue code, and packages the common resources.
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    commonJava { canBeResolved = true }
+    commonResources { canBeResolved = true }
+    commonTestJava { canBeResolved = true }
+    commonGametestJava { canBeResolved = true }
+    commonGametestResources { canBeResolved = true }
+}
+
+dependencies {
+    compileOnly project(':common')
+    commonJava project(path: ':common', configuration: 'commonJava')
+    commonResources project(path: ':common', configuration: 'commonResources')
+    commonTestJava project(path: ':common', configuration: 'commonTestJava')
+    commonGametestJava project(path: ':common', configuration: 'commonGametestJava')
+    commonGametestResources project(path: ':common', configuration: 'commonGametestResources')
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn configurations.commonJava
+    source configurations.commonJava
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn configurations.commonResources
+    from configurations.commonResources
+}
+
+tasks.named('compileTestJava', JavaCompile) {
+    dependsOn configurations.commonTestJava
+    source configurations.commonTestJava
+}
+
+tasks.named('compileGametestJava', JavaCompile) {
+    dependsOn configurations.commonGametestJava
+    source configurations.commonGametestJava
+}
+
+tasks.named('processGametestResources', ProcessResources) {
+    dependsOn configurations.commonGametestResources
+    from configurations.commonGametestResources
+}

@@ -1,0 +1,82 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    version = neo_version
+
+    parchment {
+        minecraftVersion = parchment_minecraft_version
+        mappingsVersion = parchment_mappings_version
+    }
+
+    runs {
+        configureEach {
+            // Recommended logging data for a userdev environment
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+            // Limit ram usage for the dev environment to 4GB
+            jvmArgument '-Xmx4G'
+            gameDirectory = project.file("runs/${name}")
+            sourceSet = sourceSets.gametest
+        }
+
+        client {
+            client()
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
+        }
+
+        server {
+            server()
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
+            programArgument '--nogui'
+        }
+
+        // Runs every capsule GameTest headless then exits, with the number of failed required tests as exit code.
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
+        }
+    }
+
+    mods {
+        capsule {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.gametest
+        }
+    }
+
+    unitTest {
+        enable()
+        testedMod = mods.capsule
+    }
+}
+
+neoForge.addModdingDependenciesTo(sourceSets.gametest)
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+    gametestRuntimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
+    // mods Capsule integrates with, exercised by the GameTests
+    gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"
+}
+
+tasks.named('runGameTestServer') {
+    // a fresh world and config on every run keeps results reproducible
+    doFirst {
+        delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig"
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'runGameTestServer'
+}

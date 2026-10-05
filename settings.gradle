@@ -13,3 +13,5 @@ plugins {
 }
 
 rootProject.name = 'capsule'
+include('common')
+include('neoforge')
