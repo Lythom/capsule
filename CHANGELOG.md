@@ -24,6 +24,10 @@
 - Fix invalid ids in the `excludedBlocks` config crashing the game, and block tags in it being ignored
 - Fix `/reload` not refreshing templates on dedicated servers
 - Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81)
+- Fix capsules held edge-on in first and third person
+- Fix walls, fences, panes and other multipart blocks missing from the full deploy preview on NeoForge
+- Fix a capsule showing the preview of the previously held capsule right after switching capsules
+- Fix capture bases looking activated while no empty capsule is held
 
 **1.21.1-9.0.117 : Bug fixes and code cleanup**
 
