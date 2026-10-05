@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -70,6 +71,8 @@ public class Config {
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
     public static List<Block> excludedBlocks;
     public static List<Block> opExcludedBlocks;
+    public static List<TagKey<Block>> excludedBlockTags = List.of();
+    public static List<TagKey<Block>> opExcludedBlockTags = List.of();
 
     public static String starterTemplatesPath;
     public static String prefabsTemplatesPath;
@@ -115,6 +118,8 @@ public class Config {
 
         Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIdsCfg.get());
         Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIdsCfg.get());
+        Config.opExcludedBlockTags = Serialization.deserializeBlockTags(opExcludedBlocksIdsCfg.get());
+        Config.excludedBlockTags = Serialization.deserializeBlockTags(excludedBlocksIdsCfg.get());
         Config.lootTablesList = lootTablesListCfg.get();
         Config.starterTemplatesPath = starterTemplatesPathCfg.get();
         Config.prefabsTemplatesPath = prefabsTemplatesPathCfg.get();
