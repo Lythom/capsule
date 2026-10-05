@@ -79,12 +79,15 @@ jobs:
               ./publish.sh "$JAR_FILE" "${RELEASE_TYPE:-beta}"
             done
 
-# Pushing any branch builds and tests; a release can only be published from the 1.21.1 branch.
+# Only the 1.21.1 branch is built; other branches are built and tested locally (see docs/TESTING.md).
 workflows:
   version: 2
   build_and_publish:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only: 1.21.1
       - hold:
           type: approval
           requires:
