@@ -305,7 +305,7 @@ public class ClientSmokeTest {
     }
 
     /**
-     * A capture base under a 5×5×5 house, in front of the player.
+     * A capture base under a 5×5×5 house in front of the player, and an empty one.
      */
     private void prepareCaptureArea(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
@@ -314,7 +314,10 @@ public class ClientSmokeTest {
         level.setWeatherParameters(6000, 0, false, false);
         player.getInventory().clearContent();
         BlockPos marker = markerPos();
-        level.setBlockAndUpdate(marker, CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP));
+        BlockState markerState = CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP);
+        level.setBlockAndUpdate(marker, markerState);
+        // a second capture base, out of reach of the thrown capsule, with nothing above to see its top
+        level.setBlockAndUpdate(new BlockPos(-6, ground, 10), markerState);
         for (BlockPos pos : BlockPos.betweenClosed(marker.offset(-2, 1, -2), marker.offset(2, 4, 2))) {
             int dx = pos.getX() - marker.getX(), dy = pos.getY() - marker.getY(), dz = pos.getZ() - marker.getZ();
             boolean wall = Math.abs(dx) == 2 || Math.abs(dz) == 2;
