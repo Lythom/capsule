@@ -98,3 +98,11 @@ tasks.named('runGameTestServer') {
 tasks.named('check') {
     dependsOn 'runGameTestServer'
 }
+
+test {
+    // Fabric Loader writes its logs in the working directory
+    workingDir = file('build/junit')
+    doFirst {
+        workingDir.mkdirs()
+    }
+}
