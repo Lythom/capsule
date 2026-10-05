@@ -17,6 +17,8 @@ set -euo pipefail
 # Output: build/client-smoke/<loader>/ with the screenshots, report.txt and the client log.
 # Exit code 0 when every check passed (on NeoForge, JEI must be loaded and show the
 # capsule recipes). TIMEOUT (seconds, default 1500) bounds the whole run, build included.
+# EXTRA_MODS (space separated jar files) adds mods to the run, e.g. the jars of a modpack:
+# NeoForge 1.21.1 dev runs load production mod jars from the mods folder.
 # =============================================================================
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -30,8 +32,11 @@ esac
 
 RUN_DIR="$ROOT/$LOADER/runs/clientSmoke"
 OUT="$ROOT/build/client-smoke/$LOADER"
-rm -rf "$RUN_DIR/screenshots/capsule-smoke" "$OUT"
-mkdir -p "$OUT"
+rm -rf "$RUN_DIR/screenshots/capsule-smoke" "$RUN_DIR/mods" "$OUT"
+mkdir -p "$OUT" "$RUN_DIR/mods"
+for jar in ${EXTRA_MODS:-}; do
+    cp "$jar" "$RUN_DIR/mods/"
+done
 
 GRADLE=("$ROOT/gradlew" -p "$ROOT" ":$LOADER:runClientSmoke")
 if [ -z "${DISPLAY:-}" ]; then

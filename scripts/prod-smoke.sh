@@ -23,6 +23,8 @@ set -euo pipefail
 # files are created, and the log has no error mentioning capsule or a mixin.
 # Versions come from gradle.properties. Needs java 21, curl and python3.
 # Set KEEP_SERVER=1 to keep the server directories (printed at the end).
+# EXTRA_MODS (space separated jar files) adds other mods to the server, to check that they
+# boot together.
 # =============================================================================
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -81,6 +83,9 @@ smoke() {
     mkdir -p "$dir/mods"
     "setup_$loader" "$dir"
     cp "$jar" "$dir/mods/"
+    for extra in ${EXTRA_MODS:-}; do
+        cp "$extra" "$dir/mods/"
+    done
     echo "eula=true" > "$dir/eula.txt"
     printf 'server-port=%s\nonline-mode=false\nspawn-protection=0\n' "$(free_port)" > "$dir/server.properties"
 
