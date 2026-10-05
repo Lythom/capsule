@@ -132,7 +132,7 @@ per item. Track recall item entities when they join the level and cache the hold
 ## Platforms and versions
 
 ### Forge 1.21.1 module
-Not built on purpose (1.21.1 modpacks, CurseForge + Modrinth: Forge 709 + 25, NeoForge ~11,000 + 2,111, Fabric 3,002 + 3,032; see `docs/VERSIONS.md`). Cost if
+Not built on purpose (1.21.1 modpacks, CurseForge + Modrinth: Forge 709 + 25, NeoForge 10,000+ + 2,111, Fabric 3,002 + 3,032; see `docs/VERSIONS.md`). Cost if
 wanted: one more platform module next to `neoforge` and `fabric`, built with ForgeGradle 6 as in the
 MultiLoader-Template `1.21.1` branch (ModDevGradle legacyforge stops at 1.20.1), Forge implementations of the platform
 interfaces (registries, networking, events, config, capabilities), and its own GameTest and production-jar smoke run.
@@ -179,7 +179,7 @@ JEI is the only recipe viewer plugin. On Fabric, REI and EMI are common; add plu
 blueprints and the recovery/upgrade/dye special recipes. Effort: M.
 
 ### Multi-version builds with Stonecutter
-Targets from `docs/RESEARCH.md`: 1.20.1 (Forge + Fabric), 1.21.1 (NeoForge + Fabric), latest 26.x (NeoForge +
+Targets from `docs/VERSIONS.md`: 1.20.1 (Forge + Fabric), 1.21.1 (NeoForge + Fabric), 26.1.2 (NeoForge +
 Fabric; Java 25, unobfuscated, `ResourceLocation` renamed `Identifier` from 1.21.11). Stonecutter 0.9.x on top of the
 multiloader layout, one build script per loader (ModDevGradle, ModDevGradle legacyforge for Forge 1.20.1, Loom for
 Fabric), version-specific code behind `//? if` comments. Effort: L.

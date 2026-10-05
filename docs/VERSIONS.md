@@ -1,73 +1,71 @@
 # Minecraft versions and loaders
 
-Which Minecraft versions and loaders Capsule should be built for, with the evidence behind the choice. CurseForge
-numbers come from the CurseForge search page and the Modpack Index API (modpackindex.com, which indexes CurseForge and
-Modrinth); Modrinth numbers from `docs/RESEARCH.md`. All queried 2026-10-05. A pack counts under every version and
-loader it has ever had a file for, and CurseForge caps its counts at "10,000+".
+Which Minecraft versions and loaders Capsule should be built for: where modpacks are today, whether or not Capsule is
+already in them. Sources, all queried 2026-10-05:
+
+- **Modrinth API** (official public API, 82 requests): modpacks per version and loader, and the ones still alive
+  (project updated since 2026-04-05, with or without 10k downloads).
+- **CurseForge search pages** (a few dozen page views): modpacks per version and loader. CurseForge caps counts at
+  "10,000+" and blocks automated access, so it was not queried further.
+- **What modders say**: NeoForge and Fabric announcements, linked below.
+
+A pack counts under every version and loader it has ever had a file for, and Modrinth's update date is per project,
+not per version: a pack now on 26.x still counts as "active" for the older versions it once supported.
 
 ## Evidence
 
-CurseForge is where Capsule's players are: 9.4M of its ~9.8M all-time downloads.
+Modpacks updated in the last 6 months, Modrinth (all / with ≥ 10k downloads), and CurseForge modpack counts:
 
-| Build | CurseForge | Modrinth |
-|---|---:|---:|
-| 1.12.2 Forge | ~3.89M | 3,501 |
-| 1.16.5 Forge | ~2.54M | 907 |
-| 1.20.1 Forge | ~1.71M | 369,091 |
-| 1.18.2 Forge | ~633K | 239 |
-| 1.19 / 1.19.2 Forge | ~135K | 179 |
-| 1.21.1 NeoForge (since 2026-03) | ~12K | 3,233 |
-| 1.20.4 NeoForge | 803 | 106 |
+| MC | Modrinth Forge | Modrinth NeoForge | Modrinth Fabric | Modrinth active ≥ 10k, all loaders | CurseForge Forge | CurseForge NeoForge | CurseForge Fabric |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1.12.2 | 58 / 20 | – | – | 20 | 10,000+ | – | 22 |
+| 1.16.5 | 51 / 20 | – | 89 / 34 | 54 | 10,000+ | 5 | 496 |
+| 1.18.2 | 39 / 22 | – | 100 / 44 | 66 | 8,255 | – | 1,218 |
+| 1.19.2 | 77 / 26 | – | 140 / 58 | 84 | 10,000+ | – | 2,382 |
+| **1.20.1** | **934 / 123** | 53 / 11 | **912 / 184** | **318** | **10,000+** | 298 | **4,708** |
+| **1.21.1** | 10 / 4 | **1,291 / 91** | **1,124 / 231** | **326** | 709 | **10,000+** | **3,002** |
+| 1.21.4 | 3 / 2 | 34 / 16 | 686 / 164 | 182 | – | 148 | 582 |
+| 1.21.8 | 3 / 2 | 42 / 18 | 778 / 164 | 184 | – | 177 | 466 |
+| 1.21.10 | 4 / 3 | 31 / 14 | 867 / 172 | 189 | – | 215 | 508 |
+| 1.21.11 | 11 / 2 | 62 / 18 | 2,046 / 227 | 247 | 96 | 305 | 1,033 |
+| 26.1.2 | 7 / 1 | 65 / 17 | 1,315 / 178 | 196 | 47 | 234 | 500 |
+| 26.2 | 3 / 1 | 53 / 11 | 1,404 / 173 | 185 | – | 144 | 625 |
+| 26.3 | 2 / 1 | 11 / 7 | 381 / 85 | 93 | – | 22 | 142 |
 
-Modpacks by version and loader. CurseForge columns from CurseForge search; "~" is estimated from the Modpack Index
-count of CurseForge packs minus the other loaders.
+- **1.21.1 and 1.20.1 are where the living packs are**, about equal on Modrinth and both at the CurseForge cap for
+  their main loader. 1.21.1 is NeoForge + Fabric (ATM10, Craftoria, StoneBlock 4, BMC5, Cobblemon packs), 1.20.1 is
+  Forge + Fabric (ATM9, BMC4, Prominence II). Forge 1.21.1 and NeoForge 1.20.1 are marginal.
+- **Newer 1.21.x and 26.x are Fabric-heavy** on Modrinth, mostly performance and vanilla+ packs; NeoForge content packs
+  there are still few (ATM11, NeoForge 26.1.2, is in alpha).
+- **1.12.2 to 1.19.2** keep many CurseForge packs from their time, but few are still updated.
 
-| MC | CF Forge | CF NeoForge | CF Fabric | Modrinth Forge / NeoForge / Fabric | CF packs ≥10k downloads, updated in the last 6 months |
-|---|---:|---:|---:|---|---:|
-| 1.12.2 | ~29,000 | – | 22 | 191 / 0 / 3 | 96 |
-| 1.16.5 | ~16,700 | 5 | 496 | 142 / 0 / 181 | 110 |
-| 1.18.2 | 8,255 | – | 1,218 | 168 / 0 / 269 | 124 |
-| 1.19.2 | ~12,000 | – | 2,382 | 363 / 1 / 629 | 155 |
-| **1.20.1** | **~38,000** | 298 | **4,708** | 3,015 / 263 / 4,290 | **614** |
-| **1.21.1** | 709 | **~11,000** | **3,002** | 25 / 2,111 / 3,032 | **409** |
-| 1.21.4 | – | 148 | 582 | 13 / 75 / 1,825 | 56 |
-| 1.21.11 | 96 | 305 | 1,033 | 19 / 82 / 2,834 | 94 |
-| 26.1.2 | 47 | 234 | 500 | 7 / 65 / 1,313 | 88 |
-| 26.2 | – | 144 | 625 | 3 / 52 / 1,400 | n/a |
-| 26.3 | – | 22 | 142 | 2 / 10 / 373 | n/a |
+What modders say:
 
-- On CurseForge, 1.21.1 is a NeoForge version (about 3.7 packs per Fabric pack) and 1.20.1 a Forge version (about 8
-  per Fabric pack). Fabric has about the same number of packs on both sites, so it matters more on Modrinth.
-- Top 100 CurseForge packs by downloads, by their latest file: 1.20.1 Forge 19 and Fabric 6, 1.12.2 Forge 21,
-  1.21.1 NeoForge 11 and Fabric 4, 1.16.5 Forge 11, 1.18.2 7, 1.19.2 6, 26.x 3.
-- Content packs sit on 1.20.1 Forge (ATM9, BMC4, Prominence II on Fabric) and 1.21.1 NeoForge (ATM10 22.1M,
-  Pixelmon 20.1M, StoneBlock 4, BMC5, Craftoria) or Fabric (Cobbleverse, Cobblemon packs). Forge 1.21.1 packs are
-  small (largest ~300K downloads) and often also tagged NeoForge.
-- 26.x is still small on CurseForge; ATM11 (NeoForge 26.1.2, 1.0M downloads) is the one large content pack. The 26.x
-  Fabric packs are mostly performance and vanilla+ packs.
-- Forge Config API Port, which the Fabric build needs, has 82.4M CurseForge and 67.3M Modrinth downloads and is in 13
-  of the 14 largest (≥90 mods) of the 60 most downloaded 1.21.1 Fabric packs on Modrinth.
+- NeoForge, 26.1 release post (2026-03-24): "There are strong indications that 26.1 will be the next stable modding
+  version, replacing 1.21.1, so I encourage all modders to port their mods to 26.1", flagged as a personal educated
+  guess, not an official team statement (https://neoforged.net/news/26.1release/).
+- 1.21.11 is the last obfuscated version and 26.1 the first unobfuscated one; Yarn stops at 1.21.11
+  (https://fabricmc.net/2025/12/05/12111.html, https://fabricmc.net/2026/03/14/261.html). Porting work therefore
+  concentrates on 26.1.x rather than on the 1.21.2–1.21.11 releases.
+- Content mods are following: Create's Fabric port (Create Fly) and ATM11 have 26.1.2 builds.
 
 ## Targets, in order
 
 | Order | Target | Loaders | Status | Why |
 |---|---|---|---|---|
-| 1 | 1.21.1 | NeoForge + Fabric | this branch (`dev-1.21.1`) | ~11,000 NeoForge packs on CurseForge plus 2,111 on Modrinth; Fabric 3,002 CF + 3,032 Modrinth |
-| 2 | 1.20.1 | Forge, then Fabric | to do (Stonecutter) | largest pack version (~38,000 Forge packs on CurseForge) and Capsule's most used live build (1.7M CF downloads); Fabric adds 4,708 CF + 4,290 Modrinth packs |
-| 3 | latest 26.x | NeoForge + Fabric | to do (Stonecutter) | where new packs go once the content mods (Create, ATM11) have moved; still < 1,000 packs per loader |
-| optional | 1.18.2, 1.19.2 | Forge | not planned | 10–15k CurseForge packs each, existing releases; same MDG legacyforge script as 1.20.1 if asked |
+| 1 | 1.21.1 | NeoForge + Fabric | this branch (`dev-1.21.1`) | most living packs today (326 active ≥ 10k on Modrinth, 10,000+ NeoForge on CurseForge) |
+| 2 | 1.20.1 | Forge + Fabric | to do (Stonecutter) | as many living packs as 1.21.1 on Modrinth and the largest Forge base on CurseForge |
+| 3 | 26.1.2 | NeoForge + Fabric | to do (Stonecutter) | the likely next stable modding version (NeoForge), where ATM11 and the content mods are going; may overtake 1.20.1 once packs migrate |
+| — | 1.21.2–1.21.11, 26.2+ | — | not planned | Fabric performance packs mostly; follow the next stable version instead of each release |
 | — | 1.21.1 Forge | — | not built | see "Deviation" below |
-| — | 1.16.5 and older | — | not built | big on CurseForge (1.12.2 and 1.16.5 are Capsule's top CF builds) but served by the existing releases; Java 8 and very different APIs |
-
-1.21.1 comes first because the codebase was already on it; 1.20.1 next because it is where the players are. The
-confirmed fixes of this branch should reach 1.20.1 users through it (BACKLOG "Backport the confirmed fixes to 1.20.1").
+| — | 1.19.2 and older | — | not built | few packs still updated; existing Capsule releases cover them |
 
 ### Deviation: no Forge 1.21.1 build
 
 The request asked for NeoForge and Forge (and Fabric if possible). For 1.21.1, Forge is a small minority of packs: 709
-on CurseForge (many also tagged NeoForge, the largest ~300K downloads) and 25 on Modrinth, against ~11,000 + 2,111
-NeoForge and 3,002 + 3,032 Fabric. So the second loader of this branch is Fabric: far more reach for the same work.
-Forge stays first-class for 1.20.1. The cost of a Forge 1.21.1 module is in BACKLOG ("Forge 1.21.1 module").
+on CurseForge and 25 on Modrinth (10 updated in the last 6 months), against 10,000+ and 1,291 NeoForge, 3,002 and 1,124
+Fabric. So the second loader of this branch is Fabric: far more reach for the same work. Forge stays first-class for
+1.20.1. The cost of a Forge 1.21.1 module is in BACKLOG ("Forge 1.21.1 module").
 
 ## How to build several versions
 
