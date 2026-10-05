@@ -25,13 +25,13 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [124](https://github.com/Lythom/capsule/issues/124) | Prefab blueprints do nothing (1.20.1) | DOUBT | | |
 | [123](https://github.com/Lythom/capsule/issues/123) | Use vanilla Loyalty instead of Recall | ENHANCEMENT | | |
 | [122](https://github.com/Lythom/capsule/issues/122) | Furnace drops experience on every capture | CONFIRMED-FIXED | f1ddf58 | `capturingAFurnaceDropsNoExperience`: "Did not expect experience_orb to exist" |
-| [121](https://github.com/Lythom/capsule/issues/121) | Waystones ghost blocks and broken doors (1.20.1) | DOUBT | | |
+| [121](https://github.com/Lythom/capsule/issues/121) | Waystones ghost blocks and broken doors (1.20.1) | OBSOLETE (1.21.1) | 07873fc | `waystoneStaysWhenCapturedWithADoor` with Waystones 21.1.46: waystones are never captured (`c:relocation_not_supported`), the door next to them moves without ghost blocks |
 | [120](https://github.com/Lythom/capsule/issues/120) | Vanilla 13³ capsule recipe | ENHANCEMENT (side fix in 55c7f6f) | 55c7f6f | `everyCapsuleRecipeLoadsWithResolvedIngredients`: 12 addon recipes "have an ingredient matching no item" |
 | [119](https://github.com/Lythom/capsule/issues/119) | SecurityCraft blocks can be captured | CONFIRMED-FIXED | 91cd01f | `onlyOwnersPassTheSecurityCraftOwnerCheck`: "another player cannot take the block" |
 | [118](https://github.com/Lythom/capsule/issues/118) | 1.21.1 please | OBSOLETE | | |
 | [117](https://github.com/Lythom/capsule/issues/117) | Crash placing a capsule with Ad Astra pipes | CONFIRMED-HARDENED | 6c5aed7 | none (client rendering) |
 | [116](https://github.com/Lythom/capsule/issues/116) | Deploy floats above snow layers and grass | CONFIRMED-FIXED | 372ba8e | `deployReplacesTheAimedSnowLayer`: "got BlockPos{x=4, y=3, z=4}" instead of the snow layer at y=2 |
-| [115](https://github.com/Lythom/capsule/issues/115) | Starter chest items missing (Sophisticated Storage) | CONFIRMED-FIXED | 4c18fbc | `templateCopiesDoNotShareBlockEntityData`: "source and copy share the same block entity tag" |
+| [115](https://github.com/Lythom/capsule/issues/115) | Starter chest items missing (Sophisticated Storage) | CONFIRMED-FIXED | 4c18fbc | `templateCopiesDoNotShareBlockEntityData`: "source and copy share the same block entity tag"; with Sophisticated Storage 1.6.1, `rewardBarrelsDoNotShareTheirContent`: "emptying the first barrel emptied the second one: 0 diamonds" |
 | [113](https://github.com/Lythom/capsule/issues/113) | Chest boat / minecart dupe | OBSOLETE | | |
 | [112](https://github.com/Lythom/capsule/issues/112) | Add `c:relocation_not_supported` to excluded | OBSOLETE | | |
 | [109](https://github.com/Lythom/capsule/issues/109) | "Invalid player data" with loot viewers | CONFIRMED-FIXED | a454161 | `capsuleLootEntryRoundTrips`, `lootTablesHoldingCapsulesEncode`: `CapsuleLootEntry cannot be cast to NestedLootTable` |
@@ -48,7 +48,7 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [91](https://github.com/Lythom/capsule/issues/91) | Claim bypass (Flan) | CONFIRMED-FIXED (part 1), part 2 CONFIRMED-BACKLOG | 65036a2 | `instantQueryIsRefusedForNonInstantCapsules`, `instantQueryIsRefusedOutOfRange`: the stone was captured |
 | [90](https://github.com/Lythom/capsule/issues/90) | Recall not obtainable / not in JEI | CONFIRMED-FIXED | 95e534b | `recallIsOfferedByEnchantingTables`: "recall should be in #minecraft:in_enchanting_table" |
 | [89](https://github.com/Lythom/capsule/issues/89) | Height offset on blind deploy | CONFIRMED-FIXED | fd533d4 | `blindThrowDeploysOnTheGround`: "Expected Block of Gold, got Air at (relative: 4,1,4)" |
-| [88](https://github.com/Lythom/capsule/issues/88) | Preview visual glitch (1.18.2) | DOUBT | | |
+| [88](https://github.com/Lythom/capsule/issues/88) | Preview visual glitch (1.18.2) | DOUBT (1.21.1 preview checked visually, `docs/MANUAL_VALIDATION.md`) | | |
 | [85](https://github.com/Lythom/capsule/issues/85) | Cannot deploy "traveller's base" (1.12.2) | OBSOLETE (related fix 4f94c86) | | |
 | [84](https://github.com/Lythom/capsule/issues/84) | Crafting dupe, book says lapis | DOUBT | | |
 | [83](https://github.com/Lythom/capsule/issues/83) | Crash rendering fluids (1.19) | OBSOLETE | | |
@@ -67,11 +67,12 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [56](https://github.com/Lythom/capsule/issues/56) | ProjectRed wires free in blueprints | CONFIRMED-FIXED | 86600be | `pottedPlantsAreNotFree`: "a flower pot should be required, got {}" |
 
 Totals: 13 CONFIRMED-FIXED (#91 counted once), 4 CONFIRMED-HARDENED, 1 CONFIRMED-BACKLOG (+ #91 part 2),
-14 OBSOLETE, 5 ENHANCEMENT, 8 DOUBT.
+15 OBSOLETE, 5 ENHANCEMENT, 7 DOUBT.
 
 ## Bugs found without an issue
 
-Found while writing the tests; each has its own commit and a test that failed before the fix.
+Found while writing the tests and the client smoke test; each has its own commit, with a test that failed before the
+fix or, for client rendering, before/after screenshots.
 
 | Id | Bug | Commit | Fail-before evidence |
 |---|---|---|---|
@@ -83,6 +84,10 @@ Found while writing the tests; each has its own commit and a test that failed be
 | N7 | Capsules were never added to dungeon loot: the default `lootTablesList` held `ResourceKey[minecraft:loot_table / ...]` strings | 5517bd6 | `defaultLootTablesHoldTheCapsulePool`: "simple dungeon should hold the capsule pool" |
 | N8 | `/reload` did not refresh cached templates on dedicated servers (reload listener registered on the physical client only) | 4a47699 | `reloadRefreshesRewardTemplates`: "/reload should refresh reward templates" |
 | N9 | Addon capsule recipes (tin, lead...) loaded with empty ingot tags; dead `data/forge/tags/items/ingots` files | 55c7f6f | `everyCapsuleRecipeLoadsWithResolvedIngredients`: 12 recipes with an ingredient matching no item |
+| N10 | The server answered a preview query with the template of the item it saw in hand: after switching capsules the client cached the wrong preview (blueprint showing the linked capsule's house on Fabric) | b7b10b5 | `previewAnswersTheAskedCapsule`: "the preview of the gold capsule should use the gold capsule, got 1 capsule:capsule" |
+| N11 | Capsules held edge-on in first and third person (Minecraft 1.8 hand transforms in the item models) | 0c63f8a | client smoke screenshots (rendering, no automated test) |
+| N12 | NeoForge full preview without multipart blocks (walls, fences, panes, modded multipart blocks): `RenderType.LINES` passed to `tesselateWithAO` | dbc35e5 | client smoke screenshots `17-blueprint-preview` vs `18-blueprint-deployed` |
+| N13 | Every capture base looked activated until an empty capsule had been held (regression of the N6 fix) | 4c1e887 | client smoke screenshots `01-capture-base` vs `02-capture-base-with-empty-capsule` |
 
 ## Ready-to-post comments
 
@@ -112,9 +117,10 @@ Fixed in the next 1.21.1 build. The experience stored in a captured furnace is n
 stays in the furnace and is awarded when you take its output after deploying.
 
 ### #121
-I can't reproduce this without Waystones and the 1.20.1 build. It is in the backlog to test on 1.21.1 with Waystones
-(capture and deploy a waystone next to a door, compare client and server block states). If you can still reproduce
-it, a world or a log would help.
+Tested on 1.21.1 with Waystones 21.1.46: Waystones now tags its blocks `c:relocation_not_supported`, which Capsule
+excludes, so capsules (overpowered ones included) leave waystones in place, with their data. A door next to a waystone
+is captured, deployed and undeployed with both halves and no ghost block (automated test with Waystones). I could not
+test the 1.20.1 build; if it still happens there, a world or a log would help. Closing for 1.21.1.
 
 ### #120
 Tracked as an enhancement. Note that 13×13×13 is already reachable with vanilla items: an emerald capsule (11) plus
@@ -141,6 +147,7 @@ its place, like a placed block, instead of one block above.
 ### #115
 Fixed in the next 1.21.1 build. Starter copies shared their block entity data with the cached template; a barrel
 keeping that data as its storage (Sophisticated Storage) emptied every other copy. Each copy now gets its own data.
+Checked with Sophisticated Storage 1.6.1: a starter barrel deployed twice keeps its content in both copies.
 
 ### #113
 Fixed since the 1.20.4 version: container entities are emptied before being removed during a capture. Closing.
@@ -208,8 +215,10 @@ use a datapack (`#capsule:enchantable/recall` item tag, `data/capsule/enchantmen
 Fixed in the next 1.21.1 build: a capsule thrown without preview target deployed one block above the ground.
 
 ### #88
-The preview renderer was rewritten since 1.18.2. Tracked in the backlog for a visual check on 1.21.1 (opacity and
-occlusion of the full preview).
+The preview renderer was rewritten since 1.18.2. On 1.21.1 the full preview draws the textured blocks where the
+content will deploy, opaque, so it hides what is behind it; the next build also fixes walls, fences and other multipart
+blocks missing from the preview on NeoForge, and wrong previews right after switching capsules. Could you tell whether
+the glitch on your screenshot still happens on 1.21.1?
 
 ### #85
 The 1.12.2 asset copy and this template no longer exist. Related: in the next 1.21.1 build, template files with names

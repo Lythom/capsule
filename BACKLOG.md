@@ -46,15 +46,6 @@ Issues: https://github.com/Lythom/capsule/issues/124
 nothing" without any error. Make `StructureSaver.createBlueprintTemplate` report `blueprintCreationError` and log the
 path when the source palette is empty; ask the reporter for the files. Effort: S.
 
-### Waystones and double blocks with block entities
-Issues: https://github.com/Lythom/capsule/issues/121
-
-Ghost blocks and broken doors after capturing/deploying waystones (1.20.1). Hypothesis: Waystones' own removal and
-validation logic reacts to Capsule removing one half at a time (BARRIER then AIR, flags 20/2) and to the final
-`blockUpdated` pass. Check with Waystones on 1.21.1 (now possible as a GameTest runtime dependency like
-SecurityCraft); possible mitigation: remove double blocks top half first, skip `blockUpdated` for unchanged states.
-Effort: M.
-
 ### Full preview with modded blocks (Ad Astra, Integrated Dynamics, farmland mods, Mob Grinding Utils)
 Issues: https://github.com/Lythom/capsule/issues/117, https://github.com/Lythom/capsule/issues/94,
 https://github.com/Lythom/capsule/issues/76, https://github.com/Lythom/capsule/issues/81
@@ -73,10 +64,10 @@ cannot-reproduce unless a 1.21.1 log shows up. Effort: S.
 ### Full preview opacity and occlusion
 Issues: https://github.com/Lythom/capsule/issues/88
 
-The preview uses a solid shader with translucent transparency, but vertices have alpha 1, so blocks render opaque
-and can hide the player's surroundings. Visual check on 1.21.1 (client smoke test, phase 6); consider the
-translucent shader with a lower vertex alpha. Also: four starter files are named `_stater_*` (labels show "Stater").
-Effort: S to M.
+Checked on 1.21.1 with the client smoke test (`docs/MANUAL_VALIDATION.md`): the full preview draws textured blocks with
+a solid shader and vertex alpha 1, so it is opaque and hides what is behind it. Consider the translucent shader with a
+lower vertex alpha (sorting artifacts to check), or a lighter tint. Also: four starter files are named `_stater_*`
+(labels show "Stater"). Effort: S to M.
 
 ### Blueprint crafting dupe and prefab refund slots
 Issues: https://github.com/Lythom/capsule/issues/84
@@ -98,8 +89,8 @@ Issues: https://github.com/Lythom/capsule/issues/69
 
 OptiFine does not exist on NeoForge 1.21.1. Test the preview with Iris and a common shader pack. Hypotheses: the
 custom render type drawn at `AFTER_TRANSLUCENT_BLOCKS` is ignored by shader pipelines (flush it explicitly or render
-later, or fall back to wireframe when Iris is loaded); `tesselateWithAO` gets `RenderType.LINES` instead of the
-model's render types. Effort: M.
+later, or fall back to wireframe when Iris is loaded). The preview works with Sodium without shaders (client smoke test
+with the Create: OneBlock pack). Effort: M.
 
 ## Enhancements
 
@@ -156,15 +147,15 @@ N6 capture base, reload listener, preview hardening. Either cherry-pick on the 1
 from the multi-version setup below. Effort: M (cherry-picks) to L (with tests).
 
 ### Fabric parity gaps
-Everything automated passes on Fabric (10 unit tests, the 40 common GameTests, the production server smoke test).
+Everything automated passes on Fabric (10 unit tests, the 41 common GameTests, the client smoke test, the production
+server smoke test).
 Not verified on Fabric:
 - JEI: the plugin is declared through the `jei_mod_plugin` entrypoint but never loaded in a test. JEI for Fabric
   1.21.1 is built with Loom 1.18, which Loom 1.17 refuses as a dependency; Loom 1.18 needs Gradle running on Java 25.
   Check: Java 25 for Gradle, Loom 1.18, `modLocalRuntime` JEI, look at the capsule recipes in a dev client.
-- Client side: deploy and recall previews (`WorldRenderEvents.AFTER_TRANSLUCENT`, Fabric fluid render handlers),
-  capture marker renderer, item colors and states, label GUI, left click in the air (`Minecraft#startAttack` mixin),
-  JEI/creative tab recipe list (`ClientPacketListener#handleUpdateRecipes` mixin). The Fabric dev client boots to the
-  title screen; the rest belongs to the client smoke test (plan phase 6).
+- Client side is covered by the client smoke test on Fabric too (previews, rotation by left click on a block, recall
+  box, capture base renderer and highlight, item colors and states, creative tab contents from the synced recipes),
+  except the label GUI and left click in the air (`Minecraft#startAttack` mixin).
 - Protection: claims are probed through Common Protection API (jar-in-jar), only for mods implementing it, and only
   with a player: capture bases (dispenser path) are not checked. On NeoForge the dirt `EntityPlaceEvent` probe is
   posted even without a player.
@@ -194,6 +185,21 @@ multiloader layout, one build script per loader (ModDevGradle, ModDevGradle lega
 Fabric), version-specific code behind `//? if` comments. Effort: L.
 
 ## Other findings
+
+### Capsule tooltips end with "Dyed"
+The base color is a `minecraft:dyed_color` component created with `show_in_tooltip` true (`MinecraftNBT.setColor`), so
+every capsule made by commands, loot or dyeing lists the vanilla "Dyed" line. Create it with `show_in_tooltip` false;
+existing items keep their flag. Effort: S.
+
+### Capture bases show the redstone state
+The capture base highlight (activated top while an empty capsule is held) is the dispenser `triggered` property, also
+set by redstone: a powered capture base looks activated. A client side flag on `BlockEntityCapture` read by a model
+property or by `CaptureBER` would separate them. Effort: S to M.
+
+### Client smoke test: JEI on Fabric, modpacks with Sinytra Connector
+The client smoke test skips JEI on Fabric (not loadable with Loom 1.17), and Sinytra Connector cannot start in a dev
+client ("Could not determine clean minecraft artifact path"), so Connector packs need a production client (for example
+HeadlessMC with the release jar). Effort: M.
 
 ### Updated default templates never reach existing installs
 `Files.populateFolder` only copies `initialconfig` templates when the target folder does not exist, so fixes to
