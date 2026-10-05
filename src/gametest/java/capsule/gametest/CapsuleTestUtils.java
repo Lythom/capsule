@@ -12,7 +12,9 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.Clearable;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -68,34 +70,23 @@ public class CapsuleTestUtils {
     }
 
     /**
-     * Same as GameTestHelper.makeMockServerPlayerInLevel but in survival mode, standing at relativePos.
+     * A survival player standing at relativePos. Unlike GameTestHelper.makeMockServerPlayerInLevel it is not added to the
+     * player list, so payloads broadcast by the mod never reach its connection, which did not negotiate the mod channels.
      */
     public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos) {
-        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-survival-player"), false);
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
-            @Override
-            public boolean isSpectator() {
-                return false;
-            }
-
-            @Override
-            public boolean isCreative() {
-                return false;
-            }
-        };
+        CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-player"), false);
+        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
         new EmbeddedChannel(connection);
-        helper.getLevel().getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        new ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
         Vec3 pos = helper.absoluteVec(Vec3.atBottomCenterOf(relativePos));
-        player.teleportTo(helper.getLevel(), pos.x, pos.y, pos.z, 0, 0);
+        player.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        helper.getLevel().addNewPlayer(player);
         return player;
     }
 
-    /**
-     * Mock players never negotiated the mod network channels: remove them before capsule payloads get sent to them.
-     */
     public static void removePlayer(ServerPlayer player) {
-        player.server.getPlayerList().remove(player);
+        player.serverLevel().removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
     }
 
     public static void assertTrue(GameTestHelper helper, boolean condition, String message) {
