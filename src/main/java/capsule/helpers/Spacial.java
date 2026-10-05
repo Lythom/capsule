@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +35,11 @@ public class Spacial {
         return findBottomBlock(ItemEntity.getX(), ItemEntity.getY(), ItemEntity.getZ());
     }
 
+    /**
+     * The block an entity at this position stands on, or the block it is in when it is not on the ground.
+     */
     public static BlockPos findBottomBlock(double x, double y, double z) {
-        return BlockPos.betweenClosedStream(BlockPos.containing(x, y - 1, z), BlockPos.containing(x + 1, y + 1, z + 1))
-                .min(Comparator.comparingDouble((BlockPos pos) -> pos.distToLowCornerSqr(x, y, z))).orElse(null);
+        return BlockPos.containing(x, y - 1.0E-3, z);
     }
 
     public static boolean isImmergedInLiquid(Entity entity) {
