@@ -4,7 +4,6 @@ import capsule.platform.ClientPlatform;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -22,7 +21,7 @@ public class NeoForgeClientPlatform implements ClientPlatform {
     @Override
     public void tesselateWithAO(ModelBlockRenderer renderer, BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos,
                                 PoseStack poseStack, VertexConsumer consumer, RandomSource random, long seed, int packedOverlay) {
-        renderer.tesselateWithAO(level, model, state, pos, poseStack, consumer, true, random, seed, packedOverlay, ModelData.EMPTY, RenderType.LINES);
+        renderer.tesselateWithAO(level, model, state, pos, poseStack, consumer, true, random, seed, packedOverlay, ModelData.EMPTY, null);
     }
 
     @Override

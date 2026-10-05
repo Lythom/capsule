@@ -14,7 +14,7 @@ import net.minecraft.world.level.material.FluidState;
 public interface ClientPlatform {
 
     /**
-     * ModelBlockRenderer#tesselateWithAO, with the loader's empty model data.
+     * ModelBlockRenderer#tesselateWithAO of every render type of the model, with the loader's empty model data.
      */
     void tesselateWithAO(ModelBlockRenderer renderer, BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos,
                          PoseStack poseStack, VertexConsumer consumer, RandomSource random, long seed, int packedOverlay);
