@@ -34,6 +34,13 @@ neoForge {
             programArgument '--nogui'
         }
 
+        // Plays the client smoke scenario (screenshots, checks) then exits, non-zero on failure. See scripts/client-smoke.sh.
+        clientSmoke {
+            client()
+            systemProperty 'capsule.clientsmoke', 'true'
+            programArguments.addAll '--width', '1280', '--height', '720'
+        }
+
         // Runs every capsule GameTest headless then exits, with the number of failed required tests as exit code.
         gameTestServer {
             type = "gameTestServer"
@@ -65,6 +72,7 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    gametestCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
 
     // mods Capsule integrates with, exercised by the GameTests
     gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"

@@ -3,11 +3,14 @@
   "id": "capsule-gametest",
   "version": "1.0.0",
   "name": "Capsule GameTests",
-  "description": "Dev only: registers the capsule GameTests.",
+  "description": "Dev only: registers the capsule GameTests and the client smoke test.",
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
       "capsule.gametest.CapsuleGameTests"
+    ],
+    "client": [
+      "capsule.clientsmoke.FabricClientSmoke"
     ]
   },
   "depends": {

@@ -17,6 +17,7 @@ neoForge {
 
 dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    gametestCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     // shipped by NeoForge, and on Fabric by Forge Config API Port
     compileOnly "com.electronwill.night-config:core:${night_config_version}"
 }

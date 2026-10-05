@@ -70,6 +70,13 @@ loom {
             server()
             runDir 'runs/server'
         }
+        // Plays the client smoke scenario (screenshots, checks) then exits, non-zero on failure. See scripts/client-smoke.sh.
+        clientSmoke {
+            client()
+            runDir 'runs/clientSmoke'
+            vmArg '-Dcapsule.clientsmoke=true'
+            programArgs '--width', '1280', '--height', '720'
+        }
         // Runs every capsule GameTest headless then exits, non-zero if a required test failed.
         gameTestServer {
             server()
