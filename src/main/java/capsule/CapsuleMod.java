@@ -74,6 +74,11 @@ public class CapsuleMod {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
+        NeoForge.EVENT_BUS.addListener(CapsuleMod::addReloadListeners);
+    }
+
+    public static void addReloadListeners(final AddReloadListenerEvent event) {
+        event.addListener(new StructureSaverReloadListener());
     }
 
     public static void serverStarting(final ServerStartingEvent e) {
@@ -154,11 +159,6 @@ final class CapsuleForgeSubscriber {
     @OnlyIn(Dist.CLIENT)
     public static void registerRecipes(RecipesUpdatedEvent event) {
         CapsuleItems.registerRecipesClient(event.getRecipeManager());
-    }
-
-    @SubscribeEvent
-    public static void setup(AddReloadListenerEvent event) {
-        event.addListener(new StructureSaverReloadListener());
     }
 }
 
