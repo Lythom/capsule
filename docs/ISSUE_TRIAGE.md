@@ -13,8 +13,8 @@ Classifications:
 - **ENHANCEMENT**: feature request, see `BACKLOG.md`.
 - **DOUBT**: not reproducible from the code or the information given, see `BACKLOG.md` for what to check.
 
-Test names refer to GameTests in `src/gametest/java/capsule/gametest` or JUnit tests in `src/test/java` (see
-`docs/TESTING.md`).
+Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or JUnit tests in
+`common/src/test/java` (see `docs/TESTING.md`).
 
 ## Summary
 

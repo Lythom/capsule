@@ -155,6 +155,34 @@ undeploy delay, #56 item-less blocks, #116 deploy position, #91 request validati
 N6 capture base, reload listener, preview hardening. Either cherry-pick on the 1.20.1 branch or, better, build 1.20.1
 from the multi-version setup below. Effort: M (cherry-picks) to L (with tests).
 
+### Fabric parity gaps
+Everything automated passes on Fabric (10 unit tests, the 40 common GameTests, the production server smoke test).
+Not verified on Fabric:
+- JEI: the plugin is declared through the `jei_mod_plugin` entrypoint but never loaded in a test. JEI for Fabric
+  1.21.1 is built with Loom 1.18, which Loom 1.17 refuses as a dependency; Loom 1.18 needs Gradle running on Java 25.
+  Check: Java 25 for Gradle, Loom 1.18, `modLocalRuntime` JEI, look at the capsule recipes in a dev client.
+- Client side: deploy and recall previews (`WorldRenderEvents.AFTER_TRANSLUCENT`, Fabric fluid render handlers),
+  capture marker renderer, item colors and states, label GUI, left click in the air (`Minecraft#startAttack` mixin),
+  JEI/creative tab recipe list (`ClientPacketListener#handleUpdateRecipes` mixin). The Fabric dev client boots to the
+  title screen; the rest belongs to the client smoke test (plan phase 6).
+- Protection: claims are probed through Common Protection API (jar-in-jar), only for mods implementing it, and only
+  with a player: capture bases (dispenser path) are not checked. On NeoForge the dirt `EntityPlaceEvent` probe is
+  posted even without a player.
+- Blueprint material sources use Transfer API storages; a storage that is not slotted is read as its list of views,
+  which a modded storage may reorder between the listing and the extraction. Check with a modded storage (e.g.
+  a Fabric storage mod) linked to a blueprint.
+Effort: S to M per point.
+
+### GameTests against the release jars
+`scripts/prod-smoke.sh` boots the release jars but cannot run the GameTests there: NeoForge only registers GameTests
+outside production (`GameTestHooks.isGametestEnabled`), and the tests are not in the jars. Fabric could: a small
+`capsule-gametest` jar (the fabric gametest source set) plus `fabric-gametest-api-v1` in the smoke server's mods
+folder, started with `-Dfabric-api.gametest`. Effort: S (Fabric), M (NeoForge, needs a hook to enable GameTests).
+
+### Update checker URL
+`neoforge.mods.toml` points `updateJSONURL` to `mc-curse-update-checker.herokuapp.com`, which no longer answers: every
+NeoForge start logs "Failed to process update information". Remove it or publish an update JSON. Effort: S.
+
 ### REI and EMI on Fabric
 JEI is the only recipe viewer plugin. On Fabric, REI and EMI are common; add plugins showing capsule recipes, prefab
 blueprints and the recovery/upgrade/dye special recipes. Effort: M.

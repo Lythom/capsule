@@ -1,5 +1,30 @@
 # Changelog
 
+**1.21.1-9.0.x : Fabric support and bug fixes**
+
+- New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build; JEI on Fabric is untested
+- The NeoForge jar is now named `Capsule-neoforge-1.21.1-...jar`, built with ModDevGradle against NeoForge 21.1.255; it requires NeoForge 21.1 or later and Minecraft 1.21.1
+- Fix server crash or kick with install paths containing reserved Windows names, e.g. Flatpak ATLauncher (#125)
+- Fix furnaces dropping their stored experience on every capture (#122)
+- Fix SecurityCraft blocks being captured by players who do not own them (#119)
+- Fix deploys floating above snow layers and grass (#116)
+- Fix starter and reward capsules sharing block entity data with their template, which emptied Sophisticated Storage containers (#115)
+- Fix "Invalid player data" disconnections with mods serializing loot tables (#109)
+- Fix infested blocks in the uncommon well loot capsule (#100)
+- Fix the recall enchantment bringing capsules back before they could deploy (#98)
+- Fix capsule throws being accepted by the server for non-instant capsules or out of reach positions (#91, part 1)
+- The recall enchantment can now be obtained from enchanting tables (#90)
+- Fix blind throws deploying one block above the ground (#89)
+- Fix instant capsules that could not be undeployed after a relog or restart (#75)
+- Fix blocks without item (potted plants...) being free in blueprints (#56)
+- Fix capsules never appearing in dungeon loot on 1.21.1
+- Fix the addon capsule recipes (tin, lead, silver...) showing without their ingot
+- Fix a new capture base ignoring its first redstone signal
+- Fix template files with uppercase letters or spaces disconnecting players on login, and `.nbt` names being cut
+- Fix invalid ids in the `excludedBlocks` config crashing the game, and block tags in it being ignored
+- Fix `/reload` not refreshing templates on dedicated servers
+- Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81)
+
 **1.21.1-9.0.117 : Bug fixes and code cleanup**
 
 - Fix Capture Base not working as a dispenser (typed block entity lookup change in 1.21.1)
