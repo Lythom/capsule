@@ -397,7 +397,7 @@ public class CapsulePreviewHandler {
                 if (te.getSize() != size || te.getColor() != color) {
                     te.setSizeAndColor(size, color);
                     if (te.getBlockState().hasProperty(BlockCapsuleMarker.TRIGGERED)) {
-                        worldIn.setBlock(te.getBlockPos(), te.getBlockState().setValue(BlockCapsuleMarker.TRIGGERED, size <= 0), 2);
+                        worldIn.setBlock(te.getBlockPos(), te.getBlockState().setValue(BlockCapsuleMarker.TRIGGERED, size > 0), 2);
                     }
                 }
             }
