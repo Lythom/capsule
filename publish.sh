@@ -16,14 +16,16 @@ set -euo pipefail
 #   ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]
 #
 # Examples:
-#   ./publish.sh --dry-run build/libs/Capsule-1.21.1-9.0.42.jar beta
-#   ./publish.sh build/libs/Capsule-1.21.1-9.0.42.jar release
+#   ./publish.sh --dry-run neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.42.jar beta
+#   ./publish.sh fabric/build/libs/Capsule-fabric-1.21.1-9.0.42.jar release
 #
 # Options:
 #   --dry-run  Show the commands that would be executed without actually uploading
 #
-# The version is inferred from the jar filename.
-# Format: Capsule-<mcversion>-<major>.<minor>.<BUILD_ID>.jar
+# The loader and version are inferred from the jar filename, one jar per call.
+# Format: Capsule-<neoforge|fabric>-<mcversion>-<major>.<minor>.<BUILD_ID>.jar
+# The Fabric jar is published with its required dependencies: Fabric API and
+# Forge Config API Port.
 # =============================================================================
 
 DRY_RUN=false
@@ -38,7 +40,7 @@ if [ -z "$JAR_FILE" ]; then
     echo "ERROR: No jar file specified."
     echo ""
     echo "Usage: ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]"
-    echo "Example: ./publish.sh build/libs/Capsule-1.21.1-9.0.42.jar release"
+    echo "Example: ./publish.sh neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.42.jar release"
     exit 1
 fi
 
@@ -49,13 +51,32 @@ fi
 
 RELEASE_TYPE="${2:-release}"
 MODRINTH_PROJECT_ID="Pt0JOpyz"
-LOADER="neoforge"
 
-# Extract version info from jar name: Capsule-1.21.1-9.0.42.jar -> 1.21.1-9.0.42
+# Extract loader and version info from jar name: Capsule-fabric-1.21.1-9.0.42.jar -> fabric, 1.21.1-9.0.42
 JAR_NAME=$(basename "$JAR_FILE")
-VERSION=$(echo "$JAR_NAME" | sed 's/^Capsule-//; s/\.jar$//')
+LOADER=$(echo "$JAR_NAME" | sed -n 's/^Capsule-\(neoforge\|fabric\)-.*\.jar$/\1/p')
+VERSION=$(echo "$JAR_NAME" | sed 's/^Capsule-[a-z]*-//; s/\.jar$//')
 # Extract MC version: 1.21.1-9.0.42 -> 1.21.1
 MINECRAFT_VERSION=$(echo "$VERSION" | sed 's/-.*//')
+
+# Loader name as listed by CurseForge, and required dependencies (Modrinth project ids, CurseForge slugs)
+case "$LOADER" in
+    neoforge)
+        LOADER_NAME="NeoForge"
+        MR_DEPENDENCIES='[]'
+        CF_RELATIONS='[]'
+        ;;
+    fabric)
+        LOADER_NAME="Fabric"
+        # Fabric API, Forge Config API Port
+        MR_DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}, {"project_id": "ohNO6lps", "dependency_type": "required"}]'
+        CF_RELATIONS='[{"slug": "fabric-api", "type": "requiredDependency"}, {"slug": "forge-config-api-port-fabric", "type": "requiredDependency"}]'
+        ;;
+    *)
+        echo "ERROR: Cannot read the loader from $JAR_NAME, expected Capsule-<neoforge|fabric>-<mcversion>-<version>.jar"
+        exit 1
+        ;;
+esac
 
 # Validate env vars (skip in dry-run mode)
 if [ "$DRY_RUN" = false ]; then
@@ -76,7 +97,7 @@ echo "Publishing: $JAR_NAME"
 echo "Version:    $VERSION"
 echo "MC version: $MINECRAFT_VERSION"
 echo "Type:       $RELEASE_TYPE"
-echo "Loader:     $LOADER"
+echo "Loader:     $LOADER_NAME"
 if [ "$DRY_RUN" = true ]; then
     echo "Mode:       DRY RUN (no uploads will be made)"
 fi
@@ -112,16 +133,17 @@ if [ "$DRY_RUN" = true ]; then
     echo "curl -s -H 'X-Api-Token: \$CURSEFORGE_TOKEN' \\"
     echo "    'https://minecraft.curseforge.com/api/game/versions'"
     echo ""
-    echo "# 2. Upload file (replace <MC_VERSION_ID> and <NEOFORGE_ID> from step 1)"
+    echo "# 2. Upload file (replace <MC_VERSION_ID> and <LOADER_ID> by the ids of '$MINECRAFT_VERSION' and '$LOADER_NAME' from step 1)"
     cat <<DRYEOF
 curl -X POST \\
     -H 'X-Api-Token: \$CURSEFORGE_TOKEN' \\
     -F 'metadata={
   "changelog": $JSON_CHANGELOG,
   "changelogType": "markdown",
-  "displayName": "Capsule $VERSION",
-  "gameVersions": [<MC_VERSION_ID>, <NEOFORGE_ID>],
-  "releaseType": "$RELEASE_TYPE"
+  "displayName": "Capsule $VERSION ($LOADER_NAME)",
+  "gameVersions": [<MC_VERSION_ID>, <LOADER_ID>],
+  "releaseType": "$RELEASE_TYPE",
+  "relations": {"projects": $CF_RELATIONS}
 };type=application/json' \\
     -F 'file=@$JAR_FILE;type=application/java-archive' \\
     'https://minecraft.curseforge.com/api/projects/\$CURSEFORGE_PROJECT_ID/upload-file'
@@ -134,10 +156,10 @@ DRYEOF
 curl -X POST \\
     -H 'Authorization: \$MODRINTH_TOKEN' \\
     -F 'data={
-  "name": "Capsule $VERSION",
-  "version_number": "$VERSION",
+  "name": "Capsule $VERSION ($LOADER_NAME)",
+  "version_number": "$VERSION-$LOADER",
   "changelog": $JSON_CHANGELOG,
-  "dependencies": [],
+  "dependencies": $MR_DEPENDENCIES,
   "game_versions": ["$MINECRAFT_VERSION"],
   "version_type": "$RELEASE_TYPE",
   "loaders": ["$LOADER"],
@@ -169,12 +191,12 @@ for v in versions:
         break
 " 2>/dev/null || echo "")
 
-    # Find the ID for NeoForge loader
-    CF_NEOFORGE_ID=$(echo "$CF_VERSIONS_JSON" | python3 -c "
+    # Find the ID for the loader
+    CF_LOADER_ID=$(echo "$CF_VERSIONS_JSON" | python3 -c "
 import json, sys
 versions = json.load(sys.stdin)
 for v in versions:
-    if 'neoforge' in v['name'].lower() or 'NeoForge' in v['name']:
+    if v['name'].lower() == '$LOADER':
         print(v['id'])
         break
 " 2>/dev/null || echo "")
@@ -193,15 +215,14 @@ for v in json.load(sys.stdin):
     fi
 
     echo "CurseForge MC version ID: $CF_MC_VERSION_ID"
-    echo "CurseForge NeoForge ID:   $CF_NEOFORGE_ID"
+    echo "CurseForge $LOADER_NAME ID: $CF_LOADER_ID"
 
-    # Build gameVersions array
-    if [ -n "$CF_NEOFORGE_ID" ]; then
-        CF_GAME_VERSIONS="[$CF_MC_VERSION_ID, $CF_NEOFORGE_ID]"
-    else
-        echo "WARNING: NeoForge loader ID not found, uploading with MC version only"
-        CF_GAME_VERSIONS="[$CF_MC_VERSION_ID]"
+    # Build gameVersions array: without the loader the file would be listed for every loader
+    if [ -z "$CF_LOADER_ID" ]; then
+        echo "ERROR: CurseForge loader ID not found for $LOADER_NAME"
+        exit 1
     fi
+    CF_GAME_VERSIONS="[$CF_MC_VERSION_ID, $CF_LOADER_ID]"
 
     # ---- Upload to CurseForge ----
     echo ""
@@ -211,9 +232,10 @@ for v in json.load(sys.stdin):
 {
   "changelog": $JSON_CHANGELOG,
   "changelogType": "markdown",
-  "displayName": "Capsule $VERSION",
+  "displayName": "Capsule $VERSION ($LOADER_NAME)",
   "gameVersions": $CF_GAME_VERSIONS,
-  "releaseType": "$RELEASE_TYPE"
+  "releaseType": "$RELEASE_TYPE",
+  "relations": {"projects": $CF_RELATIONS}
 }
 METAEOF
     )
@@ -241,10 +263,10 @@ METAEOF
 
     MR_DATA=$(cat <<MREOF
 {
-  "name": "Capsule $VERSION",
-  "version_number": "$VERSION",
+  "name": "Capsule $VERSION ($LOADER_NAME)",
+  "version_number": "$VERSION-$LOADER",
   "changelog": $JSON_CHANGELOG,
-  "dependencies": [],
+  "dependencies": $MR_DEPENDENCIES,
   "game_versions": ["$MINECRAFT_VERSION"],
   "version_type": "$RELEASE_TYPE",
   "loaders": ["$LOADER"],

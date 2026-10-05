@@ -17,27 +17,41 @@ jobs:
 
       - restore_cache:
           keys:
-            - v3-dependencies-{{ checksum "build.gradle" }}
-            - v3-dependencies-
+            - v4-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - v4-dependencies-
 
       - run: echo 'export GRADLE_OPTS="-Dfile.encoding=UTF-8"' >> $BASH_ENV
-      - run: rm -rf build/libs
       - run: chmod +x ./gradlew
-      - run: ./gradlew build -Pbuild_id=${CIRCLE_BUILD_NUM} --stacktrace --info
+      # unit tests and GameTests of both loaders run in check
+      - run: ./gradlew build -Pbuild_id=${CIRCLE_BUILD_NUM} --stacktrace
 
       - save_cache:
           paths:
             - ~/.gradle
-          key: v3-dependencies-{{ checksum "build.gradle" }}
+          key: v4-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+
+      - store_test_results:
+          path: neoforge/build/test-results
+
+      - store_test_results:
+          path: fabric/build/test-results
+
+      - store_test_results:
+          path: fabric/build/gametest
 
       - store_artifacts:
-          path: build/libs
-          destination: jars
+          path: neoforge/build/libs
+          destination: jars/neoforge
+
+      - store_artifacts:
+          path: fabric/build/libs
+          destination: jars/fabric
 
       - persist_to_workspace:
           root: .
           paths:
-            - build/libs
+            - neoforge/build/libs
+            - fabric/build/libs
             - publish.sh
             - CHANGELOG.md
 
@@ -54,15 +68,18 @@ jobs:
       - run:
           name: Publish to CurseForge and Modrinth
           command: |
-            JAR_FILE=$(find build/libs -name "Capsule-*.jar" ! -name "*-sources.jar" | head -1)
-            if [ -z "$JAR_FILE" ]; then
-              echo "ERROR: No jar found in build/libs/"
-              exit 1
-            fi
-            echo "Publishing: $JAR_FILE"
             chmod +x ./publish.sh
-            ./publish.sh "$JAR_FILE" "${RELEASE_TYPE:-beta}"
+            for LOADER in neoforge fabric; do
+              JAR_FILE=$(find $LOADER/build/libs -name "Capsule-$LOADER-*.jar" ! -name "*-sources.jar" | head -1)
+              if [ -z "$JAR_FILE" ]; then
+                echo "ERROR: No $LOADER jar found in $LOADER/build/libs/"
+                exit 1
+              fi
+              echo "Publishing: $JAR_FILE"
+              ./publish.sh "$JAR_FILE" "${RELEASE_TYPE:-beta}"
+            done
 
+# Pushing any branch builds and tests; a release can only be published from the 1.21.1 branch.
 workflows:
   version: 2
   build_and_publish:
@@ -72,6 +89,12 @@ workflows:
           type: approval
           requires:
             - build
+          filters:
+            branches:
+              only: 1.21.1
       - publish:
           requires:
             - hold
+          filters:
+            branches:
+              only: 1.21.1
