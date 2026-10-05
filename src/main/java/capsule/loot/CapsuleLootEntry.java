@@ -1,23 +1,32 @@
 package capsule.loot;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntries;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 
@@ -26,12 +35,24 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
  */
 public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
+    public static final MapCodec<CapsuleLootEntry> CODEC = RecordCodecBuilder.mapCodec(instance -> instance
+            .group(Codec.STRING.fieldOf("templates_path").forGetter(entry -> entry.templatesPath))
+            .and(singletonFields(instance))
+            .apply(instance, CapsuleLootEntry::new));
+
+    private static final DeferredRegister<LootPoolEntryType> ENTRY_TYPES = DeferredRegister.create(Registries.LOOT_POOL_ENTRY_TYPE, CapsuleMod.MODID);
+    public static final Supplier<LootPoolEntryType> TYPE = ENTRY_TYPES.register("capsule", () -> new LootPoolEntryType(CODEC));
+
+    public static void registerEntryType(IEventBus modEventBus) {
+        ENTRY_TYPES.register(modEventBus);
+    }
+
     public static final int DEFAULT_WEIGHT = 3;
     public static String[] COLOR_PALETTE = new String[]{
             "0xCCCCCC", "0x549b57", "0xe08822", "0x5e8eb7", "0x6c6c6c", "0xbd5757", "0x99c33d", "0x4a4cba", "0x7b2e89", "0x95d5e7", "0xffffff"
     };
     private static final Random random = new Random();
-    private String templatesPath = null;
+    private final String templatesPath;
 
     public static LootPoolEntryContainer.Builder<?> builder(String templatePath) {
         return simpleBuilder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
@@ -53,7 +74,11 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
      * @param weightIn
      */
     protected CapsuleLootEntry(String templatesPath, int weightIn) {
-        super(weightIn, 0, new ArrayList<>(), new ArrayList<>());
+        this(templatesPath, weightIn, 0, List.of(), List.of());
+    }
+
+    private CapsuleLootEntry(String templatesPath, int weight, int quality, List<LootItemCondition> conditions, List<LootItemFunction> functions) {
+        super(weight, quality, conditions, functions);
         this.templatesPath = templatesPath;
     }
 
@@ -66,8 +91,6 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
      */
     @Override
     public void createItemStack(Consumer<ItemStack> stacks, LootContext context) {
-        if (this.templatesPath == null) return;
-
         if (Config.lootTemplatesData.containsKey(this.templatesPath)) {
 
             Pair<String, CapsuleTemplate> templatePair = getRandomTemplate(context);
@@ -133,6 +156,6 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
     @Override
     public LootPoolEntryType getType() {
-        return LootPoolEntries.LOOT_TABLE;
+        return TYPE.get();
     }
 }

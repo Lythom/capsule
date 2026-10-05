@@ -6,6 +6,7 @@ import capsule.enchantments.CapsuleEnchantments;
 import capsule.itemGroups.CapsuleCreativeTabs;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
@@ -66,6 +67,7 @@ public class CapsuleMod {
         CapsuleItems.registerItems(modEventBus);
         CapsuleCreativeTabs.registerTabs(modEventBus);
         CapsuleRecipes.registerRecipeSerializers(modEventBus);
+        CapsuleLootEntry.registerEntryType(modEventBus);
 
         modEventBus.addListener(CapsuleNetwork::setupPackets);
 
