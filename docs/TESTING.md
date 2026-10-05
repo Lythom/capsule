@@ -70,6 +70,39 @@ CI passes the build number with `-Pbuild_id=<n>` (default `SNAPSHOT`), which onl
 `gametestImplementation` dependencies are loaded by the dev runs only: SecurityCraft 1.21.1 (Modrinth maven, version
 id in `gradle.properties`) for `SecurityCraftTests`. JEI is loaded in the dev runs as well (`localRuntime`).
 
+## Production jar smoke test
+
+`scripts/prod-smoke.sh <jar>...` starts a real dedicated server for each built release jar, outside Gradle:
+
+```
+./gradlew build
+scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/libs/Capsule-fabric-*.jar
+```
+
+- The loader comes from the jar name, the versions from `gradle.properties`. NeoForge: the official installer
+  (`--installServer`) of `neo_version`. Fabric: the Fabric server launcher of `fabric_loader_version`, plus the jar's
+  required dependencies, Fabric API (`fabric_api_version`) and Forge Config API Port (Modrinth).
+- Each server runs in a temporary directory: EULA accepted, `nogui`, a free port, offline mode. The script waits for
+  `Done`, sends `help capsule`, then `stop`.
+- It fails if the server does not reach `Done` within `TIMEOUT` seconds (default 600), if the capsule command is not
+  registered, if `config/capsule-common.toml` or `config/capsule/loot` are not created, if a log line with `ERROR`,
+  `Exception` or `Caused by` mentions capsule or a mixin, or if the server does not stop cleanly. Exit code 0 when every
+  jar passes.
+- Expected output per jar, for example:
+  ```
+  == fabric: Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar in /tmp/smoke-fabric.QnmLgQ
+  [16:05:43] [Server thread/INFO]: Done (8.999s)! For help, type "help"
+  	- capsule 1.21.1-9.0.SNAPSHOT
+  	   \-- common-protection-api 1.0.0
+  	- fabric-api 0.116.17+1.21.1
+  	- forgeconfigapiport 21.1.6
+  [16:05:44] [Server thread/INFO]: /capsule giveEmpty [<size>]
+  OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped cleanly
+  ```
+- `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 21, `curl` and `python3`, and network access.
+- GameTests cannot run against the release jars: NeoForge only registers GameTests outside production, and the tests
+  are not packaged in the jars.
+
 ## Not covered yet
 
 Client rendering (previews, item models, colors) has no automated test; it is planned as a client smoke test under
