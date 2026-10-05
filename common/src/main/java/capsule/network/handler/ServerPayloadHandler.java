@@ -3,7 +3,6 @@ package capsule.network.handler;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
-import capsule.helpers.NBTHelper;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.network.CapsuleContentPreviewAnswerToClient;
@@ -15,11 +14,11 @@ import capsule.network.LabelEditedMessageToServer;
 import capsule.platform.Services;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -27,6 +26,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.phys.AABB;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -50,26 +50,34 @@ public class ServerPayloadHandler {
 
 	public static void handleContentPreviewQuery(final CapsuleContentPreviewQueryToServer data, final ServerPlayer sendingPlayer) {
 		// read the content of the template and send it back to the client
-		ItemStack heldItem = sendingPlayer.getMainHandItem();
-		if (!(heldItem.getItem() instanceof CapsuleItem) || CapsuleItem.getStructureName(heldItem) == null) {
+		ItemStack capsule = previewedCapsule(sendingPlayer, data.structureName());
+		if (capsule == null) {
 			return;
 		}
 
 		ServerLevel serverworld = (ServerLevel) sendingPlayer.level();
-		Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, serverworld);
+		Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(capsule, serverworld);
 		CapsuleTemplate template = templatepair.getRight();
 
 		if (template != null) {
 			List<AABB> blockspos = Spacial.mergeVoxels(template.getPalette());
 			Services.NETWORK.sendToPlayer(sendingPlayer, new CapsuleContentPreviewAnswerToClient(blockspos, data.structureName()));
 			Services.NETWORK.sendToPlayer(sendingPlayer, new CapsuleFullContentAnswerToClient(template, data.structureName()));
-		} else if (NBTHelper.hasTag(heldItem)) {
-			CompoundTag tag = NBTHelper.getTag(heldItem);
-			if (tag != null) {
-				String structureName = tag.getString("structureName");
-				sendingPlayer.sendSystemMessage(Component.translatable("capsule.error.templateNotFound", structureName));
-			}
+		} else {
+			sendingPlayer.sendSystemMessage(Component.translatable("capsule.error.templateNotFound", data.structureName()));
 		}
+	}
+
+	/**
+	 * A capsule of the player using the asked template. Not just the held item: the client asks the preview of the item
+	 * it takes in hand before telling the server about the new selected slot.
+	 */
+	@Nullable
+	public static ItemStack previewedCapsule(Player player, String structureName) {
+		return player.getInventory().items.stream()
+				.filter(stack -> stack.getItem() instanceof CapsuleItem && structureName.equals(CapsuleItem.getStructureName(stack)))
+				.findFirst()
+				.orElse(null);
 	}
 
 	public static void handleThrowQuery(final CapsuleThrowQueryToServer data, final ServerPlayer sendingPlayer) {

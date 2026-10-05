@@ -33,6 +33,7 @@ public class CapsuleGameTests {
             FurnaceExperienceTests.class,
             InfrastructureTests.class,
             LootTests.class,
+            PreviewQueryTests.class,
             RecallTests.class,
             RecipeTests.class,
             ReloadTests.class,
