@@ -258,11 +258,11 @@ public class Config {
 
     public static void configureEnchants(ModConfigSpec.Builder configBuild) {
 
-        Config.enchantRarity = configBuild.comment("Rarity of the enchantmant. Possible values : COMMON, UNCOMMON, RARE, VERY_RARE. Default: RARE.")
+        Config.enchantRarity = configBuild.comment("Unused since Minecraft 1.21: enchantments are data driven. Change the weight in data/capsule/enchantment/recall.json with a datapack.")
                 .worldRestart()
                 .define("recallEnchantRarity", "RARE");
 
-        Config.recallEnchantType = configBuild.comment("Possible targets for the enchantment. By default : null.\nPossible values are ALL, ARMOR, ARMOR_FEET, ARMOR_LEGS, ARMOR_TORSO, ARMOR_HEAD, WEAPON, DIGGER, FISHING_ROD, BREAKABLE, BOW, null.\nIf null or empty, Capsules will be the only items to be able to get this Enchantment.")
+        Config.recallEnchantType = configBuild.comment("Unused since Minecraft 1.21: enchantments are data driven. Add items to the item tag capsule:enchantable/recall with a datapack.")
                 .worldRestart()
                 .define("recallEnchantType", "null");
     }

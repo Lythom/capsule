@@ -9,12 +9,17 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.stream.IntStream;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
 import static capsule.gametest.CapsuleTestUtils.capture;
@@ -22,6 +27,22 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 @GameTestHolder(CapsuleMod.MODID)
 @PrefixGameTestTemplate(false)
 public class RecallTests {
+
+    @GameTest(template = "empty")
+    public static void recallIsOfferedByEnchantingTables(GameTestHelper helper) {
+        var enchantments = helper.getLevel().registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+        var recall = enchantments.getHolderOrThrow(CapsuleEnchantments.RECALL);
+
+        assertTrue(helper, recall.is(EnchantmentTags.IN_ENCHANTING_TABLE), "recall should be in #minecraft:in_enchanting_table");
+        assertTrue(helper, recall.is(EnchantmentTags.NON_TREASURE), "recall should be in #minecraft:non_treasure");
+        ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
+        RandomSource random = RandomSource.create(0);
+        boolean offered = IntStream.range(0, 200).anyMatch(i -> EnchantmentHelper
+                .selectEnchantment(random, capsule, 30, enchantments.getOrCreateTag(EnchantmentTags.IN_ENCHANTING_TABLE).stream())
+                .stream().anyMatch(e -> e.enchantment.is(CapsuleEnchantments.RECALL)));
+        assertTrue(helper, offered, "an enchanting table should offer recall on a capsule");
+        helper.succeed();
+    }
 
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void recallLetsAnEarlyCollidingCapsuleDeploy(GameTestHelper helper) {
