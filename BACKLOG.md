@@ -132,7 +132,7 @@ per item. Track recall item entities when they join the level and cache the hold
 ## Platforms and versions
 
 ### Forge 1.21.1 module
-Not built on purpose (Modrinth 1.21.1 modpacks: Forge 25, NeoForge 2111, Fabric 3032; see `docs/RESEARCH.md`). Cost if
+Not built on purpose (1.21.1 modpacks, CurseForge + Modrinth: Forge 709 + 25, NeoForge ~11,000 + 2,111, Fabric 3,002 + 3,032; see `docs/VERSIONS.md`). Cost if
 wanted: one more platform module next to `neoforge` and `fabric`, built with ForgeGradle 6 as in the
 MultiLoader-Template `1.21.1` branch (ModDevGradle legacyforge stops at 1.20.1), Forge implementations of the platform
 interfaces (registries, networking, events, config, capabilities), and its own GameTest and production-jar smoke run.
