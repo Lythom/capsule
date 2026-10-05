@@ -23,8 +23,7 @@ jobs:
       - run: echo 'export GRADLE_OPTS="-Dfile.encoding=UTF-8"' >> $BASH_ENV
       - run: rm -rf build/libs
       - run: chmod +x ./gradlew
-      - run: sed -i "s/BUILD_ID/${CIRCLE_BUILD_NUM}/g" build.gradle
-      - run: ./gradlew build --stacktrace --info
+      - run: ./gradlew build -Pbuild_id=${CIRCLE_BUILD_NUM} --stacktrace --info
 
       - save_cache:
           paths:
