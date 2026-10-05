@@ -3,20 +3,31 @@ package capsule.gametest;
 import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
+import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
 
@@ -37,6 +48,42 @@ public class RecipeTests {
     private static ItemStack linkedCapsule(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         return CapsuleTestUtils.capture(helper, new BlockPos(1, 1, 1), 1);
+    }
+
+    /**
+     * Recipes guarded by load conditions (ingots provided by other mods) may be absent; loaded ones must be craftable.
+     */
+    @GameTest(template = "empty")
+    public static void everyCapsuleRecipeLoadsWithResolvedIngredients(GameTestHelper helper) {
+        RecipeManager recipes = helper.getLevel().getRecipeManager();
+        Set<String> problems = new LinkedHashSet<>();
+        helper.getLevel().getServer().getResourceManager()
+                .listResources("recipe", rl -> rl.getNamespace().equals(CapsuleMod.MODID) && rl.getPath().endsWith(".json"))
+                .forEach((file, resource) -> {
+                    String path = file.getPath();
+                    ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, path.substring("recipe/".length(), path.length() - ".json".length()));
+                    Optional<RecipeHolder<?>> recipe = recipes.byKey(id);
+                    if (recipe.isEmpty()) {
+                        if (!hasLoadConditions(resource)) problems.add(id + " is not loaded");
+                        return;
+                    }
+                    for (Ingredient ingredient : recipe.get().value().getIngredients()) {
+                        if (!ingredient.isEmpty() && (ingredient.getItems().length == 0 || Arrays.stream(ingredient.getItems()).anyMatch(s -> s.is(Items.BARRIER)))) {
+                            problems.add(id + " has an ingredient matching no item");
+                        }
+                    }
+                });
+
+        assertTrue(helper, problems.isEmpty(), "recipe problems: " + problems);
+        helper.succeed();
+    }
+
+    private static boolean hasLoadConditions(Resource resource) {
+        try (Reader reader = resource.openAsReader()) {
+            return JsonParser.parseReader(reader).getAsJsonObject().keySet().stream().anyMatch(key -> key.endsWith("conditions"));
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @GameTest(template = "empty")
