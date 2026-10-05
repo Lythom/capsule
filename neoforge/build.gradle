@@ -76,6 +76,14 @@ dependencies {
 
     // mods Capsule integrates with, exercised by the GameTests
     gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"
+
+    // mods from issues (#115, #121), opt-in because they slow every dev run down: -PmodCompat
+    if (project.hasProperty('modCompat')) {
+        gametestRuntimeOnly "maven.modrinth:waystones:${waystones_version}"
+        gametestRuntimeOnly "maven.modrinth:balm:${balm_version}"
+        gametestRuntimeOnly "maven.modrinth:sophisticated-storage:${sophisticated_storage_version}"
+        gametestRuntimeOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+    }
 }
 
 tasks.named('runGameTestServer') {
