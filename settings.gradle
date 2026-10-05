@@ -5,6 +5,17 @@ pluginManagement {
             name = 'Official NeoForge Maven'
             url = 'https://maven.neoforged.net/releases'
         }
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'Fabric'
+                    url = 'https://maven.fabricmc.net/'
+                }
+            }
+            filter {
+                includeGroupAndSubgroups 'net.fabricmc'
+            }
+        }
     }
 }
 
@@ -15,3 +26,4 @@ plugins {
 rootProject.name = 'capsule'
 include('common')
 include('neoforge')
+include('fabric')

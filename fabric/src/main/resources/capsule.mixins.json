@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "capsule.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ItemEntityMixin",
+    "ServerLevelMixin"
+  ],
+  "client": [
+    "ClientPacketListenerMixin",
+    "MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

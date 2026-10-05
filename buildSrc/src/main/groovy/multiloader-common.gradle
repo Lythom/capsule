@@ -14,19 +14,33 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 repositories {
-    maven {
-        name = 'Modrinth'
-        url = 'https://api.modrinth.com/maven'
-        content {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter {
             includeGroup 'maven.modrinth'
         }
     }
-    maven {
-        name = 'Jared (JEI)'
-        url = 'https://maven.blamejared.com/'
-        content {
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Jared (JEI)'
+                url = 'https://maven.blamejared.com/'
+            }
+        }
+        filter {
             includeGroup 'mezz.jei'
             includeGroup 'net.mezzdev.config'
+        }
+    }
+    mavenCentral {
+        content {
+            // served by maven.fabricmc.net
+            excludeGroupByRegex 'net\\.fabricmc.*'
         }
     }
 }

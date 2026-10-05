@@ -1,8 +1,11 @@
 package capsule.structure;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixers;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,6 +17,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CapsuleTemplateManagerTest {
+
+    /**
+     * Already done by NeoForge's test launcher, not by Fabric's.
+     */
+    @BeforeAll
+    static void bootstrap() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
 
     private static CapsuleTemplateManager manager(Path folder) {
         return new CapsuleTemplateManager(ResourceManager.Empty.INSTANCE, folder.toFile(), DataFixers.getDataFixer());

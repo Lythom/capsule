@@ -1,9 +1,12 @@
 package capsule.helpers;
 
+import net.minecraft.SharedConstants;
+import net.minecraft.server.Bootstrap;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +16,15 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SerializationTest {
+
+    /**
+     * Already done by NeoForge's test launcher, not by Fabric's.
+     */
+    @BeforeAll
+    static void bootstrap() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
 
     @Test
     void invalidIdsAreIgnoredInsteadOfCrashing() {
