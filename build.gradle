@@ -118,7 +118,7 @@ test {
 tasks.named('runGameTestServer') {
     // a fresh world and config on every run keeps results reproducible
     doFirst {
-        delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule"
+        delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig"
     }
 }
 
