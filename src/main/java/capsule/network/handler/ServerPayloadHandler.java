@@ -121,7 +121,7 @@ public class ServerPayloadHandler {
 							else {
 								boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, serverLevel);
 								if (deployed) {
-									CapsuleItem.setUndeployDelay(heldItem, sendingPlayer);
+									CapsuleItem.setUndeployDelay(heldItem, serverLevel);
 									serverLevel.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
 									Capsule.showDeployParticules(serverLevel, pos, size);
 								}

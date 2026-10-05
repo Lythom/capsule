@@ -113,6 +113,7 @@ public class CapsuleItem extends Item {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleItem.class);// = 180 / PI
     public static final float TO_RAD = 0.017453292F;
     public static final float GRAVITY_PER_TICK = 0.04f;
+    public static final int UNDEPLOY_DELAY = 5;
 
     public static long lastRotationTime = 0;
 
@@ -132,7 +133,8 @@ public class CapsuleItem extends Item {
      * string structureName                                       // name of the template file name without the .nbt extension.
      * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
      * string prevStructureName                                   // Used to remove older unused blueprint templates
-     * tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
+     * tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
+     * long undeployAt                                            // [Instant capsules] game time from which a deployed capsule can be undeployed
      * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
      * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
      * int upgraded                                               // How many upgrades the capsule has
@@ -591,7 +593,7 @@ public class CapsuleItem extends Item {
 
         } else if (!worldIn.isClientSide) {
             // a capsule is activated on right click, except instant that are deployed immediatly
-            if (!isInstantAndUndeployed(capsule) && getUndeployDelay(capsule) < playerIn.tickCount) {
+            if (!isInstantAndUndeployed(capsule) && canUndeploy(capsule, worldIn)) {
                 activateCapsule(capsule, (ServerLevel) worldIn, playerIn);
             }
         } else if (worldIn.isClientSide) {
@@ -658,18 +660,29 @@ public class CapsuleItem extends Item {
     private void startTimer(Level worldIn, Player playerIn, ItemStack capsule) {
         NBTHelper.updateTag(capsule, tag -> {
             CompoundTag timer = tag.getCompound("activetimer");
-            timer.putInt("starttime", playerIn.tickCount);
+            timer.putLong("starttime", worldIn.getGameTime());
             tag.put("activetimer", timer);
         });
         worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.2F, 0.9F);
     }
 
-    public static void setUndeployDelay(ItemStack capsule, Player playerIn) {
-        NBTHelper.updateTag(capsule, tag -> tag.putInt("undeployDelay", playerIn.tickCount + 5));
+    /**
+     * Prevents the click that deployed an instant capsule from undeploying it right away.
+     */
+    public static void setUndeployDelay(ItemStack capsule, Level level) {
+        NBTHelper.updateTag(capsule, tag -> {
+            tag.remove("undeployDelay");
+            tag.putLong("undeployAt", level.getGameTime() + UNDEPLOY_DELAY);
+        });
     }
 
-    public static int getUndeployDelay(ItemStack capsule) {
-        return NBTHelper.getOrCreateTag(capsule).getInt("undeployDelay");
+    /**
+     * A date further than the delay comes from another world or from a game time that went back: it is ignored.
+     */
+    public static boolean canUndeploy(ItemStack capsule, Level level) {
+        long undeployAt = NBTHelper.getOrCreateTag(capsule).getLong("undeployAt");
+        long now = level.getGameTime();
+        return now >= undeployAt || undeployAt - now > UNDEPLOY_DELAY;
     }
 
 
@@ -685,7 +698,9 @@ public class CapsuleItem extends Item {
             // disable capsule after some time
             CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
 
-            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + Config.previewDisplayDuration) {
+            long now = worldIn.getGameTime();
+            long start = timer.getLong("starttime");
+            if (isActivated(stack) && timer.contains("starttime") && (now >= start + Config.previewDisplayDuration || start > now)) {
                 revertStateFromActivated(stack);
                 worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundSource.BLOCKS, 0.2F, 0.4F);
             }
