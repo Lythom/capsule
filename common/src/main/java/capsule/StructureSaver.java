@@ -105,11 +105,13 @@ public class StructureSaver {
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, outCapturedEntities);
+        Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
+        if (denied == null) return null;
         template.removeOccupiedPositions();
         if (player != null) template.setAuthor(player.getGameProfile().getName());
         boolean writingOK = templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
         if (writingOK) {
-            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, true);
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
             for (Entity e : outCapturedEntities) {
                 Clearable.tryClear(e);
                 e.remove(Entity.RemovalReason.DISCARDED);
@@ -160,11 +162,13 @@ public class StructureSaver {
         blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt() == null || !b.nbt().contains("Items") || b.nbt().getList("Items", TAG_COMPOUND).isEmpty());
 
         if (blueprintMatch) {
+            Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
+            if (denied == null) return false;
             blueprintTemplate.removeOccupiedPositions();
             String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
             boolean written = blueprint.getLeft().writeToFile(ResourceLocation.parse(capsuleStructureId));
             if (written) {
-                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, true);
+                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
                 // check if some remove failed, it should never happen but keep it in case to prevent exploits
                 if (couldNotBeRemoved != null) {
                     return false;
@@ -216,13 +220,11 @@ public class StructureSaver {
     /**
      * Use with caution, delete the blocks at the indicated positions, except those the player may not take.
      *
-     * @param checkClaims false to remove claimed blocks too, as the blocks of a failed deploy
+     * @param claimed the positions claim mods deny, none for the blocks of a failed deploy
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerLevel
-            world, @Nullable ServerPlayer player, boolean checkClaims) {
-        Predicate<BlockPos> claimed = checkClaims ? Claims.denied(world, transferedPositions, player) : pos -> false;
-
+            world, @Nullable ServerPlayer player, Predicate<BlockPos> claimed) {
         List<BlockPos> couldNotBeRemoved = null;
 
         // disable tileDrop during the operation so that broken block are not
@@ -294,8 +296,11 @@ public class StructureSaver {
             return false;
         }
 
-        // check if the player can place a block
-        if (!playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
+        // check if claim mods let the player place every block
+        List<BlockPos> expectedOut = template.calculateDeployPositions(playerWorld, dest, placementsettings);
+        Predicate<BlockPos> claimed = Claims.denied(playerWorld, expectedOut, player);
+        if (claimed == null) return false;
+        if (!canPlace(playerWorld, expectedOut, claimed)) {
             if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.notAllowed"));
             return false;
         }
@@ -327,7 +332,7 @@ public class StructureSaver {
             printDeployError(player, err, "Couldn't deploy the capsule");
 
             // rollback
-            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null, false);
+            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null, pos -> false);
             template.removeOccupiedPositions();
             if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
@@ -391,12 +396,9 @@ public class StructureSaver {
     }
 
     /**
-     * Whether claim mods let the player place every block of the template.
+     * Whether every position is inside the build height and not claimed.
      */
-    private static boolean playerCanPlace(ServerLevel worldserver, BlockPos dest, CapsuleTemplate
-            template, @Nullable ServerPlayer player, StructurePlaceSettings placementsettings) {
-        List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
-        Predicate<BlockPos> claimed = Claims.denied(worldserver, expectedOut, player);
+    private static boolean canPlace(ServerLevel worldserver, List<BlockPos> expectedOut, Predicate<BlockPos> claimed) {
         for (BlockPos blockPos : expectedOut) {
             if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() <= worldserver.getMinBuildHeight() || claimed.test(blockPos))
                 return false;

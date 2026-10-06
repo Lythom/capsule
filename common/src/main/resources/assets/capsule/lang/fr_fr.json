@@ -28,6 +28,7 @@
     "capsule.error.technicalError": "A technical error occured while using the Capsule Mod. Please check the server logs.",
     "capsule.error.templateNotFound": "Error: the capsule template file %s was not found.",
     "capsule.error.notAllowed": "Les capsules ne peuvent pas être utilisées ici. Il s'agit peut être d'une zone protégée.",
+    "capsule.error.claimCheckFailed": "Capsule ne peut pas vérifier les protections de %s : captures et déploiements refusés. Merci de signaler cette incompatibilité.",
     "capsule.error.blueprintCreationError": "Une erreur est survenue pendant la copie du template. Cette blueprint pourrait ne pas fonctionner.",
     "capsule.error.blueprintSourceNotFound": "Plan non créé : le modèle %s est introuvable ou vide. Les chemins cherchés sont dans le journal du serveur.",
     "capsule.error.blueprintExcluded": "Certains blocks ne sont pas supportés dans la blueprint: %s",

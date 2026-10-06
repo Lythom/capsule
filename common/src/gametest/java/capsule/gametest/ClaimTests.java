@@ -1,5 +1,6 @@
 package capsule.gametest;
 
+import capsule.CapsuleMod;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
@@ -267,6 +268,75 @@ public class ClaimTests {
         } finally {
             Claims.unregister(claim);
             CapsuleTestUtils.removePlayer(owner);
+        }
+        helper.succeed();
+    }
+
+    static long claimCheckFailures(List<Component> messages, String mod) {
+        return messages.stream().filter(m -> m.getContents() instanceof TranslatableContents t
+                && t.getKey().equals("capsule.error.claimCheckFailed") && t.getArgs().length == 1 && mod.equals(t.getArgs()[0])).count();
+    }
+
+    /**
+     * A protection mod whose API changed: its adapter throws. It refuses everything, so it has a batch of its own.
+     */
+    @GameTest(template = "empty", batch = "claimfailures")
+    public static void failingClaimChecksRefuseCapturesAndDeploys(GameTestHelper helper) {
+        List<Component> messages = new ArrayList<>();
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
+        helper.setBlock(1, 1, 5, Blocks.OAK_PLANKS);
+        ItemStack planks = capture(helper, new BlockPos(1, 1, 5), 1);
+        AtomicInteger queries = new AtomicInteger();
+        ClaimAdapter failing = new ClaimAdapter() {
+            public String name() {
+                return "failing";
+            }
+
+            public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer actor) throws ReflectiveOperationException {
+                queries.incrementAndGet();
+                throw new NoSuchMethodException("test.ClaimApi.claims()");
+            }
+        };
+        Claims.register(failing);
+        try {
+            helper.setBlock(1, 1, 1, Blocks.STONE);
+            ItemStack capsule = CapsuleTestUtils.emptyCapsule(1);
+            assertTrue(helper, !Capsule.captureAtPosition(capsule, player, 1, helper.getLevel(), helper.absolutePos(new BlockPos(1, 1, 1))), "the capture is refused");
+            helper.assertBlockPresent(Blocks.STONE, 1, 1, 1);
+            assertTrue(helper, CapsuleItem.hasState(capsule, CapsuleState.EMPTY), "the capsule stays empty");
+
+            assertTrue(helper, !CapsuleTestUtils.deploy(helper, planks, new BlockPos(4, 0, 4), player), "the deploy is refused");
+            helper.assertBlockNotPresent(Blocks.OAK_PLANKS, 4, 1, 4);
+            assertTrue(helper, queries.get() == 2, "the adapter stays registered and is asked again, got " + queries.get() + " queries");
+            assertTrue(helper, claimCheckFailures(messages, "failing") == 2, "the player is told each time, got " + messages);
+        } finally {
+            Claims.unregister(failing);
+            CapsuleTestUtils.removePlayer(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A protection mod loaded without the API its adapter needs.
+     */
+    @GameTest(template = "empty", batch = "claimfailures")
+    public static void protectionModsWithoutTheirApiRefuseCapturesAndDeploys(GameTestHelper helper) {
+        List<Component> messages = new ArrayList<>();
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
+        ClaimAdapter unusable = Claims.load(CapsuleMod.MODID, () -> {
+            throw new NoSuchMethodException("test.ClaimApi.claims()");
+        });
+        try {
+            assertTrue(helper, unusable != null, "a loaded mod without its API is registered as unusable");
+            CapsuleTestUtils.fill(helper, new BlockPos(1, 1, 1), new BlockPos(2, 1, 1), Blocks.STONE.defaultBlockState());
+            assertTrue(helper, !Capsule.captureAtPosition(CapsuleTestUtils.emptyCapsule(1), player, 1, helper.getLevel(), helper.absolutePos(new BlockPos(1, 1, 1))), "the capture is refused");
+            assertTrue(helper, !Capsule.captureAtPosition(CapsuleTestUtils.emptyCapsule(1), null, 1, helper.getLevel(), helper.absolutePos(new BlockPos(2, 1, 1))), "the capture without player is refused");
+            helper.assertBlockPresent(Blocks.STONE, 1, 1, 1);
+            helper.assertBlockPresent(Blocks.STONE, 2, 1, 1);
+            assertTrue(helper, claimCheckFailures(messages, unusable.name()) == 1, "the player is told, got " + messages);
+        } finally {
+            Claims.unregister(unusable);
+            CapsuleTestUtils.removePlayer(player);
         }
         helper.succeed();
     }

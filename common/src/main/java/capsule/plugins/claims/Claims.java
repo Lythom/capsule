@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
@@ -21,7 +22,10 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 
@@ -29,11 +33,16 @@ import java.util.function.Predicate;
  * Whether claim mods let a player capture or deploy blocks. Mods with an adapter are asked once per chunk or claim;
  * the positions they do not cover are probed through the loader's protection hook (a block placement event on
  * NeoForge, Common Protection API on Fabric), so that claim mods without adapter still protect them: each position up
- * to the largest survival capsule, once per chunk column above.
+ * to the largest survival capsule, once per chunk column above. When a loaded protection mod cannot be checked,
+ * captures and deploys are refused.
  */
 public final class Claims {
     private static final Logger LOGGER = LogManager.getLogger(Claims.class);
     private static final List<ClaimAdapter> ADAPTERS = new CopyOnWriteArrayList<>();
+    /**
+     * The adapters whose failure is logged already: once each.
+     */
+    private static final Set<ClaimAdapter> REPORTED = ConcurrentHashMap.newKeySet();
     /**
      * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before Capsule 9).
      */
@@ -58,26 +67,50 @@ public final class Claims {
         ADAPTERS.remove(adapter);
     }
 
-    private interface Factory {
+    public interface Factory {
         ClaimAdapter create() throws ReflectiveOperationException;
     }
 
-    private static List<ClaimAdapter> adapters() {
-        if (!modsLoaded) {
-            modsLoaded = true;
-            load("openpartiesandclaims", OpenPartiesAndClaimsAdapter::new);
-            load("flan", FlanAdapter::new);
-            load("goml", GetOffMyLawnAdapter::new);
-        }
-        return ADAPTERS;
+    /**
+     * Loads the adapters of the protection mods present, once, when the server starts.
+     */
+    public static void loadAdapters() {
+        if (modsLoaded) return;
+        modsLoaded = true;
+        load("openpartiesandclaims", OpenPartiesAndClaimsAdapter::new);
+        load("flan", FlanAdapter::new);
+        load("goml", GetOffMyLawnAdapter::new);
     }
 
-    private static void load(String modId, Factory factory) {
-        if (!Services.PLATFORM.isModLoaded(modId)) return;
+    /**
+     * Registers the adapter of a protection mod when the mod is loaded, or a marker refusing every capture and deploy
+     * when its API is not found.
+     *
+     * @return the adapter or marker registered, null when the mod is not loaded
+     */
+    @Nullable
+    public static ClaimAdapter load(String modId, Factory factory) {
+        if (!Services.PLATFORM.isModLoaded(modId)) return null;
+        ClaimAdapter adapter;
         try {
-            ADAPTERS.add(factory.create());
+            adapter = factory.create();
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-            LOGGER.error("Captures and deploys ignore the claims of {}, its API was not found: {}", modId, e.toString());
+            adapter = new Unusable(Services.PLATFORM.modDescription(modId));
+            REPORTED.add(adapter);
+            LOGGER.error("Captures and deploys are refused: Capsule cannot check the claims of {}, its API was not found ({}). Please report this incompatibility.",
+                    adapter.name(), e.toString());
+        }
+        ADAPTERS.add(adapter);
+        return adapter;
+    }
+
+    /**
+     * A protection mod whose API was not found.
+     */
+    private record Unusable(String name) implements ClaimAdapter {
+        @Override
+        public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer player) {
+            throw new IllegalStateException("API not found");
         }
     }
 
@@ -106,29 +139,36 @@ public final class Claims {
 
     /**
      * The positions the player may not change among positions. Without a player, no claimed position may be changed.
+     *
+     * @return null when a protection mod cannot be checked: the operation is refused, the player is told
      */
+    @Nullable
     public static Predicate<BlockPos> denied(ServerLevel level, Collection<BlockPos> positions, @Nullable ServerPlayer player) {
-        return BoundingBox.encapsulatingPositions(positions)
-                .map(box -> denied(level, box, player))
-                .orElse(pos -> false);
+        Optional<BoundingBox> box = BoundingBox.encapsulatingPositions(positions);
+        return box.isPresent() ? denied(level, box.get(), player) : pos -> false;
     }
 
     /**
      * The positions of box the player may not change. The adapters are asked here; testing a position outside their
      * claims probes it when box is at most PER_BLOCK_MAX_SIZE wide, else looks up its chunk column, probed here.
+     *
+     * @return null when a protection mod cannot be checked: the operation is refused, the player is told
      */
+    @Nullable
     public static Predicate<BlockPos> denied(ServerLevel level, BoundingBox box, @Nullable ServerPlayer player) {
         ServerPlayer actor = player != null ? player : Services.PLATFORM.fakePlayer(level, NOBODY);
         // per chunk, the claims of each adapter
         Long2ObjectMap<List<List<Claim>>> claimsByChunk = new Long2ObjectOpenHashMap<>();
-        for (ClaimAdapter adapter : adapters()) {
+        for (ClaimAdapter adapter : ADAPTERS) {
             List<Claim> claims;
             try {
                 claims = adapter.claims(level, box, actor);
             } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
-                ADAPTERS.remove(adapter);
-                LOGGER.error("Captures and deploys now ignore the claims of {}, its query failed: {}", adapter.name(), e.toString());
-                return pos -> true;
+                if (REPORTED.add(adapter)) {
+                    LOGGER.error("Captures and deploys are refused while Capsule cannot check the claims of {}. Please report this incompatibility.", adapter.name(), e);
+                }
+                if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.claimCheckFailed", adapter.name()));
+                return null;
             }
             Long2ObjectMap<List<Claim>> adapterClaims = new Long2ObjectOpenHashMap<>();
             for (Claim claim : claims) {

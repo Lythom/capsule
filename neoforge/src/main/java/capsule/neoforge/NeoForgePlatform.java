@@ -52,6 +52,13 @@ public class NeoForgePlatform implements Platform {
     }
 
     @Override
+    public String modDescription(String modId) {
+        return ModList.get().getModContainerById(modId)
+                .map(mod -> mod.getModInfo().getDisplayName() + " " + mod.getModInfo().getVersion())
+                .orElse(modId);
+    }
+
+    @Override
     public Path getConfigDir() {
         return FMLPaths.CONFIGDIR.get();
     }

@@ -22,6 +22,11 @@ public interface Platform {
 
     boolean isModLoaded(String modId);
 
+    /**
+     * The name and version of a loaded mod, as written in logs and messages.
+     */
+    String modDescription(String modId);
+
     Path getConfigDir();
 
     /**

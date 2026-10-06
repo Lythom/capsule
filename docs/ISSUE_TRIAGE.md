@@ -235,6 +235,8 @@ Capture bases act as the player who placed them. Capture bases placed before thi
 nobody: they can no longer capture or deploy inside claims (re-place the base to give it an owner). Also fixed in the
 next 1.20.1, 1.18.2 and 1.16.5 builds. On 1.16.5 the checks are also per block up to size 31 and per chunk column
 above, and Flan is asked through its API for every position, as it does not answer the placement check there.
+If a claim mod is loaded but Capsule cannot check its claims (an API changed by a mod update), captures and deploys
+are refused with a chat message instead of ignoring them.
 
 ### #90
 Superseded in the next 1.21.1 build: capsules now come back with vanilla Loyalty, from enchanting tables and books

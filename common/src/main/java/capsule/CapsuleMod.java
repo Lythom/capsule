@@ -5,6 +5,7 @@ import capsule.command.CapsuleCommand;
 import capsule.itemGroups.CapsuleCreativeTabs;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootEntry;
+import capsule.plugins.claims.Claims;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.structure.CapsuleTemplateManager;
@@ -53,6 +54,7 @@ public class CapsuleMod {
     public static void serverStarting(MinecraftServer startingServer) {
         server = startingServer;
         Config.populateConfigFolders(server);
+        Claims.loadAdapters();
         if (PrefabsBlueprintAggregatorRecipe.instance != null)
             PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getResourceManager());
     }

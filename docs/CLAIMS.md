@@ -37,7 +37,8 @@ CurseForge counts were not collected (CurseForge is not scraped).
 `capsule.plugins.claims.Claims.denied(level, box, player)` returns a test of the positions the player may not change,
 computed before the capture or deploy touches any block:
 
-1. **Adapters** (`ClaimAdapter`), loaded on first use when their mod id is loaded, their API resolved once by reflection:
+1. **Adapters** (`ClaimAdapter`), loaded when the server starts if their mod id is loaded, their API resolved once by
+   reflection:
    - `OpenPartiesAndClaimsAdapter` (both loaders): per chunk of the box, the chunk claim and `hasChunkAccess` by player id.
    - `FlanAdapter` (both loaders): the claims of each chunk of the box, then one `canInteract(player, BREAK, …)` per claim
      and sub-claim intersecting the box. A claim is asked at a position outside it, so that it answers for itself and
@@ -139,10 +140,21 @@ Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My L
 
 - No Gradle or runtime dependency for players: adapters use reflection on class and method names verified above;
   Minecraft types in the signatures are class literals, so the lookups also work on Fabric's intermediary names.
-- An adapter whose API is not found is not loaded (one error line: "Captures and deploys ignore the claims of …").
-- An adapter that throws during a query is removed (one error line: "Captures and deploys now ignore the claims of …")
-  and that one operation is refused; the server never crashes. A renamed method in a future mod version therefore
-  disables its adapter until Capsule is updated; the generic probe still covers the mod on NeoForge.
+- **Failures refuse, never allow** (owner decision): when a protection mod is loaded but Capsule cannot use its
+  adapter, its claims are unknown, so every capture and deploy is refused until Capsule is updated, instead of
+  ignoring the mod. The server never crashes.
+  - An adapter whose API is not found when the server starts (a class or method renamed by a new mod version) is
+    replaced by a marker refusing every capture and deploy, and one error line names the mod, its version and the
+    missing member: "Captures and deploys are refused: Capsule cannot check the claims of Flan 1.12.8, its API was not
+    found (java.lang.NoSuchMethodException: …)".
+  - An adapter that throws during a query refuses that capture or deploy and stays registered: the next one asks it
+    again. The error and its stack trace are logged once per adapter, not per operation.
+  - The acting player is told in chat (`capsule.error.claimCheckFailed`: "Capsule cannot check the claims of Flan:
+    captures and deploys are refused. Please report this incompatibility."). Dispensers and capture bases (fake
+    players) tell nobody.
+  - The adapters are asked before the capture or deploy changes the world (`Claims.denied` returns null when one
+    fails), so a refused operation leaves the blocks, entities and capsule as they were.
+  - `Claims.load(modId, factory)` loads the adapter of another mod the same way.
 
 ### Who is checked
 
@@ -180,6 +192,10 @@ Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My L
   inside a claim open to everybody, a capture base placed before 9.0, a vanilla dispenser and a capture without player
   are refused, and outside it the base and the dispenser deploy; the placer is saved with the base and a deployed base
   acts for its deployer.
+- `ClaimTests`, batch `claimfailures` (their adapters refuse everywhere): with an adapter throwing on every query, a
+  player's capture and deploy are refused, the block stays, the capsule stays empty, the adapter is asked again by the
+  second operation and the player is told each time; with the marker of a mod whose API is missing (`Claims.load` with
+  a failing factory), the captures of a player and without player are refused and the player is told.
 - `OpenPartiesAndClaimsTests` and `FlanTests` (common GameTests, registered when the mod is loaded, `-PmodCompat` on
   both loaders, mods from the Modrinth maven): inside a real claim a stranger's capture and capture base are refused, a
   party or claim group member's and the owner's capture and the owner's capture base are allowed; a capture base placed

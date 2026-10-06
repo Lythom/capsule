@@ -49,6 +49,13 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
+    public String modDescription(String modId) {
+        return FabricLoader.getInstance().getModContainer(modId)
+                .map(mod -> mod.getMetadata().getName() + " " + mod.getMetadata().getVersion().getFriendlyString())
+                .orElse(modId);
+    }
+
+    @Override
     public Path getConfigDir() {
         return FabricLoader.getInstance().getConfigDir();
     }

@@ -104,16 +104,13 @@ public class Capsule {
             String structureName = tagForName != null ? tagForName.getString("structureName") : "";
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, structureName, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
+            // a failed undeploy gives its own feedback
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 CapsuleItem.setPlacement(capsule, new StructurePlaceSettings());
                 if (playerIn != null) notifyUndeploy(playerIn, startPos, size, CapsuleItem.getStructureName(capsule));
-            } else {
-                LOGGER.error("Error occured during undeploy of capsule.");
-                if (playerIn != null)
-                    playerIn.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
             }
         }
     }
