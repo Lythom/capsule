@@ -7,6 +7,7 @@ import capsule.enchantments.Enchantments;
 import capsule.itemGroups.CapsuleItemGroups;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
@@ -93,6 +94,7 @@ final class CapsuleModEventSubscriber {
     public static void setup(FMLCommonSetupEvent event) {
         CapsuleNetwork.setup();
         DispenserBlock.registerBehavior(CapsuleItems.CAPSULE, new DispenseCapsuleBehavior());
+        event.enqueueWork(CapsuleLootEntry::registerEntryType);
     }
 
     @SubscribeEvent

@@ -1,15 +1,22 @@
 package capsule.loot;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.*;
 import net.minecraft.loot.conditions.ILootCondition;
 import net.minecraft.loot.functions.ILootFunction;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -22,6 +29,12 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
  * @author Lythom
  */
 public class CapsuleLootEntry extends StandaloneLootEntry {
+
+    public static LootPoolEntryType TYPE;
+
+    public static void registerEntryType() {
+        TYPE = Registry.register(Registry.LOOT_POOL_ENTRY_TYPE, new ResourceLocation(CapsuleMod.MODID, "capsule"), new LootPoolEntryType(new Serializer()));
+    }
 
     public static final int DEFAULT_WEIGHT = 3;
     public static String[] COLOR_PALETTE = new String[]{
@@ -50,7 +63,11 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
      * @param weightIn
      */
     protected CapsuleLootEntry(String templatesPath, int weightIn) {
-        super(weightIn, 0, new ILootCondition[0], new ILootFunction[0]);
+        this(templatesPath, weightIn, 0, new ILootCondition[0], new ILootFunction[0]);
+    }
+
+    private CapsuleLootEntry(String templatesPath, int weight, int quality, ILootCondition[] conditions, ILootFunction[] functions) {
+        super(weight, quality, conditions, functions);
         this.templatesPath = templatesPath;
     }
 
@@ -130,6 +147,22 @@ public class CapsuleLootEntry extends StandaloneLootEntry {
 
     @Override
     public LootPoolEntryType getType() {
-        return LootEntryManager.REFERENCE;
+        return TYPE;
+    }
+
+    /**
+     * Capsule loot entries have their own type: mods serializing loot tables (loot viewers) must not use another entry's serializer.
+     */
+    public static class Serializer extends StandaloneLootEntry.Serializer<CapsuleLootEntry> {
+        @Override
+        public void serializeCustom(JsonObject json, CapsuleLootEntry entry, JsonSerializationContext context) {
+            super.serializeCustom(json, entry, context);
+            json.addProperty("templates_path", entry.templatesPath);
+        }
+
+        @Override
+        protected CapsuleLootEntry deserialize(JsonObject json, JsonDeserializationContext context, int weight, int quality, ILootCondition[] conditions, ILootFunction[] functions) {
+            return new CapsuleLootEntry(JSONUtils.getAsString(json, "templates_path"), weight, quality, conditions, functions);
+        }
     }
 }
