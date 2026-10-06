@@ -1,9 +1,21 @@
 # Changelog
 
-**1.21.1-9.0.x : Fabric support and bug fixes**
+**1.21.1-9.0.x : Fabric support, Loyalty, claim mods and bug fixes**
 
-- New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build; JEI on Fabric is untested
+- New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build
 - The NeoForge jar is now named `Capsule-neoforge-1.21.1-...jar`, built with ModDevGradle against NeoForge 21.1.255; it requires NeoForge 21.1 or later and Minecraft 1.21.1
+- New: vanilla Loyalty brings thrown capsules back and replaces the Recall enchantment (#123, #96). Capsules take Loyalty (any level) from the enchanting table or from a book on the anvil, not the other trident enchantments. Capsules already enchanted with Recall keep coming back; Recall can no longer be obtained. `/capsule giveLinked <template> <player> withLoyalty` replaces `withRecall`
+- New: capsules are fire and lava proof, existing ones included (#123)
+- New capsule tiers: amethyst, lapis and quartz (5), prismarine crystals (9) and netherite (13, the vanilla 13³ capsule); with mods: zinc and aluminum (3), osmium (5), brass (7), steel and uranium (9) (#120). Full table in `docs/RECIPES.md`
+- New: translucent full deploy preview, which no longer hides what is behind it (#88). Water and stained glass in front of the preview still hide it
+- New: captured blocks are sucked into the capsule with a particle trail (#106). Client option `captureAnimation` in `config/capsule-client.toml` (default true)
+- New: claim mods can veto captures and deploys, asked once per chunk or claim instead of once per block (#91): Open Parties and Claims and Flan (NeoForge and Fabric), Get Off My Lawn (Fabric), and a placement check per chunk for the others (NeoForge placement event, Fabric Common Protection API). Protected blocks stay in the world on capture; a deploy touching a protected block is refused. A capture base acts as the player who placed it: the placer is saved in the capture base data (`placer`), and a base deployed from a capsule acts for the player who deployed it. Capture bases placed before this version act for nobody and ignore claims, as before. Throws of a player who went offline are checked too
+- New: Sponge v1 and v3 schematics and `.schem` files (the WorldEdit 7.3 default) can be used as templates; Sponge v2 entities and MCEdit chest item counts are read correctly (#70)
+- New: REI and EMI show the capsule recipes and information pages, on NeoForge and Fabric. JEI shows the capsule recipes on Fabric too, and every viewer now shows the recovery and blueprint recipes
+- Blueprint whitelist updated to 1.21.1 block entities: signs and hanging signs with their text, banners, heads, campfires, shulker boxes, ender chests, decorated pots, chiseled bookshelves, crafters... (#101). Inventories are never kept, and blueprint blocks no longer show content they lost (chiseled bookshelf books, lectern book, jukebox record, brewing stand bottles). Existing installs: delete `config/capsule/blueprint_whitelist.json` to get the new list
+- The starter huts' axe item frame no longer covers the crafting table (#126). Existing installs: delete `config/capsule/starters` to get the new huts
+- Fix prefab blueprint recipes refunding the wrong items when `prefab_blueprint_recipe.json` moves the ingredients, and shift-click crafting a blueprint, blueprint change or recovery recipe turning the source capsule into an extra empty or one-use capsule (#84)
+- Fix blueprints whose source template cannot be read being created empty without any message: the server logs the template and the searched paths, and the player gets an error (#124)
 - Fix server crash or kick with install paths containing reserved Windows names, e.g. Flatpak ATLauncher (#125)
 - Fix furnaces dropping their stored experience on every capture (#122)
 - Fix SecurityCraft blocks being captured by players who do not own them (#119)
@@ -13,7 +25,6 @@
 - Fix infested blocks in the uncommon well loot capsule (#100)
 - Fix the recall enchantment bringing capsules back before they could deploy (#98)
 - Fix capsule throws being accepted by the server for non-instant capsules or out of reach positions (#91, part 1)
-- The recall enchantment can now be obtained from enchanting tables (#90)
 - Fix blind throws deploying one block above the ground (#89)
 - Fix instant capsules that could not be undeployed after a relog or restart (#75)
 - Fix blocks without item (potted plants...) being free in blueprints (#56)
@@ -23,11 +34,16 @@
 - Fix template files with uppercase letters or spaces disconnecting players on login, and `.nbt` names being cut
 - Fix invalid ids in the `excludedBlocks` config crashing the game, and block tags in it being ignored
 - Fix `/reload` not refreshing templates on dedicated servers
-- Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81)
+- Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81); checked with Ad Astra, Integrated Dynamics and Farmer's Delight
+- The preview, capture zone wireframe and capture animation show with Iris shader packs (#69)
 - Fix capsules held edge-on in first and third person
 - Fix walls, fences, panes and other multipart blocks missing from the full deploy preview on NeoForge
 - Fix a capsule showing the preview of the previously held capsule right after switching capsules
 - Fix capture bases looking activated while no empty capsule is held
+- Fix deploys of templates with item frames or paintings logging "Block-attached entity at invalid position"
+- Fix capsule tooltips ending with a "Dyed" line (existing capsules keep it until dyed again)
+- Remove the dead update checker URL (a warning on every NeoForge start)
+- Building needs Gradle running on Java 25 (Fabric Loom 1.18); Gradle downloads it when missing. The mod still targets Java 21
 
 **1.21.1-9.0.117 : Bug fixes and code cleanup**
 
