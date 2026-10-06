@@ -6,6 +6,7 @@ import capsule.StructureSaver.ItemStackKey;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.world.level.block.piston.PistonHeadBlock;
@@ -41,7 +43,20 @@ import java.util.stream.Collectors;
 public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
 
-    public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo) {
+    /**
+     * Items needed to place the block, null if they cannot be determined.
+     */
+    @Nullable
+    public static List<ItemStack> getBlockItemCosts(StructureTemplate.StructureBlockInfo blockInfo, @Nullable LevelReader level) {
+        BlockState state = blockInfo.state();
+        if (state.getBlock() instanceof FlowerPotBlock pot && pot.getContent() != Blocks.AIR) {
+            return List.of(new ItemStack(Items.FLOWER_POT), new ItemStack(pot.getContent()));
+        }
+        ItemStack cost = getBlockItemCost(blockInfo, level);
+        return cost == null ? null : List.of(cost);
+    }
+
+    public static ItemStack getBlockItemCost(StructureTemplate.StructureBlockInfo blockInfo, @Nullable LevelReader level) {
         final BlockState state = blockInfo.state();
         Block block = state.getBlock();
         CompoundTag blockNBT = blockInfo.nbt();
@@ -75,6 +90,10 @@ public class Blueprint {
             } else if (block instanceof PistonHeadBlock
                     || block instanceof MovingPistonBlock) {
                 return ItemStack.EMPTY; // Piston extension is free
+
+            } else if (level != null && !state.isAir() && block.asItem() == Items.AIR) {
+                // blocks without item (attached stems, plant bodies...) cost what they are picked as
+                return block.getCloneItemStack(level, BlockPos.ZERO, state);
             }
             ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {
@@ -109,23 +128,23 @@ public class Blueprint {
         CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return null;
 
-        return getMaterialList(blueprintTemplate, player);
+        return getMaterialList(blueprintTemplate, worldserver, player);
     }
 
-    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable Player player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable LevelReader level, @Nullable Player player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
         for (StructureTemplate.StructureBlockInfo block : blueprintTemplate.getPalette()) {// Note: tile entities not supported so nbt data is not used here
-            ItemStack itemStack = getBlockItemCost(block);
-            ItemStackKey stackKey = new ItemStackKey(itemStack);
-            if (itemStack == null) {
+            List<ItemStack> itemStacks = getBlockItemCosts(block, level);
+            if (itemStacks == null) {
                 if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.technicalError"));
                 if (player != null)
                     LOGGER.error("Unknown item during blueprint undo for " + block.state().getBlock().toString());
                 return null;
-            } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
-                Integer currValue = list.get(stackKey);
-                if (currValue == null) currValue = 0;
-                list.put(stackKey, currValue + itemStack.getCount());
+            }
+            for (ItemStack itemStack : itemStacks) {
+                if (!itemStack.isEmpty()) {
+                    list.merge(new ItemStackKey(itemStack), itemStack.getCount(), Integer::sum);
+                }
             }
         }
         // Note: entities not supported so no entities check
@@ -138,7 +157,7 @@ public class Blueprint {
             try {
                 CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 if (template != null) {
-                    Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
+                    Map<ItemStackKey, Integer> fullList = getMaterialList(template, null, null);
                     if (fullList != null) {
                         ItemStackKey[] list = fullList.entrySet().stream()
                                 .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
