@@ -129,11 +129,11 @@ public class CapsuleTemplateRenderer {
         for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
             BlockPos targetPos = entry.getKey();
             BlockState state = entry.getValue();
-            BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
 
             poseStack.pushPose(); //Save position again
             poseStack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ()); // handled by renderBatched
             try {
+                BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
                 if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
                     random.setSeed(Mth.getSeed(targetPos));
                     blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, RenderType.LINES);
@@ -232,7 +232,8 @@ public class CapsuleTemplateRenderer {
 
                 for (StructureTemplate.StructureBlockInfo template$blockinfo : CapsuleTemplate.processBlockInfos(template, templateWorld, offPos, placementSettings, list)) {
                     BlockPos blockpos = template$blockinfo.pos();
-                    if (mutableboundingbox == null || mutableboundingbox.isInside(blockpos)) {
+                    if (mutableboundingbox != null && !mutableboundingbox.isInside(blockpos)) continue;
+                    try {
                         FluidState fluidstate = placementSettings.shouldKeepLiquids() ? templateWorld.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state().mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
                         if (template$blockinfo.nbt() != null) {
@@ -257,6 +258,8 @@ public class CapsuleTemplateRenderer {
                                 }
                             }
                         }
+                    } catch (RuntimeException e) {
+                        logSkippedBlock(template$blockinfo.state(), e);
                     }
                 }
 
@@ -306,19 +309,27 @@ public class CapsuleTemplateRenderer {
                             voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
                         }
 
-                        StructureTemplate.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);
+                        try {
+                            StructureTemplate.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);
+                        } catch (RuntimeException e) {
+                            LOGGER.debug("Preview shapes at the edge of the template not updated", e);
+                        }
                     }
 
                     for (Pair<BlockPos, CompoundTag> pair : list2) {
                         BlockPos blockpos4 = pair.getFirst();
                         if (!placementSettings.getKnownShape()) {
                             BlockState blockstate1 = templateWorld.getBlockState(blockpos4);
-                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, templateWorld, blockpos4);
-                            if (blockstate1 != blockstate3) {
-                                templateWorld.setBlock(blockpos4, blockstate3, placeFlag & -2 | 16);
-                            }
+                            try {
+                                BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, templateWorld, blockpos4);
+                                if (blockstate1 != blockstate3) {
+                                    templateWorld.setBlock(blockpos4, blockstate3, placeFlag & -2 | 16);
+                                }
 
-                            templateWorld.blockUpdated(blockpos4, blockstate3.getBlock());
+                                templateWorld.blockUpdated(blockpos4, blockstate3.getBlock());
+                            } catch (RuntimeException e) {
+                                logSkippedBlock(blockstate1, e);
+                            }
                         }
                     }
                 }
@@ -329,6 +340,13 @@ public class CapsuleTemplateRenderer {
                 return false;
             }
         }
+    }
+
+    /**
+     * Modded blocks may expect a Level where the preview only offers a LevelAccessor (FakeWorld).
+     */
+    private static void logSkippedBlock(BlockState state, RuntimeException e) {
+        LOGGER.debug("Preview of {} is incomplete: {}", state, e.toString());
     }
 
     public void setWorldDirty() {

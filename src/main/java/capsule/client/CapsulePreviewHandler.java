@@ -214,14 +214,22 @@ public class CapsulePreviewHandler {
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         CapsuleTemplateRenderer renderer = CapsulePreviewHandler.cachedFullPreview.get(structureName);
         StructurePlaceSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
-        renderer.changeTemplateIfDirty(
-                template,
-                thePlayer.getCommandSenderWorld(),
-                destOriginPos,
-                recenterRotation(extendSize, placement),
-                placement,
-                2
-        );
+        try {
+            renderer.changeTemplateIfDirty(
+                    template,
+                    thePlayer.getCommandSenderWorld(),
+                    destOriginPos,
+                    recenterRotation(extendSize, placement),
+                    placement,
+                    2
+            );
+        } catch (RuntimeException e) {
+            // the wireframe preview is displayed instead
+            LOGGER.warn("Full preview of {} disabled: {}", structureName, e.toString());
+            CapsulePreviewHandler.currentFullPreview.remove(structureName);
+            CapsulePreviewHandler.cachedFullPreview.remove(structureName);
+            return;
+        }
 
         float glitchIntensity = (float) (Math.abs(Math.cos(time * 0.1f)) * Math.abs(Math.cos(time * 0.14f)) * Math.abs(Math.cos(time * 0.12f))) - 0.3f;
         glitchIntensity = (float) Math.min(0.05, Math.max(0, glitchIntensity));
