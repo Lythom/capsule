@@ -5,12 +5,14 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -90,6 +92,18 @@ public class RecipeTests {
 
         assertTrue(helper, CapsuleItem.getBaseColor(result) != CapsuleItem.getBaseColor(capsule), "base color should change");
         assertTrue(helper, CapsuleItem.getSize(result) == 3, "size is kept");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void capsuleColorsHaveNoDyedTooltip(GameTestHelper helper) {
+        ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
+        ItemStack dyed = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.RED_DYE));
+
+        for (ItemStack stack : List.of(capsule, dyed)) {
+            DyedItemColor color = stack.get(DataComponents.DYED_COLOR);
+            assertTrue(helper, color != null && !color.showInTooltip(), "the capsule tooltip should not say Dyed: " + color);
+        }
         helper.succeed();
     }
 
