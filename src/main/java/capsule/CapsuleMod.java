@@ -15,12 +15,15 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemModelsProperties;
 import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.ResourceLocation;
@@ -60,6 +63,11 @@ public class CapsuleMod {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(CapsuleMod::addReloadListeners);
+    }
+
+    public static void addReloadListeners(final AddReloadListenerEvent event) {
+        event.addListener(new StructureSaverReloadListener());
     }
 
     public static void serverStarting(final FMLServerStartingEvent e) {
@@ -164,13 +172,17 @@ final class CapsuleForgeSubscriber {
     public static void registerRecipes(RecipesUpdatedEvent event) {
         CapsuleItems.registerRecipesClient(event.getRecipeManager());
     }
+}
 
-    @SubscribeEvent
-    public static void setup(AddReloadListenerEvent event) {
-        StructureSaver.getRewardManager(event.getDataPackRegistries().getResourceManager()).onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+class StructureSaverReloadListener extends ReloadListener<Void> {
+    protected Void prepare(IResourceManager resourceManager, IProfiler profiler) {
+        StructureSaver.getRewardManager(resourceManager).onResourceManagerReload(resourceManager);
         for (CapsuleTemplateManager ctm : StructureSaver.CapsulesManagers.values()) {
-            ctm.onResourceManagerReload(event.getDataPackRegistries().getResourceManager());
+            ctm.onResourceManagerReload(resourceManager);
         }
+        return null;
+    }
 
+    protected void apply(Void object, IResourceManager resourceManager, IProfiler profiler) {
     }
 }
