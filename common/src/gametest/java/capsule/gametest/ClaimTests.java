@@ -1,5 +1,6 @@
 package capsule.gametest;
 
+import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
 import capsule.blocks.CapsuleBlocks;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
@@ -236,6 +238,32 @@ public class ClaimTests {
             Capsule.handleItemEntityOnGround(thrown, capsule);
             helper.assertBlockNotPresent(Blocks.GOLD_BLOCK, 4, 1, 4);
             assertTrue(helper, claim.askedFor.contains(thrower.getUUID()), "the claims are asked for the offline thrower");
+        } finally {
+            Claims.unregister(claim);
+            CapsuleTestUtils.removePlayer(owner);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "claims")
+    public static void failedDeploysAreRolledBackInClaims(GameTestHelper helper) {
+        ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
+        ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
+        TestClaim claim = new TestClaim(helper, new BlockPos(0, 1, 0), new BlockPos(8, 4, 8), owner.getUUID());
+        Claims.register(claim);
+        // throws once the blocks are placed, as a modded block crashing during the deploy
+        StructurePlaceSettings crashing = new StructurePlaceSettings() {
+            @Override
+            public boolean getKnownShape() {
+                throw new IllegalStateException("test crash");
+            }
+        };
+        try {
+            assertTrue(helper, !StructureSaver.deploy(capsule, helper.getLevel(), owner, helper.absolutePos(new BlockPos(4, 1, 4)), crashing), "the deploy fails");
+            helper.assertBlockNotPresent(Blocks.GOLD_BLOCK, 4, 1, 4);
+            assertTrue(helper, CapsuleTestUtils.deploy(helper, capsule, new BlockPos(4, 0, 4), owner), "the capsule keeps its content");
+            helper.assertBlockPresent(Blocks.GOLD_BLOCK, 4, 1, 4);
         } finally {
             Claims.unregister(claim);
             CapsuleTestUtils.removePlayer(owner);
