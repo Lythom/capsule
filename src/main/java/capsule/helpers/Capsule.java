@@ -9,6 +9,7 @@ import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
 import capsule.network.CapsuleUndeployNotifToClient;
+import capsule.plugins.claims.Claims;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.block.BlockState;
@@ -73,6 +74,13 @@ public class Capsule {
     }
 
     public static void resentToCapsule(final ItemStack capsule, final ServerWorld world, @Nullable final PlayerEntity playerIn) {
+        resentToCapsule(capsule, world, playerIn, playerIn instanceof ServerPlayerEntity ? (ServerPlayerEntity) playerIn : null);
+    }
+
+    /**
+     * Captures the deployed content back, as actor for claim mods. playerIn, if any, sees the capture.
+     */
+    public static void resentToCapsule(final ItemStack capsule, final ServerWorld world, @Nullable final PlayerEntity playerIn, @Nullable final ServerPlayerEntity actor) {
         // store again
         RegistryKey<World> dimensionId = CapsuleItem.getDimension(capsule);
         ServerWorld capsuleWorld = world.getServer().getLevel(dimensionId);
@@ -86,7 +94,7 @@ public class Capsule {
 
         // do the transportation
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(capsuleWorld, playerIn == null ? null : playerIn.getUUID(), capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
+            boolean blueprintMatch = StructureSaver.undeployBlueprint(capsuleWorld, actor, capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
             if (blueprintMatch) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
@@ -95,7 +103,7 @@ public class Capsule {
                 playerIn.sendMessage(new TranslationTextComponent("capsule.error.blueprintDontMatch"), Util.NIL_UUID);
             }
         } else {
-            CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, playerIn == null ? null : playerIn.getUUID(), capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
+            CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
@@ -120,9 +128,9 @@ public class Capsule {
     }
 
     /**
-     * Deploy the capsule at the anchorBlockPos position. update capsule state
+     * Deploy the capsule at the anchorBlockPos position, as actor for claim mods. update capsule state
      */
-    public static boolean deployCapsule(ItemStack capsule, BlockPos anchorBlockPos, UUID thrower, int extendLength, ServerWorld world) {
+    public static boolean deployCapsule(ItemStack capsule, BlockPos anchorBlockPos, @Nullable ServerPlayerEntity actor, int extendLength, ServerWorld world) {
         // specify target to capture
 
         boolean didSpawn = false;
@@ -138,7 +146,7 @@ public class Capsule {
         String structureName = capsule.getTag().getString("structureName");
 
         // do the transportation
-        boolean result = StructureSaver.deploy(capsule, world, thrower, dest, Config.overridableBlocks, CapsuleItem.getPlacement(capsule));
+        boolean result = StructureSaver.deploy(capsule, world, actor, dest, Config.overridableBlocks, CapsuleItem.getPlacement(capsule));
 
         if (result) {
             // register the link in the capsule
@@ -171,7 +179,7 @@ public class Capsule {
             BlockPos source = anchor.offset(-extendLength, 1, -extendLength);
 
             // Save the region in a structure block file
-            return captureAtPosition(capsule, thrower, size, playerWorld, source);
+            return captureAtPosition(capsule, Claims.player(playerWorld, thrower), size, playerWorld, source);
         } else {
             CapsuleItem.revertStateFromActivated(capsule);
             // send a chat message to explain failure
@@ -184,15 +192,13 @@ public class Capsule {
         return false;
     }
 
-    public static boolean captureAtPosition(ItemStack capsule, UUID thrower, int size, ServerWorld playerWorld, BlockPos source) {
-        String throwerId = "CapsuleMod";
-        PlayerEntity player = null;
-        if (thrower != null) {
-            player = playerWorld.getPlayerByUUID(thrower);
-            throwerId = player.getGameProfile().getName();
-        }
+    /**
+     * Captures the content at source into a new template, as actor for claim mods.
+     */
+    public static boolean captureAtPosition(ItemStack capsule, @Nullable ServerPlayerEntity actor, int size, ServerWorld playerWorld, BlockPos source) {
+        String throwerId = actor != null ? actor.getGameProfile().getName() : "CapsuleMod";
         String capsuleID = StructureSaver.getUniqueName(playerWorld, throwerId);
-        CapsuleTemplate template = StructureSaver.undeploy(playerWorld, thrower, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
+        CapsuleTemplate template = StructureSaver.undeploy(playerWorld, actor, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
         boolean storageOK = template != null;
         if (storageOK) {
             // register the link in the capsule
@@ -392,7 +398,7 @@ public class Capsule {
             // DEPLOY
             // is linked, deploy
             BlockPos throwPos = Spacial.findBottomBlock(ItemEntity);
-            boolean deployed = deployCapsule(capsule, throwPos, ItemEntity.getThrower(), extendLength, itemWorld);
+            boolean deployed = deployCapsule(capsule, throwPos, Claims.player(itemWorld, ItemEntity.getThrower()), extendLength, itemWorld);
             if (deployed) {
                 itemWorld.playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundCategory.BLOCKS, 0.4F, 0.1F);
                 showDeployParticules(itemWorld, ItemEntity.blockPosition(), size);

@@ -1,5 +1,6 @@
 package capsule;
 
+import capsule.blocks.TileEntityCapture;
 import capsule.items.CapsuleItem;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
@@ -14,6 +15,7 @@ import net.minecraft.entity.item.ExperienceOrbEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IClearable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -89,7 +91,7 @@ public class StructureSaver {
         return preventItemDrop && (entity instanceof ItemEntity || entity instanceof ExperienceOrbEntity);
     }
 
-    public static CapsuleTemplate undeploy(ServerWorld worldserver, @Nullable UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+    public static CapsuleTemplate undeploy(ServerWorld worldserver, @Nullable ServerPlayerEntity player, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
                                            Map<BlockPos, Block> legacyItemOccupied) {
 
         MinecraftServer minecraftserver = worldserver.getServer();
@@ -110,11 +112,7 @@ public class StructureSaver {
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, outCapturedEntities);
         template.removeOccupiedPositions();
-        PlayerEntity player = null;
-        if (playerID != null) {
-            player = worldserver.getPlayerByUUID(playerID);
-            if (player != null) template.setAuthor(player.getGameProfile().getName());
-        }
+        if (player != null) template.setAuthor(player.getGameProfile().getName());
         boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
@@ -139,7 +137,7 @@ public class StructureSaver {
 
     }
 
-    public static boolean undeployBlueprint(ServerWorld worldserver, UUID playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
+    public static boolean undeployBlueprint(ServerWorld worldserver, @Nullable ServerPlayerEntity player, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
         CapsuleTemplate blueprintTemplate = blueprint.getRight();
         if (blueprintTemplate == null) return false;
@@ -153,10 +151,6 @@ public class StructureSaver {
         List<Template.BlockInfo> worldBlocks = tempTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
         List<Template.BlockInfo> blueprintBLocks = blueprintTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
-        PlayerEntity player = null;
-        if (playerID != null) {
-            player = worldserver.getPlayerByUUID(playerID);
-        }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintBLocks.size() != worldBlocks.size())
             return false;
@@ -236,7 +230,7 @@ public class StructureSaver {
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerWorld
-            world, @Nullable PlayerEntity player) {
+            world, @Nullable ServerPlayerEntity player) {
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -293,18 +287,13 @@ public class StructureSaver {
     }
 
 
-    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, @Nullable UUID thrower, BlockPos
+    public static boolean deploy(ItemStack capsule, ServerWorld playerWorld, @Nullable ServerPlayerEntity player, BlockPos
             dest, List<Block> overridableBlocks, PlacementSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
 
         if (template == null) return false;
-
-        PlayerEntity player = null;
-        if (thrower != null) {
-            player = playerWorld.getServer().getPlayerList().getPlayer(thrower);
-        }
 
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
         int size = CapsuleItem.getSize(capsule);
@@ -337,13 +326,20 @@ public class StructureSaver {
         try {
             template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, overridableBlocks, spawnedBlocks, spawnedEntities);
             placePlayerOnTop(playerWorld, dest, size);
+            // capture bases act for the player who places them, here the deployer
+            for (BlockPos pos : spawnedBlocks) {
+                TileEntity base = playerWorld.getBlockEntity(pos);
+                if (base instanceof TileEntityCapture) {
+                    ((TileEntityCapture) base).setPlacer(player == null ? null : player.getUUID());
+                }
+            }
 
             return true;
         } catch (Exception err) {
             printDeployError(player, err, "Couldn't deploy the capsule");
 
             // rollback
-            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
+            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null);
             template.removeOccupiedPositions();
             if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);

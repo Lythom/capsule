@@ -1,5 +1,6 @@
 package capsule.blocks;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SUpdateTileEntityPacket;
@@ -10,12 +11,18 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class TileEntityCapture extends DispenserTileEntity {
 
     public static final List<TileEntityCapture> instances = new ArrayList<>();
+
+    // claim mods check the captures and deploys of the base as this player; older bases have none
+    @Nullable
+    private UUID placer = null;
 
     public TileEntityCapture() {
         super(CapsuleBlocks.MARKER_TE);
@@ -76,6 +83,29 @@ public class TileEntityCapture extends DispenserTileEntity {
             color = this.getTileData().getInt("color");
         }
         return color;
+    }
+
+    @Nullable
+    public UUID getPlacer() {
+        return placer;
+    }
+
+    public void setPlacer(@Nullable UUID placer) {
+        this.placer = placer;
+        setChanged();
+    }
+
+    @Override
+    public CompoundNBT save(CompoundNBT tag) {
+        super.save(tag);
+        if (placer != null) tag.putUUID("placer", placer);
+        return tag;
+    }
+
+    @Override
+    public void load(BlockState state, CompoundNBT tag) {
+        super.load(state, tag);
+        placer = tag.hasUUID("placer") ? tag.getUUID("placer") : null;
     }
 
     public AxisAlignedBB getBoundingBox() {

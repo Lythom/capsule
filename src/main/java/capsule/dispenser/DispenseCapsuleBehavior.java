@@ -1,12 +1,16 @@
 package capsule.dispenser;
 
+import capsule.blocks.TileEntityCapture;
 import capsule.helpers.Capsule;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
+import capsule.plugins.claims.Claims;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.dispenser.DefaultDispenseItemBehavior;
 import net.minecraft.dispenser.IBlockSource;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
@@ -22,9 +26,12 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
         if (!(capsule.getItem() instanceof CapsuleItem)) return capsule;
 
         ServerWorld serverWorld = source.getLevel();
+        // capture bases act for the player who placed them; other dispensers, and older bases, for nobody
+        TileEntity base = source.getEntity();
+        ServerPlayerEntity actor = base instanceof TileEntityCapture ? Claims.fakePlayer(serverWorld, ((TileEntityCapture) base).getPlacer()) : null;
         if (CapsuleItem.hasState(capsule, CapsuleItem.CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {
-                Capsule.resentToCapsule(capsule, serverWorld, null);
+                Capsule.resentToCapsule(capsule, serverWorld, null, actor);
                 source.getLevel().playSound(null, source.getPos(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundCategory.BLOCKS, 0.2F, 0.4F);
             } catch (Exception e) {
                 LOGGER.error("Couldn't resend the content into the capsule", e);
@@ -34,7 +41,7 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
             final int extendLength = (size - 1) / 2;
 
             BlockPos anchor = Spacial.getAnchor(source.getPos(), source.getBlockState(), size);
-            boolean deployed = Capsule.deployCapsule(capsule, anchor, null, extendLength, serverWorld);
+            boolean deployed = Capsule.deployCapsule(capsule, anchor, actor, extendLength, serverWorld);
             if (deployed) {
                 source.getLevel().playSound(null, source.getPos(), SoundEvents.ARROW_SHOOT, SoundCategory.BLOCKS, 0.2F, 0.4F);
                 Capsule.showDeployParticules(serverWorld, source.getPos(), size);
