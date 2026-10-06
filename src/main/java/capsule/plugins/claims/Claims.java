@@ -14,6 +14,10 @@ import java.util.UUID;
  * The player claim mods check a capture or deploy as. Each position is then asked to them with a block placement event.
  */
 public final class Claims {
+    /**
+     * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before this version).
+     */
+    private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
 
     private Claims() {
     }
@@ -29,6 +33,14 @@ public final class Claims {
         if (player instanceof ServerPlayerEntity) return (ServerPlayerEntity) player;
         ServerPlayerEntity connected = level.getServer().getPlayerList().getPlayer(id);
         return connected != null ? connected : fakePlayer(level, id);
+    }
+
+    /**
+     * The player the claims are asked for: player, or without a player an anonymous fake player that no claim lists as
+     * a member, so that nobody may change a claimed position.
+     */
+    public static ServerPlayerEntity actor(ServerWorld level, @Nullable ServerPlayerEntity player) {
+        return player != null ? player : FakePlayerFactory.get(level, NOBODY);
     }
 
     /**
