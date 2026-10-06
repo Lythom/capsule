@@ -15,8 +15,6 @@ public class BlockCapsuleMarker extends DispenserBlock {
         super(BlockCapsuleMarker.Properties.of(Material.STONE, MaterialColor.STONE)
                 .strength(2.5F)
                 .sound(SoundType.STONE));
-
-        this.registerDefaultState(this.stateDefinition.any());
     }
 
     @Override
