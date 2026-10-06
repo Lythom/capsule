@@ -72,7 +72,7 @@ gametest() {
         echo "FAIL: $loader GameTests on the release jar (exit status $status), log: $log"
         return 1
     fi
-    echo "OK: $loader GameTests passed on $(basename "$jar")"
+    echo "OK: $loader, $(grep -oE 'All [0-9]+ required tests passed' "$log" | tail -n 1) on $(basename "$jar")"
     [ -n "${KEEP_SERVER:-}" ] || rm -rf "$dir"
 }
 
