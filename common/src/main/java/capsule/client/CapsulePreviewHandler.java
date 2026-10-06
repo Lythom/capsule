@@ -84,6 +84,7 @@ public class CapsulePreviewHandler {
             tryPreviewRecall(mc.player.getMainHandItem(), poseStack);
             tryPreviewDeploy(mc.player, partialTick, mc.player.getMainHandItem(), poseStack);
             tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), poseStack);
+            CaptureAnimation.render(poseStack, mc.gameRenderer.getMainCamera().getPosition(), partialTick);
         }
     }
 
@@ -129,6 +130,7 @@ public class CapsulePreviewHandler {
      * set captureBlock data (clientside only ) when capsule is in hand.
      */
     public static void onLocalPlayerTick(LocalPlayer player) {
+        CaptureAnimation.tick();
         ItemStack mainHandItem = player.getMainHandItem();
         tryPreviewCapture(player, mainHandItem);
         if (!ItemStack.matches(lastMainHandItem, mainHandItem)) {

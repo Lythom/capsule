@@ -1,5 +1,6 @@
 package capsule.network.handler;
 
+import capsule.client.CaptureAnimation;
 import capsule.client.CapsulePreviewHandler;
 import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.helpers.Capsule;
@@ -45,6 +46,7 @@ public class ClientPayloadHandler {
 		int size = data.size();
 		String templateName = data.templateName();
 		Capsule.showUndeployParticules(Minecraft.getInstance().level, posFrom, posTo, size);
+		CaptureAnimation.start(Minecraft.getInstance().level, posFrom, posTo, size);
 		if (!StringUtil.isNullOrEmpty(templateName)) {
 			// remove templates because they are dirty and must be redownloaded
 			CapsulePreviewHandler.currentPreview.remove(templateName);

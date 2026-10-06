@@ -4,6 +4,7 @@ import capsule.CapsuleMod;
 import capsule.blocks.CapsuleBlocks;
 import capsule.blocks.CaptureBER;
 import capsule.client.CapsulePreviewHandler;
+import capsule.client.ClientConfig;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -11,19 +12,29 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 public class CapsuleNeoForgeClient {
 
-    static void init(IEventBus modEventBus) {
+    static void init(IEventBus modEventBus, ModContainer modContainer) {
+        ModConfigSpec config = ModConfigSpecBuilder.build(ClientConfig::define);
+        modContainer.registerConfig(ModConfig.Type.CLIENT, config);
+        modEventBus.addListener((ModConfigEvent event) -> {
+            if (event.getConfig().getSpec() == config) ClientConfig.bakeConfig();
+        });
+
         CapsuleMod.openGuiScreenCommon = LabelGui::open;
 
         modEventBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> ItemProperties.register(

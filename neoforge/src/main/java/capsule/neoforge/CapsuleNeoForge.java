@@ -75,7 +75,7 @@ public class CapsuleNeoForge {
         });
 
         if (dist.isClient()) {
-            CapsuleNeoForgeClient.init(modEventBus);
+            CapsuleNeoForgeClient.init(modEventBus, modContainer);
         }
     }
 }

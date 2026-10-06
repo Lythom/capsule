@@ -5,7 +5,9 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.CapsuleBlocks;
+import capsule.client.CaptureAnimation;
 import capsule.client.CapsulePreviewHandler;
+import capsule.client.ClientConfig;
 import capsule.enchantments.CapsuleEnchantments;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
@@ -162,6 +164,16 @@ public class ClientSmokeTest {
                 .run("throw", this::rightClick)
                 .sleep(3)
                 .run("screenshot", () -> screenshot("03-capsule-thrown"))
+                .await("capture animation", 100, () -> CaptureAnimation.renderedFrames > 0)
+                .sleep(6)
+                .run("screenshot", () -> screenshot("04a-capture-animation"))
+                .sleep(4)
+                .run("screenshot", () -> screenshot("04b-capture-animation"))
+                .run("animate a capture the client did not see", () -> CaptureAnimation.start(mc().level, markerPos().above(3), markerPos(), CAPTURE_SIZE))
+                .sleep(5)
+                .run("screenshot", () -> screenshot("04c-capture-animation-unseen"))
+                .run("check", () -> scenario.check("the capture animation plays with captureAnimation on", CaptureAnimation.renderedFrames > 0,
+                        CaptureAnimation.renderedFrames + " frames rendered"))
                 .await("captured", 100, serverCondition(p -> p.level().getBlockState(markerPos().above()).isAir()
                         && capsuleEntity(p, s -> CapsuleItem.hasState(s, CapsuleState.LINKED)) != null))
                 .sleep(20)
@@ -273,10 +285,19 @@ public class ClientSmokeTest {
                 .await("deployed capsule in hand", 40, () -> mainHandIs(CapsuleState.DEPLOYED))
                 .sleep(20)
                 .run("screenshot", () -> screenshot("15-deployed-capsule-in-hand"))
+                .run("turn the capture animation off", () -> {
+                    ClientConfig.captureAnimation = false;
+                    CaptureAnimation.renderedFrames = 0;
+                })
                 .run("undeploy", this::rightClick)
                 .await("undeployed", 60, () -> mainHandIs(CapsuleState.LINKED))
                 .sleep(20)
-                .run("screenshot", () -> screenshot("16-undeployed"));
+                .run("screenshot", () -> screenshot("16-undeployed"))
+                .run("check", () -> {
+                    scenario.check("no capture animation with captureAnimation off", CaptureAnimation.renderedFrames == 0,
+                            CaptureAnimation.renderedFrames + " frames rendered");
+                    ClientConfig.captureAnimation = true;
+                });
     }
 
     private void blueprintScenario() {
