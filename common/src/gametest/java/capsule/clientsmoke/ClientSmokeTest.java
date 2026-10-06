@@ -560,12 +560,13 @@ public class ClientSmokeTest {
     }
 
     /**
-     * A view from above, flying so that the camera stays where it is put.
+     * A view from above, flying so that the camera stays where it is put. The teleport goes first: a client player on
+     * the ground stops flying.
      */
     private static void flyTo(ServerPlayer player, double x, double y, double z, float pitch) {
+        player.connection.teleport(x, y, z, 0, pitch);
         player.getAbilities().flying = true;
         player.onUpdateAbilities();
-        player.connection.teleport(x, y, z, 0, pitch);
     }
 
     private BlockPos markerPos() {
