@@ -3,9 +3,13 @@ package capsule.client.render;
 import capsule.platform.Services;
 import capsule.structure.CapsuleTemplate;
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
@@ -45,6 +49,14 @@ import java.util.Map;
 
 public class CapsuleTemplateRenderer {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final float PREVIEW_ALPHA = 0.5f;
+    // the depth pass is drawn first: the buffers end in their insertion order
+    private static final MultiBufferSource.BufferSource GHOST_BUFFERS = MultiBufferSource.immediateWithBuffers(
+            Util.make(new Object2ObjectLinkedOpenHashMap<>(), buffers -> {
+                buffers.put(CustomRenderType.GHOST_DEPTH, new ByteBufferBuilder(CustomRenderType.GHOST_DEPTH.bufferSize()));
+                buffers.put(CustomRenderType.GHOST, new ByteBufferBuilder(CustomRenderType.GHOST.bufferSize()));
+            }),
+            new ByteBufferBuilder(256));
     public FakeWorld templateWorld = null;
     private boolean isWorldDirty = true;
     private StructurePlaceSettings lastPlacementSettings;
@@ -55,21 +67,23 @@ public class CapsuleTemplateRenderer {
         if (player == null)
             return;
 
-        final Minecraft minecraft = Minecraft.getInstance();
-
-        final Vec3 cameraView = minecraft.gameRenderer.getMainCamera().getPosition();
+        final Vec3 cameraView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         poseStack.pushPose();
         poseStack.translate(destPos.getX() - cameraView.x, destPos.getY() - cameraView.y, destPos.getZ() - cameraView.z);
 
-        renderTemplate(poseStack, cameraView, player);
+        renderTemplate(poseStack, PREVIEW_ALPHA);
 
         poseStack.popPose();
     }
 
-    public void renderTemplate(PoseStack poseStack, Vec3 cameraView, Player player) {
+    /**
+     * Draws the blocks of the template world as translucent ghost blocks, in the space of poseStack.
+     */
+    public void renderTemplate(PoseStack poseStack, float alpha) {
         Minecraft minecraft = Minecraft.getInstance();
-        MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
-        VertexConsumer bufferSolid = bufferSource.getBuffer(CustomRenderType.VISUAL_BLOCK);
+        VertexConsumer consumer = VertexMultiConsumer.create(
+                GHOST_BUFFERS.getBuffer(CustomRenderType.GHOST_DEPTH),
+                new TranslucentVertexConsumer(GHOST_BUFFERS.getBuffer(CustomRenderType.GHOST), alpha));
 
         for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
             BlockPos targetPos = entry.getKey();
@@ -81,11 +95,11 @@ public class CapsuleTemplateRenderer {
                 BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
                 if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
                     random.setSeed(Mth.getSeed(targetPos));
-                    Services.client().tesselateWithAO(blockRenderer, templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY);
+                    Services.client().tesselateWithAO(blockRenderer, templateWorld, ibakedmodel, state, targetPos, poseStack, consumer, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY);
                 } else {
                     FluidState ifluidstate = state.getFluidState();
                     if (!ifluidstate.isEmpty()) {
-                        renderFluid(poseStack, targetPos, templateWorld, bufferSolid, ifluidstate);
+                        renderFluid(poseStack, targetPos, templateWorld, consumer, ifluidstate);
                     }
                 }
             } catch (Exception e) {
@@ -94,6 +108,7 @@ public class CapsuleTemplateRenderer {
             poseStack.popPose(); // Load the position we saved earlier
 
         }
+        GHOST_BUFFERS.endBatch();
     }
 
     private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
