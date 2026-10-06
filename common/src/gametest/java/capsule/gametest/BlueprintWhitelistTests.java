@@ -18,11 +18,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChiseledBookShelfBlock;
 import net.minecraft.world.level.block.LecternBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.CampfireBlockEntity;
 import net.minecraft.world.level.block.entity.LecternBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +103,10 @@ public class BlueprintWhitelistTests {
                     : be instanceof CampfireBlockEntity campfire ? campfire.getItems().stream().allMatch(ItemStack::isEmpty)
                     : !(be instanceof LecternBlockEntity lectern) || !lectern.hasBook();
             if (!empty) problems.add(BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock()) + " kept its content");
+            BlockState state = be.getBlockState();
+            boolean showsContent = ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES.stream().anyMatch(p -> state.hasProperty(p) && state.getValue(p))
+                    || state.hasProperty(LecternBlock.HAS_BOOK) && state.getValue(LecternBlock.HAS_BOOK);
+            if (showsContent) problems.add(state + " shows a content it does not have");
         }
         for (Block block : blocks) {
             if (BlockPos.betweenClosedStream(new BlockPos(4, 1, 4), new BlockPos(6, 1, 6)).noneMatch(p -> helper.getBlockState(p).is(block))) {

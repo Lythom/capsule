@@ -42,11 +42,14 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChiseledBookShelfBlock;
 import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -69,6 +72,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Copy of mc original net.minecraft.world.gen.feature.template class, but having fields public to allow external manipulation.
@@ -78,6 +82,14 @@ import java.util.stream.Collectors;
  */
 public class CapsuleTemplate {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleTemplate.class);
+
+    /**
+     * Block state properties showing the content of a block entity, false once its content is removed.
+     */
+    private static final List<BooleanProperty> CONTENT_PROPERTIES = Stream.concat(
+            ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES.stream(),
+            Stream.of(BlockStateProperties.HAS_BOOK, BlockStateProperties.HAS_RECORD, BlockStateProperties.HAS_BOTTLE_0, BlockStateProperties.HAS_BOTTLE_1, BlockStateProperties.HAS_BOTTLE_2)
+    ).toList();
 
     public final List<CapsuleTemplate.Palette> palettes = Lists.newArrayList();
     public final List<StructureTemplate.StructureEntityInfo> entities = Lists.newArrayList();
@@ -475,7 +487,7 @@ public class CapsuleTemplate {
                     }
                     return new StructureTemplate.StructureBlockInfo(
                             b.pos(),
-                            b.state(),
+                            withoutContent(b.state()),
                             nbt
                     );
                 }).collect(Collectors.toList());
@@ -483,6 +495,13 @@ public class CapsuleTemplate {
         getPalette().addAll(newBlockList);
         // remove all entities
         entities.clear();
+    }
+
+    private static BlockState withoutContent(BlockState state) {
+        for (BooleanProperty property : CONTENT_PROPERTIES) {
+            if (state.hasProperty(property)) state = state.setValue(property, false);
+        }
+        return state;
     }
 
     static class BasicPalette implements Iterable<BlockState> {
