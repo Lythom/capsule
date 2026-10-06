@@ -11,6 +11,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.loot.LootTables;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
@@ -72,6 +73,8 @@ public class Config {
     public static List<Block> excludedBlocks;
     public static List<Block> overridableBlocks;
     public static List<Block> opExcludedBlocks;
+    public static List<ResourceLocation> excludedBlockTags = Collections.emptyList();
+    public static List<ResourceLocation> opExcludedBlockTags = Collections.emptyList();
 
     public static String starterTemplatesPath;
     public static String prefabsTemplatesPath;
@@ -119,6 +122,8 @@ public class Config {
 
         Config.opExcludedBlocks = Serialization.deserializeBlockList(opExcludedBlocksIdsCfg.get());
         Config.excludedBlocks = Serialization.deserializeBlockList(excludedBlocksIdsCfg.get());
+        Config.opExcludedBlockTags = Serialization.deserializeBlockTags(opExcludedBlocksIdsCfg.get());
+        Config.excludedBlockTags = Serialization.deserializeBlockTags(excludedBlocksIdsCfg.get());
         Config.overridableBlocks = Serialization.deserializeBlockList(overridableBlocksIdsCfg.get());
         Config.lootTablesList = lootTablesListCfg.get();
         Config.starterTemplatesPath = starterTemplatesPathCfg.get();
