@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class Spacial {
     public static final float MAX_BLOCKS_PER_TICK_THROW = 1.2f;
+    public static final int PREVIEW_REACH = 18;
     protected static final Logger LOGGER = LogManager.getLogger(Spacial.class);
 
     public static BlockPos findBottomBlock(ItemEntity ItemEntity) {
@@ -50,7 +51,7 @@ public class Spacial {
     }
 
     public static BlockRayTraceResult clientRayTracePreview(PlayerEntity thePlayer, float partialTicks, int size) {
-        int blockReachDistance = 18 + size;
+        int blockReachDistance = PREVIEW_REACH + size;
         Vector3d vec3d = thePlayer.getEyePosition(partialTicks);
         Vector3d vec3d1 = thePlayer.getViewVector(partialTicks);
         Vector3d vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
@@ -58,6 +59,14 @@ public class Spacial {
         return thePlayer.getCommandSenderWorld().clip(
                 new RayTraceContext(vec3d, vec3d2, RayTraceContext.BlockMode.OUTLINE, stopOnLiquid ? RayTraceContext.FluidMode.ANY : RayTraceContext.FluidMode.NONE, thePlayer)
         );
+    }
+
+    /**
+     * Whether a player could aim at pos with clientRayTracePreview.
+     */
+    public static boolean isInPreviewRange(PlayerEntity player, BlockPos pos, int size) {
+        double range = PREVIEW_REACH + size + 2;
+        return player.getEyePosition(1.0F).distanceToSqr(Vector3d.atCenterOf(pos)) <= range * range;
     }
 
     @Nullable

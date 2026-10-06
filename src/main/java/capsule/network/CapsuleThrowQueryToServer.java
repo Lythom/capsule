@@ -1,6 +1,7 @@
 package capsule.network;
 
 import capsule.helpers.Capsule;
+import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -41,6 +42,13 @@ public class CapsuleThrowQueryToServer {
         ServerWorld world = sendingPlayer.getLevel();
         ctx.get().enqueueWork(() -> {
             if (heldItem.getItem() instanceof CapsuleItem) {
+                // the query comes from the client: it must match what the held capsule allows
+                if (instant && !CapsuleItem.isInstantAndUndeployed(heldItem)) return;
+                BlockPos pos = this.pos;
+                if (pos != null && !Spacial.isInPreviewRange(sendingPlayer, pos, CapsuleItem.getSize(heldItem))) {
+                    if (instant) return;
+                    pos = null; // an out of range throw lands where it falls
+                }
                 if (instant && pos != null) {
                     int size = CapsuleItem.getSize(heldItem);
                     int extendLength = (size - 1) / 2;
