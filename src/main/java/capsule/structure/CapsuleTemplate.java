@@ -27,6 +27,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -42,6 +44,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Copy of mc original net.minecraft.world.gen.feature.template class, but having fields public to allow external manipulation.
@@ -448,7 +451,7 @@ public class CapsuleTemplate {
                     }
                     return new StructureTemplate.StructureBlockInfo(
                             b.pos(),
-                            b.state(),
+                            withoutContent(b.state()),
                             nbt
                     );
                 }).collect(Collectors.toList());
@@ -456,6 +459,24 @@ public class CapsuleTemplate {
         getPalette().addAll(newBlockList);
         // remove all entities
         entities.clear();
+    }
+
+    /**
+     * Block state properties showing the content of a block entity, false once its content is removed. Loaded on first
+     * use, after the blocks.
+     */
+    private static class ContentProperties {
+        private static final List<BooleanProperty> ALL = Stream.concat(
+                ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES.stream(),
+                Stream.of(BlockStateProperties.HAS_BOOK, BlockStateProperties.HAS_RECORD, BlockStateProperties.HAS_BOTTLE_0, BlockStateProperties.HAS_BOTTLE_1, BlockStateProperties.HAS_BOTTLE_2)
+        ).toList();
+    }
+
+    private static BlockState withoutContent(BlockState state) {
+        for (BooleanProperty property : ContentProperties.ALL) {
+            if (state.hasProperty(property)) state = state.setValue(property, false);
+        }
+        return state;
     }
 
     static class BasicPalette implements Iterable<BlockState> {
