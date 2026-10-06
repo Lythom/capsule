@@ -39,8 +39,9 @@ repositories {
     }
     mavenCentral {
         content {
-            // served by maven.fabricmc.net
+            // served by maven.fabricmc.net, and by Loom for the remapped mods
             excludeGroupByRegex 'net\\.fabricmc.*'
+            excludeGroupByRegex 'remapped\\..*'
         }
     }
 }

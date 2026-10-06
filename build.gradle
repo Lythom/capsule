@@ -1,6 +1,6 @@
 plugins {
     // https://projects.neoforged.net/neoforged/moddevgradle
     id 'net.neoforged.moddev' version '2.0.148' apply false
-    // https://maven.fabricmc.net/net/fabricmc/fabric-loom-remap/ (1.18 needs Java 25 to run Gradle)
-    id 'net.fabricmc.fabric-loom-remap' version '1.17.21' apply false
+    // https://maven.fabricmc.net/net/fabricmc/fabric-loom-remap/ (runs on Java 25, see gradle/gradle-daemon-jvm.properties)
+    id 'net.fabricmc.fabric-loom-remap' version '1.18.2' apply false
 }

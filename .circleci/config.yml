@@ -3,7 +3,8 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/openjdk:21.0.8
+      # Java 21 builds and runs the mod; Gradle downloads the Java 25 its daemon needs (gradle/gradle-daemon-jvm.properties)
+      - image: cimg/openjdk:21.0.12
     resource_class: large
 
     working_directory: ~/repo
