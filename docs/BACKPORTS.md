@@ -106,6 +106,7 @@ and publish scripts, documentation.
 | L3 claim probe measured (2d5b468) | not applicable: the 1.21.1 numbers apply | not applicable: same | 6d54239 (per block 31³ 4 to 17 ms, 255³ about 2 s; Flan 1.16.5 does not listen to `EntityPlaceEvent`, so the probe does not see its claims) |
 | L3 generic probe per block up to size 31, per chunk column above (efa286a) | b9acfec | a2ae24b | a13e209 |
 | Flan 1.16.5 adapter (1.16.5 only) | not applicable: Flan adapter of 82a85aa | not applicable: same | eba5fed |
+| Failed deploys rolled back inside claims, a dupe since L2 (780c7f6) | e71d26c | fd477f4 | 62955f8 |
 | CircleCI on version branches only (1.21.1: fbf85d5) | 57c98fd | 0f0eb49 | f20202d |
 | L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
 

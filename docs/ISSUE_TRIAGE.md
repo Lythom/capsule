@@ -233,7 +233,8 @@ and Fabric) and Get Off My Lawn (Fabric) are asked once per chunk or claim, othe
 block (per chunk above size 31). Protected blocks stay in place on capture, and a deploy touching a claim you have no rights in is refused.
 Capture bases act as the player who placed them. Capture bases placed before this version and dispensers act for
 nobody: they can no longer capture or deploy inside claims (re-place the base to give it an owner). Also fixed in the
-next 1.20.1, 1.18.2 and 1.16.5 builds. On 1.16.5 the checks stay per block (Flan 1.16.5 only answers per position).
+next 1.20.1, 1.18.2 and 1.16.5 builds. On 1.16.5 the checks are also per block up to size 31 and per chunk column
+above, and Flan is asked through its API for every position, as it does not answer the placement check there.
 
 ### #90
 Superseded in the next 1.21.1 build: capsules now come back with vanilla Loyalty, from enchanting tables and books
