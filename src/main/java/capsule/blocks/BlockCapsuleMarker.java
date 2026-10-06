@@ -19,8 +19,6 @@ public class BlockCapsuleMarker extends DispenserBlock {
                 .sound(SoundType.STONE)
                 .harvestTool(ToolType.PICKAXE)
                 .harvestLevel(0));
-
-        this.registerDefaultState(this.stateDefinition.any());
     }
 
     @Override
