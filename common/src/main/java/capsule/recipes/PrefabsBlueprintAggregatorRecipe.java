@@ -7,6 +7,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
@@ -15,6 +16,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -26,16 +28,16 @@ import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Triple;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 
@@ -111,9 +113,10 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
         private final ResourceLocation id;
 
         public final ShapedRecipe recipe;
-        private int ingredientOneIndex = 4;
-        private int ingredientTwoIndex = 0;
-        private int ingredientThreeIndex = 2;
+        /**
+         * Indexes in the recipe pattern of the template ingredients 1, 2 and 3, given back after crafting.
+         */
+        private final List<Integer> templateIngredientIndexes;
 
         public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
             this.id = id;
@@ -121,8 +124,24 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             FixIngredient(template, ingredients.getMiddle(), "2");
             FixIngredient(template, ingredients.getRight(), "3");
             this.recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.codec().codec().parse(JsonOps.INSTANCE, template).getOrThrow();
-//            Optional<RecipeHolder<?>> holder = RecipeManager.fromJson(id, template, JsonOps.INSTANCE);
-//	        this.recipe = holder.map(recipeHolder -> (ShapedRecipe) recipeHolder.value()).orElse(null);
+            this.templateIngredientIndexes = templateIngredientIndexes(GsonHelper.getAsJsonArray(template, "pattern").asList().stream().map(JsonElement::getAsString).toList());
+        }
+
+        /**
+         * Positions of 1, 2 and 3 once the pattern is shrunk to its non blank rows and columns, like ShapedRecipePattern does.
+         */
+        private static List<Integer> templateIngredientIndexes(List<String> pattern) {
+            List<Integer> rows = IntStream.range(0, pattern.size()).filter(y -> !pattern.get(y).isBlank()).boxed().toList();
+            List<Integer> columns = IntStream.range(0, pattern.get(0).length()).filter(x -> pattern.stream().anyMatch(row -> row.charAt(x) != ' ')).boxed().toList();
+            if (rows.isEmpty()) return List.of();
+            int top = rows.get(0), left = columns.get(0), width = columns.get(columns.size() - 1) - left + 1;
+            List<Integer> indexes = new ArrayList<>();
+            for (int y = top; y <= rows.get(rows.size() - 1); y++) {
+                for (int x = left; x < left + width; x++) {
+                    if ("123".indexOf(pattern.get(y).charAt(x)) >= 0) indexes.add(x - left + (y - top) * width);
+                }
+            }
+            return indexes;
         }
 
         private void FixIngredient(JsonObject template, StructureSaver.ItemStackKey ingredientKey, String key) {
@@ -143,9 +162,10 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             }
         }
 
-        public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, ShapedRecipe serializedRecipe) {
+        public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, ShapedRecipe serializedRecipe, List<Integer> templateIngredientIndexes) {
             this.id = id;
             this.recipe = serializedRecipe;
+            this.templateIngredientIndexes = templateIngredientIndexes;
         }
 
         public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
@@ -157,13 +177,14 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
          */
         public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
             NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
+            int[] patternIndexes = patternIndexes(inv);
 
             for (int i = 0; i < nonnulllist.size(); ++i) {
                 ItemStack itemstack = inv.getItem(i);
                 nonnulllist.set(i, Services.PLATFORM.getCraftingRemainingItem(itemstack));
                 if (itemstack.getItem() instanceof CapsuleItem) {
-                    nonnulllist.set(i, itemstack.copy());
-                } else if (i == ingredientOneIndex || i == ingredientTwoIndex || i == ingredientThreeIndex) {
+                    nonnulllist.set(i, ClearCapsuleRecipe.givenBack(itemstack.copy()));
+                } else if (patternIndexes != null && templateIngredientIndexes.contains(patternIndexes[i])) {
                     ItemStack refund = itemstack.copy();
                     refund.setCount(1);
                     nonnulllist.set(i, refund);
@@ -179,19 +200,31 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
         }
 
         public boolean matches(CraftingInput inv) {
+            return patternIndexes(inv) != null;
+        }
+
+        /**
+         * The recipe pattern index under each slot of inv (-1 outside the pattern) where the recipe matches, or null.
+         */
+        @Nullable
+        private int[] patternIndexes(CraftingInput inv) {
             for (int i = 0; i <= inv.width() - recipe.getWidth(); ++i) {
                 for (int j = 0; j <= inv.height() - recipe.getHeight(); ++j) {
-                    if (this.checkMatch(inv, i, j, true)) {
-                        return true;
-                    }
-
-                    if (this.checkMatch(inv, i, j, false)) {
-                        return true;
+                    for (boolean mirrored : new boolean[]{true, false}) {
+                        if (this.checkMatch(inv, i, j, mirrored)) {
+                            int[] indexes = new int[inv.size()];
+                            for (int slot = 0; slot < indexes.length; slot++) {
+                                int k = slot % inv.width() - i;
+                                int l = slot / inv.width() - j;
+                                boolean inside = k >= 0 && l >= 0 && k < recipe.getWidth() && l < recipe.getHeight();
+                                indexes[slot] = inside ? (mirrored ? recipe.getWidth() - k - 1 : k) + l * recipe.getWidth() : -1;
+                            }
+                            return indexes;
+                        }
                     }
                 }
             }
-
-            return false;
+            return null;
         }
 
         public boolean matches(CraftingInput inv, Level worldIn) {
@@ -258,7 +291,8 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             for (int i = 0; i < size; i++) {
                 ResourceLocation id = ResourceLocation.parse(buffer.readUtf());
                 ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.streamCodec().decode(buffer);
-                instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe));
+                List<Integer> templateIngredientIndexes = buffer.readList(FriendlyByteBuf::readVarInt);
+                instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe, templateIngredientIndexes));
             }
 
             return instance;
@@ -269,6 +303,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             for (PrefabsBlueprintCapsuleRecipe subRecipe : recipe.recipes) {
                 buffer.writeUtf(subRecipe.id.toString());
                 ShapedRecipe.Serializer.SHAPED_RECIPE.streamCodec().encode(buffer, subRecipe.recipe);
+                buffer.writeCollection(subRecipe.templateIngredientIndexes, FriendlyByteBuf::writeVarInt);
             }
         }
 

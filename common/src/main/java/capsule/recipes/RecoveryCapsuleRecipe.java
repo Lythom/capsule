@@ -46,7 +46,7 @@ public class RecoveryCapsuleRecipe extends ShapelessRecipe {
             ItemStack itemstack = inv.getItem(i);
             nonnulllist.set(i, Services.PLATFORM.getCraftingRemainingItem(itemstack));
             if (itemstack.getItem() instanceof CapsuleItem) {
-                nonnulllist.set(i, itemstack.copy());
+                nonnulllist.set(i, ClearCapsuleRecipe.givenBack(itemstack.copy()));
             }
         }
 
