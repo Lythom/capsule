@@ -17,6 +17,8 @@ import net.minecraft.entity.item.PaintingEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.inventory.IClearable;
 import net.minecraft.nbt.*;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -438,7 +440,7 @@ public class CapsuleTemplate {
                     }
                     return new Template.BlockInfo(
                             b.pos,
-                            b.state,
+                            withoutContent(b.state),
                             nbt
                     );
                 }).collect(Collectors.toList());
@@ -446,6 +448,23 @@ public class CapsuleTemplate {
         getPalette().addAll(newBlockList);
         // remove all entities
         entities.clear();
+    }
+
+    /**
+     * Block state properties showing the content of a block entity, false once its content is removed. Loaded on first
+     * use, after the blocks.
+     */
+    private static class ContentProperties {
+        private static final List<BooleanProperty> ALL = Arrays.asList(
+                BlockStateProperties.HAS_BOOK, BlockStateProperties.HAS_RECORD, BlockStateProperties.HAS_BOTTLE_0, BlockStateProperties.HAS_BOTTLE_1, BlockStateProperties.HAS_BOTTLE_2
+        );
+    }
+
+    private static BlockState withoutContent(BlockState state) {
+        for (BooleanProperty property : ContentProperties.ALL) {
+            if (state.hasProperty(property)) state = state.setValue(property, false);
+        }
+        return state;
     }
 
     static class BasicPalette implements Iterable<BlockState> {
