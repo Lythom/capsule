@@ -62,6 +62,16 @@ public class RecallEnchant extends Enchantment {
         }
     }
 
+    /**
+     * A thrown capsule cannot deploy before its third tick (see CapsuleItem.onEntityItemUpdate): recalling it earlier would
+     * bring it back undeployed.
+     */
+    public static boolean shouldRecall(ItemEntity entity) {
+        return entity.getThrower() != null
+                && entity.tickCount > 2
+                && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity));
+    }
+
     @SubscribeEvent
     public static void onWorldTickEvent(TickEvent.WorldTickEvent wte) {
         if (wte.side == LogicalSide.CLIENT || wte.phase != TickEvent.Phase.END)
@@ -75,7 +85,7 @@ public class RecallEnchant extends Enchantment {
                 .collect(Collectors.toList());
 
         for (ItemEntity entity : recallItemEntities) {
-            if (entity.getThrower() != null && (entity.horizontalCollision || entity.verticalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))) {
+            if (shouldRecall(entity)) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.tick();
