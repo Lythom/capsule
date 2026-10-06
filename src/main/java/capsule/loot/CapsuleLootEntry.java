@@ -1,19 +1,27 @@
 package capsule.loot;
 
+import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import net.minecraft.core.Registry;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntries;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -26,6 +34,13 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
  * @author Lythom
  */
 public class CapsuleLootEntry extends LootPoolSingletonContainer {
+
+    private static final DeferredRegister<LootPoolEntryType> ENTRY_TYPES = DeferredRegister.create(Registry.LOOT_ENTRY_REGISTRY, CapsuleMod.MODID);
+    public static final RegistryObject<LootPoolEntryType> TYPE = ENTRY_TYPES.register("capsule", () -> new LootPoolEntryType(new Serializer()));
+
+    public static void registerEntryType(IEventBus modEventBus) {
+        ENTRY_TYPES.register(modEventBus);
+    }
 
     public static final int DEFAULT_WEIGHT = 3;
     public static String[] COLOR_PALETTE = new String[]{
@@ -54,7 +69,11 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
      * @param weightIn
      */
     protected CapsuleLootEntry(String templatesPath, int weightIn) {
-        super(weightIn, 0, new LootItemCondition[0], new LootItemFunction[0]);
+        this(templatesPath, weightIn, 0, new LootItemCondition[0], new LootItemFunction[0]);
+    }
+
+    private CapsuleLootEntry(String templatesPath, int weight, int quality, LootItemCondition[] conditions, LootItemFunction[] functions) {
+        super(weight, quality, conditions, functions);
         this.templatesPath = templatesPath;
     }
 
@@ -134,6 +153,22 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
     @Override
     public LootPoolEntryType getType() {
-        return LootPoolEntries.REFERENCE;
+        return TYPE.get();
+    }
+
+    /**
+     * Capsule loot entries have their own type: mods serializing loot tables (loot viewers) must not use another entry's serializer.
+     */
+    public static class Serializer extends LootPoolSingletonContainer.Serializer<CapsuleLootEntry> {
+        @Override
+        public void serializeCustom(JsonObject json, CapsuleLootEntry entry, JsonSerializationContext context) {
+            super.serializeCustom(json, entry, context);
+            json.addProperty("templates_path", entry.templatesPath);
+        }
+
+        @Override
+        protected CapsuleLootEntry deserialize(JsonObject json, JsonDeserializationContext context, int weight, int quality, LootItemCondition[] conditions, LootItemFunction[] functions) {
+            return new CapsuleLootEntry(GsonHelper.getAsString(json, "templates_path"), weight, quality, conditions, functions);
+        }
     }
 }

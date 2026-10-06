@@ -7,6 +7,7 @@ import capsule.enchantments.CapsuleEnchantments;
 import capsule.itemGroups.CapsuleItemGroups;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
@@ -70,6 +71,7 @@ public class CapsuleMod {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
         CapsuleEnchantments.registerEnchantments(modEventBus);
+        CapsuleLootEntry.registerEntryType(modEventBus);
     }
 
     public static void serverStarting(final ServerStartingEvent e) {
