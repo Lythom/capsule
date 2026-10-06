@@ -633,7 +633,7 @@ public class CapsuleItem extends Item {
             if (!isInstantAndUndeployed(capsule)
                     && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE))) {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
+                BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? Spacial.getDeployPosition(worldIn, rtr).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
                 if (dest != null) {
                     CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
                 }
@@ -647,7 +647,7 @@ public class CapsuleItem extends Item {
                     if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
                         dest = rtr.getBlockPos();
                     } else {
-                        dest = rtr.getBlockPos().offset(rtr.getDirection().getNormal());
+                        dest = Spacial.getDeployPosition(worldIn, rtr);
                     }
                     dest = dest.offset(0, CapsuleItem.getYOffset(capsule), 0);
                 }
@@ -656,7 +656,7 @@ public class CapsuleItem extends Item {
                 }
             } else if (isActivated(capsule)) {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
+                BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? Spacial.getDeployPosition(worldIn, rtr).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
                 CapsuleNetwork.wrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }

@@ -7,6 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,6 +36,16 @@ public class Spacial {
      */
     public static BlockPos findBottomBlock(double x, double y, double z) {
         return new BlockPos(x, y - 1.0E-3, z);
+    }
+
+    /**
+     * Position of the lowest center block of a capsule content deployed where the player aims. Like a placed block, the
+     * content takes the place of a replaceable block (snow layer, grass) instead of floating above it.
+     */
+    public static BlockPos getDeployPosition(BlockGetter level, BlockHitResult hit) {
+        BlockState aimed = level.getBlockState(hit.getBlockPos());
+        boolean replaced = aimed.getMaterial().isReplaceable() && aimed.getFluidState().isEmpty();
+        return replaced ? hit.getBlockPos() : hit.getBlockPos().relative(hit.getDirection());
     }
 
     public static boolean isImmergedInLiquid(Entity entity) {
