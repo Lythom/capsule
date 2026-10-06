@@ -27,6 +27,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -440,7 +442,7 @@ public class CapsuleTemplate {
                     }
                     return new StructureTemplate.StructureBlockInfo(
                             b.pos,
-                            b.state,
+                            withoutContent(b.state),
                             nbt
                     );
                 }).collect(Collectors.toList());
@@ -448,6 +450,23 @@ public class CapsuleTemplate {
         getPalette().addAll(newBlockList);
         // remove all entities
         entities.clear();
+    }
+
+    /**
+     * Block state properties showing the content of a block entity, false once its content is removed. Loaded on first
+     * use, after the blocks.
+     */
+    private static class ContentProperties {
+        private static final List<BooleanProperty> ALL = Arrays.asList(
+                BlockStateProperties.HAS_BOOK, BlockStateProperties.HAS_RECORD, BlockStateProperties.HAS_BOTTLE_0, BlockStateProperties.HAS_BOTTLE_1, BlockStateProperties.HAS_BOTTLE_2
+        );
+    }
+
+    private static BlockState withoutContent(BlockState state) {
+        for (BooleanProperty property : ContentProperties.ALL) {
+            if (state.hasProperty(property)) state = state.setValue(property, false);
+        }
+        return state;
     }
 
     static class BasicPalette implements Iterable<BlockState> {
