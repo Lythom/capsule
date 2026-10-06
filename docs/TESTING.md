@@ -1,8 +1,14 @@
 # Testing
 
-Four automated layers: JUnit unit tests and GameTests run on both loaders on every `./gradlew build`; the production
-jar smoke test runs the built jars on real servers; the client smoke test plays a scenario in a real client and takes
-screenshots. What remains manual is listed in `docs/MANUAL_VALIDATION.md`. Everything needs Java 21; the first build downloads and
+Five automated layers: JUnit unit tests and GameTests run on both loaders on every `./gradlew build`; the GameTests
+also run against the release jars on real servers; the production jar smoke test boots the built jars on real servers;
+the client smoke test plays a scenario in a real client, with JEI, REI or EMI, and takes screenshots.
+`scripts/validate-all.sh` runs them all and prints one summary. What remains manual is listed in
+`docs/MANUAL_VALIDATION.md`.
+
+Minecraft and the mod run on Java 21. Gradle itself runs on Java 25 (Fabric Loom 1.18 needs it): the Gradle launcher
+starts its daemon on a Java 25 found on the machine, or downloads one (`gradle/gradle-daemon-jvm.properties`, kept in
+`~/.gradle/jdks`), and still compiles and runs the game with the Java 21 toolchain. The first build downloads and
 decompiles Minecraft for both loaders (several minutes), later runs take about two minutes.
 
 ## Layout
@@ -10,8 +16,12 @@ decompiles Minecraft for both loaders (several minutes), later runs take about t
 | Project | Contents |
 |---|---|
 | `common` | all the game logic, assets and data (`src/main`), unit tests (`src/test/java`), GameTest bodies and the client smoke test (`src/gametest/java`, packages `capsule.gametest` and `capsule.clientsmoke`) and test structures (`src/gametest/resources`). Compiled against vanilla Minecraft; `checkLoaderImports` (part of `check`) fails if a common source references `net.neoforged` or `net.fabricmc` |
-| `neoforge` | NeoForge glue; compiles the common sources into `Capsule-neoforge-<mc>-<version>.jar`. Its gametest source set adds the SecurityCraft, Waystones and Sophisticated Storage tests and the client smoke entrypoint |
-| `fabric` | Fabric glue (Loom); compiles the common sources into `Capsule-fabric-<mc>-<version>.jar`. Its gametest source set is a dev only mod, `capsule-gametest`, with the GameTests and the client smoke entrypoint |
+| `neoforge` | NeoForge glue; compiles the common sources into `Capsule-neoforge-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule_gametest`, with the GameTests (adding the SecurityCraft, Waystones and Sophisticated Storage tests) and the client smoke entrypoint |
+| `fabric` | Fabric glue (Loom); compiles the common sources into `Capsule-fabric-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule-gametest`, with the GameTests and the client smoke entrypoint |
+
+The test mods are packaged too, in `<loader>/build/test-mod/<release jar name>-gametest.jar` (task `testModJar`, part of
+`assemble`, remapped like the release jar on Fabric), so that the GameTests and the client smoke scenario run next to
+the release jar in real servers and clients. They are never published: CI publishes `build/libs` only.
 
 ## Commands
 
@@ -24,8 +34,10 @@ decompiles Minecraft for both loaders (several minutes), later runs take about t
 | `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones and Sophisticated Storage tests (46) | number of failed required tests |
 | `./gradlew :fabric:runGameTestServer` | the 41 common GameTests on a headless Fabric server | number of failed required tests |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
+| `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
 | `scripts/prod-smoke.sh <jar>...` | the release jars on real dedicated servers, see below | non-zero if a jar fails |
 | `scripts/client-smoke.sh neoforge\|fabric` | the client smoke test under Xvfb, see below | non-zero if a check fails |
+| `scripts/validate-all.sh` | every layer above, with JEI, REI and EMI, and a summary table, see below | non-zero if a step fails |
 
 CI passes the build number with `-Pbuild_id=<n>` (default `SNAPSHOT`), which only changes the jar names
 `neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.<n>.jar` and `fabric/build/libs/Capsule-fabric-1.21.1-9.0.<n>.jar`.
@@ -48,6 +60,8 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   in `CapsuleGameTests.TEST_CLASSES` into test functions named after the method (lowercase), using the templates of
   the `capsule` namespace. NeoForge registers it from `NeoForgeGameTests` (`RegisterGameTestsEvent`), adding
   `SecurityCraftTests`; Fabric through the `fabric-gametest` entrypoint of `fabric/src/gametest/resources/fabric.mod.json`.
+- `-Dcapsule.gametest.failOnPurpose=true` adds `FailureProofTests.failsOnPurpose`, which always fails: it shows that a
+  runner reports failures. It is never registered otherwise.
 - `runGameTestServer` deletes `<loader>/runs/gameTestServer/world`, `config/capsule` and `initialconfig` first, so every
   run starts from a fresh world and default config.
 - Expected output, at the end of the console log:
@@ -89,9 +103,10 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 ### Mods on the GameTest runtime
 
 `gametestImplementation` dependencies of the neoforge project are loaded by its dev runs only: SecurityCraft 1.21.1
-(Modrinth maven, version id in `gradle.properties`) for `SecurityCraftTests`, NeoForge only. JEI is loaded in the
-NeoForge dev runs as well (`localRuntime`); JEI for Fabric is not (its jars need a newer Loom, which needs Java 25).
-The Fabric dev runs load Fabric API and Forge Config API Port.
+(Modrinth maven, version id in `gradle.properties`) for `SecurityCraftTests`, NeoForge only. The dev runs of both loaders
+load one recipe viewer, JEI by default: `-PrecipeViewer=jei|rei|emi` picks JEI 19.57.0.451, REI 16.0.799 (with
+Architectury API and Cloth Config) or EMI 1.1.24 (versions in `gradle.properties`). The Fabric dev runs load Fabric API
+and Forge Config API Port.
 
 ## Mod interaction tests
 
@@ -112,11 +127,20 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   EXTRA_MODS="$(ls ~/mods/*.jar)" scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar
   ```
   Avoid spaces and brackets in the jar names.
-- **Modpacks**: `EXTRA_MODS` also adds jars to the client of `scripts/client-smoke.sh`. NeoForge 1.21.1 dev runs load
-  production mod jars from the mods folder, so the mods of a Modrinth pack (`modrinth.index.json` of the `.mrpack`
-  lists their URLs) can run the whole client scenario. Leave out JEI (already in the dev runs), Sinytra Connector (it
-  cannot start in a dev run) and the Fabric mods it would load. A mod crashing at startup leaves the client on its crash
-  screen until `TIMEOUT`.
+- **Modpacks**: `MODPACK=<Modrinth slug>[:<version id>]` (or a `.mrpack` file) plays the client scenario in a
+  production NeoForge client with the pack's mods, so packs using Sinytra Connector work (Connector cannot start in a
+  dev run). `scripts/prod-client.py` installs the pack's client files and overrides, the NeoForge version the pack names
+  (official installer `--installClient`, vanilla libraries, assets without sounds) and starts the client like a launcher,
+  offline, with the release jar and the test mod jar of `./gradlew build`:
+  ```
+  ./gradlew build
+  MODPACK=forgeulously-optimized:mPRwXMh4 scripts/client-smoke.sh neoforge
+  ```
+  Forgeulously Optimized 1.1.4 (49 mods, NeoForge 21.1.218, Connector 2.0.0-beta.12 with Fabric mods, Sodium, Iris) is
+  the pack `validate-all.sh --modpack` uses. The game directory is kept in `build/client-smoke/<run>/game`. The recipe
+  viewer check is left to the pack: the report has a line for each viewer it brings. `EXTRA_MODS` also adds jars to the
+  dev client of `scripts/client-smoke.sh`; a mod crashing at startup leaves the client on its crash screen until
+  `TIMEOUT`.
 
 ## Client smoke test
 
@@ -131,11 +155,15 @@ scripts/client-smoke.sh fabric
 ```
 
 - The script runs the task under `xvfb-run` (unless `DISPLAY` is set) with a `TIMEOUT` (seconds, default 1500), then
-  copies the screenshots, `report.txt`, `console.log` and `client.log` to `build/client-smoke/<loader>/`. In this
-  container the client renders with Mesa llvmpipe; a run takes 3 to 4 minutes once Gradle is warm.
+  copies the screenshots, `report.txt`, `console.log` and `client.log` to `build/client-smoke/<loader>/` (or `OUT`). In
+  this container the client renders with Mesa llvmpipe; a run takes about two minutes once Gradle is warm.
+- `RECIPE_VIEWER=jei|rei|emi` (default `jei`) picks the recipe viewer of the dev client (`-PrecipeViewer`), on both
+  loaders. `GRADLE_ARGS` adds arguments to the Gradle call, for example `-I mirror.gradle` with an init script putting a
+  Maven Central mirror first when Maven Central answers 429. `MODPACK` runs the production client instead, see
+  [Mod interaction tests](#mod-interaction-tests).
 - Scenario, on ticks of the client: create a flat creative world (`saves/capsule-smoke`, recreated on each run), build a
   house on a capture base, throw an empty capsule to capture it, give capsules of every state and color, open the
-  survival inventory with tooltips, the creative search and the JEI recipes, then fly to an empty area, preview, rotate,
+  survival inventory with tooltips, the creative search and the recipe viewer, then fly to an empty area, preview, rotate,
   throw, deploy and undeploy the captured house, and preview and deploy a blueprint of the castle wall prefab.
   Screenshots: `<run dir>/screenshots/capsule-smoke/NN-<step>.png` (1280×720).
 - Checks, each a `PASS`/`FAIL` line of `report.txt`:
@@ -143,17 +171,22 @@ scripts/client-smoke.sh fabric
   - every capsule slot of the inventory screenshots differs from the empty slot background;
   - the log has no warning of a `capsule.*` logger, no missing model, texture or blockstate of the `capsule` namespace
     and no exception thrown through capsule code (a log4j appender installed before the models load);
-  - JEI lists crafting recipes and information pages of capsules (NeoForge; `SKIP JEI` when JEI is not installed);
+  - the recipe viewer (JEI, REI or EMI, through `RecipeViewerProbe`, once it has loaded its plugins) lists crafting
+    recipes and information pages of capsules, a recipe for every capsule tier, and every recipe Capsule adds for the
+    viewers (`RecipeViewerContent`: upgrades, clear, recovery, blueprints, prefab blueprints from the templates of
+    `config/capsule/prefabs`, blueprint change); `SKIP recipe viewers` when none is installed;
   - the deployed chest keeps its 5 diamonds, the blueprint preview has as many blocks as the blueprint;
   - every step finishes in time (a step waiting for the server, for example the capture, fails after its timeout).
 - Exit code: the client exits with status 1 when a check failed; the script fails if the client fails, if
-  `RESULT PASS` is missing from the report, or, on NeoForge, if JEI was not checked.
+  `RESULT PASS` is missing from the report, or if the chosen recipe viewer was not checked.
 - Expected output:
   ```
-  == neoforge client smoke test (log: build/client-smoke/neoforge/console.log)
+  == neoforge client smoke test with JEI (log: build/client-smoke/neoforge/console.log)
   PASS 01-capture-base has no missing texture: 0 missing texture pixels
   ...
-  PASS JEI shows the capsule recipes: 3 crafting recipes for Empty Capsule, 14 capsule information pages
+  PASS JEI shows the capsule recipes: 9 crafting recipes for Empty Capsule, 14 capsule information pages
+  PASS JEI shows a recipe for every capsule tier: 30 tiers, without recipe: []
+  PASS JEI shows the upgrade, clear, recovery, blueprint and prefab recipes: 249 recipes including 6 prefabs, without recipe: []
   ...
   PASS no capsule warning, missing model/texture or exception in the log
   RESULT PASS
@@ -195,10 +228,94 @@ scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/li
   OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped cleanly
   ```
 - `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 21, `curl` and `python3`, and network access.
-- GameTests cannot run against the release jars: NeoForge only registers GameTests outside production, and the tests
-  are not packaged in the jars.
+  Downloads (installers, Fabric API, Forge Config API Port, `EXTRA_MODS` of `validate-all.sh`) and the installed NeoForge
+  server are cached in `CAPSULE_CACHE` (default `~/.cache/capsule-validation`), outside the repository
+  (`scripts/lib.sh`).
+
+## GameTests on the release jars
+
+`scripts/prod-gametest.sh <jar>...` runs every GameTest on a real dedicated server of the jar's loader, with the
+release jar and its test mod jar (`<loader>/build/test-mod/<release jar name>-gametest.jar`, made by `./gradlew build`):
+
+```
+./gradlew build
+scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/libs/Capsule-fabric-*.jar
+```
+
+- Servers are installed like in `prod-smoke.sh`, in a temporary directory. NeoForge runs with
+  `-Dneoforge.gameTestServer=true` and SecurityCraft (Modrinth), for `SecurityCraftTests`. NeoForge registers and ticks
+  GameTests outside production only, so the test mod does it itself on a production GameTest server
+  (`ProductionGameTests`). Fabric runs with `-Dfabric-api.gametest` and Fabric API's GameTest module, which its release
+  jar does not bundle (the version comes from the Fabric API pom); the test mod jar is remapped like the release jar.
+- Expected output: the same summary as `runGameTestServer`, then `OK`:
+  ```
+  == neoforge: Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar + Capsule-neoforge-1.21.1-9.0.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.dMMlJn
+  [11:06:18] [Server thread/INFO] [minecraft/GameTestServer]: All 82 required tests passed :)
+  OK: All 82 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
+  == fabric: Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar + Capsule-fabric-1.21.1-9.0.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.eYuJF4
+  [11:07:27] [Server thread/INFO]: All 80 required tests passed :)
+  OK: All 80 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  ```
+- Exit code 0 when every jar passes. A failure prints the failed tests and keeps the server directory:
+  ```
+  FAIL_ON_PURPOSE=1 scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar
+  [11:07:56] [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
+  [11:07:56] [Server thread/INFO] [minecraft/GameTestServer]:    - failsonpurpose
+  [11:07:51] [Server thread/ERROR] [minecraft/LogTestReporter]: failsonpurpose failed at 10190940, -60, 14580310! failed on purpose (-Dcapsule.gametest.failOnPurpose=true)
+  FAIL: neoforge GameTests on the release jar (exit status 1), log: /tmp/gametest-neoforge.mqlxI2/console.log
+  ```
+  `FAIL_ON_PURPOSE=1` registers `FailureProofTests` (`-Dcapsule.gametest.failOnPurpose=true`), never registered otherwise.
+- `TIMEOUT` (seconds, default 1200), `EXTRA_MODS` and `KEEP_SERVER` work as in `prod-smoke.sh`.
+
+## Everything at once
+
+`scripts/validate-all.sh` runs every automated layer, one step at a time, and prints one summary:
+
+```
+scripts/validate-all.sh            # build, unit tests, GameTests, mod-compat GameTests, release-jar GameTests and
+                                   # their failure proof, prod smoke, client smoke × {NeoForge, Fabric} × {JEI, REI, EMI}
+scripts/validate-all.sh --iris     # + client smoke with Iris, Sodium and MakeUp Ultra Fast on both loaders
+scripts/validate-all.sh --modded   # + client smoke with the mods of #81, #94, #117 and #76 on both loaders
+scripts/validate-all.sh --modpack  # + client smoke in a production NeoForge client with a Connector modpack
+scripts/validate-all.sh --all      # everything
+```
+
+- It works from a clean clone with Java 21, `python3`, `curl`, `xvfb-run`, `flock` and network access. Gradle
+  downloads its own Java 25 if the machine has none. Everything downloaded outside Gradle (servers, installers, mods of
+  the variants, the modpack, the shader pack, by sha1 from Modrinth) is cached in `CAPSULE_CACHE` (default
+  `~/.cache/capsule-validation`). `GRADLE_ARGS` is added to every Gradle call, `MODPACK` overrides the pack.
+- Every step takes the lock `/tmp/capsule-heavy.lock` (as `flock /tmp/capsule-heavy.lock <command>` does), so it
+  waits for any other Minecraft run of the machine and lets others run between its steps.
+- Logs: `build/validate-all/<step>.log` and `summary.txt`; each client smoke run keeps its screenshots, report and logs
+  in `build/client-smoke/<step>/`. Exit code 0 when every step passes.
+- A full run (`--all`) takes about 25 minutes once Gradle is warm. Its summary, without the log column:
+  ```
+  RESULT STEP                                         TIME  DETAIL
+  PASS   build: jars and loader import check         0m17s  BUILD SUCCESSFUL
+  PASS   unit tests (both loaders)                   0m20s  BUILD SUCCESSFUL
+  PASS   GameTests NeoForge                          0m34s  All 82 required tests passed
+  PASS   GameTests Fabric                            0m31s  All 80 required tests passed
+  PASS   mod-compat GameTests NeoForge               0m41s  All 88 required tests passed
+  PASS   mod-compat GameTests Fabric                 0m31s  All 82 required tests passed
+  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 82 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
+  PASS   GameTests on the Fabric release jar         0m27s  OK: All 80 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)
+  PASS   Fabric release jar: failure reported        0m28s  OK: the failing test was reported (exit status 1)
+  PASS   release jars on dedicated servers           1m00s  OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped
+  PASS   client smoke neoforge-jei                   1m24s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-rei                   1m25s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-emi                   1m23s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-jei                     1m22s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-rei                     1m21s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-emi                     1m22s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-iris                  1m32s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-iris                    1m37s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-modded                1m37s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-modded                  1m39s  46 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-modpack               1m22s  42 checks passed, 0 failed, 1 skipped
+  ```
 
 ## Not covered
 
-See `docs/MANUAL_VALIDATION.md`: multiplayer with latency, sounds and controls, shaders, JEI on Fabric, modpacks
-beyond the one tested, and the TEST.md items marked manual.
+See `docs/MANUAL_VALIDATION.md`: multiplayer with latency, sounds and controls, modpacks beyond the one tested, and the
+TEST.md items marked manual.
