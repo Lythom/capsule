@@ -107,6 +107,7 @@ and publish scripts, documentation.
 | L3 generic probe per block up to size 31, per chunk column above (efa286a) | b9acfec | a2ae24b | a13e209 |
 | Flan 1.16.5 adapter (1.16.5 only) | not applicable: Flan adapter of 82a85aa | not applicable: same | eba5fed |
 | Failed deploys rolled back inside claims, a dupe since L2 (780c7f6) | e71d26c | fd477f4 | 62955f8 |
+| Claim checks that fail refuse captures and deploys, adapter kept, player told (3c399cc) | cd73eb5 | 6f9252c | 24de839 (Flan asked for the whole operation before the world changes) |
 | CircleCI on version branches only (1.21.1: fbf85d5) | 57c98fd | 0f0eb49 | f20202d |
 | L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
 
@@ -139,6 +140,11 @@ launches of 7 runs each, 3 for 255):
 
 The adapter is exercised on the dev server only (no GameTests on this branch); the production boot test does not
 capture.
+
+Since 24de839 Flan is asked for every position (and the chunk columns above size 31 for their probe positions) before
+the capture or deploy changes the world, so a failing query refuses the whole operation instead of leaving it partial.
+Same benchmark, one launch: 13.5 ms for 31 and 594 ms for 255 without claim, 14.0 ms and 4 353 ms inside a Flan admin
+claim.
 
 ## Notes
 
