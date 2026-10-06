@@ -35,10 +35,10 @@ import java.util.function.Predicate;
 /**
  * Cost of the claim probe (the dirt placement event of {@link Claims#canPlaceBlock}) asked for every block or once per
  * chunk column of a capture of 3, 11, 31 and 255, by a stranger, and of the check captures and deploys do
- * ({@link Claims#denied}: the probe per block up to 31 and per chunk column above), outside claims and, when Flan is
- * loaded (-PmodCompat), inside a Flan admin claim covering the box. Runs once the dev server started with
- * -Dcapsule.claimBenchmark=true (runServer -PclaimBenchmark), logs the median times as "claim probe benchmark", then
- * stops the server. Left out of the mod jar.
+ * ({@link Claims#denied}: the Flan adapter per position, the probe per block up to 31 and per chunk column above),
+ * outside claims and, when Flan is loaded (-PmodCompat), inside a Flan admin claim covering the box. Runs once the dev
+ * server started with -Dcapsule.claimBenchmark=true (runServer -PclaimBenchmark), logs the median times as "claim probe
+ * benchmark", then stops the server. Left out of the mod jar.
  */
 @Mod.EventBusSubscriber(modid = CapsuleMod.MODID)
 public class ClaimProbeBenchmark {

@@ -15,17 +15,24 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.ModList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * Whether claim mods let a player capture or deploy blocks, asked with a block placement event: for every block up to
- * {@link #PER_BLOCK_MAX_SIZE}, once per chunk column above.
+ * Whether claim mods let a player capture or deploy blocks. Flan, which does not listen to the block placement event on
+ * 1.16.5, is asked per position through its API; the other positions are probed with a block placement event, so that
+ * claim mods without adapter protect them: every block up to {@link #PER_BLOCK_MAX_SIZE}, once per chunk column above.
  */
 public final class Claims {
+    private static final Logger LOGGER = LogManager.getLogger(Claims.class);
     /**
      * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before this version).
      */
@@ -35,8 +42,26 @@ public final class Claims {
      * one block per chunk column: one placement event per block of a 255 capsule takes seconds.
      */
     public static final int PER_BLOCK_MAX_SIZE = 31;
+    private static boolean flanLoaded = false;
+    @Nullable
+    private static FlanAdapter flan = null;
 
     private Claims() {
+    }
+
+    @Nullable
+    private static FlanAdapter flan() {
+        if (!flanLoaded) {
+            flanLoaded = true;
+            if (ModList.get().isLoaded("flan")) {
+                try {
+                    flan = new FlanAdapter();
+                } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+                    LOGGER.error("Captures and deploys ignore the claims of Flan, its API was not found: {}", e.toString());
+                }
+            }
+        }
+        return flan;
     }
 
     /**
@@ -89,24 +114,70 @@ public final class Claims {
         MutableBoundingBox box = new MutableBoundingBox(min[0], min[1], min[2], max[0], max[1], max[2]);
         ServerPlayerEntity actor = actor(level, player);
         boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
+        FlanAdapter adapter = flan();
+        Object flanClaims;
+        try {
+            flanClaims = adapter == null ? null : adapter.storage(level);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            return failed(adapter, e);
+        }
         Long2BooleanMap deniedChunks = new Long2BooleanOpenHashMap();
-        return pos -> {
-            if (perBlock) return !canPlaceBlock(level, pos, actor);
-            long chunk = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
-            if (!deniedChunks.containsKey(chunk)) deniedChunks.put(chunk, columnDenied(level, box, pos, actor));
-            return deniedChunks.get(chunk);
+        return new Predicate<BlockPos>() {
+            private boolean failed = false;
+
+            @Override
+            public boolean test(BlockPos pos) {
+                if (failed) return true;
+                try {
+                    Boolean allowed = flanClaims == null ? null : adapter.allowed(flanClaims, pos, player);
+                    if (allowed != null) return !allowed;
+                    if (perBlock) return !canPlaceBlock(level, pos, actor);
+                    long chunk = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+                    if (!deniedChunks.containsKey(chunk)) {
+                        deniedChunks.put(chunk, columnDenied(level, box, pos, actor, adapter, flanClaims));
+                    }
+                    return deniedChunks.get(chunk);
+                } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+                    failed(adapter, e);
+                    failed = true;
+                    return true;
+                }
+            }
         };
     }
 
     /**
-     * Whether claim mods deny the chunk column of pos, probed at the center of the column within box.
+     * Whether the claims of mods without adapter deny the chunk column of pos, probed at the center or a corner of the
+     * column within box that no Flan claim contains.
      */
-    private static boolean columnDenied(ServerWorld level, MutableBoundingBox box, BlockPos pos, ServerPlayerEntity actor) {
+    private static boolean columnDenied(ServerWorld level, MutableBoundingBox box, BlockPos pos, ServerPlayerEntity actor,
+                                        @Nullable FlanAdapter flan, @Nullable Object flanClaims) throws ReflectiveOperationException {
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
         MutableBoundingBox column = new MutableBoundingBox(Math.max(box.x0, chunkX << 4), box.y0, Math.max(box.z0, chunkZ << 4),
                 Math.min(box.x1, (chunkX << 4) + 15), box.y1, Math.min(box.z1, (chunkZ << 4) + 15));
-        return !canPlaceBlock(level, new BlockPos(column.getCenter()), actor);
+        List<BlockPos> candidates = new ArrayList<>();
+        candidates.add(new BlockPos(column.getCenter()));
+        for (int x : new int[]{column.x0, column.x1}) {
+            for (int y : new int[]{column.y0, column.y1}) {
+                for (int z : new int[]{column.z0, column.z1}) {
+                    candidates.add(new BlockPos(x, y, z));
+                }
+            }
+        }
+        for (BlockPos candidate : candidates) {
+            if (flanClaims != null && flan.allowed(flanClaims, candidate, null) != null) continue;
+            return !canPlaceBlock(level, candidate, actor);
+        }
+        return false;
+    }
+
+    private static Predicate<BlockPos> failed(@Nullable FlanAdapter adapter, Throwable e) {
+        if (adapter != null && flan == adapter) {
+            flan = null;
+            LOGGER.error("Captures and deploys now ignore the claims of {}, its query failed: {}", adapter.name(), e.toString());
+        }
+        return pos -> true;
     }
 
     /**
