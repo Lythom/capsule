@@ -775,9 +775,8 @@ public class CapsuleItem extends Item {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
             if (srcStructurePath != null) {
                 String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (ServerLevel) worldIn, playerIn);
-                // anyway we write the structure name
                 // we dont want to have the same link as the original capsule
-                CapsuleItem.setStructureName(capsule, templateName);
+                if (templateName != null) CapsuleItem.setStructureName(capsule, templateName);
                 NBTHelper.updateTag(capsule, tag -> tag.remove("templateShouldBeCopied"));
             }
         }

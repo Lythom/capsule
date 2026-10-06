@@ -9,6 +9,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -20,6 +21,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -74,8 +77,20 @@ public class CapsuleTestUtils {
      * player list, so payloads broadcast by the mod never reach its connection, which did not negotiate the mod channels.
      */
     public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos) {
+        return survivalPlayer(helper, relativePos, new ArrayList<>());
+    }
+
+    /**
+     * A survival player whose system messages (chat feedback) are added to messages.
+     */
+    public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos, List<Component> messages) {
         CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-player"), false);
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation());
+        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
+            @Override
+            public void sendSystemMessage(Component message, boolean overlay) {
+                messages.add(message);
+            }
+        };
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
         new EmbeddedChannel(connection);
         new ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
