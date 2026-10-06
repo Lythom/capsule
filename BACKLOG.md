@@ -6,11 +6,13 @@ backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
 
 ## Waiting for the owner
 
-### Claims on 1.16.5 stay per block
-Agent's decision pending confirmation (`docs/BACKPORTS.md`): Flan 1.16.5 can only answer per position and Open Parties
-and Claims has no 1.16.5 release, so `dev-1.16` keeps the per-block placement event and only got the capture base
-placer and offline thrower checks (b429eb0). Per-chunk probing there would miss Flan claims not containing the probe
-positions.
+### Generic claim probe per block
+Issues: https://github.com/Lythom/capsule/issues/91
+
+Measured in `docs/CLAIMS.md` ("Per block or per chunk column"): per block stays far below one tick except for a full
+31³ capture inside a claim denying through the NeoForge placement event (47 to 52 ms, the 50 ms limit), so the probe
+of mods without adapter stays per chunk column. Accepting that worst case makes it per block (the predicate of
+`Claims.denied`). Effort: S.
 
 ## Confirmed gaps
 

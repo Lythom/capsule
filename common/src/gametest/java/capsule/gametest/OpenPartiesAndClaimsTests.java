@@ -6,10 +6,13 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import xaero.pac.common.parties.party.member.PartyMemberRank;
 import xaero.pac.common.server.api.OpenPACServerAPI;
+import xaero.pac.common.server.claims.api.IServerClaimsManagerAPI;
 import xaero.pac.common.server.parties.party.api.IServerPartyAPI;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -45,5 +48,17 @@ public class OpenPartiesAndClaimsTests {
                     api.getPartyManager().removeParty(party);
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
                 });
+    }
+
+    /**
+     * Claims the chunks of box for owner, until the returned task runs.
+     */
+    static Runnable claim(GameTestHelper helper, BoundingBox box, ServerPlayer owner) {
+        IServerClaimsManagerAPI claims = OpenPACServerAPI.get(helper.getLevel().getServer()).getServerClaimsManager();
+        ResourceLocation dimension = helper.getLevel().dimension().location();
+        List<ChunkPos> chunks = ChunkPos.rangeClosed(new ChunkPos(box.minX() >> 4, box.minZ() >> 4), new ChunkPos(box.maxX() >> 4, box.maxZ() >> 4)).toList();
+        chunks.forEach(chunk -> claims.claim(dimension, owner.getUUID(), -1, chunk.x, chunk.z, false));
+        CapsuleTestUtils.assertTrue(helper, chunks.stream().allMatch(chunk -> claims.get(dimension, chunk.x, chunk.z) != null), "every chunk should be claimed");
+        return () -> chunks.forEach(chunk -> claims.unclaim(dimension, chunk.x, chunk.z));
     }
 }

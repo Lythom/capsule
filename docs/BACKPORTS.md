@@ -100,7 +100,7 @@ and publish scripts, documentation.
 
 ## Claims on 1.16.5
 
-Agent's decision, pending the owner's confirmation: `dev-1.16` keeps the per-block check. Open Parties and Claims has
+Owner's decision (round 2b, L4): `dev-1.16` keeps the per-block check. Open Parties and Claims has
 no 1.16.5 release, and Flan 1.16.5 (1.7.2, Flemmli97's GitLab maven, not on Modrinth) has no per-chunk claim query:
 `ClaimStorage` only offers `getClaimAt(BlockPos)`, `getDimensions()` returns `int[]` and permissions are
 `ClaimPermission` objects (javap). Without an adapter, a probe once per chunk column would miss Flan claims not

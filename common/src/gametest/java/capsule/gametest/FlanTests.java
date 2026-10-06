@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.stream.Stream;
 
@@ -36,5 +37,15 @@ public class FlanTests {
                     storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
                 });
+    }
+
+    /**
+     * Claims the columns of box for owner, until the returned task runs.
+     */
+    static Runnable claim(GameTestHelper helper, BoundingBox box, ServerPlayer owner) {
+        ClaimStorage storage = ClaimStorage.get(helper.getLevel());
+        Claim claim = storage.createAdminClaim(new BlockPos(box.minX(), box.minY(), box.minZ()), new BlockPos(box.maxX(), box.minY(), box.maxZ()), helper.getLevel(), false);
+        storage.transferOwner(claim, owner.getUUID());
+        return () -> storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
     }
 }

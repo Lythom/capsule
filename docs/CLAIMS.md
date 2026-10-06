@@ -80,6 +80,49 @@ Chunks, and Cadmus if it cancels the event) and keeps vanilla-like protections t
 mods without adapter (YAWP regions) it is approximate: a region not containing the probe position is missed, a region
 containing it denies the whole column. On Fabric, the Common Protection API call follows the same rule.
 
+### Per block or per chunk column (measured)
+
+A single block can be protected, so the owner asked for the generic probe per block if it stays within one server
+tick (50 ms) for survival sizes (up to 31, the largest upgraded capsule). `ClaimProbeBenchmark` measures it: the probe
+(`Platform.canPlaceBlock`, as a stranger) for every position of a full N³ box (the worst case: a capture probes the
+blocks it takes, a deploy the blocks it places) and once per chunk column, outside claims and inside a claim of Flan
+and of Open Parties and Claims covering the whole box (no adapter involved: it stands for a claim mod without adapter).
+It is a GameTest of its own batch, registered only with `-PclaimBenchmark`:
+
+```
+flock /tmp/capsule-heavy.lock ./gradlew :neoforge:runGameTestServer -PclaimBenchmark [-PmodCompat]
+flock /tmp/capsule-heavy.lock ./gradlew :fabric:runGameTestServer -PclaimBenchmark [-PmodCompat]
+grep -a "claim probe benchmark" <loader>/runs/gameTestServer/logs/latest.log
+```
+
+Milliseconds per capture, median of 7 runs (3 for 255), per block / per chunk column, measured on 2026-10-06 on this
+container (4 cores of a Xeon at 2.1 GHz, dev GameTest server, Java 21). Probes per block: 27, 1331, 29 791 and
+16 581 375; per chunk column: 1, 2 to 4, 6 to 9 and 272 to 289, depending on where the box meets the chunk borders.
+
+| Loader | Protection | 3 | 11 | 31 | 255 |
+|---|---|---|---|---|---|
+| NeoForge | no claim mod (SecurityCraft listens) | 0.02 / 0.00 | 0.68 / 0.01 | 6.41 / 0.04 | 2 305 / 0.53 |
+| NeoForge | Flan and Open Parties and Claims loaded, no claim | 0.03 / 0.00 | 1.04 / 0.01 | 8.98 / 0.04 (other runs 10.8, 18.8, 20.7) | 4 215 / 0.58 |
+| NeoForge | inside a Flan claim, every probe denied | 1.67 / 0.06 | 8.92 / 0.04 | **51.76** / 0.05 (other runs 49.43, 47.35) | 24 259 / 1.01 |
+| NeoForge | inside an Open Parties and Claims claim | 0.01 / 0.00 | 0.36 / 0.00 | 6.85 / 0.02 | 4 230 / 0.58 |
+| Fabric | no claim mod | 0.00 / 0.00 | 0.16 / 0.00 | 1.77 / 0.01 | 135 / 0.11 |
+| Fabric | Flan and Open Parties and Claims loaded, no claim | 0.03 / 0.00 | 1.27 / 0.01 | 6.35 / 0.01 | 2 802 / 0.15 |
+| Fabric | inside a Flan claim, every probe denied | 0.13 / 0.01 | 1.12 / 0.01 | 9.80 / 0.01 | 3 322 / 0.17 |
+| Fabric | inside an Open Parties and Claims claim | 0.01 / 0.00 | 0.21 / 0.00 | 4.71 / 0.01 | 2 713 / 0.14 |
+
+- Open Parties and Claims denied none of the probes: on NeoForge it lets this placement event through for a stranger,
+  and on Fabric it does not implement Common Protection API. Its adapter is what protects its claims.
+- Inside both claims at once, NeoForge 31: 51.5 ms. Denied events send the player packets (Flan's refusal): queued on
+  the test player's connection instead of dropped (`CapsuleTestUtils.survivalPlayer` now drops them), 63.3 ms for 31,
+  and the 255 box ran out of memory (4 GB).
+
+**Decision: per chunk column, kept.** Per block stays far below one tick in every case but one: a full 31³ capture
+inside a claim that denies through the NeoForge placement event takes 47 to 52 ms (median of the three runs 49.4 ms):
+the probes alone fill the tick, and one run in three goes over it. The owner decides whether that worst case (a claim
+mod without adapter, the capture fully inside its claim) is acceptable; per block is then a change of the predicate of
+`Claims.denied` (probe each tested position outside adapter claims instead of one position per column). The 255 OP capture would take 2.3 to 4.2 s per block on NeoForge outside claims, 24 s inside a
+denying claim, 0.1 to 3.3 s on Fabric.
+
 ### Weak coupling and failures
 
 - No Gradle or runtime dependency for players: adapters use reflection on class and method names verified above;

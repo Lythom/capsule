@@ -70,8 +70,9 @@ public class CapsuleGameTests {
     }
 
     public static List<TestFunction> testFunctions(Stream<Class<?>> testClasses) {
-        Stream<Class<?>> proof = Boolean.getBoolean(FailureProofTests.PROPERTY) ? Stream.of(FailureProofTests.class) : Stream.empty();
-        return Stream.concat(testClasses, proof)
+        Stream<Class<?>> onDemand = Map.<String, Class<?>>of(FailureProofTests.PROPERTY, FailureProofTests.class, ClaimProbeBenchmark.PROPERTY, ClaimProbeBenchmark.class)
+                .entrySet().stream().filter(e -> Boolean.getBoolean(e.getKey())).map(Map.Entry::getValue);
+        return Stream.concat(testClasses, onDemand)
                 .flatMap(type -> Arrays.stream(type.getDeclaredMethods()))
                 .filter(method -> method.isAnnotationPresent(GameTest.class) && Modifier.isStatic(method.getModifiers()))
                 .sorted(Comparator.comparing(Method::getName))

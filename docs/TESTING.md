@@ -65,6 +65,9 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   `SecurityCraftTests`; Fabric through the `fabric-gametest` entrypoint of `fabric/src/gametest/resources/fabric.mod.json`.
 - `-Dcapsule.gametest.failOnPurpose=true` adds `FailureProofTests.failsOnPurpose`, which always fails: it shows that a
   runner reports failures. It is never registered otherwise.
+- `-PclaimBenchmark` (`-Dcapsule.gametest.claimBenchmark=true`) adds `ClaimProbeBenchmark.claimProbeCost`, which logs
+  the cost of the generic claim probe per block and per chunk column (`docs/CLAIMS.md`); a few minutes with
+  `-PmodCompat` on NeoForge. It is never registered otherwise.
 - `runGameTestServer` deletes `<loader>/runs/gameTestServer/world`, `config/capsule`, `initialconfig`, `schematics`
   (and `worldedit-schematics` on NeoForge) first, so every run starts from a fresh world and default config, without the
   template copies of the previous run.

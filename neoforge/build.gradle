@@ -45,6 +45,8 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
+            // adds ClaimProbeBenchmark, see docs/CLAIMS.md
+            if (project.hasProperty('claimBenchmark')) systemProperty 'capsule.gametest.claimBenchmark', 'true'
         }
     }
 

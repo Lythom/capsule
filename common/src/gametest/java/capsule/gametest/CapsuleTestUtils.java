@@ -5,7 +5,11 @@ import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import com.mojang.authlib.GameProfile;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.util.ReferenceCountUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
@@ -94,7 +98,14 @@ public class CapsuleTestUtils {
             }
         };
         Connection connection = new Connection(PacketFlow.SERVERBOUND);
-        new EmbeddedChannel(connection);
+        // packets sent to the player are dropped, not queued
+        new EmbeddedChannel(new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) {
+                ReferenceCountUtil.release(message);
+                promise.setSuccess();
+            }
+        }, connection);
         new ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
         Vec3 pos = helper.absoluteVec(Vec3.atBottomCenterOf(relativePos));
         player.moveTo(pos.x, pos.y, pos.z, 0, 0);

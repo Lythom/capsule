@@ -103,6 +103,8 @@ loom {
             runDir 'runs/gameTestServer'
             vmArg '-Dfabric-api.gametest'
             vmArg "-Dfabric-api.gametest.report-file=${project.file('build/gametest/report.xml')}"
+            // adds ClaimProbeBenchmark, see docs/CLAIMS.md
+            if (project.hasProperty('claimBenchmark')) vmArg '-Dcapsule.gametest.claimBenchmark=true'
         }
     }
 }
