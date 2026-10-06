@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -131,7 +132,13 @@ public class CapsuleTemplateManager {
         if (template == null) {
             return false;
         } else {
-            Path path = this.resolvePath(capsuleTemplateLocation, ".nbt");
+            Path path;
+            try {
+                path = this.resolvePath(capsuleTemplateLocation, ".nbt");
+            } catch (ResourceLocationException e) {
+                LOGGER.error("Couldn't resolve proper location: {}", templateName.getPath(), e);
+                return false;
+            }
             Path path1 = path.getParent();
             if (path1 == null) {
                 return false;
@@ -155,18 +162,23 @@ public class CapsuleTemplateManager {
         }
     }
 
+    /**
+     * Only the part coming from the template name is checked for portability: the install path is out of our hands.
+     */
     private Path resolvePath(ResourceLocation locationIn, String extIn) {
-        if (locationIn.getPath().contains("//")) {
-            throw new ResourceLocationException("Invalid resource path: " + locationIn);
-        } else {
-            String ext = locationIn.getPath().endsWith(extIn) ? "" : extIn;
-            Path p = this.pathGenerated.toAbsolutePath().resolve(locationIn.getPath() + ext).normalize();
-            if (FileUtil.isPathNormalized(p) && FileUtil.isPathPortable(p)) {
+        String name = locationIn.getPath();
+        String ext = name.endsWith(extIn) ? "" : extIn;
+        Path base = this.pathGenerated.toAbsolutePath().normalize();
+        try {
+            Path relative = base.getFileSystem().getPath(name + ext);
+            Path p = base.resolve(relative).normalize();
+            if (!name.contains("//") && p.startsWith(base) && FileUtil.isPathPortable(relative)) {
                 return p;
-            } else {
-                throw new ResourceLocationException("Invalid resource path: " + p);
             }
+        } catch (InvalidPathException e) {
+            throw new ResourceLocationException("Invalid resource path: " + locationIn, e);
         }
+        throw new ResourceLocationException("Invalid resource path: " + locationIn);
     }
 
     public void remove(ResourceLocation templateLocation) {
@@ -187,8 +199,13 @@ public class CapsuleTemplateManager {
     public boolean deleteTemplate(ResourceLocation templateLocation) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
         if (this.templates.containsKey(capsuleTemplateLocation)) {
-            File file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
-
+            File file;
+            try {
+                file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
+            } catch (ResourceLocationException e) {
+                LOGGER.error("Couldn't resolve proper location: {}", templateLocation.getPath(), e);
+                return false;
+            }
             boolean deleted = file.delete();
             if (deleted) {
                 remove(capsuleTemplateLocation);
