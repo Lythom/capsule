@@ -38,7 +38,8 @@ public class OpenPartiesAndClaimsTests {
         api.getServerClaimsManager().claim(dimension, owner.getUUID(), -1, claimed.x, claimed.z, false);
 
         new ClaimModScenario(owner, member, stranger, center, center.offset(2 * dx, 0, 0), center.offset(4 * dx, 0, 0), outside,
-                center.offset(0, 0, 3 * dz), center.offset(4 * dx, 0, 3 * dz))
+                center.offset(0, 0, 3 * dz), center.offset(4 * dx, 0, 3 * dz), center.offset(0, 0, 6 * dz), center.offset(4 * dx, 0, 6 * dz),
+                outside.south(3))
                 .run(helper, () -> {
                     api.getServerClaimsManager().unclaim(dimension, claimed.x, claimed.z);
                     api.getPartyManager().removeParty(party);

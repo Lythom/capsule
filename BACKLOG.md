@@ -6,14 +6,6 @@ backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
 
 ## Waiting for the owner
 
-### Claims and actors without a player
-Issues: https://github.com/Lythom/capsule/issues/91
-
-Vanilla dispensers throwing a capsule and capture bases placed before 9.0 have no player: claims do not apply to them
-(`docs/CLAIMS.md`, "Who is checked"). Proposal: treat them as "nobody", refused inside any claim (adapters answer for a
-stranger, the generic probe with a fake player without rights). Changes the behavior of existing capture bases inside
-claims, hence the decision. Effort: S.
-
 ### Claims on 1.16.5 stay per block
 Agent's decision pending confirmation (`docs/BACKPORTS.md`): Flan 1.16.5 can only answer per position and Open Parties
 and Claims has no 1.16.5 release, so `dev-1.16` keeps the per-block placement event and only got the capture base

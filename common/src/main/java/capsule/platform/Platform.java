@@ -37,7 +37,7 @@ public interface Platform {
     /**
      * Asks protection mods (claims, spawn protection) whether the player may place a block at pos.
      */
-    boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player);
+    boolean canPlaceBlock(ServerLevel level, BlockPos pos, Player player);
 
     /**
      * A player that is not connected, acting for profile (capture bases act for the player who placed them).

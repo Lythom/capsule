@@ -51,7 +51,7 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [96](https://github.com/Lythom/capsule/issues/96) | Recall tick handler server load | DONE | 0640895 | `onlyCapsuleEntitiesAreTracked`: tracked thrown capsules instead of a scan of every item entity |
 | [94](https://github.com/Lythom/capsule/issues/94) | Crash with Integrated Dynamics cables | VERIFIED (no crash; cables and parts invisible in the preview, BACKLOG) | 6c5aed7 | client smoke `--modded`, Integrated Dynamics 1.38.0 + Integrated Tunnels 1.13.0 (NeoForge) |
 | [93](https://github.com/Lythom/capsule/issues/93) | "Invalid resource path" on GDLauncher (1.16.5) | OBSOLETE | | |
-| [91](https://github.com/Lythom/capsule/issues/91) | Claim bypass (Flan) | CONFIRMED-FIXED (part 1), part 2 DONE | 65036a2, 82a85aa | `instantQueryIsRefusedForNonInstantCapsules`, `instantQueryIsRefusedOutOfRange`: the stone was captured; part 2: `ClaimTests`, and `OpenPartiesAndClaimsTests`, `FlanTests` with the real mods on both loaders |
+| [91](https://github.com/Lythom/capsule/issues/91) | Claim bypass (Flan) | CONFIRMED-FIXED (part 1), part 2 DONE | 65036a2, 82a85aa | `instantQueryIsRefusedForNonInstantCapsules`, `instantQueryIsRefusedOutOfRange`: the stone was captured; part 2: `ClaimTests`, and `OpenPartiesAndClaimsTests`, `FlanTests` with the real mods on both loaders; no identity (round 2b): `capsulesUsedByNobodyAreRefusedInClaims`: "Expected Stone, got Air at (relative: 7,2,2)" (a capture without player in a claim), `flanVetoesStrangers`: "Did not expect Stone at (relative: 3,2,10)" (a capture base placed before 9.0 deployed in the claim) |
 | [90](https://github.com/Lythom/capsule/issues/90) | Recall not obtainable / not in JEI | CONFIRMED-FIXED, superseded by Loyalty (#123) | 95e534b, 0640895 | `recallIsOfferedByEnchantingTables`: "recall should be in #minecraft:in_enchanting_table"; since 0640895 `enchantingTablesOfferLoyaltyForCapsules`, `recallIsNoLongerObtainable` |
 | [89](https://github.com/Lythom/capsule/issues/89) | Height offset on blind deploy | CONFIRMED-FIXED | fd533d4 | `blindThrowDeploysOnTheGround`: "Expected Block of Gold, got Air at (relative: 4,1,4)" |
 | [88](https://github.com/Lythom/capsule/issues/88) | Preview visual glitch (1.18.2) | DONE (translucent preview) | 0c1d3aa | client smoke screenshots `14b`, `19`, `20` before/after (`docs/MANUAL_VALIDATION.md`) |
@@ -231,7 +231,8 @@ Fixed in the next 1.21.1 build. The server refuses instant capture/deploy reques
 and positions out of reach. Claim mods can now veto captures and deploys: Open Parties and Claims and Flan (NeoForge
 and Fabric) and Get Off My Lawn (Fabric) are asked once per chunk or claim, other mods through a placement check per
 chunk. Protected blocks stay in place on capture, and a deploy touching a claim you have no rights in is refused.
-Capture bases act as the player who placed them; bases placed before this version are not checked. Also fixed in the
+Capture bases act as the player who placed them. Capture bases placed before this version and dispensers act for
+nobody: they can no longer capture or deploy inside claims (re-place the base to give it an owner). Also fixed in the
 next 1.20.1, 1.18.2 and 1.16.5 builds. On 1.16.5 the checks stay per block (Flan 1.16.5 only answers per position).
 
 ### #90

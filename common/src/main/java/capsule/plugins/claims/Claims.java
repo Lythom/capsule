@@ -32,6 +32,10 @@ import java.util.function.Predicate;
 public final class Claims {
     private static final Logger LOGGER = LogManager.getLogger(Claims.class);
     private static final List<ClaimAdapter> ADAPTERS = new CopyOnWriteArrayList<>();
+    /**
+     * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before Capsule 9).
+     */
+    private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
     private static boolean modsLoaded = false;
 
     private Claims() {
@@ -95,10 +99,9 @@ public final class Claims {
     }
 
     /**
-     * The positions the player may not change among positions. A null player is not checked.
+     * The positions the player may not change among positions. Without a player, no claimed position may be changed.
      */
     public static Predicate<BlockPos> denied(ServerLevel level, Collection<BlockPos> positions, @Nullable ServerPlayer player) {
-        if (player == null) return pos -> false;
         return BoundingBox.encapsulatingPositions(positions)
                 .map(box -> denied(level, box, player))
                 .orElse(pos -> false);
@@ -107,13 +110,14 @@ public final class Claims {
     /**
      * The positions of box the player may not change. The queries are done here, testing a position costs none.
      */
-    public static Predicate<BlockPos> denied(ServerLevel level, BoundingBox box, ServerPlayer player) {
+    public static Predicate<BlockPos> denied(ServerLevel level, BoundingBox box, @Nullable ServerPlayer player) {
+        ServerPlayer actor = player != null ? player : Services.PLATFORM.fakePlayer(level, NOBODY);
         // per chunk, the claims of each adapter
         Long2ObjectMap<List<List<Claim>>> claimsByChunk = new Long2ObjectOpenHashMap<>();
         for (ClaimAdapter adapter : adapters()) {
             List<Claim> claims;
             try {
-                claims = adapter.claims(level, box, player);
+                claims = adapter.claims(level, box, actor);
             } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
                 ADAPTERS.remove(adapter);
                 LOGGER.error("Captures and deploys now ignore the claims of {}, its query failed: {}", adapter.name(), e.toString());
@@ -138,7 +142,7 @@ public final class Claims {
                 long chunk = ChunkPos.asLong(chunkX, chunkZ);
                 BoundingBox column = intersection(box, new BoundingBox(chunkX << 4, box.minY(), chunkZ << 4, (chunkX << 4) + 15, box.maxY(), (chunkZ << 4) + 15));
                 BlockPos probe = unclaimedPosition(column, claimsByChunk.getOrDefault(chunk, List.of()));
-                if (probe != null && !Services.PLATFORM.canPlaceBlock(level, probe, player)) deniedChunks.add(chunk);
+                if (probe != null && !Services.PLATFORM.canPlaceBlock(level, probe, actor)) deniedChunks.add(chunk);
             }
         }
 
@@ -150,7 +154,7 @@ public final class Claims {
                 for (List<Claim> claims : chunkClaims) {
                     Claim claim = lastContaining(claims, pos);
                     if (claim == null) continue;
-                    if (!claim.allowed()) return true;
+                    if (!claim.allowed() || player == null) return true;
                     claimed = true;
                 }
             }

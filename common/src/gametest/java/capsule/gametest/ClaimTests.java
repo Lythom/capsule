@@ -20,6 +20,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.Vec3;
 
@@ -40,16 +42,17 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 public class ClaimTests {
 
     /**
-     * Claims one box of the test area for an owner.
+     * Claims one box of the test area for an owner, or for everybody when owner is null.
      */
     static class TestClaim implements ClaimAdapter {
         final BoundingBox area;
         final BoundingBox claimed;
+        @Nullable
         final UUID owner;
         final AtomicInteger queries = new AtomicInteger();
         final List<UUID> askedFor = new ArrayList<>();
 
-        TestClaim(GameTestHelper helper, BlockPos from, BlockPos to, UUID owner) {
+        TestClaim(GameTestHelper helper, BlockPos from, BlockPos to, @Nullable UUID owner) {
             this.area = BoundingBox.fromCorners(helper.absolutePos(BlockPos.ZERO), helper.absolutePos(new BlockPos(8, 8, 8)));
             this.claimed = BoundingBox.fromCorners(helper.absolutePos(from), helper.absolutePos(to));
             this.owner = owner;
@@ -65,7 +68,7 @@ public class ClaimTests {
             if (!box.intersects(area)) return List.of();
             queries.incrementAndGet();
             askedFor.add(player.getUUID());
-            return List.of(new Claim(claimed, player.getUUID().equals(owner)));
+            return List.of(new Claim(claimed, owner == null || player.getUUID().equals(owner)));
         }
     }
 
@@ -137,6 +140,8 @@ public class ClaimTests {
         List<Component> messages = new ArrayList<>();
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer other = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0), messages);
+        helper.setBlock(1, 1, 5, Blocks.OAK_PLANKS);
+        ItemStack planks = capture(helper, new BlockPos(1, 1, 5), 1);
         TestClaim claim = new TestClaim(helper, new BlockPos(1, 1, 1), new BlockPos(1, 4, 3), owner.getUUID());
         Claims.register(claim);
         try {
@@ -147,8 +152,6 @@ public class ClaimTests {
             helper.assertBlockPresent(Blocks.STONE, 1, 1, 2);
             helper.assertBlockNotPresent(Blocks.STONE, 2, 1, 2);
 
-            helper.setBlock(1, 1, 5, Blocks.OAK_PLANKS);
-            ItemStack planks = capture(helper, new BlockPos(1, 1, 5), 1);
             assertTrue(helper, !CapsuleTestUtils.deploy(helper, planks, new BlockPos(1, 1, 2), other), "deploy in the claim of another player is refused");
             assertTrue(helper, claim.queries.get() == 2, "a deploy asks the claims once, got " + claim.queries.get());
             assertTrue(helper, messages.stream().anyMatch(m -> m.getContents() instanceof TranslatableContents t && t.getKey().equals("capsule.error.notAllowed")), "the player is told");
@@ -170,11 +173,11 @@ public class ClaimTests {
     public static void capsulesThrownByOfflinePlayersAreChecked(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer thrower = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
+        helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
+        ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
         TestClaim claim = new TestClaim(helper, new BlockPos(0, 1, 0), new BlockPos(8, 4, 8), owner.getUUID());
         Claims.register(claim);
         try {
-            helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
-            ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
             Vec3 pos = helper.absoluteVec(new Vec3(4.5, 1, 4.5));
             ItemEntity thrown = new ItemEntity(helper.getLevel(), pos.x, pos.y, pos.z, capsule);
             thrown.setThrower(thrower);
@@ -202,16 +205,15 @@ public class ClaimTests {
     public static void captureBasesActAsThePlayerWhoPlacedThem(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer other = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
-        TestClaim claim = new TestClaim(helper, new BlockPos(0, 2, 2), new BlockPos(8, 2, 2), owner.getUUID());
-        Claims.register(claim);
         BlockPos ownerBase = new BlockPos(1, 1, 2);
         BlockPos otherBase = new BlockPos(4, 1, 2);
-        BlockPos legacyBase = new BlockPos(7, 1, 2);
-        for (BlockPos pos : List.of(ownerBase, otherBase, legacyBase)) {
+        for (BlockPos pos : List.of(ownerBase, otherBase)) {
             helper.setBlock(pos.north(2), Blocks.STONE);
             ItemStack capsule = capture(helper, pos.north(2), 1);
-            captureBase(helper, pos, pos == ownerBase ? owner : pos == otherBase ? other : null).setItem(0, capsule);
+            captureBase(helper, pos, pos == ownerBase ? owner : other).setItem(0, capsule);
         }
+        TestClaim claim = new TestClaim(helper, new BlockPos(0, 2, 2), new BlockPos(8, 2, 2), owner.getUUID());
+        Claims.register(claim);
         BlockEntityCapture placed = helper.getBlockEntity(ownerBase);
         assertTrue(helper, owner.getUUID().equals(placed.getPlacer()), "the base remembers who placed it");
         BlockEntityCapture reloaded = (BlockEntityCapture) BlockEntityCapture.loadStatic(placed.getBlockPos(), placed.getBlockState(),
@@ -222,19 +224,63 @@ public class ClaimTests {
         CapsuleTestUtils.removePlayer(other);
 
         helper.startSequence()
-                .thenExecute(() -> List.of(ownerBase, otherBase, legacyBase).forEach(pos -> helper.setBlock(pos.east(), Blocks.REDSTONE_BLOCK)))
-                .thenWaitUntil(() -> {
-                    helper.assertBlockPresent(Blocks.STONE, ownerBase.above());
-                    helper.assertBlockPresent(Blocks.STONE, legacyBase.above());
-                })
+                .thenExecute(() -> List.of(ownerBase, otherBase).forEach(pos -> helper.setBlock(pos.east(), Blocks.REDSTONE_BLOCK)))
+                .thenWaitUntil(() -> helper.assertBlockPresent(Blocks.STONE, ownerBase.above()))
                 .thenIdle(10)
                 .thenExecute(() -> {
                     helper.assertBlockNotPresent(Blocks.STONE, otherBase.above());
                     BlockEntityCapture refused = helper.getBlockEntity(otherBase);
                     assertTrue(helper, CapsuleItem.hasState(refused.getItem(0), CapsuleState.LINKED), "the refused capsule stays linked");
                     assertTrue(helper, claim.askedFor.contains(owner.getUUID()) && claim.askedFor.contains(other.getUUID()), "bases are checked as their placer, even offline");
-                    assertTrue(helper, claim.queries.get() == 2, "a base placed before Capsule 9 asks nothing, got " + claim.queries.get());
+                    assertTrue(helper, claim.queries.get() == 2, "each base asks the claims once, got " + claim.queries.get());
                     Claims.unregister(claim);
+                })
+                .thenSucceed();
+    }
+
+    static DispenserBlockEntity dispenser(GameTestHelper helper, BlockPos pos) {
+        helper.setBlock(pos, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.UP));
+        return helper.getBlockEntity(pos);
+    }
+
+    @GameTest(template = "empty", batch = "claims", timeoutTicks = 200)
+    public static void capsulesUsedByNobodyAreRefusedInClaims(GameTestHelper helper) {
+        ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        BlockPos legacyBaseInside = new BlockPos(1, 1, 2);
+        BlockPos dispenserInside = new BlockPos(4, 1, 2);
+        BlockPos legacyBaseOutside = new BlockPos(1, 1, 6);
+        BlockPos dispenserOutside = new BlockPos(4, 1, 6);
+        List<BlockPos> machines = List.of(legacyBaseInside, dispenserInside, legacyBaseOutside, dispenserOutside);
+        for (BlockPos pos : machines) {
+            helper.setBlock(pos.north(2), Blocks.STONE);
+            ItemStack capsule = capture(helper, pos.north(2), 1);
+            (pos.getX() == 1 ? captureBase(helper, pos, null) : dispenser(helper, pos)).setItem(0, capsule);
+        }
+        // everybody may build in this claim, but nobody
+        TestClaim claim = new TestClaim(helper, new BlockPos(0, 2, 0), new BlockPos(8, 2, 3), null);
+        Claims.register(claim);
+        helper.setBlock(7, 2, 0, Blocks.STONE);
+        helper.setBlock(7, 2, 2, Blocks.STONE);
+        Capsule.captureAtPosition(CapsuleTestUtils.emptyCapsule(1), stranger, 1, helper.getLevel(), helper.absolutePos(new BlockPos(7, 2, 0)));
+        Capsule.captureAtPosition(CapsuleTestUtils.emptyCapsule(1), null, 1, helper.getLevel(), helper.absolutePos(new BlockPos(7, 2, 2)));
+        CapsuleTestUtils.removePlayer(stranger);
+        helper.assertBlockNotPresent(Blocks.STONE, 7, 2, 0);
+        helper.assertBlockPresent(Blocks.STONE, 7, 2, 2);
+
+        helper.startSequence()
+                .thenExecute(() -> machines.forEach(pos -> helper.setBlock(pos.east(), Blocks.REDSTONE_BLOCK)))
+                .thenWaitUntil(() -> {
+                    helper.assertBlockPresent(Blocks.STONE, legacyBaseOutside.above());
+                    helper.assertBlockPresent(Blocks.STONE, dispenserOutside.above());
+                })
+                .thenIdle(10)
+                .thenExecute(() -> {
+                    Claims.unregister(claim);
+                    for (BlockPos pos : List.of(legacyBaseInside, dispenserInside)) {
+                        helper.assertBlockNotPresent(Blocks.STONE, pos.above());
+                        DispenserBlockEntity machine = helper.getBlockEntity(pos);
+                        assertTrue(helper, CapsuleItem.hasState(machine.getItem(0), CapsuleState.LINKED), "the refused capsule stays linked");
+                    }
                 })
                 .thenSucceed();
     }

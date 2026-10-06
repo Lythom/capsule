@@ -97,8 +97,12 @@ containing it denies the whole column. On Fabric, the Common Protection API call
 - A capture base (`BlockEntityCapture`): it remembers the player who placed it (`placer` UUID in its saved data, set in
   `setPlacedBy`) and its captures and deploys are checked as a fake player with that profile, without chat feedback.
   A capture base deployed from a capsule (or blueprint) acts for the player who deployed it, so a captured base does
-  not keep acting for its first owner. Bases placed before Capsule 9.0 have no placer and are not checked, as before;
-  vanilla dispensers neither.
+  not keep acting for its first owner.
+- Nobody: vanilla dispensers, capture bases placed before Capsule 9.0 (no placer: re-placing the base gives it one) and
+  any other capture or deploy without a player. Nobody may change a position inside an adapter claim, whatever the
+  claim allows strangers or fake players. The generic probe asks for an anonymous fake player (`[Capsule]`, a fixed
+  UUID that no claim lists as a member), so mods without adapter answer for a stranger. Outside claims nothing
+  changes.
 - Fake players: NeoForge `FakePlayerFactory.get`, Fabric API `FakePlayer.get` (`Platform.fakePlayer`), with the profile
   from the server profile cache. Flan treats a fake player whose profile is unknown to the server with its "fake player"
   permission.
@@ -109,18 +113,21 @@ containing it denies the whole column. On Fabric, the Common Protection API call
   checked per chunk, so strangers are refused anyway.
 - FTB Chunks and Cadmus on Fabric (they do not implement Common Protection API): an adapter can be added from the API
   above, but neither mod is on Modrinth, so it could not be tested in the GameTest runtimes.
-- Vanilla dispensers and capture bases placed before 9.0 act for nobody: claims do not apply to them.
 
 ## Tests
 
 - `ClaimTests` (common GameTests, both loaders, every build): the counting test above; a stranger's capture keeps the
   claimed blocks and their deploy is refused with one query each, the owner's are allowed; a capsule thrown by a player
-  who then went offline is refused in a claim; capture bases are checked as the player who placed them, also offline,
-  legacy bases are not checked; the placer is saved with the base and a deployed base acts for its deployer.
+  who then went offline is refused in a claim; capture bases are checked as the player who placed them, also offline;
+  inside a claim open to everybody, a capture base placed before 9.0, a vanilla dispenser and a capture without player
+  are refused, and outside it the base and the dispenser deploy; the placer is saved with the base and a deployed base
+  acts for its deployer.
 - `OpenPartiesAndClaimsTests` and `FlanTests` (common GameTests, registered when the mod is loaded, `-PmodCompat` on
   both loaders, mods from the Modrinth maven): inside a real claim a stranger's capture and capture base are refused, a
-  party or claim group member's and the owner's capture and the owner's capture base are allowed; outside the claim (the
-  next chunk for Open Parties and Claims, the next blocks of the same chunk for Flan) the stranger's capture is allowed.
+  party or claim group member's and the owner's capture and the owner's capture base are allowed; a capture base placed
+  before 9.0 and a vanilla dispenser are refused; outside the claim (the next chunk for Open Parties and Claims, the next
+  blocks of the same chunk for Flan) the stranger's capture, a capture without player and a vanilla dispenser are
+  allowed.
 - Get Off My Lawn: its adapter is checked against the jar with `javap` only. Its dev runtime fails: the mods it nests
   (Cardinal Components, Polymer, …) are not loaded from its jar by the Loom dev runs, and most are not on Modrinth.
 - The GameTest server has no profile cache (real servers do, and both mods need it): `GameTestProfiles` gives it an

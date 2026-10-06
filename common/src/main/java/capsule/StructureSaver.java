@@ -294,8 +294,8 @@ public class StructureSaver {
         }
 
         // check if the player can place a block
-        if (player != null && !playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
-            player.sendSystemMessage(Component.translatable("capsule.error.notAllowed"));
+        if (!playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
+            if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.notAllowed"));
             return false;
         }
 
@@ -393,7 +393,7 @@ public class StructureSaver {
      * Whether claim mods let the player place every block of the template.
      */
     private static boolean playerCanPlace(ServerLevel worldserver, BlockPos dest, CapsuleTemplate
-            template, ServerPlayer player, StructurePlaceSettings placementsettings) {
+            template, @Nullable ServerPlayer player, StructurePlaceSettings placementsettings) {
         List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
         Predicate<BlockPos> claimed = Claims.denied(worldserver, expectedOut, player);
         for (BlockPos blockPos : expectedOut) {

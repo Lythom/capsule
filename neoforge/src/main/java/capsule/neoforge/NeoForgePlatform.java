@@ -76,7 +76,7 @@ public class NeoForgePlatform implements Platform {
     }
 
     @Override
-    public boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player) {
+    public boolean canPlaceBlock(ServerLevel level, BlockPos pos, Player player) {
         BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, pos);
         return !NeoForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(snapshot, Blocks.DIRT.defaultBlockState(), player)).isCanceled();
     }

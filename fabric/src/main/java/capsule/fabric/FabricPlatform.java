@@ -71,8 +71,8 @@ public class FabricPlatform implements Platform {
     }
 
     @Override
-    public boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player) {
-        return player == null || CommonProtection.canPlaceBlock(level, pos, player.getGameProfile(), player);
+    public boolean canPlaceBlock(ServerLevel level, BlockPos pos, Player player) {
+        return CommonProtection.canPlaceBlock(level, pos, player.getGameProfile(), player);
     }
 
     @Override

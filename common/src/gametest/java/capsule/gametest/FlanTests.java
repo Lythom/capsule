@@ -31,7 +31,7 @@ public class FlanTests {
 
         // outside the claim box but next to it, in a chunk it may share
         new ClaimModScenario(owner, member, stranger, new BlockPos(3, 1, 3), new BlockPos(5, 1, 3), new BlockPos(7, 1, 3), new BlockPos(12, 1, 12),
-                new BlockPos(3, 1, 7), new BlockPos(8, 1, 7))
+                new BlockPos(3, 1, 7), new BlockPos(8, 1, 7), new BlockPos(3, 1, 10), new BlockPos(8, 1, 10), new BlockPos(12, 1, 15))
                 .run(helper, () -> {
                     storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
