@@ -20,8 +20,6 @@ modId="capsule" #mandatory
 version="${file.jarVersion}" #mandatory
  # A display name for the mod
 displayName="Capsule" #mandatory
-# A URL to query for updates for this mod. See the JSON update specification <here>
-updateJSONURL="https://mc-curse-update-checker.herokuapp.com/235338" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
 displayURL="https://www.curseforge.com/minecraft/mc-mods/capsule" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
