@@ -32,7 +32,7 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [123](https://github.com/Lythom/capsule/issues/123) | Use vanilla Loyalty instead of Recall | DONE | 0640895, d88bbef | `RecallTests` (Loyalty from table and anvil, other trident enchantments refused, Loyalty and legacy Recall capsules come back, a Loyalty trident does not); `capsuleSurvivesLava`: "the capsule should not burn in lava" |
 | [122](https://github.com/Lythom/capsule/issues/122) | Furnace drops experience on every capture | CONFIRMED-FIXED | f1ddf58 | `capturingAFurnaceDropsNoExperience`: "Did not expect experience_orb to exist" |
 | [121](https://github.com/Lythom/capsule/issues/121) | Waystones ghost blocks and broken doors (1.20.1) | OBSOLETE (1.21.1) | 07873fc | `waystoneStaysWhenCapturedWithADoor` with Waystones 21.1.46: waystones are never captured (`c:relocation_not_supported`), the door next to them moves without ghost blocks |
-| [120](https://github.com/Lythom/capsule/issues/120) | Vanilla 13³ capsule recipe | DONE (side fix in 55c7f6f) | 342b153 | `everyCapsuleRecipeLoadsWithResolvedIngredients` loads every tier, client smoke checks a viewer recipe for each of the 30 tiers; tier table `docs/RECIPES.md` |
+| [120](https://github.com/Lythom/capsule/issues/120) | Vanilla 13³ capsule recipe | DONE (side fix in 55c7f6f) | 342b153 | `everyCapsuleRecipeLoadsWithResolvedIngredients` loads every tier, client smoke checks a viewer recipe for each of the 29 tiers; tier table `docs/RECIPES.md` |
 | [119](https://github.com/Lythom/capsule/issues/119) | SecurityCraft blocks can be captured | CONFIRMED-FIXED | 91cd01f | `onlyOwnersPassTheSecurityCraftOwnerCheck`: "another player cannot take the block" |
 | [118](https://github.com/Lythom/capsule/issues/118) | 1.21.1 please | OBSOLETE | | |
 | [117](https://github.com/Lythom/capsule/issues/117) | Crash placing a capsule with Ad Astra pipes | VERIFIED | 6c5aed7 | client smoke `--modded`, Ad Astra 1.16.26 on both loaders: preview and deploy without crash |
@@ -141,7 +141,7 @@ is captured, deployed and undeployed with both halves and no ghost block (automa
 test the 1.20.1 build; if it still happens there, a world or a log would help. Closing for 1.21.1.
 
 ### #120
-Done in the next 1.21.1 build: a netherite capsule gives 13×13×13 with vanilla items. Also new: amethyst, lapis and
+Done in the next 1.21.1 build: a netherite capsule gives 13×13×13 with vanilla items. Also new: amethyst and
 quartz (5) and prismarine crystals (9), and with mods zinc, aluminum, osmium, brass, steel and uranium. Modded recipes
 only load when a mod provides the ingot, so recipe viewers no longer show capsules you cannot craft.
 

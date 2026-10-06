@@ -1,6 +1,6 @@
 # Capsule tiers
 
-Proposal for the owner's review (round 2, #120). Every empty capsule is crafted with the same pattern: a stone button
+Approved by the owner (round 2, #120). Every empty capsule is crafted with the same pattern: a stone button
 on top, the material left and right of an ender pearl, an iron ingot below. The material sets the capture size and
 the material color (the cap of the capsule); the base color (the body) is the tier's.
 
@@ -28,7 +28,6 @@ the material color (the cap of the capsule); the base color (the body) is the ti
 | Silver | `#c:ingots/silver` | 5 | white | `#CFDCE6` | `addons_capsule_silver` | existing |
 | Osmium | `#c:ingots/osmium` | 5 | white | `#9CB4C8` | `addons_capsule_osmium` | new |
 | Amethyst | `#c:gems/amethyst` | 5 | white | `#9A5CC6` | `capsule_amethyst` | new |
-| Lapis lazuli | `#c:gems/lapis` | 5 | white | `#345EC3` | `capsule_lapis` | new |
 | Quartz | `#c:gems/quartz` | 5 | white | `#E3DBD0` | `capsule_quartz` | new |
 | Diamond | `#c:gems/diamond` | 7 | white | `#00FFF2` | `capsule_diamond` | existing |
 | Bronze | `#c:ingots/bronze` | 7 | white | `#F9AB0D` | `addons_capsule_bronze` | existing |
@@ -51,8 +50,9 @@ the material color (the cap of the capsule); the base color (the body) is the ti
 
 Other ways to a 13³ capsule in vanilla: an emerald capsule with one upgrade, or a gold capsule with four.
 
-Left out on purpose: redstone, glowstone, coal and other dusts (not a construction material), copper and iron
-nuggets, raw ores, and blocks of a material (a block would cost nine times the ingot for the same capsule).
+Left out on purpose: lapis lazuli (blueprints are blue), redstone, glowstone, coal and other dusts (not a construction
+material), copper and iron nuggets, raw ores, and blocks of a material (a block would cost nine times the ingot for the
+same capsule).
 
 The new vanilla recipes are unlocked with the other tiers (advancement `capsule:recipes/tools/capsule`). The GameTest
 resources fill every modded `c:ingots/*` tag with a placeholder item, so `everyCapsuleRecipeLoadsWithResolvedIngredients`

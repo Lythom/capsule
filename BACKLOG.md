@@ -6,13 +6,6 @@ backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
 
 ## Waiting for the owner
 
-### Capsule tier table
-Issues: https://github.com/Lythom/capsule/issues/120
-
-`docs/RECIPES.md` (342b153) is a proposal: sizes by material rarity, material color from the material's dominant
-color, base (body) left white for every metal and gem tier so it stays free for dyeing. Alternative: tier-tinted bases.
-Changing sizes or colors is JSON only. Effort: S.
-
 ### Claims and actors without a player
 Issues: https://github.com/Lythom/capsule/issues/91
 

@@ -72,6 +72,20 @@ public class RecipeTests {
         helper.succeed();
     }
 
+    /**
+     * Blueprints are blue: no capsule tier is made of lapis.
+     */
+    @GameTest(template = "empty")
+    public static void noCapsuleTierIsMadeOfLapis(GameTestHelper helper) {
+        List<ResourceLocation> lapisTiers = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
+                .filter(recipe -> recipe.value().getResultItem(helper.getLevel().registryAccess()).getItem() instanceof CapsuleItem)
+                .filter(recipe -> recipe.value().getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.LAPIS_LAZULI))))
+                .map(RecipeHolder::id)
+                .toList();
+        assertTrue(helper, lapisTiers.isEmpty(), "capsule tiers made of lapis: " + lapisTiers);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void dyeRecipeColorsCapsule(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);

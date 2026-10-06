@@ -85,7 +85,7 @@ Findings left as they are:
 | Waystones 21.1.46 + Balm 21.0.66 (#121) | GT-mods: `waystoneStaysWhenCapturedWithADoor`, `...ByAnOverpoweredCapsule` | pass: Waystones tags its blocks `c:relocation_not_supported`, so standard and OP capsules leave both halves in place with their block entity; the door next to it is captured, deployed and undeployed with both halves, no ghost block |
 | Sophisticated Storage 1.6.1 + Sophisticated Core 1.5.5 (#115) | GT-mods: `rewardBarrelsDoNotShareTheirContent` | pass; fails without the #115 fix (4c18fbc): "emptying the first barrel emptied the second one: 0 diamonds" |
 | JEI 19.57.0.451, SecurityCraft, Waystones, Balm, Sophisticated Storage, Sophisticated Core | PS with `EXTRA_MODS`, release jar on a NeoForge 21.1.255 dedicated server | boots, `capsule` command registered, no error in the log, clean stop |
-| JEI 19.57.0.451, REI 16.0.799 (+ Architectury API, Cloth Config), EMI 1.1.24 | CS, each viewer on both loaders | capsule recipes and 14 information pages shown; a recipe for each of the 30 tiers; every recipe Capsule adds (upgrades, clear, recovery, blueprints, 6 prefab blueprints, blueprint change) |
+| JEI 19.57.0.451, REI 16.0.799 (+ Architectury API, Cloth Config), EMI 1.1.24 | CS, each viewer on both loaders | capsule recipes and 14 information pages shown; a recipe for each of the 29 tiers; every recipe Capsule adds (upgrades, clear, recovery, blueprints, 6 prefab blueprints, blueprint change) |
 | WorldEdit 7.3.8 (#70) | GT-mods NeoForge: `worldEditSchematicsDeploy` | pass: the Sponge v2 and v3 fixtures are written by WorldEdit's own clipboard writers, and WorldEdit reads the hand-made MCEdit and Sponge v1 fixtures |
 | Open Parties and Claims 0.32.x, Flan 1.12.8 (#91) | GT-mods, both loaders: `openPartiesAndClaimsVetoesStrangers`, `flanVetoesStrangers` | pass: inside a claim a stranger's capture and capture base are refused, a member's and the owner's allowed; outside the claim allowed |
 | Get Off My Lawn ReServed 1.13.1 (#91, Fabric) | adapter checked with `javap` only | not run: the Loom dev runs do not load the mods nested in its jar |
@@ -104,7 +104,7 @@ Findings left as they are:
 
 | TEST.md item | Covered by | Manual |
 |---|---|---|
-| Empty capsule recipes (all materials, OP) visible in creative tab and JEI | GT `everyCapsuleRecipeLoadsWithResolvedIngredients` (every tier, modded tags filled by the test resources), `ironCapsuleRecipe`; CS `08-creative-search`, a recipe for each of the 30 tiers in JEI, REI and EMI on both loaders | tier colors (owner review) |
+| Empty capsule recipes (all materials, OP) visible in creative tab and JEI | GT `everyCapsuleRecipeLoadsWithResolvedIngredients` (every tier, modded tags filled by the test resources), `ironCapsuleRecipe`; CS `08-creative-search`, a recipe for each of the 29 tiers in JEI, REI and EMI on both loaders | tier colors (owner review) |
 | JEI information tabs (empty, linked, deployed, recovery, blueprint, OP, capture base) | CS viewer check (14 capsule information pages, JEI, REI, EMI) | reading the texts |
 | Tooltips (empty, linked, deployed, recovery, blueprint) | CS `06-inventory-linked-tooltip`, `07-inventory-blueprint-tooltip` | other states' texts |
 | Dye (empty, linked, deployed, recovery, blueprint) | GT `dyeRecipeColorsCapsule` (empty); CS sprites of dyed capsules | dyeing each other state in a crafting grid |
