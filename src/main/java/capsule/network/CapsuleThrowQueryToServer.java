@@ -54,7 +54,7 @@ public class CapsuleThrowQueryToServer {
                     int extendLength = (size - 1) / 2;
                     // instant capsule initial capture
                     if (CapsuleItem.hasState(heldItem, EMPTY)) {
-                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer.getUUID(), size, sendingPlayer.serverLevel(), pos);
+                        boolean captured = Capsule.captureAtPosition(heldItem, sendingPlayer, size, sendingPlayer.serverLevel(), pos);
                         if (captured) {
                             BlockPos center = pos.offset(0, size / 2, 0);
                             CapsuleNetwork.wrapper.send(
@@ -65,7 +65,7 @@ public class CapsuleThrowQueryToServer {
                     }
                     // instant deployment
                     else {
-                        boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, world);
+                        boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer, extendLength, world);
                         if (deployed) {
                             CapsuleItem.setUndeployDelay(heldItem, world);
                             world.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
