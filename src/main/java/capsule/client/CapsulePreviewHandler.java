@@ -174,7 +174,7 @@ public class CapsulePreviewHandler {
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
-                BlockPos destOriginPos = rtc.getBlockPos().offset(rtc.getDirection().getNormal()).offset(-extendSize, (int)(0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
+                BlockPos destOriginPos = Spacial.getDeployPosition(thePlayer.getCommandSenderWorld(), rtc).offset(-extendSize, (int)(0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
                 String structureName = heldItemMainhand.getTag().getString("structureName");
 
                 if (!structureName.equals(uncompletePreviewsCountStructure)) {
