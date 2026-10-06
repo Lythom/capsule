@@ -76,9 +76,11 @@ dependencies {
 
     // mods Capsule integrates with, exercised by the GameTests
     gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"
+    gametestCompileOnly "maven.modrinth:worldedit:${worldedit_version}"
 
-    // mods from issues (#115, #121), opt-in because they slow every dev run down: -PmodCompat
+    // mods from issues (#70, #115, #121), opt-in because they slow every dev run down: -PmodCompat
     if (project.hasProperty('modCompat')) {
+        gametestRuntimeOnly "maven.modrinth:worldedit:${worldedit_version}"
         gametestRuntimeOnly "maven.modrinth:waystones:${waystones_version}"
         gametestRuntimeOnly "maven.modrinth:balm:${balm_version}"
         gametestRuntimeOnly "maven.modrinth:sophisticated-storage:${sophisticated_storage_version}"
@@ -89,7 +91,8 @@ dependencies {
 tasks.named('runGameTestServer') {
     // a fresh world and config on every run keeps results reproducible
     doFirst {
-        delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig"
+        delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig",
+                "runs/gameTestServer/schematics", "runs/gameTestServer/worldedit-schematics"
     }
 }
 

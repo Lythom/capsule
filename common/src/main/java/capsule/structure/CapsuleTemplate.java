@@ -7,7 +7,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
@@ -18,9 +20,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -821,23 +826,26 @@ public class CapsuleTemplate {
     // SCHEMATIC STUFF BELOW
 
     // inspired by https://github.com/maruohon/worldprimer/blob/master/src/main/java/fi/dy/masa/worldprimer/util/Schematic.java
-    // schematic V2: https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-2.md
-    // schematic V3: https://github.com/SpongePowered/Schematic-Specification/blob/master/versions/schematic-3.md
-    public void readSchematic(CompoundTag nbt) throws Exception {
-        int version = 1;
-        if (nbt.contains("Version", Tag.TAG_INT)) {
-            version = nbt.getInt("Version");
-        }
+    // MCEdit and Schematica schematics need a block name palette (BlockIDs or SchematicaMapping), legacy numeric ids are not read.
+    // Sponge schematics: https://github.com/SpongePowered/Schematic-Specification/tree/master/versions
+    // Minecraft 1.12.2, the last version of MCEdit schematics, with namespaced block entity and item ids
+    private static final int MCEDIT_DATA_VERSION = 1343;
+    // Minecraft 1.13: Sponge v1 schematics have no DataVersion
+    private static final int SPONGE_V1_DATA_VERSION = 1519;
+
+    public void readSchematic(CompoundTag file) throws Exception {
+        // Sponge v3 nests everything in a Schematic compound
+        CompoundTag nbt = file.contains("Schematic", Tag.TAG_COMPOUND) ? file.getCompound("Schematic") : file;
+        int version = nbt.getInt("Version"); // 0 for MCEdit
         if (version > 3) {
             throw new Exception("Schematic version >3 not supported");
         }
-        if (version == 1 && !(nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) && nbt.contains("Data", Tag.TAG_BYTE_ARRAY))) {
+        if (version == 0 && !(nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) && nbt.contains("Data", Tag.TAG_BYTE_ARRAY))) {
             throw new Exception("Schematic: Missing data in the schematic");
         }
-
-        if (!nbt.contains("DataVersion", 99)) {
-            nbt.putInt("DataVersion", 500);
-        }
+        int dataVersion = nbt.contains("DataVersion", Tag.TAG_ANY_NUMERIC) ? nbt.getInt("DataVersion")
+                : version == 0 ? MCEDIT_DATA_VERSION : SPONGE_V1_DATA_VERSION;
+        CompoundTag blocks = version == 3 ? nbt.getCompound("Blocks") : nbt;
 
         this.palettes.clear();
         this.palettes.add(new Palette(new ArrayList<>()));
@@ -846,140 +854,131 @@ public class CapsuleTemplate {
         int width = nbt.getShort("Width");
         int height = nbt.getShort("Height");
         int length = nbt.getShort("Length");
-        int paletteSize = switch (version) {
-            case 2 -> nbt.getInt("PaletteMax");
-            case 3 -> nbt.getCompound("Blocks").getCompound("PaletteMax").size();
-            default -> 4095;
-        };
-        this.author = "?";
-        try {
-            this.author = nbt.getCompound("Metadata").getString("Author");
-        } catch (Exception e) {
-        }
+        String schematicAuthor = nbt.getCompound("Metadata").getString("Author");
+        this.author = schematicAuthor.isEmpty() ? "?" : schematicAuthor;
 
-
-        BlockState[] palette = this.readSchematicPalette(nbt, version, paletteSize);
+        BlockState[] palette = version == 0 ? readMCEditPalette(nbt) : readSpongePalette(blocks.getCompound("Palette"));
         if (palette == null || palette.length == 0) {
             throw new Exception("Schematic: Failed to read the block palette, see logs");
         }
-
-        // get blocks informations
-        BlockState[] blocksById = getSchematicBlocks(nbt, version, palette, width, height, length);
+        BlockState[] blocksById = version == 0 ? getMCEditBlocks(nbt, palette) : getSpongeBlocks(blocks.getByteArray(version == 3 ? "Data" : "BlockData"), palette);
         if (blocksById == null) {
             throw new Exception("Schematic: Failed to read the block stats, see logs");
         }
 
-        // get tile entities
-        Map<BlockPos, CompoundTag> tiles = getSchematicBlockEntities(nbt, version);
+        Map<BlockPos, CompoundTag> blockEntities = getSchematicBlockEntities(nbt, blocks, version, dataVersion);
+        readSchematicEntities(nbt, version, dataVersion);
 
-        // get entities
-        this.entities.clear();
-        ListTag tagList = nbt.getList("Entities", Tag.TAG_COMPOUND);
-        for (int i = 0; i < tagList.size(); ++i) {
-            CompoundTag entityNBT = tagList.getCompound(i).copy();
-            ListTag posList = entityNBT.getList("Pos", Tag.TAG_DOUBLE);
-            Vec3 vec3d = new Vec3(posList.getDouble(0), posList.getDouble(1), posList.getDouble(2));
-            entityNBT.remove("Pos");
-            this.entities.add(new StructureTemplate.StructureEntityInfo(vec3d, BlockPos.containing(vec3d), entityNBT));
-        }
-
-        // calculate block template informations
         int index = 0;
-        int sizeX = 1;
-        int sizeY = 1;
-        int sizeZ = 1;
         for (int y = 0; y < height; ++y) {
             for (int z = 0; z < length; ++z) {
-                for (int x = 0; x < width; ++x, index++) {
+                for (int x = 0; x < width && index < blocksById.length; ++x, index++) {
                     BlockState state = blocksById[index];
-                    if (state.getBlock() != Blocks.AIR) {
+                    if (state != null && !state.isAir()) {
                         BlockPos pos = new BlockPos(x, y, z);
-                        CompoundTag teNBT = tiles.get(pos);
-                        getPalette().add(new StructureTemplate.StructureBlockInfo(pos, state, teNBT));
-                        if (pos.getX() > sizeX) sizeX = pos.getX();
-                        if (pos.getY() > sizeY) sizeY = pos.getY();
-                        if (pos.getZ() > sizeZ) sizeZ = pos.getZ();
+                        getPalette().add(new StructureTemplate.StructureBlockInfo(pos, state, blockEntities.get(pos)));
                     }
                 }
             }
         }
-        int size = Math.max(sizeX, Math.max(sizeY, sizeZ));
+        int size = Math.max(width, Math.max(height, length));
         if (size % 2 == 0) size++;
         this.size = new BlockPos(size, size, size);
     }
 
-    private Map<BlockPos, CompoundTag> getSchematicBlockEntities(CompoundTag nbt, int version) {
+    /**
+     * Block entity data by position, with its id and updated to the current Minecraft version.
+     */
+    private static Map<BlockPos, CompoundTag> getSchematicBlockEntities(CompoundTag nbt, CompoundTag blocks, int version, int dataVersion) {
         Map<BlockPos, CompoundTag> blockEntities = new HashMap<>();
-        if (version == 1) {
-            ListTag tagList = nbt.getList("TileEntities", Tag.TAG_COMPOUND);
-            for (int i = 0; i < tagList.size(); ++i) {
-                CompoundTag tag = tagList.getCompound(i);
-                BlockPos pos = new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
-                blockEntities.put(pos, tag);
+        ListTag tagList = version == 3 ? blocks.getList("BlockEntities", Tag.TAG_COMPOUND)
+                : nbt.getList(version == 2 ? "BlockEntities" : "TileEntities", Tag.TAG_COMPOUND);
+        for (int i = 0; i < tagList.size(); ++i) {
+            CompoundTag entry = tagList.getCompound(i);
+            CompoundTag data = version == 3 ? entry.getCompound("Data").copy() : entry.copy();
+            BlockPos pos;
+            if (version == 0) {
+                pos = new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z"));
+                data.remove("x");
+                data.remove("y");
+                data.remove("z");
+            } else {
+                int[] positions = entry.getIntArray("Pos");
+                pos = new BlockPos(positions[0], positions[1], positions[2]);
+                data.remove("Pos");
+                data.remove("Id");
+                data.remove("ContentVersion");
+                data.putString("id", entry.getString("Id"));
             }
-        } else if (version == 2 || version == 3) {
-            ListTag tagList = version == 2 ? nbt.getList("BlockEntities", Tag.TAG_COMPOUND) : nbt.getCompound("Blocks").getList("BlockEntities", Tag.TAG_COMPOUND);
-            for (int i = 0; i < tagList.size(); ++i) {
-                CompoundTag tag = tagList.getCompound(i).copy();
-                int[] positions = tag.getIntArray("Pos");
-                BlockPos pos = new BlockPos(positions[0], positions[1], positions[2]);
-                tag.remove("Pos");
-                blockEntities.put(pos, tag);
-            }
+            blockEntities.put(pos, updateToCurrentVersion(References.BLOCK_ENTITY, data, dataVersion));
         }
         return blockEntities;
     }
 
-    @Nullable
-    private BlockState[] getSchematicBlocks(CompoundTag nbt, int version, BlockState[] palette, int width, int height,
-                                            int length) throws Exception {
-        byte[] blockIdsByte = switch (version) {
-            case 1 -> nbt.getByteArray("Blocks");
-            case 2 -> nbt.getByteArray("BlockData");
-            case 3 -> nbt.getCompound("Blocks").getByteArray("Data");
-            default -> null;
-        };
-        final int numBlocks = blockIdsByte.length;
-//        if (numBlocks != (width * height * length)) {
-//            LOGGER.error("Schematic: Mismatched block array size compared to the width/height/length, blocks: {}, W x H x L: {} x {} x {}",
-//                    numBlocks, width, height, length);
-//            return null;
-//        }
-        BlockState[] blocksById = new BlockState[numBlocks];
-        if (version == 2 || version == 3) {
-            int index = 0;
-            int i = 0;
-            int value = 0;
-            int varint_length = 0;
-            while (i < numBlocks) {
-                value = 0;
-                varint_length = 0;
-
-                while (true) {
-                    value |= (blockIdsByte[i] & 127) << (varint_length++ * 7);
-                    if (varint_length > 5) {
-                        throw new RuntimeException("VarInt too big (probably corrupted data)");
-                    }
-                    if ((blockIdsByte[i] & 128) != 128) {
-                        i++;
-                        break;
-                    }
-                    i++;
-                }
-                // index = (y * length + z) * width + x
-                int y = index / (width * length);
-                int z = (index % (width * length)) / width;
-                int x = (index % (width * length)) % width;
-                if (value < 0 || value >= palette.length) {
-                    LOGGER.warn("Schematic: palette index {} out of bounds (palette size {}), skipping block at index {}", value, palette.length, index);
-                    index++;
-                    continue;
-                }
-                BlockState state = palette[value];
-                blocksById[index] = state;
-                index++;
+    private void readSchematicEntities(CompoundTag nbt, int version, int dataVersion) {
+        // WorldEdit writes Sponge v2 entity positions in world coordinates and the schematic's world position as Offset
+        int[] offset = version == 2 && nbt.getIntArray("Offset").length == 3 ? nbt.getIntArray("Offset") : new int[3];
+        ListTag tagList = nbt.getList("Entities", Tag.TAG_COMPOUND);
+        for (int i = 0; i < tagList.size(); ++i) {
+            CompoundTag entry = tagList.getCompound(i);
+            CompoundTag data = version == 3 ? entry.getCompound("Data").copy() : entry.copy();
+            ListTag posList = (version == 3 ? entry : data).getList("Pos", Tag.TAG_DOUBLE);
+            Vec3 pos = new Vec3(posList.getDouble(0) - offset[0], posList.getDouble(1) - offset[1], posList.getDouble(2) - offset[2]);
+            data.remove("Pos");
+            if (version > 0) {
+                data.remove("Id");
+                data.putString("id", entry.getString("Id"));
             }
-        } else if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
+            data = updateToCurrentVersion(References.ENTITY, data, dataVersion);
+            this.entities.add(new StructureTemplate.StructureEntityInfo(pos, BlockPos.containing(pos), data));
+        }
+    }
+
+    private static CompoundTag updateToCurrentVersion(DSL.TypeReference type, CompoundTag data, int dataVersion) {
+        int currentVersion = SharedConstants.getCurrentVersion().getDataVersion().getVersion();
+        return (CompoundTag) DataFixers.getDataFixer().update(type, new Dynamic<>(NbtOps.INSTANCE, data), dataVersion, currentVersion).getValue();
+    }
+
+    /**
+     * Sponge block data: one palette index per block, as var ints.
+     */
+    private static BlockState[] getSpongeBlocks(byte[] data, BlockState[] palette) {
+        List<BlockState> states = new ArrayList<>();
+        int i = 0;
+        while (i < data.length) {
+            int value = 0;
+            int varintLength = 0;
+            while (true) {
+                value |= (data[i] & 127) << (varintLength++ * 7);
+                if (varintLength > 5) {
+                    throw new RuntimeException("VarInt too big (probably corrupted data)");
+                }
+                if ((data[i++] & 128) != 128) break;
+            }
+            if (value < 0 || value >= palette.length) {
+                LOGGER.warn("Schematic: palette index {} out of bounds (palette size {}), skipping block at index {}", value, palette.length, states.size());
+                states.add(null);
+            } else {
+                states.add(palette[value]);
+            }
+        }
+        return states.toArray(new BlockState[0]);
+    }
+
+    private BlockState[] readSpongePalette(CompoundTag paletteTag) {
+        BlockState[] palette = new BlockState[paletteTag.getAllKeys().stream().mapToInt(paletteTag::getInt).max().orElse(-1) + 1];
+        Arrays.fill(palette, Blocks.AIR.defaultBlockState());
+        for (String key : paletteTag.getAllKeys()) {
+            palette[paletteTag.getInt(key)] = parseBlockState(key);
+        }
+        return palette;
+    }
+
+    private static BlockState[] getMCEditBlocks(CompoundTag nbt, BlockState[] palette) {
+        byte[] blockIdsByte = nbt.getByteArray("Blocks");
+        final int numBlocks = blockIdsByte.length;
+        BlockState[] blocksById = new BlockState[numBlocks];
+        if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
             byte[] add = nbt.getByteArray("AddBlocks");
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);
 
@@ -1028,7 +1027,7 @@ public class CapsuleTemplate {
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
-        // No palette, use the registry IDs directly
+        // Block ids below 256
         else {
             for (int i = 0; i < numBlocks; i++) {
                 BlockState block = palette[((int) blockIdsByte[i]) & 0xFF];
@@ -1038,68 +1037,31 @@ public class CapsuleTemplate {
         return blocksById;
     }
 
-    @Nullable
-    private BlockState[] readSchematicPalette(CompoundTag nbt, int version, int paletteSize) throws Exception {
-        final BlockState air = Blocks.AIR.defaultBlockState();
-        BlockState[] palette = new BlockState[paletteSize];
-        Arrays.fill(palette, air);
-
-        // MCEdit2 palette (Legacy)
-        if (nbt.contains("BlockIDs", Tag.TAG_COMPOUND)) {
-            CompoundTag tag = nbt.getCompound("BlockIDs");
-            Set<String> keys = tag.getAllKeys();
-
-            for (String idStr : keys) {
-                String key = tag.getString(idStr);
-                int id;
-
-                try {
-                    id = Integer.parseInt(idStr);
-                } catch (NumberFormatException e) {
-                    LOGGER.error("Schematic: Invalid ID '{}' (not a number) in MCEdit2 palette for block '{}'", idStr, key);
-                    continue;
-                }
-
-                if (id >= palette.length) {
-                    LOGGER.error("Schematic: Invalid ID '{}' in MCEdit2 palette for block '{}', max = 4095", id, key);
-                    return null;
-                }
-
-                BlockState block = parseBlockState(key);
-                if (block != null) {
-                    palette[id] = block;
-                } else {
-                    LOGGER.error("Schematic: Missing/non-existing block '{}' in MCEdit2 palette", key);
-                }
+    private BlockState[] readMCEditPalette(CompoundTag nbt) {
+        BlockState[] palette = new BlockState[4096];
+        Arrays.fill(palette, Blocks.AIR.defaultBlockState());
+        CompoundTag tag = nbt.contains("BlockIDs", Tag.TAG_COMPOUND) ? nbt.getCompound("BlockIDs") : nbt.getCompound("SchematicaMapping");
+        if (tag.isEmpty()) {
+            LOGGER.error("Schematic: no BlockIDs or SchematicaMapping palette, legacy numeric block ids are not supported.");
+            return null;
+        }
+        boolean mcedit2 = nbt.contains("BlockIDs", Tag.TAG_COMPOUND);
+        for (String key : tag.getAllKeys()) {
+            int id;
+            String name;
+            try {
+                id = mcedit2 ? Integer.parseInt(key) : tag.getShort(key);
+                name = mcedit2 ? tag.getString(key) : key;
+            } catch (NumberFormatException e) {
+                LOGGER.error("Schematic: Invalid ID '{}' (not a number) in MCEdit2 palette", key);
+                continue;
             }
-        } else {
-            // other type of palettes have different locations but works the same
-            CompoundTag tag = null;
-            if (version == 2) {
-                tag = nbt.getCompound("Palette");
-            } else if (version == 3) {
-                tag = nbt.getCompound("Blocks").getCompound("Palette");
-            } else if (nbt.contains("SchematicaMapping", Tag.TAG_COMPOUND)) {
-                tag = nbt.getCompound("SchematicaMapping");
-            }
-            if (tag == null) {
-                LOGGER.error("Schematic: Unsupported palette format, no recognized palette tag found.");
+            if (id < 0 || id >= palette.length) {
+                LOGGER.error("Schematic: Invalid ID '{}' in the palette for block '{}', max = 4095", id, name);
                 return null;
             }
-            Set<String> keys = tag.getAllKeys();
-
-            for (String key : keys) {
-                int idx = tag.getShort(key);
-
-                if (idx >= palette.length) {
-                    LOGGER.error("Schematic: Invalid ID '{}' in MCEdit2 palette for block '{}', max = {}", idx, key, paletteSize);
-                    return null;
-                }
-
-                palette[idx] = parseBlockState(key);
-            }
+            palette[id] = parseBlockState(name);
         }
-
         return palette;
     }
 

@@ -37,7 +37,10 @@ import java.util.Optional;
  */
 public class CapsuleTemplateManager {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final List<String> EXTENSIONS = List.of(".schematic", ".nbt");
+    /**
+     * Template file extensions, in lookup order.
+     */
+    public static final List<String> EXTENSIONS = List.of(".schematic", ".schem", ".nbt");
     private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
     private ResourceManager resourceManager;
@@ -105,7 +108,7 @@ public class CapsuleTemplateManager {
         Optional<Resource> optionalTemplate = this.resourceManager.getResource(capsuleTemplateLocation);
         if (optionalTemplate.isPresent()) {
             try {
-                CapsuleTemplate template = this.loadTemplate(optionalTemplate.get().open(), ".schematic".equals(extension), capsuleTemplateLocation.toString());
+                CapsuleTemplate template = this.loadTemplate(optionalTemplate.get().open(), !".nbt".equals(extension), capsuleTemplateLocation.toString());
                 return template;
             } catch (FileNotFoundException var18) {
                 return null;
@@ -126,7 +129,7 @@ public class CapsuleTemplateManager {
                 Path path = this.resolvePath(locationIn, extension);
 
                 try (InputStream inputstream = new FileInputStream(path.toFile())) {
-                    CapsuleTemplate template = this.loadTemplate(inputstream, ".schematic".equals(extension), path.toString());
+                    CapsuleTemplate template = this.loadTemplate(inputstream, !".nbt".equals(extension), path.toString());
                     return template;
                 } catch (FileNotFoundException var18) {
                     return null;

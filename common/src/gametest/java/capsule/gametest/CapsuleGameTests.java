@@ -39,6 +39,7 @@ public class CapsuleGameTests {
             PreviewQueryTests.class,
             RecallTests.class,
             RecipeTests.class,
+            SchematicTests.class,
             ReloadTests.class,
             TemplateCopyTests.class,
             ThrowDeployTests.class,

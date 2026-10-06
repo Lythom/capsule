@@ -230,7 +230,7 @@ public class Config {
         list.add(common);
         list.add(uncommon);
         list.add(rare);
-        Config.lootTemplatesPathsCfg = configBuild.comment("List of paths and weights where the mod will look for structureBlock files. Each .nbt or .schematic in those folders have a chance to appear as a reward capsule in a dungeon chest.\nHigher weight means more common. Default weights : 2 (rare), 6 (uncommon) or 10 (common)\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly.")
+        Config.lootTemplatesPathsCfg = configBuild.comment("List of paths and weights where the mod will look for structureBlock files. Each .nbt, .schem or .schematic in those folders have a chance to appear as a reward capsule in a dungeon chest.\nHigher weight means more common. Default weights : 2 (rare), 6 (uncommon) or 10 (common)\nTo Lower the chance of getting a capsule at all, insert an empty folder here and configure its weight accordingly.")
                 .worldRestart()
                 .define("lootTemplatesPaths", list, o -> o instanceof ArrayList);
 

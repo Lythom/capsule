@@ -98,7 +98,8 @@ processResources {
 tasks.named('runGameTestServer') {
     // a fresh world and config on every run keeps results reproducible
     doFirst {
-        delete 'runs/gameTestServer/world', 'runs/gameTestServer/config/capsule', 'runs/gameTestServer/initialconfig'
+        delete 'runs/gameTestServer/world', 'runs/gameTestServer/config/capsule', 'runs/gameTestServer/initialconfig',
+                'runs/gameTestServer/schematics'
     }
 }
 

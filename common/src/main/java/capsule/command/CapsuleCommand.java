@@ -302,7 +302,7 @@ public class CapsuleCommand {
     }
 
     private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName, boolean withLoyalty) throws CommandSyntaxException {
-        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "");
+        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "").replace(".schem", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (withLoyalty) {
@@ -319,7 +319,7 @@ public class CapsuleCommand {
     }
 
     private static int executeGiveBlueprint(ServerPlayer player, String rewardTemplateName) throws CommandSyntaxException {
-        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "");
+        String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "").replace(".schem", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
 
             CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.getServer());

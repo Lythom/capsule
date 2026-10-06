@@ -1,6 +1,7 @@
 package capsule.helpers;
 
 import capsule.Config;
+import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -145,7 +146,7 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath, ResourceManager ressourceManager) {
         try {
-            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".nbt") || s.getPath().endsWith(".json") || s.getPath().endsWith(".schematic")).entrySet()) {
+            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".json") || CapsuleTemplateManager.EXTENSIONS.stream().anyMatch(s.getPath()::endsWith)).entrySet()) {
                 Resource resource = ressourceLoc.getValue();
                 // source path
                 String sourcePath = ressourceLoc.getKey().getPath();
@@ -173,7 +174,7 @@ public class Files {
     }
 
     private static String withoutTemplateExtension(String fileName) {
-        for (String extension : new String[]{".nbt", ".schematic"}) {
+        for (String extension : CapsuleTemplateManager.EXTENSIONS) {
             if (fileName.endsWith(extension)) return fileName.substring(0, fileName.length() - extension.length());
         }
         return null;
