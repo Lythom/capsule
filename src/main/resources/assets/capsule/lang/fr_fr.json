@@ -29,6 +29,7 @@
     "capsule.error.templateNotFound": "Error: the capsule template file %s was not found.",
     "capsule.error.notAllowed": "Les capsules ne peuvent pas être utilisées ici. Il s'agit peut être d'une zone protégée.",
     "capsule.error.blueprintCreationError": "Une erreur est survenue pendant la copie du template. Cette blueprint pourrait ne pas fonctionner.",
+    "capsule.error.blueprintSourceNotFound": "Plan non créé : le modèle %s est introuvable ou vide. Les chemins cherchés sont dans le journal du serveur.",
     "capsule.error.blueprintExcluded": "Certains blocks ne sont pas supportés dans la blueprint: %s",
     "capsule.error.blueprintDontMatch": "Impossible de recapturer: vous pouvez charger la capsule (clic gauche dans le vide), ou vous assurer que la région a recapturer correspond exactement à la structure du blueprint (aucun bloc enlevé ou ajouté, inventaires vidés).",
     "capsule.error.areaNotLoaded": "Impossible de déployer car la zone de destination n'est pas chargée",

@@ -19,6 +19,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +30,7 @@ import java.util.Optional;
  */
 public class CapsuleTemplateManager {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final List<String> EXTENSIONS = List.of(".schematic", ".nbt");
     private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
     private ResourceManager resourceManager;
@@ -53,13 +56,34 @@ public class CapsuleTemplateManager {
     @Nullable
     public CapsuleTemplate getTemplate(ResourceLocation templateLocation) {
         ResourceLocation capsuleTemplateLocation = new ResourceLocation(CapsuleMod.MODID, templateLocation.getPath());
-        return this.templates.computeIfAbsent(capsuleTemplateLocation, (p_209204_1_) -> {
-            CapsuleTemplate template = this.loadTemplateFile(p_209204_1_, ".schematic");
-            if (template == null) template = this.loadTemplateFile(p_209204_1_, ".nbt");
-            if (template == null) template = this.loadTemplateResource(p_209204_1_, ".schematic");
-            if (template == null) template = this.loadTemplateResource(p_209204_1_, ".nbt");
-            return template;
+        return this.templates.computeIfAbsent(capsuleTemplateLocation, location -> {
+            for (String extension : EXTENSIONS) {
+                CapsuleTemplate template = this.loadTemplateFile(location, extension);
+                if (template != null) return template;
+            }
+            for (String extension : EXTENSIONS) {
+                CapsuleTemplate template = this.loadTemplateResource(location, extension);
+                if (template != null) return template;
+            }
+            return null;
         });
+    }
+
+    /**
+     * The files then resources getTemplate reads, for error messages.
+     */
+    public List<String> searchedLocations(ResourceLocation templateLocation) {
+        List<String> locations = new ArrayList<>();
+        for (String extension : EXTENSIONS) {
+            try {
+                locations.add(this.resolvePath(templateLocation, extension).toString());
+            } catch (ResourceLocationException ignored) {
+            }
+        }
+        for (String extension : EXTENSIONS) {
+            locations.add(CapsuleMod.MODID + ":" + templateLocation.getPath() + extension);
+        }
+        return locations;
     }
 
     public void onResourceManagerReload(ResourceManager resourceManager) {

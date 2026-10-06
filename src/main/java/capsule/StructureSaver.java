@@ -630,14 +630,11 @@ public class StructureSaver {
         return getTemplateNBTData(StructureSaver.getTemplate(capsule, worldServer).getRight());
     }
 
-    public static CompoundTag getTemplateNBTData(String path, ServerLevel worldServer) {
-        Pair<CapsuleTemplateManager, CapsuleTemplate> sourcetemplatepair;
+    private static Pair<CapsuleTemplateManager, CapsuleTemplate> getSourceTemplate(String path, ServerLevel worldServer) {
         if (path.startsWith(Config.rewardTemplatesPath) || path.startsWith("config/")) {
-            sourcetemplatepair = StructureSaver.getTemplateForReward(worldServer.getServer(), path);
-        } else {
-            sourcetemplatepair = StructureSaver.getTemplateForCapsule(worldServer, path);
+            return StructureSaver.getTemplateForReward(worldServer.getServer(), path);
         }
-        return getTemplateNBTData(sourcetemplatepair.getRight());
+        return StructureSaver.getTemplateForCapsule(worldServer, path);
     }
 
     public static CompoundTag getTemplateNBTData(CapsuleTemplate template) {
@@ -662,12 +659,22 @@ public class StructureSaver {
             return null;
         }
 
+        Pair<CapsuleTemplateManager, CapsuleTemplate> source = getSourceTemplate(srcStructurePath, worldServer);
+        if (source.getRight() == null || source.getRight().getPalette().isEmpty()) {
+            LOGGER.error("Couldn't create a blueprint of {}: template not found or empty, searched {}", srcStructurePath,
+                    source.getLeft() == null ? "nothing" : source.getLeft().searchedLocations(new ResourceLocation(srcStructurePath.toLowerCase())));
+            if (playerIn != null) {
+                playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintSourceNotFound", srcStructurePath));
+            }
+            return null;
+        }
+
         String destStructureName = getBlueprintUniqueName(worldServer) + "-" + srcStructurePath.replace("/", "_");
 
         CapsuleTemplateManager templateManager = getTemplateManager(worldServer.getServer());
         outExcluded.clear();
         boolean created = templateManager != null && duplicateTemplate(
-                getTemplateNBTData(srcStructurePath, worldServer),
+                getTemplateNBTData(source.getRight()),
                 destStructureName,
                 templateManager,
                 true,
