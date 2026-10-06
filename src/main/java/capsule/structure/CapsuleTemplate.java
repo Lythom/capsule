@@ -138,7 +138,7 @@ public class CapsuleTemplate {
         for (Template.EntityInfo template$entityinfo : processEntityInfos(this, worldIn, offsetPos, placementIn, this.entities)) {
             BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
             if (boundsIn == null || boundsIn.isInside(blockpos)) {
-                CompoundNBT compoundnbt = template$entityinfo.nbt;
+                CompoundNBT compoundnbt = template$entityinfo.nbt.copy();
                 Vector3d vector3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListNBT listnbt = new ListNBT();
                 listnbt.add(DoubleNBT.valueOf(vector3d1.x));
@@ -251,7 +251,7 @@ public class CapsuleTemplate {
                 int k = template$basicpalette.idFor(template$blockinfo.state);
                 compoundnbt.putInt("state", k);
                 if (template$blockinfo.nbt != null) {
-                    compoundnbt.put("nbt", template$blockinfo.nbt);
+                    compoundnbt.put("nbt", template$blockinfo.nbt.copy());
                 }
 
                 listnbt1.add(compoundnbt);
@@ -295,7 +295,7 @@ public class CapsuleTemplate {
             compoundnbt1.put("pos", this.newDoubleList(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
             compoundnbt1.put("blockPos", this.newIntegerList(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
             if (template$entityinfo.nbt != null) {
-                compoundnbt1.put("nbt", template$entityinfo.nbt);
+                compoundnbt1.put("nbt", template$entityinfo.nbt.copy());
             }
 
             listnbt.add(compoundnbt1);
@@ -644,10 +644,11 @@ public class CapsuleTemplate {
                             if (template$blockinfo.nbt != null) {
                                 TileEntity tileentity1 = worldIn.getBlockEntity(blockpos);
                                 if (tileentity1 != null) {
-                                    template$blockinfo.nbt.putInt("x", blockpos.getX());
-                                    template$blockinfo.nbt.putInt("y", blockpos.getY());
-                                    template$blockinfo.nbt.putInt("z", blockpos.getZ());
-                                    tileentity1.load(template$blockinfo.state, template$blockinfo.nbt);
+                                    CompoundNBT templateTag = template$blockinfo.nbt.copy();
+                                    templateTag.putInt("x", blockpos.getX());
+                                    templateTag.putInt("y", blockpos.getY());
+                                    templateTag.putInt("z", blockpos.getZ());
+                                    tileentity1.load(template$blockinfo.state, templateTag);
                                     tileentity1.mirror(placementIn.getMirror());
                                     tileentity1.rotate(placementIn.getRotation());
                                 }
