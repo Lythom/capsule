@@ -19,6 +19,7 @@ set -euo pipefail
 # capsule recipes). TIMEOUT (seconds, default 1500) bounds the whole run, build included.
 # EXTRA_MODS (space separated jar files) adds mods to the run, e.g. the jars of a modpack:
 # NeoForge 1.21.1 dev runs load production mod jars from the mods folder.
+# SHADER_PACK (a shader pack zip) turns it on with Iris, which EXTRA_MODS must bring with Sodium.
 # =============================================================================
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,11 +33,16 @@ esac
 
 RUN_DIR="$ROOT/$LOADER/runs/clientSmoke"
 OUT="$ROOT/build/client-smoke/$LOADER"
-rm -rf "$RUN_DIR/screenshots/capsule-smoke" "$RUN_DIR/mods" "$OUT"
+rm -rf "$RUN_DIR/screenshots/capsule-smoke" "$RUN_DIR/mods" "$RUN_DIR/shaderpacks" "$RUN_DIR/config/iris.properties" "$OUT"
 mkdir -p "$OUT" "$RUN_DIR/mods"
 for jar in ${EXTRA_MODS:-}; do
     cp "$jar" "$RUN_DIR/mods/"
 done
+if [ -n "${SHADER_PACK:-}" ]; then
+    mkdir -p "$RUN_DIR/shaderpacks" "$RUN_DIR/config"
+    cp "$SHADER_PACK" "$RUN_DIR/shaderpacks/"
+    printf 'enableShaders=true\nshaderPack=%s\n' "$(basename "$SHADER_PACK")" > "$RUN_DIR/config/iris.properties"
+fi
 
 GRADLE=("$ROOT/gradlew" -p "$ROOT" ":$LOADER:runClientSmoke")
 if [ -z "${DISPLAY:-}" ]; then
