@@ -25,6 +25,7 @@ public class CapsuleGameTests {
     public static final List<Class<?>> TEST_CLASSES = List.of(
             BlueprintCostTests.class,
             BlueprintCraftingTests.class,
+            BlueprintWhitelistTests.class,
             BundledContentTests.class,
             BundledTemplateContentTests.class,
             CaptureBaseTests.class,
