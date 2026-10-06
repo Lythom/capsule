@@ -88,14 +88,14 @@ public class CapsuleTemplateRenderer {
                 stack.pushPose(); //Save position again
                 stack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ());
 
-                IBakedModel ibakedmodel = dispatcher.getBlockModel(state);
-                BlockColors blockColors = minecraft.getBlockColors();
-                int color = blockColors.getColor(state, templateWorld, targetPos, 0);
-
-                float f = (float) (color >> 16 & 255) / 255.0F;
-                float f1 = (float) (color >> 8 & 255) / 255.0F;
-                float f2 = (float) (color & 255) / 255.0F;
                 try {
+                    IBakedModel ibakedmodel = dispatcher.getBlockModel(state);
+                    BlockColors blockColors = minecraft.getBlockColors();
+                    int color = blockColors.getColor(state, templateWorld, targetPos, 0);
+
+                    float f = (float) (color >> 16 & 255) / 255.0F;
+                    float f1 = (float) (color >> 8 & 255) / 255.0F;
+                    float f2 = (float) (color & 255) / 255.0F;
                     if (state.getRenderShape() == BlockRenderType.MODEL) {
                         for (Direction direction : Direction.values()) {
                             if (Block.shouldRenderFace(state, templateWorld, targetPos, direction) && !(templateWorld.getBlockState(targetPos.relative(direction)).getBlock().equals(state.getBlock()))) {
@@ -206,7 +206,8 @@ public class CapsuleTemplateRenderer {
 
                 for (Template.BlockInfo template$blockinfo : CapsuleTemplate.processBlockInfos(template, templateWorld, offPos, placementSettings, list)) {
                     BlockPos blockpos = template$blockinfo.pos;
-                    if (mutableboundingbox == null || mutableboundingbox.isInside(blockpos)) {
+                    if (mutableboundingbox != null && !mutableboundingbox.isInside(blockpos)) continue;
+                    try {
                         FluidState fluidstate = placementSettings.shouldKeepLiquids() ? templateWorld.getFluidState(blockpos) : null;
                         BlockState blockstate = template$blockinfo.state.mirror(placementSettings.getMirror()).rotate(templateWorld, blockpos, placementSettings.getRotation());
                         if (template$blockinfo.nbt != null) {
@@ -231,6 +232,8 @@ public class CapsuleTemplateRenderer {
                                 }
                             }
                         }
+                    } catch (RuntimeException e) {
+                        logSkippedBlock(template$blockinfo.state, e);
                     }
                 }
 
@@ -280,19 +283,27 @@ public class CapsuleTemplateRenderer {
                             voxelshapepart.setFull(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2, true, true);
                         }
 
-                        Template.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);
+                        try {
+                            Template.updateShapeAtEdge(templateWorld, placeFlag, voxelshapepart, l1, i2, j2);
+                        } catch (RuntimeException e) {
+                            LOGGER.debug("Preview shapes at the edge of the template not updated", e);
+                        }
                     }
 
                     for (Pair<BlockPos, CompoundNBT> pair : list2) {
                         BlockPos blockpos4 = pair.getFirst();
                         if (!placementSettings.getKnownShape()) {
                             BlockState blockstate1 = templateWorld.getBlockState(blockpos4);
-                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, templateWorld, blockpos4);
-                            if (blockstate1 != blockstate3) {
-                                templateWorld.setBlock(blockpos4, blockstate3, placeFlag & -2 | 16);
-                            }
+                            try {
+                                BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, templateWorld, blockpos4);
+                                if (blockstate1 != blockstate3) {
+                                    templateWorld.setBlock(blockpos4, blockstate3, placeFlag & -2 | 16);
+                                }
 
-                            templateWorld.blockUpdated(blockpos4, blockstate3.getBlock());
+                                templateWorld.blockUpdated(blockpos4, blockstate3.getBlock());
+                            } catch (RuntimeException e) {
+                                logSkippedBlock(blockstate1, e);
+                            }
                         }
                     }
                 }
@@ -303,6 +314,13 @@ public class CapsuleTemplateRenderer {
                 return false;
             }
         }
+    }
+
+    /**
+     * Modded blocks may expect a World where the preview only offers an IWorld (FakeWorld).
+     */
+    private static void logSkippedBlock(BlockState state, RuntimeException e) {
+        LOGGER.debug("Preview of {} is incomplete: {}", state, e.toString());
     }
 
     public void setWorldDirty() {
