@@ -92,7 +92,8 @@ containing it denies the whole column. On Fabric, the Common Protection API call
 ### Who is checked
 
 - A player throwing a capsule or using an instant capsule: that player, or a fake player with their profile if they
-  went offline before it landed (before: not checked).
+  went offline before it landed (before: not checked). The thrower is the UUID the item entity saves, which
+  `ItemEntity.getOwner` does not resolve once the player is offline or in another dimension.
 - A capture base (`BlockEntityCapture`): it remembers the player who placed it (`placer` UUID in its saved data, set in
   `setPlacedBy`) and its captures and deploys are checked as a fake player with that profile, without chat feedback.
   A capture base deployed from a capsule (or blueprint) acts for the player who deployed it, so a captured base does
@@ -113,9 +114,9 @@ containing it denies the whole column. On Fabric, the Common Protection API call
 ## Tests
 
 - `ClaimTests` (common GameTests, both loaders, every build): the counting test above; a stranger's capture keeps the
-  claimed blocks and their deploy is refused with one query each, the owner's are allowed; capture bases are checked as
-  the player who placed them, also offline, legacy bases are not checked; the placer is saved with the base and a
-  deployed base acts for its deployer.
+  claimed blocks and their deploy is refused with one query each, the owner's are allowed; a capsule thrown by a player
+  who then went offline is refused in a claim; capture bases are checked as the player who placed them, also offline,
+  legacy bases are not checked; the placer is saved with the base and a deployed base acts for its deployer.
 - `OpenPartiesAndClaimsTests` and `FlanTests` (common GameTests, registered when the mod is loaded, `-PmodCompat` on
   both loaders, mods from the Modrinth maven): inside a real claim a stranger's capture and capture base are refused, a
   party or claim group member's and the owner's capture and the owner's capture base are allowed; outside the claim (the

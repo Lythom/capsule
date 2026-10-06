@@ -16,10 +16,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -160,6 +162,30 @@ public class ClaimTests {
             Claims.unregister(claim);
             CapsuleTestUtils.removePlayer(owner);
             CapsuleTestUtils.removePlayer(other);
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "claims")
+    public static void capsulesThrownByOfflinePlayersAreChecked(GameTestHelper helper) {
+        ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        ServerPlayer thrower = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
+        TestClaim claim = new TestClaim(helper, new BlockPos(0, 1, 0), new BlockPos(8, 4, 8), owner.getUUID());
+        Claims.register(claim);
+        try {
+            helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
+            ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
+            Vec3 pos = helper.absoluteVec(new Vec3(4.5, 1, 4.5));
+            ItemEntity thrown = new ItemEntity(helper.getLevel(), pos.x, pos.y, pos.z, capsule);
+            thrown.setThrower(thrower);
+            CapsuleTestUtils.removePlayer(thrower);
+
+            Capsule.handleItemEntityOnGround(thrown, capsule);
+            helper.assertBlockNotPresent(Blocks.GOLD_BLOCK, 4, 1, 4);
+            assertTrue(helper, claim.askedFor.contains(thrower.getUUID()), "the claims are asked for the offline thrower");
+        } finally {
+            Claims.unregister(claim);
+            CapsuleTestUtils.removePlayer(owner);
         }
         helper.succeed();
     }

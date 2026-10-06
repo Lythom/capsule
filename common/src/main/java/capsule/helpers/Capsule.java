@@ -448,8 +448,7 @@ public class Capsule {
             // DEPLOY
             // is linked, deploy
             BlockPos throwPos = Spacial.findBottomBlock(itemEntity);
-            UUID throwerUUID = itemEntity.getOwner() != null ? itemEntity.getOwner().getUUID() : null;
-            boolean deployed = deployCapsule(capsule, throwPos, Claims.player(itemWorld, throwerUUID), extendLength, itemWorld);
+            boolean deployed = deployCapsule(capsule, throwPos, Claims.player(itemWorld, thrower(itemEntity)), extendLength, itemWorld);
             if (deployed) {
                 itemWorld.playSound(null, itemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
                 showDeployParticules(itemWorld, itemEntity.blockPosition(), size);
@@ -470,8 +469,7 @@ public class Capsule {
                 }
                 BlockPos anchor = Spacial.getAnchor(captureBasePosition, itemWorld.getBlockState(captureBasePosition), size);
 
-                UUID throwerUUID = itemEntity.getOwner() != null ? itemEntity.getOwner().getUUID() : null;
-                boolean captured = captureContentIntoCapsule(capsule, anchor, throwerUUID, size, extendLength, itemWorld);
+                boolean captured = captureContentIntoCapsule(capsule, anchor, thrower(itemEntity), size, extendLength, itemWorld);
                 if (captured) {
                     BlockPos center = anchor.offset(0, size / 2, 0);
                     Services.NETWORK.sendToPlayersNear(
@@ -485,6 +483,16 @@ public class Capsule {
                 LOGGER.error("Couldn't capture the content into the capsule", e);
             }
         }
+    }
+
+    /**
+     * The player who threw the item, also when they are offline or in another level, unlike ItemEntity.getOwner.
+     */
+    @Nullable
+    private static UUID thrower(ItemEntity itemEntity) {
+        CompoundTag data = new CompoundTag();
+        itemEntity.addAdditionalSaveData(data);
+        return data.hasUUID("Thrower") ? data.getUUID("Thrower") : null;
     }
 
     public static String labelFromPath(String path) {
