@@ -70,8 +70,13 @@ public class CapsuleMod {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStarting);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, CapsuleMod::serverStopped);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, CapsuleMod::RegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(CapsuleMod::addReloadListeners);
         CapsuleEnchantments.registerEnchantments(modEventBus);
         CapsuleLootEntry.registerEntryType(modEventBus);
+    }
+
+    public static void addReloadListeners(final AddReloadListenerEvent event) {
+        event.addListener(new StructureSaverReloadListener());
     }
 
     public static void serverStarting(final ServerStartingEvent e) {
@@ -174,11 +179,6 @@ final class CapsuleForgeSubscriber {
     @OnlyIn(Dist.CLIENT)
     public static void registerRecipes(RecipesUpdatedEvent event) {
         CapsuleItems.registerRecipesClient(event.getRecipeManager());
-    }
-
-    @SubscribeEvent
-    public static void setup(AddReloadListenerEvent event) {
-        event.addListener(new StructureSaverReloadListener());
     }
 }
 
