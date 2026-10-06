@@ -17,7 +17,7 @@ set -euo pipefail
 # the log and stops the server.
 #
 # Checks: the server reaches "Done", the capsule command is registered, the capsule config
-# files are created, and the log has no error mentioning capsule.
+# files are created, the log has no error mentioning capsule and capsule asks no update checker.
 # Uses $JAVA_HOME/bin/java when JAVA_HOME is set (Java 8 for 1.16.5, 17 for 1.18.2 and
 # 1.20.1), java otherwise. Needs curl and python3.
 # Set KEEP_SERVER=1 to keep the server directories (printed at the end).
@@ -62,9 +62,6 @@ smoke() {
     setup_forge "$dir"
     cp "$jar" "$dir/mods/"
     echo "eula=true" > "$dir/eula.txt"
-    # no update check: the result depends on the network, not on the jar
-    mkdir -p "$dir/config"
-    echo "versionCheck = false" > "$dir/config/fml.toml"
     printf 'server-port=%s\nonline-mode=false\nspawn-protection=0\n' "$(free_port)" > "$dir/server.properties"
 
     mkfifo "$dir/console"
@@ -100,6 +97,7 @@ smoke() {
     local errors
     errors="$(grep -hiE 'ERROR|Exception|Caused by' "$log" "$dir/logs/latest.log" | grep -i 'capsule' || true)"
     [ -z "$errors" ] || failures+=("errors in the log:"$'\n'"$errors")
+    ! grep -q '\[capsule\] Starting version check' "$log" "$dir/logs/latest.log" || failures+=("capsule asks an update checker")
     [ "$status" -eq 0 ] || failures+=("the server exited with status $status")
     grep -q 'Stopping server' "$log" || failures+=("the server did not stop cleanly")
 
