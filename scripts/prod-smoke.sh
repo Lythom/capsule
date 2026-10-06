@@ -122,6 +122,7 @@ smoke() {
     local errors
     errors="$(grep -iE 'ERROR|Exception|Caused by' "$log" | grep -iE 'capsule|mixin' || true)"
     [ -z "$errors" ] || failures+=("errors in the log:"$'\n'"$errors")
+    ! grep -q '\[capsule\] Starting version check' "$log" || failures+=("capsule asks an update checker")
     [ "$status" -eq 0 ] || failures+=("the server exited with status $status")
     grep -q 'Stopping server' "$log" || failures+=("the server did not stop cleanly")
 
