@@ -36,11 +36,8 @@ import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.FolderName;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -52,6 +49,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -232,7 +230,7 @@ public class StructureSaver {
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerWorld
             world, @Nullable ServerPlayerEntity player) {
-        ServerPlayerEntity actor = Claims.actor(world, player);
+        Predicate<BlockPos> claimed = Claims.denied(world, transferedPositions, player);
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -254,7 +252,7 @@ public class StructureSaver {
                 BlockState b = world.getBlockState(pos);
                 try {
                     // uses same mechanic for TileEntity than net.minecraft.world.gen.feature.template.Template
-                    if (playerCanRemove(world, pos, player, actor)) {
+                    if (!claimed.test(pos) && (player == null || SecurityCraftOwnerCheck.canTakeBlock(world, pos, player))) {
                         TileEntity tileentity = b.hasTileEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
                         if (tileentity != null) {
@@ -308,7 +306,7 @@ public class StructureSaver {
         }
 
         // check if the player can place a block
-        if (!playerCanPlace(playerWorld, dest, template, Claims.actor(playerWorld, player), placementsettings)) {
+        if (!playerCanPlace(playerWorld, dest, template, player, placementsettings)) {
             if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.notAllowed"), Util.NIL_UUID);
             return false;
         }
@@ -405,34 +403,17 @@ public class StructureSaver {
     }
 
     /**
-     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
+     * Whether claim mods let the player place every block of the template.
      */
     private static boolean playerCanPlace(ServerWorld worldserver, BlockPos dest, CapsuleTemplate
-            template, PlayerEntity actor, PlacementSettings placementsettings) {
+            template, @Nullable ServerPlayerEntity player, PlacementSettings placementsettings) {
         List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
+        Predicate<BlockPos> claimed = Claims.denied(worldserver, expectedOut, player);
         for (BlockPos blockPos : expectedOut) {
-            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() < 0 || !canPlaceBlock(worldserver, blockPos, actor))
+            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() < 0 || claimed.test(blockPos))
                 return false;
         }
         return true;
-    }
-
-    /**
-     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
-     */
-    private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player, PlayerEntity actor) {
-        return canPlaceBlock(worldserver, blockPos, actor)
-                && (player == null || SecurityCraftOwnerCheck.canTakeBlock(worldserver, blockPos, player));
-    }
-
-    /**
-     * Whether protection mods let the player place a block at blockPos, asked with a dirt placement event.
-     */
-    public static boolean canPlaceBlock(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
-        BlockSnapshot blocksnapshot = BlockSnapshot.create(worldserver.dimension(), worldserver, blockPos);
-        BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.defaultBlockState(), player);
-        MinecraftForge.EVENT_BUS.post(event);
-        return !event.isCanceled();
     }
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, ServerWorld

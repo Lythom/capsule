@@ -1,7 +1,7 @@
 package capsule.dev;
 
 import capsule.CapsuleMod;
-import capsule.StructureSaver;
+import capsule.plugins.claims.Claims;
 import com.mojang.authlib.GameProfile;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -25,13 +25,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
+import java.util.AbstractCollection;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
- * Cost of the claim probe (the dirt placement event of {@link StructureSaver#canPlaceBlock}) asked for every block or
- * once per chunk column of a capture of 3, 11, 31 and 255, by a stranger, outside claims and, when Flan is loaded
- * (-PmodCompat), inside a Flan admin claim covering the box. Runs once the dev server started with
+ * Cost of the claim probe (the dirt placement event of {@link Claims#canPlaceBlock}) asked for every block or once per
+ * chunk column of a capture of 3, 11, 31 and 255, by a stranger, and of the check captures and deploys do
+ * ({@link Claims#denied}: the probe per block up to 31 and per chunk column above), outside claims and, when Flan is
+ * loaded (-PmodCompat), inside a Flan admin claim covering the box. Runs once the dev server started with
  * -Dcapsule.claimBenchmark=true (runServer -PclaimBenchmark), logs the median times as "claim probe benchmark", then
  * stops the server. Left out of the mod jar.
  */
@@ -53,6 +58,7 @@ public class ClaimProbeBenchmark {
             // loads the chunks and the probe code before measuring
             perColumn(level, min, largest, stranger);
             perBlock(level, min, 31, stranger);
+            check(level, min, 31, stranger);
             measure(level, "no claim", min, stranger);
 
             if (ModList.get().isLoaded("flan")) {
@@ -70,13 +76,15 @@ public class ClaimProbeBenchmark {
         }
     }
 
-    private static void measure(ServerWorld level, String scenario, BlockPos min, PlayerEntity player) {
+    private static void measure(ServerWorld level, String scenario, BlockPos min, ServerPlayerEntity player) {
         for (int size : SIZES) {
             int runs = size < 255 ? 7 : 3;
             long[] blockTimes = new long[runs];
             long[] columnTimes = new long[runs];
+            long[] checkTimes = new long[runs];
             int deniedBlocks = 0;
             int deniedColumns = 0;
+            int deniedChecked = 0;
             for (int run = 0; run < runs; run++) {
                 long start = System.nanoTime();
                 deniedBlocks = perBlock(level, min, size, player);
@@ -84,19 +92,23 @@ public class ClaimProbeBenchmark {
                 start = System.nanoTime();
                 deniedColumns = perColumn(level, min, size, player);
                 columnTimes[run] = System.nanoTime() - start;
+                start = System.nanoTime();
+                deniedChecked = check(level, min, size, player);
+                checkTimes[run] = System.nanoTime() - start;
             }
             int maxX = min.getX() + size - 1;
             int maxZ = min.getZ() + size - 1;
             int columns = ((maxX >> 4) - (min.getX() >> 4) + 1) * ((maxZ >> 4) - (min.getZ() >> 4) + 1);
-            LOGGER.info("claim probe benchmark | Forge 1.16.5 | {} | size {} | per block: {} probes, {} denied, {} ms | per chunk column: {} probes, {} denied, {} ms | median of {}",
-                    scenario, size, (long) size * size * size, deniedBlocks, median(blockTimes), columns, deniedColumns, median(columnTimes), runs);
+            LOGGER.info("claim probe benchmark | Forge 1.16.5 | {} | size {} | per block: {} probes, {} denied, {} ms | per chunk column: {} probes, {} denied, {} ms | Claims.denied: {} denied, {} ms | median of {}",
+                    scenario, size, (long) size * size * size, deniedBlocks, median(blockTimes), columns, deniedColumns, median(columnTimes),
+                    deniedChecked, median(checkTimes), runs);
         }
     }
 
     private static int perBlock(ServerWorld level, BlockPos min, int size, PlayerEntity player) {
         int denied = 0;
         for (BlockPos pos : BlockPos.betweenClosed(min, min.offset(size - 1, size - 1, size - 1))) {
-            if (!StructureSaver.canPlaceBlock(level, pos, player)) denied++;
+            if (!Claims.canPlaceBlock(level, pos, player)) denied++;
         }
         return denied;
     }
@@ -110,10 +122,40 @@ public class ClaimProbeBenchmark {
             for (int chunkZ = min.getZ() >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
                 int x = Math.min(Math.max((chunkX << 4) + 8, min.getX()), maxX);
                 int z = Math.min(Math.max((chunkZ << 4) + 8, min.getZ()), maxZ);
-                if (!StructureSaver.canPlaceBlock(level, new BlockPos(x, y, z), player)) denied++;
+                if (!Claims.canPlaceBlock(level, new BlockPos(x, y, z), player)) denied++;
             }
         }
         return denied;
+    }
+
+    /**
+     * The check of a capture of every block of the box, as StructureSaver does it.
+     */
+    private static int check(ServerWorld level, BlockPos min, int size, ServerPlayerEntity player) {
+        Collection<BlockPos> positions = box(min, size);
+        Predicate<BlockPos> claimed = Claims.denied(level, positions, player);
+        int denied = 0;
+        for (BlockPos pos : positions) {
+            if (claimed.test(pos)) denied++;
+        }
+        return denied;
+    }
+
+    /**
+     * The positions of the box, without keeping them.
+     */
+    private static Collection<BlockPos> box(BlockPos min, int size) {
+        return new AbstractCollection<BlockPos>() {
+            @Override
+            public Iterator<BlockPos> iterator() {
+                return BlockPos.betweenClosed(min, min.offset(size - 1, size - 1, size - 1)).iterator();
+            }
+
+            @Override
+            public int size() {
+                return size * size * size;
+            }
+        };
     }
 
     /**
