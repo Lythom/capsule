@@ -104,23 +104,40 @@ and publish scripts, documentation.
 |---|---|---|---|
 | L2 captures and deploys of nobody refused inside claims (d303680) | 75d1eb9 | bdd5efe | 8361759 (placement event fired per block for an anonymous fake player) |
 | L3 claim probe measured (2d5b468) | not applicable: the 1.21.1 numbers apply | not applicable: same | 6d54239 (per block 31³ 4 to 17 ms, 255³ about 2 s; Flan 1.16.5 does not listen to `EntityPlaceEvent`, so the probe does not see its claims) |
-| L3 generic probe per block up to size 31, per chunk column above (efa286a) | in progress | in progress | in progress, with a Flan 1.16.5 adapter |
+| L3 generic probe per block up to size 31, per chunk column above (efa286a) | b9acfec | a2ae24b | a13e209 |
+| Flan 1.16.5 adapter (1.16.5 only) | not applicable: Flan adapter of 82a85aa | not applicable: same | eba5fed |
+| CircleCI on version branches only (1.21.1: fbf85d5) | 57c98fd | 0f0eb49 | f20202d |
 | L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
 
 ## Claims on 1.16.5
 
-Owner's decision (round 2b, L4): `dev-1.16` keeps the per-block check. Open Parties and Claims has
+First decision (round 2b): `dev-1.16` kept the per-block check. Open Parties and Claims has
 no 1.16.5 release, and Flan 1.16.5 (1.7.2, Flemmli97's GitLab maven, not on Modrinth) has no per-chunk claim query:
 `ClaimStorage` only offers `getClaimAt(BlockPos)`, `getDimensions()` returns `int[]` and permissions are
 `ClaimPermission` objects (javap). Without an adapter, a probe once per chunk column would miss Flan claims not
-containing the probe positions, a protection regression. So 1.16.5 keeps the per-block placement event and gets the
+containing the probe positions, a protection regression. So 1.16.5 first kept the per-block placement event and got the
 protection bypass fixes only: capture bases act for their placer (fake player), a deployed base for its deployer,
 offline throwers are checked as fake players (b429eb0).
 
 The 1.16.5 measurement (6d54239) showed that Flan 1.16.5-1.7.2 on Forge listens to `BreakEvent`, `LeftClickBlock` and
 `RightClickBlock`, not to `EntityPlaceEvent`: no probe was denied inside a Flan claim, so Flan claims are not protected
-from captures and deploys by the placement event, per block or not. A Flan 1.16.5 adapter and the size 31 rule of
-1.21.1 are in progress on the backport branches.
+from captures and deploys by the placement event, per block or not.
+
+The owner then chose the 1.21.1 rule for every version (per block up to size 31, per chunk column above; a13e209), and
+1.16.5 got a Flan adapter (eba5fed): reflection only, loaded when Flan is present, one query per tested position
+(`ClaimStorage.get(ServerWorld).getClaimAt(BlockPos)`, `Claim.canInteract(ServerPlayerEntity, ClaimPermission,
+BlockPos, boolean)` with `PermissionRegistry.BREAK`, checked with javap on `flan-1.16.5-1.7.2-forge.jar`). Strangers and
+nobody are refused inside Flan claims. Cost of `Claims.denied` for a stranger and a whole box, ms (median of 3 server
+launches of 7 runs each, 3 for 255):
+
+| Case | 3 | 11 | 31 | 255 |
+|---|---|---|---|---|
+| no claim mod | 0.02 | 0.66 | 11.5 | 418 |
+| Flan loaded, no claim | 0.02 | 0.56 | 9.5 | 513 |
+| inside a Flan admin claim | 0.16 | 1.69 | 17.0 | 5 033 |
+
+The adapter is exercised on the dev server only (no GameTests on this branch); the production boot test does not
+capture.
 
 ## Notes
 
