@@ -105,16 +105,13 @@ public class Capsule {
         } else {
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, capsule.getTag().getString("structureName"), startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
+            // a failed undeploy gives its own feedback
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
                 CapsuleItem.setPlacement(capsule, new PlacementSettings());
                 if (playerIn != null) notifyUndeploy(playerIn, startPos, size, CapsuleItem.getStructureName(capsule));
-            } else {
-                LOGGER.error("Error occured during undeploy of capsule.");
-                if (playerIn != null)
-                    playerIn.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
             }
         }
     }
