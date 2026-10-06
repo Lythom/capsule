@@ -132,6 +132,43 @@ public class RecallTests {
         throwComesBack(helper, CapsuleEnchantments.RECALL);
     }
 
+    private static void lavaPool(GameTestHelper helper) {
+        CapsuleTestUtils.fill(helper, new BlockPos(0, 0, 0), new BlockPos(8, 0, 8), Blocks.STONE.defaultBlockState());
+        CapsuleTestUtils.fill(helper, new BlockPos(2, 1, 2), new BlockPos(6, 1, 6), Blocks.STONE.defaultBlockState());
+        CapsuleTestUtils.fill(helper, new BlockPos(3, 1, 3), new BlockPos(5, 1, 5), Blocks.LAVA.defaultBlockState());
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void capsuleThrownIntoLavaDeploysAndComesBack(GameTestHelper helper) {
+        helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
+        ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
+        capsule.enchant(enchantment(helper, Enchantments.LOYALTY), 1);
+        CapsuleItem.setState(capsule, CapsuleState.ACTIVATED);
+        lavaPool(helper);
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
+
+        drop(helper, capsule, new Vec3(4.5, 4, 4.5), player);
+
+        helper.succeedWhen(() -> {
+            assertTrue(helper, BlockPos.betweenClosedStream(new BlockPos(3, 1, 3), new BlockPos(5, 3, 5)).anyMatch(p -> helper.getBlockState(p).is(Blocks.GOLD_BLOCK)), "capsule should deploy its gold block in the lava");
+            assertTrue(helper, player.getInventory().contains(s -> CapsuleItem.hasState(s, CapsuleState.DEPLOYED)), "the deployed capsule should be back in the inventory");
+            CapsuleTestUtils.removePlayer(player);
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void capsuleSurvivesLava(GameTestHelper helper) {
+        lavaPool(helper);
+
+        ItemEntity entity = drop(helper, CapsuleTestUtils.emptyCapsule(3), new Vec3(4.5, 2, 4.5), null);
+
+        helper.runAfterDelay(60, () -> {
+            assertTrue(helper, entity.isAlive(), "the capsule should not burn in lava");
+            entity.discard();
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void droppedLoyaltyTridentIsNotRecalled(GameTestHelper helper) {
         CapsuleTestUtils.fill(helper, new BlockPos(0, 0, 0), new BlockPos(8, 0, 8), Blocks.STONE.defaultBlockState());

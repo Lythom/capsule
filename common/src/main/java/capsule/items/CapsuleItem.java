@@ -141,7 +141,8 @@ public class CapsuleItem extends Item {
     public CapsuleItem() {
         super((new Item.Properties())
                 .stacksTo(1)
-                .durability(0));
+                .durability(0)
+                .fireResistant());
         DispenserBlock.registerBehavior(this, new DispenseCapsuleBehavior());
     }
 
