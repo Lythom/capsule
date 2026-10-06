@@ -15,7 +15,7 @@ import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
-import capsule.platform.Services;
+import capsule.plugins.RecipeViewerContent;
 import capsule.structure.CapsuleTemplate;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.CameraType;
@@ -51,6 +51,8 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
@@ -77,6 +79,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -219,28 +222,40 @@ public class ClientSmokeTest {
                 })
                 .sleep(20)
                 .run("screenshot", () -> screenshot("08-creative-search"))
-                .run("close", () -> mc().setScreen(null))
-                .run("JEI", () -> {
-                    if (!Services.PLATFORM.isModLoaded("jei")) {
-                        scenario.results.add("SKIP JEI: not installed");
-                        return;
-                    }
+                .run("close", () -> mc().setScreen(null));
+        List<RecipeViewerProbe> viewers = RecipeViewerProbe.installed();
+        if (viewers.isEmpty()) scenario.run("recipe viewers", () -> scenario.results.add("SKIP recipe viewers: none installed"));
+        viewers.forEach(this::recipeViewerScenario);
+    }
+
+    private void recipeViewerScenario(RecipeViewerProbe viewer) {
+        String name = viewer.name();
+        scenario.await(name + " loaded", 1200, viewer::ready)
+                .run(name, () -> {
                     ItemStack capsule = CapsuleItems.capsuleList.firstKey();
-                    long recipes = JeiSmokePlugin.available() ? JeiSmokePlugin.craftingRecipes(capsule) : 0;
-                    long pages = JeiSmokePlugin.available() ? JeiSmokePlugin.capsuleInformationPages() : 0;
-                    scenario.check("JEI shows the capsule recipes", recipes > 0 && pages > 0,
+                    long recipes = viewer.craftingRecipes(capsule);
+                    long pages = viewer.capsuleInformationPages();
+                    scenario.check(name + " shows the capsule recipes", recipes > 0 && pages > 0,
                             recipes + " crafting recipes for " + capsule.getHoverName().getString() + ", " + pages + " capsule information pages");
                     List<String> tiersWithoutRecipe = CapsuleItems.capsuleList.keySet().stream()
-                            .filter(tier -> !JeiSmokePlugin.available() || JeiSmokePlugin.craftingRecipes(tier) == 0)
+                            .filter(tier -> viewer.craftingRecipes(tier) == 0)
                             .map(tier -> CapsuleItem.getSize(tier) + "/" + Integer.toHexString(CapsuleItem.getMaterialColor(tier)))
                             .toList();
-                    scenario.check("JEI shows a recipe for every capsule tier", tiersWithoutRecipe.isEmpty(),
+                    scenario.check(name + " shows a recipe for every capsule tier", tiersWithoutRecipe.isEmpty(),
                             CapsuleItems.capsuleList.size() + " tiers, without recipe: " + tiersWithoutRecipe);
-                    if (JeiSmokePlugin.available()) JeiSmokePlugin.showRecipes(capsule);
+                    List<RecipeHolder<CraftingRecipe>> special = RecipeViewerContent.craftingRecipes();
+                    List<String> specialWithoutRecipe = special.stream()
+                            .filter(recipe -> viewer.craftingRecipes(recipe.value().getResultItem(mc().level.registryAccess())) == 0)
+                            .map(recipe -> recipe.id().getPath())
+                            .toList();
+                    long prefabs = special.stream().filter(recipe -> recipe.id().getPath().startsWith("/prefab/")).count();
+                    scenario.check(name + " shows the upgrade, clear, recovery, blueprint and prefab recipes", specialWithoutRecipe.isEmpty(),
+                            special.size() + " recipes including " + prefabs + " prefabs, without recipe: " + specialWithoutRecipe);
+                    viewer.showRecipes(capsule);
                 })
                 .sleep(20)
                 .run("screenshot", () -> {
-                    if (mc().screen != null) screenshot("09-jei-capsule-recipes");
+                    if (mc().screen != null) screenshot("09-" + name.toLowerCase(Locale.ROOT) + "-capsule-recipes");
                 })
                 .run("close", () -> mc().setScreen(null));
     }

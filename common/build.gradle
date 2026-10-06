@@ -17,7 +17,10 @@ neoForge {
 
 dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    gametestCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    // REI publishes its common API in intermediary names, its NeoForge API has the Mojang names
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
+    compileOnly("dev.emi:emi-xplat-mojmap:${emi_version}:api") { transitive = false }
     // claim mods (#91), same API on both loaders
     gametestCompileOnly "maven.modrinth:open-parties-and-claims:${opac_neoforge_version}"
     gametestCompileOnly "maven.modrinth:flan:${flan_neoforge_version}"
@@ -26,6 +29,8 @@ dependencies {
 }
 
 configurations {
+    // the client smoke test asks the recipe viewers what they show
+    gametestCompileOnly.extendsFrom compileOnly
     commonJava { canBeResolved = false; canBeConsumed = true }
     commonResources { canBeResolved = false; canBeConsumed = true }
     commonTestJava { canBeResolved = false; canBeConsumed = true }

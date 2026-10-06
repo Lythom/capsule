@@ -24,6 +24,12 @@
     ],
     "jei_mod_plugin": [
       "capsule.plugins.jei.CapsulePlugin"
+    ],
+    "rei_client": [
+      "capsule.plugins.rei.CapsuleReiPlugin"
+    ],
+    "emi": [
+      "capsule.plugins.emi.CapsuleEmiPlugin"
     ]
   },
   "mixins": [

@@ -37,6 +37,30 @@ repositories {
             includeGroup 'net.mezzdev.config'
         }
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Shedaniel (REI)'
+                url = 'https://maven.shedaniel.me/'
+            }
+        }
+        filter {
+            includeGroup 'me.shedaniel'
+            includeGroup 'me.shedaniel.cloth'
+            includeGroup 'dev.architectury'
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'TerraformersMC (EMI)'
+                url = 'https://maven.terraformersmc.com/releases/'
+            }
+        }
+        filter {
+            includeGroup 'dev.emi'
+        }
+    }
     mavenCentral {
         content {
             // served by maven.fabricmc.net, and by Loom for the remapped mods

@@ -38,8 +38,17 @@ dependencies {
     runtimeOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
-    // JEI for Fabric is built with a Loom version that needs Java 25: compiled against its common API only
+    // recipe viewers: the plugins compile against their APIs, the dev runs load the one picked with -PrecipeViewer
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") { transitive = false }
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") { transitive = false }
+    modCompileOnly("dev.emi:emi-fabric:${emi_version}:api") { transitive = false }
+    // the dev runs do not load nested jars: JEI's config library is added
+    modLocalRuntime([
+            jei : ["mezz.jei:jei-${minecraft_version}-fabric:${jei_version}", "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:0.5.12"],
+            rei : ["me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"],
+            emi : ["dev.emi:emi-fabric:${emi_version}"],
+    ][findProperty('recipeViewer') ?: 'jei'])
 
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
 

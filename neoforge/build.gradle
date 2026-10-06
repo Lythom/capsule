@@ -64,15 +64,22 @@ neoForge {
 neoForge.addModdingDependenciesTo(sourceSets.gametest)
 
 configurations {
+    gametestCompileOnly.extendsFrom compileOnly
     runtimeClasspath.extendsFrom localRuntime
     gametestRuntimeClasspath.extendsFrom localRuntime
 }
 
 dependencies {
+    // recipe viewers: the plugins compile against their APIs, the dev runs load the one picked with -PrecipeViewer
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
-    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-    gametestCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
+    compileOnly("dev.emi:emi-neoforge:${emi_version}:api") { transitive = false }
+    localRuntime([
+            jei : "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}",
+            rei : "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}",
+            emi : "dev.emi:emi-neoforge:${emi_version}",
+    ][findProperty('recipeViewer') ?: 'jei'])
 
     // mods Capsule integrates with, exercised by the GameTests
     gametestImplementation "maven.modrinth:security-craft:${securitycraft_version}"

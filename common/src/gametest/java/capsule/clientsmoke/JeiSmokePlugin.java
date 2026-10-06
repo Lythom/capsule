@@ -7,19 +7,17 @@ import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.recipe.IFocus;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
 /**
- * Dev only JEI plugin giving the client smoke test access to the JEI runtime. JEI loads it on NeoForge only.
+ * Dev only JEI plugin giving the client smoke test access to the JEI runtime.
  */
 @JeiPlugin
-public class JeiSmokePlugin implements IModPlugin {
+public class JeiSmokePlugin implements IModPlugin, RecipeViewerProbe {
     private static IJeiRuntime runtime;
 
     @Override
@@ -32,31 +30,32 @@ public class JeiSmokePlugin implements IModPlugin {
         runtime = jeiRuntime;
     }
 
-    static boolean available() {
+    @Override
+    public String name() {
+        return "JEI";
+    }
+
+    @Override
+    public boolean ready() {
         return runtime != null;
     }
 
-    static long craftingRecipes(ItemStack output) {
-        return count(RecipeTypes.CRAFTING, output);
+    @Override
+    public long craftingRecipes(ItemStack output) {
+        return runtime.getRecipeManager().createRecipeLookup(RecipeTypes.CRAFTING).limitFocus(List.of(focus(output))).get().count();
     }
 
-    /**
-     * Information pages of capsule items, which only the capsule plugin registers.
-     */
-    static long capsuleInformationPages() {
+    @Override
+    public long capsuleInformationPages() {
         return runtime.getRecipeManager().createRecipeLookup(RecipeTypes.INFORMATION).get()
-                .filter(page -> page.getIngredients().stream().anyMatch(i -> i.getItemStack()
-                        .map(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(CapsuleMod.MODID))
-                        .orElse(false)))
+                .filter(page -> page.getIngredients().stream()
+                        .anyMatch(i -> i.getItemStack().map(RecipeViewerProbe::isCapsule).orElse(false)))
                 .count();
     }
 
-    static void showRecipes(ItemStack output) {
+    @Override
+    public void showRecipes(ItemStack output) {
         runtime.getRecipesGui().show(focus(output));
-    }
-
-    private static long count(RecipeType<?> type, ItemStack output) {
-        return runtime.getRecipeManager().createRecipeLookup(type).limitFocus(List.of(focus(output))).get().count();
     }
 
     private static IFocus<ItemStack> focus(ItemStack stack) {

@@ -14,6 +14,9 @@
     ],
     "client": [
       "capsule.clientsmoke.FabricClientSmoke"
+    ],
+    "jei_mod_plugin": [
+      "capsule.clientsmoke.JeiSmokePlugin"
     ]
   },
   "depends": {
