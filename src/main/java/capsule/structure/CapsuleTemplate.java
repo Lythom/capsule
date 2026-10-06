@@ -141,7 +141,7 @@ public class CapsuleTemplate {
         for (StructureTemplate.StructureEntityInfo template$entityinfo : processEntityInfos(this, worldIn, offsetPos, placementIn, this.entities)) {
             BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
             if (boundsIn == null || boundsIn.isInside(blockpos)) {
-                CompoundTag compoundnbt = template$entityinfo.nbt;
+                CompoundTag compoundnbt = template$entityinfo.nbt.copy();
                 Vec3 vector3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListTag listnbt = new ListTag();
                 listnbt.add(DoubleTag.valueOf(vector3d1.x));
@@ -254,7 +254,7 @@ public class CapsuleTemplate {
                 int k = template$basicpalette.idFor(template$blockinfo.state());
                 compoundnbt.putInt("state", k);
                 if (template$blockinfo.nbt() != null) {
-                    compoundnbt.put("nbt", template$blockinfo.nbt());
+                    compoundnbt.put("nbt", template$blockinfo.nbt().copy());
                 }
 
                 listnbt1.add(compoundnbt);
@@ -298,7 +298,7 @@ public class CapsuleTemplate {
             compoundnbt1.put("pos", this.newDoubleList(template$entityinfo.pos.x, template$entityinfo.pos.y, template$entityinfo.pos.z));
             compoundnbt1.put("blockPos", this.newIntegerList(template$entityinfo.blockPos.getX(), template$entityinfo.blockPos.getY(), template$entityinfo.blockPos.getZ()));
             if (template$entityinfo.nbt != null) {
-                compoundnbt1.put("nbt", template$entityinfo.nbt);
+                compoundnbt1.put("nbt", template$entityinfo.nbt.copy());
             }
 
             listnbt.add(compoundnbt1);
@@ -643,7 +643,7 @@ public class CapsuleTemplate {
                             list2.add(Pair.of(blockpos, template$blockinfo.nbt()));
                             BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
                             if (blockentity1 != null) {
-                                CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt();
+                                CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt().copy();
                                 templateTag.putInt("x", blockpos.getX());
                                 templateTag.putInt("y", blockpos.getY());
                                 templateTag.putInt("z", blockpos.getZ());
