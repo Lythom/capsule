@@ -1,6 +1,5 @@
 package capsule.gametest;
 
-import capsule.CapsuleMod;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.TestFunction;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -12,8 +11,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
-@EventBusSubscriber(modid = CapsuleMod.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = NeoForgeGameTests.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class NeoForgeGameTests {
+    /**
+     * The GameTests and the client smoke test are a mod of their own, never in the release jar.
+     */
+    public static final String MODID = "capsule_gametest";
 
     @SubscribeEvent
     public static void register(RegisterGameTestsEvent event) {

@@ -70,7 +70,8 @@ public class CapsuleGameTests {
     }
 
     public static List<TestFunction> testFunctions(Stream<Class<?>> testClasses) {
-        return testClasses
+        Stream<Class<?>> proof = Boolean.getBoolean(FailureProofTests.PROPERTY) ? Stream.of(FailureProofTests.class) : Stream.empty();
+        return Stream.concat(testClasses, proof)
                 .flatMap(type -> Arrays.stream(type.getDeclaredMethods()))
                 .filter(method -> method.isAnnotationPresent(GameTest.class) && Modifier.isStatic(method.getModifiers()))
                 .sorted(Comparator.comparing(Method::getName))

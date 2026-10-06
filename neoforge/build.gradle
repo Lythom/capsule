@@ -51,6 +51,9 @@ neoForge {
     mods {
         capsule {
             sourceSet sourceSets.main
+        }
+        // GameTests and client smoke test, see src/gametest/resources/META-INF/neoforge.mods.toml
+        capsule_gametest {
             sourceSet sourceSets.gametest
         }
     }
@@ -106,6 +109,17 @@ tasks.named('runGameTestServer') {
         delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig",
                 "runs/gameTestServer/schematics", "runs/gameTestServer/worldedit-schematics"
     }
+}
+
+// The GameTests as a mod jar, for real servers and clients next to the release jar (scripts/prod-gametest.sh)
+tasks.register('testModJar', Jar) {
+    from sourceSets.gametest.output
+    archiveClassifier = 'gametest'
+    destinationDirectory = layout.buildDirectory.dir('test-mod')
+}
+
+tasks.named('assemble') {
+    dependsOn 'testModJar'
 }
 
 tasks.named('check') {

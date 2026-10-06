@@ -21,61 +21,20 @@ set -euo pipefail
 #
 # Checks: the server reaches "Done", the capsule command is registered, the capsule config
 # files are created, and the log has no error mentioning capsule or a mixin.
-# Versions come from gradle.properties. Needs java 21, curl and python3.
+# Versions come from gradle.properties, downloads are cached (scripts/lib.sh).
+# Needs java 21, curl and python3.
 # Set KEEP_SERVER=1 to keep the server directories (printed at the end).
 # EXTRA_MODS (space separated jar files) adds other mods to the server, to check that they
 # boot together.
 # =============================================================================
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$(dirname "$0")/lib.sh"
 TIMEOUT="${TIMEOUT:-600}"
-
-prop() {
-    grep "^$1=" "$ROOT/gradle.properties" | cut -d= -f2-
-}
-
-MC_VERSION="$(prop minecraft_version)"
-NEO_VERSION="$(prop neo_version)"
-FABRIC_LOADER_VERSION="$(prop fabric_loader_version)"
-FABRIC_API_VERSION="$(prop fabric_api_version)"
-FCAP_VERSION="$(prop forge_config_api_port_version)"
-
-download() {
-    echo "  download $1"
-    curl -fsSL --retry 3 -o "$2" "$1"
-}
-
-setup_neoforge() {
-    local dir="$1"
-    download "https://maven.neoforged.net/releases/net/neoforged/neoforge/$NEO_VERSION/neoforge-$NEO_VERSION-installer.jar" "$dir/installer.jar"
-    (cd "$dir" && java -jar installer.jar --installServer . > installer.log 2>&1)
-    rm "$dir/installer.jar"
-    echo "-Xmx2G" >> "$dir/user_jvm_args.txt"
-    START=(./run.sh nogui)
-}
-
-setup_fabric() {
-    local dir="$1"
-    local installer
-    installer="$(curl -fsSL https://meta.fabricmc.net/v2/versions/installer | python3 -c 'import json,sys; print(next(v["version"] for v in json.load(sys.stdin) if v["stable"]))')"
-    download "https://meta.fabricmc.net/v2/versions/loader/$MC_VERSION/$FABRIC_LOADER_VERSION/$installer/server/jar" "$dir/fabric-server-launch.jar"
-    download "https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/$FABRIC_API_VERSION/fabric-api-$FABRIC_API_VERSION.jar" "$dir/mods/fabric-api-$FABRIC_API_VERSION.jar"
-    download "https://api.modrinth.com/maven/maven/modrinth/forge-config-api-port/$FCAP_VERSION/forge-config-api-port-$FCAP_VERSION.jar" "$dir/mods/forge-config-api-port-$FCAP_VERSION.jar"
-    START=(java -Xmx2G -jar fabric-server-launch.jar nogui)
-}
-
-free_port() {
-    python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
-}
 
 smoke() {
     local jar loader dir log
     jar="$(realpath "$1")"
-    case "$(basename "$jar")" in
-        *neoforge*) loader=neoforge ;;
-        *fabric*) loader=fabric ;;
-        *) echo "ERROR: cannot tell the loader of $jar"; return 1 ;;
-    esac
+    loader="$(loader_of "$jar")" || return 1
     dir="$(mktemp -d "${TMPDIR:-/tmp}/smoke-$loader.XXXXXX")"
     log="$dir/console.log"
     echo "== $loader: $(basename "$jar") in $dir"

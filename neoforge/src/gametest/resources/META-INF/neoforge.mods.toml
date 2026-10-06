@@ -1,0 +1,16 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT License"
+
+[[mods]]
+modId="capsule_gametest"
+version="1.0.0"
+displayName="Capsule GameTests"
+description="Dev only: registers the capsule GameTests and the client smoke test."
+
+[[dependencies.capsule_gametest]]
+modId="capsule"
+type="required"
+versionRange="*"
+ordering="AFTER"
+side="BOTH"

@@ -123,6 +123,23 @@ tasks.named('runGameTestServer') {
     }
 }
 
+// The GameTests as a mod jar, for real servers and clients next to the release jar (scripts/prod-gametest.sh)
+def gametestJar = tasks.register('gametestJar', Jar) {
+    from sourceSets.gametest.output
+    archiveClassifier = 'gametest-dev'
+    destinationDirectory = layout.buildDirectory.dir('devlibs')
+}
+
+tasks.register('testModJar', net.fabricmc.loom.task.RemapJarTask) {
+    inputFile = gametestJar.flatMap { it.archiveFile }
+    archiveClassifier = 'gametest'
+    destinationDirectory = layout.buildDirectory.dir('test-mod')
+}
+
+tasks.named('assemble') {
+    dependsOn 'testModJar'
+}
+
 tasks.named('check') {
     dependsOn 'runGameTestServer'
 }

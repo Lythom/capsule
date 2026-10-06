@@ -1,12 +1,11 @@
 package capsule.gametest;
 
-import capsule.CapsuleMod;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 
-@EventBusSubscriber(modid = CapsuleMod.MODID)
+@EventBusSubscriber(modid = NeoForgeGameTests.MODID)
 public class NeoForgeGameTestSetup {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
