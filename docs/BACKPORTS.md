@@ -98,6 +98,15 @@ the `dyed_color` data component, which exists from 1.20.5. Round 1 infrastructur
 ModDevGradle, unit test and GameTest infrastructure, GameTests, common/neoforge split, Fabric, smoke tests, CircleCI
 and publish scripts, documentation.
 
+## Round 2b (owner decisions L2 to L4)
+
+| Change (dev-1.21.1 commit) | 1.20.1 (`dev-1.20`) | 1.18.2 (`dev-1.18`) | 1.16.5 (`dev-1.16`) |
+|---|---|---|---|
+| L2 captures and deploys of nobody refused inside claims (d303680) | 75d1eb9 | bdd5efe | 8361759 (placement event fired per block for an anonymous fake player) |
+| L3 claim probe measured (2d5b468) | not applicable: the 1.21.1 numbers apply | not applicable: same | 6d54239 (per block 31³ 4 to 17 ms, 255³ about 2 s; Flan 1.16.5 does not listen to `EntityPlaceEvent`, so the probe does not see its claims) |
+| L3 generic probe per block up to size 31, per chunk column above (efa286a) | in progress | in progress | in progress, with a Flan 1.16.5 adapter |
+| L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
+
 ## Claims on 1.16.5
 
 Owner's decision (round 2b, L4): `dev-1.16` keeps the per-block check. Open Parties and Claims has
@@ -107,6 +116,11 @@ no 1.16.5 release, and Flan 1.16.5 (1.7.2, Flemmli97's GitLab maven, not on Modr
 containing the probe positions, a protection regression. So 1.16.5 keeps the per-block placement event and gets the
 protection bypass fixes only: capture bases act for their placer (fake player), a deployed base for its deployer,
 offline throwers are checked as fake players (b429eb0).
+
+The 1.16.5 measurement (6d54239) showed that Flan 1.16.5-1.7.2 on Forge listens to `BreakEvent`, `LeftClickBlock` and
+`RightClickBlock`, not to `EntityPlaceEvent`: no probe was denied inside a Flan claim, so Flan claims are not protected
+from captures and deploys by the placement event, per block or not. A Flan 1.16.5 adapter and the size 31 rule of
+1.21.1 are in progress on the backport branches.
 
 ## Notes
 
