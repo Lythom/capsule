@@ -135,7 +135,7 @@ public class CapsuleItem extends Item {
      * string structureName                                       // name of the template file name without the .nbt extension.
      * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
      * string prevStructureName                                   // Used to remove older unused blueprint templates
-     * tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
+     * tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
      * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
      * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
      * int upgraded                                               // How many upgrades the capsule has
@@ -688,7 +688,7 @@ public class CapsuleItem extends Item {
 
     private void startTimer(Level worldIn, Player playerIn, ItemStack capsule) {
         CompoundTag timer = capsule.getOrCreateTagElement("activetimer");
-        timer.putInt("starttime", playerIn.tickCount);
+        timer.putLong("starttime", worldIn.getGameTime());
         worldIn.playSound(null, playerIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_ON, SoundSource.BLOCKS, 0.2F, 0.9F);
     }
 
@@ -705,7 +705,9 @@ public class CapsuleItem extends Item {
             // disable capsule after some time
             CompoundTag timer = stack.getTagElement("activetimer");
 
-            if (timer != null && isActivated(stack) && timer.contains("starttime") && entityIn.tickCount >= timer.getInt("starttime") + Config.previewDisplayDuration) {
+            long now = worldIn.getGameTime();
+            if (timer != null && isActivated(stack) && timer.contains("starttime")
+                    && (now >= timer.getLong("starttime") + Config.previewDisplayDuration || timer.getLong("starttime") > now)) {
                 revertStateFromActivated(stack);
                 worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundSource.BLOCKS, 0.2F, 0.4F);
             }
