@@ -59,7 +59,7 @@ public class CapsuleThrowQueryToServer {
                     else {
                         boolean deployed = Capsule.deployCapsule(heldItem, pos.offset(0, -1, 0), sendingPlayer.getUUID(), extendLength, world);
                         if (deployed) {
-                            CapsuleItem.setUndeployDelay(heldItem, sendingPlayer);
+                            CapsuleItem.setUndeployDelay(heldItem, world);
                             world.playSound(null, pos, SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
                             Capsule.showDeployParticules(world, pos, size);
                         }
