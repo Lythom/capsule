@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -136,7 +135,7 @@ public class CapsuleTemplateRenderer {
                 BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
                 if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
                     random.setSeed(Mth.getSeed(targetPos));
-                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, RenderType.LINES);
+                    blockRenderer.tesselateWithAO(templateWorld, ibakedmodel, state, targetPos, poseStack, bufferSolid, true, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
                 } else {
                     FluidState ifluidstate = state.getFluidState();
                     if (!ifluidstate.isEmpty()) {
