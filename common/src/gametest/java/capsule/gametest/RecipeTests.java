@@ -3,13 +3,11 @@ package capsule.gametest;
 import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
-import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
@@ -21,8 +19,6 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 
-import java.io.IOException;
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,7 +45,7 @@ public class RecipeTests {
     }
 
     /**
-     * Recipes guarded by load conditions (ingots provided by other mods) may be absent; loaded ones must be craftable.
+     * The GameTest resources fill the ingot tags of other mods (data/c/tags/item/ingots), so every recipe must load.
      */
     @GameTest(template = "empty")
     public static void everyCapsuleRecipeLoadsWithResolvedIngredients(GameTestHelper helper) {
@@ -57,12 +53,12 @@ public class RecipeTests {
         Set<String> problems = new LinkedHashSet<>();
         helper.getLevel().getServer().getResourceManager()
                 .listResources("recipe", rl -> rl.getNamespace().equals(CapsuleMod.MODID) && rl.getPath().endsWith(".json"))
-                .forEach((file, resource) -> {
+                .keySet().forEach(file -> {
                     String path = file.getPath();
                     ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, path.substring("recipe/".length(), path.length() - ".json".length()));
                     Optional<RecipeHolder<?>> recipe = recipes.byKey(id);
                     if (recipe.isEmpty()) {
-                        if (!hasLoadConditions(resource)) problems.add(id + " is not loaded");
+                        problems.add(id + " is not loaded");
                         return;
                     }
                     for (Ingredient ingredient : recipe.get().value().getIngredients()) {
@@ -74,14 +70,6 @@ public class RecipeTests {
 
         assertTrue(helper, problems.isEmpty(), "recipe problems: " + problems);
         helper.succeed();
-    }
-
-    private static boolean hasLoadConditions(Resource resource) {
-        try (Reader reader = resource.openAsReader()) {
-            return JsonParser.parseReader(reader).getAsJsonObject().keySet().stream().anyMatch(key -> key.endsWith("conditions"));
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     @GameTest(template = "empty")
@@ -163,6 +151,20 @@ public class RecipeTests {
                 e, iron, e);
 
         assertTrue(helper, CapsuleItem.hasState(result, CapsuleState.EMPTY) && CapsuleItem.getSize(result) == 3, "iron capsule should be an empty 3x3x3 capsule");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void netheriteCapsuleRecipeGivesAVanilla13Capsule(GameTestHelper helper) {
+        ItemStack e = ItemStack.EMPTY;
+        ItemStack netherite = new ItemStack(Items.NETHERITE_INGOT);
+
+        ItemStack result = craft(helper, "capsule:capsule_netherite", 3, 3,
+                e, new ItemStack(Items.STONE_BUTTON), e,
+                netherite, new ItemStack(Items.ENDER_PEARL), netherite,
+                e, new ItemStack(Items.IRON_INGOT), e);
+
+        assertTrue(helper, CapsuleItem.hasState(result, CapsuleState.EMPTY) && CapsuleItem.getSize(result) == 13, "netherite capsule should be an empty 13x13x13 capsule");
         helper.succeed();
     }
 }

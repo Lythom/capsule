@@ -207,6 +207,12 @@ public class ClientSmokeTest {
                     long pages = JeiSmokePlugin.available() ? JeiSmokePlugin.capsuleInformationPages() : 0;
                     scenario.check("JEI shows the capsule recipes", recipes > 0 && pages > 0,
                             recipes + " crafting recipes for " + capsule.getHoverName().getString() + ", " + pages + " capsule information pages");
+                    List<String> tiersWithoutRecipe = CapsuleItems.capsuleList.keySet().stream()
+                            .filter(tier -> !JeiSmokePlugin.available() || JeiSmokePlugin.craftingRecipes(tier) == 0)
+                            .map(tier -> CapsuleItem.getSize(tier) + "/" + Integer.toHexString(CapsuleItem.getMaterialColor(tier)))
+                            .toList();
+                    scenario.check("JEI shows a recipe for every capsule tier", tiersWithoutRecipe.isEmpty(),
+                            CapsuleItems.capsuleList.size() + " tiers, without recipe: " + tiersWithoutRecipe);
                     if (JeiSmokePlugin.available()) JeiSmokePlugin.showRecipes(capsule);
                 })
                 .sleep(20)
