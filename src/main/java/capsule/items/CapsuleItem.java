@@ -614,7 +614,7 @@ public class CapsuleItem extends Item {
             if (!isInstantAndUndeployed(capsule)
                     && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE))) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()) : null;
+                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? Spacial.getDeployPosition(worldIn, rtr) : null;
                 if (dest != null) {
                     CapsuleNetwork.wrapper.sendToServer(new CapsuleContentPreviewQueryToServer(capsule.getTag().getString("structureName")));
                 }
@@ -628,7 +628,7 @@ public class CapsuleItem extends Item {
                     if (CapsuleItem.hasState(capsule, CapsuleState.EMPTY)) {
                         dest = rtr.getBlockPos();
                     } else {
-                        dest = rtr.getBlockPos().offset(rtr.getDirection().getNormal());
+                        dest = Spacial.getDeployPosition(worldIn, rtr);
                     }
                 }
                 if (dest != null) {
@@ -636,7 +636,7 @@ public class CapsuleItem extends Item {
                 }
             } else if (isActivated(capsule)) {
                 BlockRayTraceResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
-                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? rtr.getBlockPos().offset(rtr.getDirection().getNormal()) : null;
+                BlockPos dest = rtr != null && rtr.getType() == RayTraceResult.Type.BLOCK ? Spacial.getDeployPosition(worldIn, rtr) : null;
                 CapsuleNetwork.wrapper.sendToServer(new CapsuleThrowQueryToServer(dest, false));
             }
         }
