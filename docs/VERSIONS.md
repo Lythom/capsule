@@ -54,10 +54,10 @@ What modders say:
 | Order | Target | Loaders | Status | Why |
 |---|---|---|---|---|
 | 1 | 1.21.1 | NeoForge + Fabric | this branch (`dev-1.21.1`) | most living packs today (326 active ≥ 10k on Modrinth, 10,000+ NeoForge on CurseForge) |
-| 2 | 1.20.1 | Forge + Fabric | to do (Stonecutter) | as many living packs as 1.21.1 on Modrinth and the largest Forge base on CurseForge |
-| 3 | 26.1.2 | NeoForge + Fabric | to do (Stonecutter) | the likely next stable modding version (NeoForge), where ATM11 and the content mods are going; may overtake 1.20.1 once packs migrate |
-| — | 1.21.2–1.21.11, 26.2+ | — | not planned | Fabric performance packs mostly; follow the next stable version instead of each release |
-| — | 1.21.1 Forge | — | not built | see "Deviation" below |
+| 2 | 1.20.1 | Forge + Fabric | to do (Stonecutter); bug fixes backported to Forge on `dev-1.20` (`docs/BACKPORTS.md`) | as many living packs as 1.21.1 on Modrinth and the largest Forge base on CurseForge |
+| 3 | 26.1.2 + 26.2 | NeoForge + Fabric | to do (Stonecutter, later round) | 26.1.2: the likely next stable modding version (NeoForge), where ATM11 and the content mods are going; may overtake 1.20.1 once packs migrate. 26.2: asked directly by a user (owner's decision, 2026-10-06), as many active packs as 26.1.2 on Modrinth (185 against 196), expected small effort once 26.1 builds |
+| — | 1.21.2–1.21.11, 26.3+ | — | not planned | Fabric performance packs mostly; follow the next stable version instead of each release |
+| — | 1.21.1 Forge | — | dropped | owner's decision (2026-10-06), see "Deviation" below |
 | — | 1.19.2 and older | — | not built | few packs still updated; existing Capsule releases cover them |
 
 ### Deviation: no Forge 1.21.1 build
@@ -65,7 +65,9 @@ What modders say:
 The request asked for NeoForge and Forge (and Fabric if possible). For 1.21.1, Forge is a small minority of packs: 709
 on CurseForge and 25 on Modrinth (10 updated in the last 6 months), against 10,000+ and 1,291 NeoForge, 3,002 and 1,124
 Fabric. So the second loader of this branch is Fabric: far more reach for the same work. Forge stays first-class for
-1.20.1. The cost of a Forge 1.21.1 module is in BACKLOG ("Forge 1.21.1 module").
+1.20.1. The owner dropped Forge 1.21.1 on 2026-10-06 (BACKLOG, "Decided, not doing"). Cost if it ever comes back: one
+more platform module built with ForgeGradle 6 as in the MultiLoader-Template `1.21.1` branch (ModDevGradle legacyforge
+stops at 1.20.1), Forge implementations of the platform interfaces, and its own GameTest and production-jar runs.
 
 ## How to build several versions
 
