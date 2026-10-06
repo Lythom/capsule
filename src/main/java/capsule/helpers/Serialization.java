@@ -1,5 +1,6 @@
 package capsule.helpers;
 
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringUtil;
@@ -10,62 +11,55 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class Serialization {
     protected static final Logger LOGGER = LogManager.getLogger(Serialization.class);
 
+    /**
+     * Blocks matching the configured ids. An id ending with ':' selects every block of that namespace.
+     * Ids that are neither blocks nor namespaces are tags, see deserializeBlockTags.
+     */
     public static List<Block> deserializeBlockList(List<? extends String> blockIds) {
-        ArrayList<Block> states = new ArrayList<>();
+        ArrayList<Block> blocks = new ArrayList<>();
         ArrayList<String> notfound = new ArrayList<>();
 
         for (String blockId : blockIds) {
-            ResourceLocation excludedLocation = new ResourceLocation(blockId);
-            // is it a whole registryName to exclude ?
-            if (StringUtil.isNullOrEmpty(excludedLocation.getPath())) {
-                List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
-                        .filter(block -> {
-                            ResourceLocation registryName = block.getRegistryName();
-                            if (registryName == null) return false;
-                            return registryName.toString().toLowerCase().contains(blockId.toLowerCase());
-                        }).collect(Collectors.toList());
-                if (blockIdsList.size() > 0) {
-                    states.addAll(blockIdsList);
-                } else {
-                    notfound.add(blockId);
-                }
-            } else {
-                // is it a block ?
-                Block b = ForgeRegistries.BLOCKS.getValue(excludedLocation);
-                if (b != null) {
-                    // exclude the block
-                    states.add(b);
-                } else {
-                    // is it a tag ?
-                    Optional<TagKey<Block>> tag = ForgeRegistries.BLOCKS.tags().getTagNames()
-                            .filter(t -> excludedLocation.equals(t.location()))
-                            .findFirst();
-                    if (tag.isPresent()) {
-                        // get all blocks concerned by tag
-                        List<Block> blockIdsList = ForgeRegistries.BLOCKS.getValues().stream()
-                                .filter((Block block) -> block.builtInRegistryHolder().is(tag.get())).collect(Collectors.toList());
-                        states.addAll(blockIdsList);
-                    } else {
-                        notfound.add(excludedLocation.toString());
-                    }
-                }
+            if (blockId.startsWith("#")) continue;
+            ResourceLocation location = ResourceLocation.tryParse(blockId);
+            if (location == null) {
+                notfound.add(blockId);
+            } else if (StringUtil.isNullOrEmpty(location.getPath())) {
+                List<Block> namespaceBlocks = ForgeRegistries.BLOCKS.getValues().stream()
+                        .filter(block -> block.getRegistryName() != null && block.getRegistryName().getNamespace().equals(location.getNamespace()))
+                        .toList();
+                if (namespaceBlocks.isEmpty()) notfound.add(blockId);
+                blocks.addAll(namespaceBlocks);
+            } else if (ForgeRegistries.BLOCKS.containsKey(location)) {
+                blocks.add(ForgeRegistries.BLOCKS.getValue(location));
             }
         }
-        if (notfound.size() > 0) {
+        if (!notfound.isEmpty()) {
             LOGGER.info(String.format(
                     "Blocks couldn't be resolved as Block or Tag from config name : %s. Those blocks won't be considered in the overridable or excluded blocks list when capturing with capsule.",
-                    String.join(", ", notfound.toArray(new CharSequence[0]))
+                    String.join(", ", notfound)
             ));
         }
 
-        Block[] output = new Block[states.size()];
-        return states;
+        return blocks;
+    }
+
+    /**
+     * Tags matching the configured ids, written with or without '#'. Their content is only known once tags are loaded.
+     */
+    public static List<TagKey<Block>> deserializeBlockTags(List<? extends String> blockIds) {
+        ArrayList<TagKey<Block>> tags = new ArrayList<>();
+        for (String blockId : blockIds) {
+            ResourceLocation location = ResourceLocation.tryParse(blockId.startsWith("#") ? blockId.substring(1) : blockId);
+            if (location != null && !StringUtil.isNullOrEmpty(location.getPath()) && (blockId.startsWith("#") || !ForgeRegistries.BLOCKS.containsKey(location))) {
+                tags.add(TagKey.create(Registry.BLOCK_REGISTRY, location));
+            }
+        }
+        return tags;
     }
 
     public static String[] serializeBlockArray(Block[] states) {

@@ -29,6 +29,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -60,11 +61,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -795,9 +798,10 @@ public class CapsuleItem extends Item {
     }
 
     public static List<Block> getExcludedBlocs(ItemStack stack) {
-        List<Block> excludedBlocks = Config.excludedBlocks;
-        if (isOverpowered(stack)) {
-            excludedBlocks = Config.opExcludedBlocks;
+        boolean overpowered = isOverpowered(stack);
+        List<Block> excludedBlocks = new ArrayList<>(overpowered ? Config.opExcludedBlocks : Config.excludedBlocks);
+        for (TagKey<Block> tag : overpowered ? Config.opExcludedBlockTags : Config.excludedBlockTags) {
+            ForgeRegistries.BLOCKS.tags().getTag(tag).forEach(excludedBlocks::add);
         }
         return excludedBlocks;
     }
