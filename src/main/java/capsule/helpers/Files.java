@@ -162,6 +162,13 @@ public class Files {
         }
     }
 
+    private static String withoutTemplateExtension(String fileName) {
+        for (String extension : new String[]{".nbt", ".schematic"}) {
+            if (fileName.endsWith(extension)) return fileName.substring(0, fileName.length() - extension.length());
+        }
+        return null;
+    }
+
     public static void iterateTemplates(File templateFolder, Consumer<String> onTemplateFound) {
         if (templateFolder.exists() && templateFolder.isDirectory()) {
             Iterator<Path> iterator = null;
@@ -169,10 +176,13 @@ public class Files {
                 iterator = java.nio.file.Files.walk(templateFolder.toPath()).iterator();
                 while (iterator.hasNext()) {
                     Path path = iterator.next();
-                    File file = path.toFile();
-                    if (file.isFile() && (file.getName().endsWith(".nbt") || file.getName().endsWith(".schematic"))) {
-                        Path relative = templateFolder.toPath().relativize(path);
-                        onTemplateFound.accept(relative.toString().replaceAll("\\\\", "/").replaceAll(".nbt", "").replaceAll(".schematic", ""));
+                    String relative = templateFolder.toPath().relativize(path).toString().replace('\\', '/');
+                    String name = withoutTemplateExtension(relative);
+                    if (name == null || !path.toFile().isFile()) continue;
+                    if (name.chars().allMatch(c -> ResourceLocation.validPathChar((char) c))) {
+                        onTemplateFound.accept(name);
+                    } else {
+                        LOGGER.warn("Ignoring template " + path + ": template file names can only contain a-z 0-9 / . _ -");
                     }
                 }
             } catch (IOException e) {
