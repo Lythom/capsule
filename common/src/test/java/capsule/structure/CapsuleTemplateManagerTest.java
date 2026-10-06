@@ -46,14 +46,14 @@ class CapsuleTemplateManagerTest {
     }
 
     @Test
-    void pathsEscapingTheTemplateFolderAreRefusedWithoutException(@TempDir Path tmp) {
-        CapsuleTemplateManager m = manager(tmp);
+    void pathsEscapingTheTemplateFolderAreRefusedWithoutException(@TempDir Path tmp) throws Exception {
+        CapsuleTemplateManager m = manager(Files.createDirectories(tmp.resolve("capsules")));
         ResourceLocation escaping = ResourceLocation.parse("../escaped");
         m.getOrCreateTemplate(escaping);
 
         assertFalse(m.writeToFile(escaping));
         assertFalse(m.deleteTemplate(escaping));
-        assertFalse(Files.exists(tmp.resolveSibling("escaped.nbt")));
+        assertFalse(Files.exists(tmp.resolve("escaped.nbt")));
     }
 
     @Test
