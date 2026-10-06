@@ -19,7 +19,9 @@ import net.minecraft.state.properties.SlabType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraft.util.datafix.DataFixesManager;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fluids.FluidAttributes;
@@ -39,7 +41,21 @@ import java.util.stream.Collectors;
 public class Blueprint {
     protected static final Logger LOGGER = LogManager.getLogger(Blueprint.class);
 
-    public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo) {
+    /**
+     * Items needed to place the block, null if they cannot be determined.
+     */
+    @Nullable
+    public static List<ItemStack> getBlockItemCosts(Template.BlockInfo blockInfo, @Nullable IWorldReader level) {
+        BlockState state = blockInfo.state;
+        if (state.getBlock() instanceof FlowerPotBlock) {
+            Block plant = ((FlowerPotBlock) state.getBlock()).getContent();
+            if (plant != Blocks.AIR) return Arrays.asList(new ItemStack(Items.FLOWER_POT), new ItemStack(plant));
+        }
+        ItemStack cost = getBlockItemCost(blockInfo, level);
+        return cost == null ? null : Collections.singletonList(cost);
+    }
+
+    public static ItemStack getBlockItemCost(Template.BlockInfo blockInfo, @Nullable IWorldReader level) {
         final BlockState state = blockInfo.state;
         Block block = state.getBlock();
         CompoundNBT blockNBT = blockInfo.nbt;
@@ -74,6 +90,10 @@ public class Blueprint {
             } else if (block instanceof PistonHeadBlock
                     || block instanceof MovingPistonBlock) {
                 return ItemStack.EMPTY; // Piston extension is free
+
+            } else if (level != null && !state.isAir() && block.asItem() == Items.AIR) {
+                // blocks without item (attached stems, plant bodies...) cost what they are picked as
+                return block.getCloneItemStack(level, BlockPos.ZERO, state);
             }
             ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {
@@ -108,23 +128,23 @@ public class Blueprint {
         CapsuleTemplate blueprintTemplate = StructureSaver.getTemplate(blueprint, worldserver).getRight();
         if (blueprintTemplate == null) return null;
 
-        return getMaterialList(blueprintTemplate, player);
+        return getMaterialList(blueprintTemplate, worldserver, player);
     }
 
-    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable PlayerEntity player) {
+    public static Map<ItemStackKey, Integer> getMaterialList(CapsuleTemplate blueprintTemplate, @Nullable IWorldReader level, @Nullable PlayerEntity player) {
         Map<ItemStackKey, Integer> list = new HashMap<>();
         for (Template.BlockInfo block : blueprintTemplate.getPalette()) {// Note: tile entities not supported so nbt data is not used here
-            ItemStack itemStack = getBlockItemCost(block);
-            ItemStackKey stackKey = new ItemStackKey(itemStack);
-            if (itemStack == null) {
+            List<ItemStack> itemStacks = getBlockItemCosts(block, level);
+            if (itemStacks == null) {
                 if (player != null) player.sendMessage(new TranslationTextComponent("capsule.error.technicalError"), Util.NIL_UUID);
                 if (player != null)
                     LOGGER.error("Unknown item during blueprint undo for block " + block.state.getBlock().getRegistryName());
                 return null;
-            } else if (!itemStack.isEmpty() && itemStack.getItem() != Items.AIR) {
-                Integer currValue = list.get(stackKey);
-                if (currValue == null) currValue = 0;
-                list.put(stackKey, currValue + itemStack.getCount());
+            }
+            for (ItemStack itemStack : itemStacks) {
+                if (!itemStack.isEmpty()) {
+                    list.merge(new ItemStackKey(itemStack), itemStack.getCount(), Integer::sum);
+                }
             }
         }
         // Note: entities not supported so no entities check
@@ -137,7 +157,7 @@ public class Blueprint {
             try {
                 CapsuleTemplate template = tempManager.getTemplate(new ResourceLocation(templateName));
                 if (template != null) {
-                    Map<ItemStackKey, Integer> fullList = getMaterialList(template, null);
+                    Map<ItemStackKey, Integer> fullList = getMaterialList(template, null, null);
                     if (fullList != null) {
                         ItemStackKey[] list = fullList.entrySet().stream()
                                 .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
