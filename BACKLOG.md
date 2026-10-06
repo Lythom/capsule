@@ -52,11 +52,12 @@ The translucent preview (0c1d3aa) is drawn after the translucent terrain: water 
 it, as they hid the opaque preview. Optional: draw it before the translucent terrain (render stage and depth to
 check). Effort: S to M.
 
-### Preview shadow with Iris on NeoForge
+### Preview and wireframe shadows with Iris
 Issues: https://github.com/Lythom/capsule/issues/69
 
-With Iris and a shader pack, the preview casts a shadow on NeoForge only: the render stage event Capsule draws in is
-also fired in Iris' shadow pass. Cosmetic; skip drawing during the shadow pass. Effort: S.
+With Iris and a shader pack, the preview casts a shadow on NeoForge (the render stage event Capsule draws in is also
+fired in Iris' shadow pass), and the capture zone wireframe on both loaders (client smoke screenshots
+`*-iris/02-*.png`). Cosmetic; skip drawing during the shadow pass. Effort: S.
 
 ### Creative copy of a deployed capsule shows an empty full preview
 Seen during round 2, not investigated: a deployed capsule copied in creative (middle click) previews nothing. Effort: S.
