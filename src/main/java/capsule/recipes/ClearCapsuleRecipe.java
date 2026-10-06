@@ -10,10 +10,24 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class ClearCapsuleRecipe extends SpecialRecipe {
+    /**
+     * Capsules that a craft put back in the grid. Shift-click crafting goes on while the result is a capsule, so it would
+     * then clear them; they can be cleared once moved by the player.
+     */
+    private static final Set<ItemStack> GIVEN_BACK = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+
+    public static ItemStack givenBack(ItemStack capsule) {
+        GIVEN_BACK.add(capsule);
+        return capsule;
+    }
 
     public ClearCapsuleRecipe(ResourceLocation idIn) {
         super(idIn);
@@ -65,7 +79,7 @@ public class ClearCapsuleRecipe extends SpecialRecipe {
     }
 
     public boolean canBeEmptyCapsule(ItemStack itemstack) {
-        if (!(itemstack.getItem() instanceof CapsuleItem)) return false;
+        if (!(itemstack.getItem() instanceof CapsuleItem) || GIVEN_BACK.contains(itemstack)) return false;
         return CapsuleItem.isLinkedStateCapsule(itemstack) || (CapsuleItem.hasState(itemstack, DEPLOYED) && !CapsuleItem.isBlueprint(itemstack));
     }
 
