@@ -28,6 +28,7 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -72,17 +73,30 @@ public class ClaimTests {
         }
     }
 
+    static int columns(BoundingBox box) {
+        return ((box.maxX() >> 4) - (box.minX() >> 4) + 1) * ((box.maxZ() >> 4) - (box.minZ() >> 4) + 1);
+    }
+
+    static long countDenied(Predicate<BlockPos> denied, BoundingBox box) {
+        long count = 0;
+        for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
+            if (denied.test(pos)) count++;
+        }
+        return count;
+    }
+
     @GameTest(template = "empty", batch = "claimscale")
     public static void claimQueriesScaleWithChunksAndRegionsNotBlocks(GameTestHelper helper) {
         int size = CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE;
         BlockPos min = helper.absolutePos(new BlockPos(0, 1, 0));
         BoundingBox box = BoundingBox.fromCorners(min, min.offset(size - 1, size - 1, size - 1));
         ChunkPos deniedChunk = new ChunkPos(min);
+        ChunkPos unclaimedChunk = new ChunkPos(box.maxX() >> 4, box.maxZ() >> 4);
         AtomicInteger chunkQueries = new AtomicInteger();
         AtomicInteger regionQueries = new AtomicInteger();
         BoundingBox region = BoundingBox.fromCorners(min.offset(1, 0, 1), min.offset(40, 10, 40));
         BoundingBox subRegion = BoundingBox.fromCorners(min.offset(34, 0, 34), min.offset(36, 10, 36));
-        // a chunk claim mod denying the first chunk, and a box claim mod denying a region except a sub-region
+        // a chunk claim mod denying the first chunk and leaving the last one unclaimed, and a box claim mod denying a region except a sub-region
         ClaimAdapter chunks = new ClaimAdapter() {
             public String name() {
                 return "chunks";
@@ -92,7 +106,7 @@ public class ClaimTests {
                 if (!queried.equals(box)) return List.of();
                 return ClaimAdapter.perChunk(level, queried, (x, z) -> {
                     chunkQueries.incrementAndGet();
-                    return x != deniedChunk.x || z != deniedChunk.z;
+                    return x == unclaimedChunk.x && z == unclaimedChunk.z ? null : x != deniedChunk.x || z != deniedChunk.z;
                 });
             }
         };
@@ -110,27 +124,63 @@ public class ClaimTests {
         Claims.register(chunks);
         Claims.register(regions);
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 4));
-        try {
+        try (TestProbe probe = new TestProbe(box, Set.of())) {
             Predicate<BlockPos> denied = Claims.denied(helper.getLevel(), box, player);
-            int chunkCount = ((box.maxX() >> 4) - (box.minX() >> 4) + 1) * ((box.maxZ() >> 4) - (box.minZ() >> 4) + 1);
+            int chunkCount = columns(box);
             assertTrue(helper, chunkQueries.get() == chunkCount, "one query per chunk expected (" + chunkCount + "), got " + chunkQueries.get());
             assertTrue(helper, regionQueries.get() == 1, "one query for the regions expected, got " + regionQueries.get());
+            assertTrue(helper, probe.queries.get() == 1, "one probe for the only chunk column without adapter claim expected, got " + probe.queries.get());
 
             assertTrue(helper, denied.test(min), "a denied chunk is denied");
-            assertTrue(helper, !denied.test(min.offset(size - 1, 0, size - 1)), "an allowed chunk is allowed");
+            assertTrue(helper, !denied.test(min.offset(size - 1, 0, size - 1)), "an unclaimed chunk the probe allows is allowed");
             assertTrue(helper, denied.test(min.offset(30, 0, 30)), "a region denied by a mod is denied in a chunk allowed by another");
             assertTrue(helper, !denied.test(subRegion.getCenter()), "a sub-region overrides its region");
 
-            long deniedCount = 0;
-            for (BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
-                if (denied.test(pos)) deniedCount++;
-            }
-            assertTrue(helper, deniedCount > 0 && chunkQueries.get() == chunkCount && regionQueries.get() == 1,
+            long deniedCount = countDenied(denied, box);
+            assertTrue(helper, deniedCount > 0 && chunkQueries.get() == chunkCount && regionQueries.get() == 1 && probe.queries.get() == 1,
                     "testing the " + box.getXSpan() * box.getYSpan() * box.getZSpan() + " positions queries nothing more");
         } finally {
             Claims.unregister(chunks);
             Claims.unregister(regions);
+        }
+
+        // without adapter claims, the probe asks every position up to the largest survival capsule, each chunk column above
+        try {
+            for (int probedSize : new int[]{Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE + 1}) {
+                BoundingBox probed = BoundingBox.fromCorners(min.above(), min.above().offset(probedSize - 1, probedSize - 1, probedSize - 1));
+                try (TestProbe probe = new TestProbe(probed, Set.of())) {
+                    countDenied(Claims.denied(helper.getLevel(), probed, player), probed);
+                    int expected = probedSize <= Claims.PER_BLOCK_MAX_SIZE ? probedSize * probedSize * probedSize : columns(probed);
+                    assertTrue(helper, probe.queries.get() == expected, "size " + probedSize + ": " + expected + " probes expected, got " + probe.queries.get());
+                }
+            }
+        } finally {
             CapsuleTestUtils.removePlayer(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A claim mod without adapter protecting one block, away from where its chunk column would be probed.
+     */
+    @GameTest(template = "empty", batch = "claimprobe")
+    public static void aSingleProtectedBlockStaysUpToTheLargestSurvivalCapsule(GameTestHelper helper) {
+        ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        BlockPos corner = new BlockPos(1, 1, 1);
+        // on the bottom layer, never the center of a column, where the box would be probed per chunk column
+        BlockPos protectedRelative = new BlockPos(2, 1, 1);
+        BlockPos protectedBlock = helper.absolutePos(protectedRelative);
+        CapsuleTestUtils.fill(helper, corner, corner.offset(2, 2, 2), Blocks.STONE.defaultBlockState());
+        try (TestProbe probe = new TestProbe(new BoundingBox(protectedBlock), Set.of(protectedBlock))) {
+            assertTrue(helper, Capsule.captureAtPosition(CapsuleTestUtils.emptyCapsule(3), stranger, 3, helper.getLevel(), helper.absolutePos(corner)), "capture should run");
+            helper.assertBlockPresent(Blocks.STONE, protectedRelative);
+            helper.assertBlockNotPresent(Blocks.STONE, 3, 1, 1);
+
+            // expected: above 31 (OP capsules) the probe stays per chunk column and misses a single block
+            BoundingBox overpowered = BoundingBox.fromCorners(protectedBlock, protectedBlock.offset(Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE));
+            assertTrue(helper, !Claims.denied(helper.getLevel(), overpowered, stranger).test(protectedBlock), "above " + Claims.PER_BLOCK_MAX_SIZE + " a single protected block is not seen");
+        } finally {
+            CapsuleTestUtils.removePlayer(stranger);
         }
         helper.succeed();
     }

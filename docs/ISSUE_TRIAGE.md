@@ -230,7 +230,7 @@ Fixed since 1.20.x (absolute template paths). 1.16.5 is no longer maintained. Cl
 Fixed in the next 1.21.1 build. The server refuses instant capture/deploy requests for capsules that are not instant,
 and positions out of reach. Claim mods can now veto captures and deploys: Open Parties and Claims and Flan (NeoForge
 and Fabric) and Get Off My Lawn (Fabric) are asked once per chunk or claim, other mods through a placement check per
-chunk. Protected blocks stay in place on capture, and a deploy touching a claim you have no rights in is refused.
+block (per chunk above size 31). Protected blocks stay in place on capture, and a deploy touching a claim you have no rights in is refused.
 Capture bases act as the player who placed them. Capture bases placed before this version and dispensers act for
 nobody: they can no longer capture or deploy inside claims (re-place the base to give it an owner). Also fixed in the
 next 1.20.1, 1.18.2 and 1.16.5 builds. On 1.16.5 the checks stay per block (Flan 1.16.5 only answers per position).

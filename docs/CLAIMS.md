@@ -46,11 +46,15 @@ computed before the capture or deploy touches any block:
 
    Each returns claims as boxes with an allowed flag. Within a mod the last claim containing a position decides
    (sub-claims come after their claim); across mods any refusal wins. `Claims.register` lets another mod add an adapter.
-2. **Generic probe** for mods without adapter: one query per chunk column of the box, at the column's center or a corner
-   that no adapter claim covers, through the loader hook kept from before (`Platform.canPlaceBlock`: a dirt
-   `EntityPlaceEvent` on NeoForge, `CommonProtection.canPlaceBlock` on Fabric). Columns fully covered by adapter claims
-   are not probed. The answer applies to the column's positions outside adapter claims.
-3. The test of a position is a chunk lookup in the claims and probe results: no query.
+2. **Generic probe** for mods without adapter, through the loader hook kept from before (`Platform.canPlaceBlock`: a
+   dirt `EntityPlaceEvent` on NeoForge, `CommonProtection.canPlaceBlock` on Fabric), outside adapter claims:
+   - up to size 31 (`Claims.PER_BLOCK_MAX_SIZE`, the largest survival capsule; the size is the box's largest side): each
+     tested position, when it is tested;
+   - above (OP capsules): one query per chunk column of the box, at the column's center or a corner that no adapter
+     claim covers. Columns fully covered by adapter claims are not probed. The answer applies to the column's positions
+     outside adapter claims.
+3. The test of a position is a chunk lookup in the adapter claims, then one probe query up to size 31, a lookup in the
+   column results above.
 
 The capture removes only the allowed positions, as before (protected blocks stay in the world and leave the template);
 a deploy is refused with "not allowed" if any position is denied.
@@ -65,20 +69,25 @@ Per capture or deploy, for a box of `c` chunk columns crossing `r` claims:
 | Open Parties and Claims | 2 map lookups per chunk: `2c` |
 | Flan | `c` map lookups + `r` permission checks |
 | Get Off My Lawn | 1 R-tree query + `r` permission checks |
-| generic probe | at most `c` events (or Common Protection API calls); none in chunks covered by adapter claims |
-| per block | one hash lookup and a few box tests, no event |
+| generic probe, size up to 31 | one event (or Common Protection API call) per tested position outside adapter claims: at most 29 791 |
+| generic probe, size above 31 | at most `c` events (or Common Protection API calls); none in chunks covered by adapter claims |
+| per block | one hash lookup and a few box tests, plus the probe event up to size 31 |
 
 The largest capsule (255) spans at most 17 × 17 = 289 chunk columns. `ClaimTests.claimQueriesScaleWithChunksAndRegionsNotBlocks`
-checks it with counting adapters: exactly one query per chunk for a chunk mod and one for a region mod on a 255³ box,
-and testing all its 16.6 M positions queries nothing more.
+checks it with counting adapters and a counting probe: exactly one query per chunk for a chunk mod, one for a region mod
+and one probe for the only chunk column they leave unclaimed on a 255³ box, and testing all its 16.6 M positions
+queries nothing more; without adapter claims, testing every position of a 31³ box probes each of them (29 791), of a
+32³ box each chunk column once.
 
 ### The per-block dirt `EntityPlaceEvent` probe on NeoForge
 
-**Limited** to one event per chunk column, outside adapter claims (and none in columns covered by them). Cost: at most
-289 events for the largest capsule instead of one per block. It stays exact for chunk claim mods without adapter (FTB
-Chunks, and Cadmus if it cancels the event) and keeps vanilla-like protections that listen to the event. For box based
-mods without adapter (YAWP regions) it is approximate: a region not containing the probe position is missed, a region
-containing it denies the whole column. On Fabric, the Common Protection API call follows the same rule.
+Kept per block, outside adapter claims, for captures and deploys up to size 31: it stays exact for every mod listening
+to the event, single protected blocks included. **Limited** above 31 (OP capsules) to one event per chunk column,
+outside adapter claims (and none in columns covered by them): at most 289 events for the largest capsule instead of
+16.6 M. That stays exact for chunk claim mods without adapter (FTB Chunks, and Cadmus if it cancels the event); for box
+based mods without adapter (YAWP regions) and single protected blocks it is approximate: a region or block not
+containing the probe position is missed, a region containing it denies the whole column. On Fabric, the Common
+Protection API call follows the same rule.
 
 ### Per block or per chunk column (measured)
 
@@ -116,12 +125,15 @@ container (4 cores of a Xeon at 2.1 GHz, dev GameTest server, Java 21). Probes p
   the test player's connection instead of dropped (`CapsuleTestUtils.survivalPlayer` now drops them), 63.3 ms for 31,
   and the 255 box ran out of memory (4 GB).
 
-**Decision: per chunk column, kept.** Per block stays far below one tick in every case but one: a full 31³ capture
-inside a claim that denies through the NeoForge placement event takes 47 to 52 ms (median of the three runs 49.4 ms):
-the probes alone fill the tick, and one run in three goes over it. The owner decides whether that worst case (a claim
-mod without adapter, the capture fully inside its claim) is acceptable; per block is then a change of the predicate of
-`Claims.denied` (probe each tested position outside adapter claims instead of one position per column). The 255 OP capture would take 2.3 to 4.2 s per block on NeoForge outside claims, 24 s inside a
-denying claim, 0.1 to 3.3 s on Fabric.
+Per block stays far below one tick in every case but one: a full 31³ capture inside a claim that denies through the
+NeoForge placement event takes 47 to 52 ms (median of the three runs 49.4 ms): the probes alone fill the tick, and one
+run in three goes over it. The 255 OP capture would take 2.3 to 4.2 s per block on NeoForge outside claims, 24 s inside
+a denying claim, 0.1 to 3.3 s on Fabric.
+
+**Decision (owner, round 2b L3): per block up to size 31, per chunk column above.** The worst case above (a claim mod
+without adapter, a full 31³ capture inside its claim) is accepted; above 31 the probe stays per chunk column, to avoid
+multi-second freezes with OP capsules. `Claims.PER_BLOCK_MAX_SIZE` (31) chooses the predicate of `Claims.denied`.
+Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My Lawn exact boxes.
 
 ### Weak coupling and failures
 
@@ -159,7 +171,10 @@ denying claim, 0.1 to 3.3 s on Fabric.
 
 ## Tests
 
-- `ClaimTests` (common GameTests, both loaders, every build): the counting test above; a stranger's capture keeps the
+- `ClaimTests` (common GameTests, both loaders, every build): the counting test above; a test probe (`TestProbe`,
+  answering the NeoForge placement event and Common Protection API in the GameTest mods) protecting one block of the
+  bottom layer, away from the column centers, stays after a stranger's size 3 capture, and is not seen by the probe of a
+  32 wide box (per chunk column, expected); a stranger's capture keeps the
   claimed blocks and their deploy is refused with one query each, the owner's are allowed; a capsule thrown by a player
   who then went offline is refused in a claim; capture bases are checked as the player who placed them, also offline;
   inside a claim open to everybody, a capture base placed before 9.0, a vanilla dispenser and a capture without player

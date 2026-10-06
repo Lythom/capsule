@@ -4,23 +4,13 @@ Work identified on the dev-1.21.1 branch and not done there, after round 2 (`doc
 M (a day or two), L (several days). Triage details and ready-to-post issue comments are in `docs/ISSUE_TRIAGE.md`,
 backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
 
-## Waiting for the owner
-
-### Generic claim probe per block
-Issues: https://github.com/Lythom/capsule/issues/91
-
-Measured in `docs/CLAIMS.md` ("Per block or per chunk column"): per block stays far below one tick except for a full
-31³ capture inside a claim denying through the NeoForge placement event (47 to 52 ms, the 50 ms limit), so the probe
-of mods without adapter stays per chunk column. Accepting that worst case makes it per block (the predicate of
-`Claims.denied`). Effort: S.
-
 ## Confirmed gaps
 
 ### Claim mods: FTB Chunks and Cadmus on Fabric, Get Off My Lawn runtime test
 Issues: https://github.com/Lythom/capsule/issues/91
 
 - FTB Chunks and Cadmus do not implement Common Protection API, so on Fabric they are not asked at all (on NeoForge the
-  per-chunk placement event covers them). An FTB Chunks adapter can be written from the API in `docs/CLAIMS.md`; neither
+  placement event probe covers them). An FTB Chunks adapter can be written from the API in `docs/CLAIMS.md`; neither
   mod is on Modrinth, so it needs another way to get them into the GameTest runtime (maven.ftb.dev). Effort: S to M.
 - Get Off My Lawn: the adapter was only checked with `javap`; the Loom dev runs do not load the mods nested in its jar.
   Test it on a production Fabric server (`scripts/prod-gametest.sh` with `EXTRA_MODS`). Effort: S to M.

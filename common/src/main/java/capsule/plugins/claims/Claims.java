@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,8 +27,9 @@ import java.util.function.Predicate;
 
 /**
  * Whether claim mods let a player capture or deploy blocks. Mods with an adapter are asked once per chunk or claim;
- * the chunks they do not cover are probed once each through the loader's protection hook (a block placement event on
- * NeoForge, Common Protection API on Fabric), so that chunk based claim mods without adapter still protect them.
+ * the positions they do not cover are probed through the loader's protection hook (a block placement event on
+ * NeoForge, Common Protection API on Fabric), so that claim mods without adapter still protect them: each position up
+ * to the largest survival capsule, once per chunk column above.
  */
 public final class Claims {
     private static final Logger LOGGER = LogManager.getLogger(Claims.class);
@@ -36,6 +38,10 @@ public final class Claims {
      * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before Capsule 9).
      */
     private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
+    /**
+     * Largest size probed per block: above, OP captures and deploys would take seconds, so they are probed per chunk column.
+     */
+    public static final int PER_BLOCK_MAX_SIZE = 31;
     private static boolean modsLoaded = false;
 
     private Claims() {
@@ -108,7 +114,8 @@ public final class Claims {
     }
 
     /**
-     * The positions of box the player may not change. The queries are done here, testing a position costs none.
+     * The positions of box the player may not change. The adapters are asked here; testing a position outside their
+     * claims probes it when box is at most PER_BLOCK_MAX_SIZE wide, else looks up its chunk column, probed here.
      */
     public static Predicate<BlockPos> denied(ServerLevel level, BoundingBox box, @Nullable ServerPlayer player) {
         ServerPlayer actor = player != null ? player : Services.PLATFORM.fakePlayer(level, NOBODY);
@@ -136,15 +143,8 @@ public final class Claims {
             adapterClaims.long2ObjectEntrySet().forEach(e -> claimsByChunk.computeIfAbsent(e.getLongKey(), k -> new ArrayList<>()).add(e.getValue()));
         }
 
-        LongSet deniedChunks = new LongOpenHashSet();
-        for (int chunkX = box.minX() >> 4; chunkX <= box.maxX() >> 4; chunkX++) {
-            for (int chunkZ = box.minZ() >> 4; chunkZ <= box.maxZ() >> 4; chunkZ++) {
-                long chunk = ChunkPos.asLong(chunkX, chunkZ);
-                BoundingBox column = intersection(box, new BoundingBox(chunkX << 4, box.minY(), chunkZ << 4, (chunkX << 4) + 15, box.maxY(), (chunkZ << 4) + 15));
-                BlockPos probe = unclaimedPosition(column, claimsByChunk.getOrDefault(chunk, List.of()));
-                if (probe != null && !Services.PLATFORM.canPlaceBlock(level, probe, actor)) deniedChunks.add(chunk);
-            }
-        }
+        boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
+        LongSet deniedColumns = perBlock ? LongSets.EMPTY_SET : deniedColumns(level, box, claimsByChunk, actor);
 
         return pos -> {
             long chunk = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
@@ -158,8 +158,25 @@ public final class Claims {
                     claimed = true;
                 }
             }
-            return !claimed && deniedChunks.contains(chunk);
+            if (claimed) return false;
+            return perBlock ? !Services.PLATFORM.canPlaceBlock(level, pos, actor) : deniedColumns.contains(chunk);
         };
+    }
+
+    /**
+     * The chunk columns of box denied by mods without adapter, probed once each outside the adapter claims.
+     */
+    private static LongSet deniedColumns(ServerLevel level, BoundingBox box, Long2ObjectMap<List<List<Claim>>> claimsByChunk, ServerPlayer actor) {
+        LongSet denied = new LongOpenHashSet();
+        for (int chunkX = box.minX() >> 4; chunkX <= box.maxX() >> 4; chunkX++) {
+            for (int chunkZ = box.minZ() >> 4; chunkZ <= box.maxZ() >> 4; chunkZ++) {
+                long chunk = ChunkPos.asLong(chunkX, chunkZ);
+                BoundingBox column = intersection(box, new BoundingBox(chunkX << 4, box.minY(), chunkZ << 4, (chunkX << 4) + 15, box.maxY(), (chunkZ << 4) + 15));
+                BlockPos probe = unclaimedPosition(column, claimsByChunk.getOrDefault(chunk, List.of()));
+                if (probe != null && !Services.PLATFORM.canPlaceBlock(level, probe, actor)) denied.add(chunk);
+            }
+        }
+        return denied;
     }
 
     @Nullable
