@@ -3,9 +3,11 @@ package capsule.fabric;
 import capsule.CapsuleMod;
 import capsule.platform.ItemSource;
 import capsule.platform.Platform;
+import com.mojang.authlib.GameProfile;
 import eu.pb4.common.protection.api.CommonProtection;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -71,6 +73,11 @@ public class FabricPlatform implements Platform {
     @Override
     public boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player) {
         return player == null || CommonProtection.canPlaceBlock(level, pos, player.getGameProfile(), player);
+    }
+
+    @Override
+    public ServerPlayer fakePlayer(ServerLevel level, GameProfile profile) {
+        return FakePlayer.get(level, profile);
     }
 
     @Override

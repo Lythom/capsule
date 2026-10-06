@@ -29,7 +29,7 @@ public class SecurityCraftTests {
 
     private static ItemStack captureAs(GameTestHelper helper, ServerPlayer player) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(1);
-        Capsule.captureAtPosition(capsule, player.getUUID(), 1, helper.getLevel(), helper.absolutePos(BLOCK));
+        Capsule.captureAtPosition(capsule, player, 1, helper.getLevel(), helper.absolutePos(BLOCK));
         return capsule;
     }
 

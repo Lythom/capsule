@@ -1,5 +1,6 @@
 package capsule.platform;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -37,6 +38,11 @@ public interface Platform {
      * Asks protection mods (claims, spawn protection) whether the player may place a block at pos.
      */
     boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player);
+
+    /**
+     * A player that is not connected, acting for profile (capture bases act for the player who placed them).
+     */
+    ServerPlayer fakePlayer(ServerLevel level, GameProfile profile);
 
     /**
      * The item storage of the block at pos (chests, modded storages), or null if it has none.

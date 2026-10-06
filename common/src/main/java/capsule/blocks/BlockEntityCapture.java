@@ -1,12 +1,16 @@
 package capsule.blocks;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockEntityCapture extends DispenserBlockEntity {
@@ -16,6 +20,9 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     // zone previewed on the client while an empty capsule is held
     private int size = 0;
     private int color = 0;
+    // claim mods check the captures and deploys of the base as this player; bases placed before Capsule 9 have none
+    @Nullable
+    private UUID placer = null;
 
     public BlockEntityCapture(BlockPos p_155490_, BlockState p_155491_) {
         super(CapsuleBlocks.MARKER_TE.get(), p_155490_, p_155491_);
@@ -46,6 +53,28 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     public void setSizeAndColor(int size, int color) {
         this.size = size;
         this.color = color;
+    }
+
+    @Nullable
+    public UUID getPlacer() {
+        return placer;
+    }
+
+    public void setPlacer(@Nullable UUID placer) {
+        this.placer = placer;
+        setChanged();
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (placer != null) tag.putUUID("placer", placer);
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        placer = tag.hasUUID("placer") ? tag.getUUID("placer") : null;
     }
 
     public AABB getBoundingBox() {

@@ -18,6 +18,9 @@ neoForge {
 dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     gametestCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    // claim mods (#91), same API on both loaders
+    gametestCompileOnly "maven.modrinth:open-parties-and-claims:${opac_neoforge_version}"
+    gametestCompileOnly "maven.modrinth:flan:${flan_neoforge_version}"
     // shipped by NeoForge, and on Fabric by Forge Config API Port
     compileOnly "com.electronwill.night-config:core:${night_config_version}"
 }

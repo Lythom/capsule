@@ -29,6 +29,6 @@ public class NeoForgeGameTests {
         Stream<Class<?>> optional = Map.of("waystones", WaystonesTests.class, "sophisticatedstorage", SophisticatedStorageTests.class, "worldedit", WorldEditTests.class).entrySet().stream()
                 .filter(e -> ModList.get().isLoaded(e.getKey()))
                 .map(Map.Entry::getValue);
-        return CapsuleGameTests.testFunctions(Stream.of(CapsuleGameTests.TEST_CLASSES.stream(), Stream.of(SecurityCraftTests.class), optional).flatMap(s -> s));
+        return CapsuleGameTests.testFunctions(Stream.of(CapsuleGameTests.TEST_CLASSES.stream(), Stream.of(SecurityCraftTests.class), optional, CapsuleGameTests.loadedModTestClasses()).flatMap(s -> s));
     }
 }

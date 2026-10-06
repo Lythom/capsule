@@ -1,6 +1,7 @@
 package capsule.gametest;
 
 import capsule.CapsuleMod;
+import capsule.platform.Services;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -29,6 +31,7 @@ public class CapsuleGameTests {
             BundledContentTests.class,
             BundledTemplateContentTests.class,
             CaptureBaseTests.class,
+            ClaimTests.class,
             ConfigTests.class,
             CoreMechanicsTests.class,
             DeployPositionTests.class,
@@ -47,9 +50,23 @@ public class CapsuleGameTests {
             UndeployDelayTests.class
     );
 
+    /**
+     * Tests of optional mods, by mod id, run when the mod is loaded (-PmodCompat).
+     */
+    private static final Map<String, Class<?>> MOD_TEST_CLASSES = Map.of(
+            "openpartiesandclaims", OpenPartiesAndClaimsTests.class,
+            "flan", FlanTests.class
+    );
+
+    public static Stream<Class<?>> loadedModTestClasses() {
+        return MOD_TEST_CLASSES.entrySet().stream()
+                .filter(e -> Services.PLATFORM.isModLoaded(e.getKey()))
+                .map(Map.Entry::getValue);
+    }
+
     @GameTestGenerator
     public static Collection<TestFunction> generate() {
-        return testFunctions(TEST_CLASSES.stream());
+        return testFunctions(Stream.concat(TEST_CLASSES.stream(), loadedModTestClasses()));
     }
 
     public static List<TestFunction> testFunctions(Stream<Class<?>> testClasses) {

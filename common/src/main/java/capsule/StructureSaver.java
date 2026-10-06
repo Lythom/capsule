@@ -1,8 +1,9 @@
 package capsule;
 
+import capsule.blocks.BlockEntityCapture;
 import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
-import capsule.platform.Services;
+import capsule.plugins.claims.Claims;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.Clearable;
@@ -47,7 +49,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -83,7 +85,7 @@ public class StructureSaver {
         return preventItemDrop && (entity instanceof ItemEntity || entity instanceof ExperienceOrb);
     }
 
-    public static CapsuleTemplate undeploy(ServerLevel worldserver, @Nullable UUID playerID, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
+    public static CapsuleTemplate undeploy(ServerLevel worldserver, @Nullable ServerPlayer player, String capsuleStructureId, BlockPos startPos, int size, List<Block> excluded,
                                            Map<BlockPos, Block> legacyItemOccupied) {
 
         MinecraftServer minecraftserver = worldserver.getServer();
@@ -104,11 +106,7 @@ public class StructureSaver {
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, outCapturedEntities);
         template.removeOccupiedPositions();
-        Player player = null;
-        if (playerID != null) {
-            player = worldserver.getPlayerByUUID(playerID);
-            if (player != null) template.setAuthor(player.getGameProfile().getName());
-        }
+        if (player != null) template.setAuthor(player.getGameProfile().getName());
         boolean writingOK = templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
@@ -130,7 +128,7 @@ public class StructureSaver {
 
     }
 
-    public static boolean undeployBlueprint(ServerLevel worldserver, UUID playerID, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
+    public static boolean undeployBlueprint(ServerLevel worldserver, @Nullable ServerPlayer player, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
         CapsuleTemplate blueprintTemplate = blueprint.getRight();
         if (blueprintTemplate == null) return false;
@@ -144,10 +142,6 @@ public class StructureSaver {
         List<StructureTemplate.StructureBlockInfo> worldBlocks = tempTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
         List<StructureTemplate.StructureBlockInfo> blueprintBLocks = blueprintTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
-        Player player = null;
-        if (playerID != null) {
-            player = worldserver.getPlayerByUUID(playerID);
-        }
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintBLocks.size() != worldBlocks.size())
             return false;
@@ -220,12 +214,13 @@ public class StructureSaver {
     }
 
     /**
-     * Use with caution, delete the blocks at the indicated positions.
+     * Use with caution, delete the blocks at the indicated positions, except those the player may not take.
      *
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerLevel
-            world, @Nullable Player player) {
+            world, @Nullable ServerPlayer player) {
+        Predicate<BlockPos> claimed = Claims.denied(world, transferedPositions, player);
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -246,7 +241,7 @@ public class StructureSaver {
                 BlockState b = world.getBlockState(pos);
                 try {
                     // uses same mechanic for BlockEntity than net.minecraft.world.gen.feature.template.Template
-                    if (playerCanRemove(world, pos, player)) {
+                    if (!claimed.test(pos) && (player == null || SecurityCraftOwnerCheck.canTakeBlock(world, pos, player))) {
                         BlockEntity BlockEntity = b.hasBlockEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
                         if (BlockEntity != null) {
@@ -280,18 +275,13 @@ public class StructureSaver {
     }
 
 
-    public static boolean deploy(ItemStack capsule, ServerLevel playerWorld, @Nullable UUID thrower, BlockPos
+    public static boolean deploy(ItemStack capsule, ServerLevel playerWorld, @Nullable ServerPlayer player, BlockPos
             dest, StructurePlaceSettings placementsettings) {
 
         Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = getTemplate(capsule, playerWorld);
         CapsuleTemplate template = templatepair.getRight();
 
         if (template == null) return false;
-
-        Player player = null;
-        if (thrower != null) {
-            player = playerWorld.getServer().getPlayerList().getPlayer(thrower);
-        }
 
         Map<BlockPos, Block> outOccupiedSpawnPositions = new HashMap<>();
         int size = CapsuleItem.getSize(capsule);
@@ -324,13 +314,19 @@ public class StructureSaver {
         try {
             template.spawnBlocksAndEntities(playerWorld, dest, placementsettings, occupiedPositions, spawnedBlocks, spawnedEntities);
             placePlayerOnTop(playerWorld, dest, size);
+            // capture bases act for the player who places them, here the deployer
+            for (BlockPos pos : spawnedBlocks) {
+                if (playerWorld.getBlockEntity(pos) instanceof BlockEntityCapture base) {
+                    base.setPlacer(player == null ? null : player.getUUID());
+                }
+            }
 
             return true;
         } catch (Exception err) {
             printDeployError(player, err, "Couldn't deploy the capsule");
 
             // rollback
-            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, player);
+            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null);
             template.removeOccupiedPositions();
             if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
@@ -394,33 +390,17 @@ public class StructureSaver {
     }
 
     /**
-     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
+     * Whether claim mods let the player place every block of the template.
      */
     private static boolean playerCanPlace(ServerLevel worldserver, BlockPos dest, CapsuleTemplate
-            template, Player player, StructurePlaceSettings placementsettings) {
-        if (player != null) {
-            List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
-            for (BlockPos blockPos : expectedOut) {
-                if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() <= worldserver.getMinBuildHeight() || !isEntityPlaceEventAllowed(worldserver, blockPos, player))
-                    return false;
-            }
+            template, ServerPlayer player, StructurePlaceSettings placementsettings) {
+        List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
+        Predicate<BlockPos> claimed = Claims.denied(worldserver, expectedOut, player);
+        for (BlockPos blockPos : expectedOut) {
+            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() <= worldserver.getMinBuildHeight() || claimed.test(blockPos))
+                return false;
         }
         return true;
-    }
-
-    /**
-     * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
-     */
-    private static boolean playerCanRemove(ServerLevel worldserver, BlockPos blockPos, @Nullable Player player) {
-        if (player != null) {
-            return isEntityPlaceEventAllowed(worldserver, blockPos, player)
-                    && SecurityCraftOwnerCheck.canTakeBlock(worldserver, blockPos, player);
-        }
-        return true;
-    }
-
-    private static boolean isEntityPlaceEventAllowed(ServerLevel worldserver, BlockPos blockPos, @Nullable Player player) {
-        return Services.PLATFORM.canPlaceBlock(worldserver, blockPos, player);
     }
 
     public static Pair<CapsuleTemplateManager, CapsuleTemplate> getTemplate(ItemStack capsule, ServerLevel

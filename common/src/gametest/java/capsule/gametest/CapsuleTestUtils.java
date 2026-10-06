@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,7 +50,7 @@ public class CapsuleTestUtils {
      */
     public static boolean deploy(GameTestHelper helper, ItemStack capsule, BlockPos relativeAnchor, ServerPlayer player) {
         int extendLength = (CapsuleItem.getSize(capsule) - 1) / 2;
-        return Capsule.deployCapsule(capsule, helper.absolutePos(relativeAnchor), player == null ? null : player.getUUID(), extendLength, helper.getLevel());
+        return Capsule.deployCapsule(capsule, helper.absolutePos(relativeAnchor), player, extendLength, helper.getLevel());
     }
 
     public static CapsuleTemplate template(GameTestHelper helper, ItemStack capsule) {
@@ -77,15 +77,17 @@ public class CapsuleTestUtils {
      * player list, so payloads broadcast by the mod never reach its connection, which did not negotiate the mod channels.
      */
     public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos) {
-        return survivalPlayer(helper, relativePos, new ArrayList<>());
+        return survivalPlayer(helper, relativePos, null);
     }
 
     /**
-     * A survival player whose system messages (chat feedback) are added to messages.
+     * A survival player whose system messages (chat feedback) are added to messages, if not null. Without messages it
+     * is a plain ServerPlayer, which some mods (Flan) tell apart from fake players by its class.
      */
-    public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos, List<Component> messages) {
+    public static ServerPlayer survivalPlayer(GameTestHelper helper, BlockPos relativePos, @Nullable List<Component> messages) {
         CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-player"), false);
-        ServerPlayer player = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
+        ServerPlayer player = messages == null ? new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation())
+                : new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), cookie.gameProfile(), cookie.clientInformation()) {
             @Override
             public void sendSystemMessage(Component message, boolean overlay) {
                 messages.add(message);

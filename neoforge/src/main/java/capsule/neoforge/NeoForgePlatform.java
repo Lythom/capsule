@@ -3,6 +3,7 @@ package capsule.neoforge;
 import capsule.CapsuleMod;
 import capsule.platform.ItemSource;
 import capsule.platform.Platform;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -25,6 +26,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -77,6 +79,11 @@ public class NeoForgePlatform implements Platform {
     public boolean canPlaceBlock(ServerLevel level, BlockPos pos, @Nullable Player player) {
         BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, pos);
         return !NeoForge.EVENT_BUS.post(new BlockEvent.EntityPlaceEvent(snapshot, Blocks.DIRT.defaultBlockState(), player)).isCanceled();
+    }
+
+    @Override
+    public ServerPlayer fakePlayer(ServerLevel level, GameProfile profile) {
+        return FakePlayerFactory.get(level, profile);
     }
 
     @Override

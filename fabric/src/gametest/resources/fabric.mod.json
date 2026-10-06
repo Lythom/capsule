@@ -6,6 +6,9 @@
   "description": "Dev only: registers the capsule GameTests and the client smoke test.",
   "environment": "*",
   "entrypoints": {
+    "main": [
+      "capsule.gametest.FabricGameTestSetup"
+    ],
     "fabric-gametest": [
       "capsule.gametest.CapsuleGameTests"
     ],

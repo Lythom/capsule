@@ -20,6 +20,9 @@ repositories {
     }
 }
 
+// mod<Gametest...> configurations, remapped like the main mod dependencies
+loom.createRemapConfigurations(sourceSets.gametest)
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered {
@@ -39,6 +42,14 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
 
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
+
+    // claim mods (#91): the claim GameTests compile against them, opt-in at runtime with -PmodCompat
+    modGametestCompileOnly "maven.modrinth:open-parties-and-claims:${opac_fabric_version}"
+    modGametestCompileOnly "maven.modrinth:flan:${flan_fabric_version}"
+    if (project.hasProperty('modCompat')) {
+        modGametestRuntimeOnly "maven.modrinth:open-parties-and-claims:${opac_fabric_version}"
+        modGametestRuntimeOnly "maven.modrinth:flan:${flan_fabric_version}"
+    }
 }
 
 sourceSets.gametest {

@@ -3,6 +3,8 @@ package capsule.blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -17,6 +19,8 @@ import net.minecraft.core.dispenser.BlockSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
+
 public class BlockCapsuleMarker extends DispenserBlock {
     private static final Logger LOGGER = LogManager.getLogger(BlockCapsuleMarker.class);
 
@@ -29,6 +33,14 @@ public class BlockCapsuleMarker extends DispenserBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
         return new BlockEntityCapture(pPos, pState);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (placer instanceof Player && level.getBlockEntity(pos) instanceof BlockEntityCapture base) {
+            base.setPlacer(placer.getUUID());
+        }
     }
 
     /**
