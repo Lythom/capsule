@@ -5,6 +5,7 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.enchantments.RecallEnchant;
 import capsule.items.CapsuleItem;
+import capsule.items.ThrownCapsules;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.StarterLoot;
 import capsule.network.CapsuleNetwork;
@@ -24,6 +25,7 @@ import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -55,6 +57,8 @@ public class CapsuleNeoForge {
         bus.addListener(EventPriority.HIGHEST, (EntityJoinLevelEvent event) -> {
             if (StructureSaver.isPreventedDrop(event.getEntity())) event.setCanceled(true);
         });
+        bus.addListener(EventPriority.LOWEST, (EntityJoinLevelEvent event) -> ThrownCapsules.onEntityLoad(event.getEntity(), event.getLevel()));
+        bus.addListener((EntityLeaveLevelEvent event) -> ThrownCapsules.onEntityUnload(event.getEntity(), event.getLevel()));
         bus.addListener((LootTableLoadEvent event) -> {
             LootPool.Builder pool = CapsuleLootTableHook.capsulePool(event.getName());
             if (pool != null) event.getTable().addPool(pool.name("capsulePool").build());

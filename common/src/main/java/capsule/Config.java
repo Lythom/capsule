@@ -259,11 +259,11 @@ public class Config {
 
     public static void configureEnchants(ConfigSpecBuilder configBuild) {
 
-        Config.enchantRarity = configBuild.comment("Unused since Minecraft 1.21: enchantments are data driven. Change the weight in data/capsule/enchantment/recall.json with a datapack.")
+        Config.enchantRarity = configBuild.comment("Unused since Minecraft 1.21: capsules come back with the vanilla Loyalty enchantment, whose weight a datapack can change.")
                 .worldRestart()
                 .define("recallEnchantRarity", "RARE");
 
-        Config.recallEnchantType = configBuild.comment("Unused since Minecraft 1.21: enchantments are data driven. Add items to the item tag capsule:enchantable/recall with a datapack.")
+        Config.recallEnchantType = configBuild.comment("Unused since Minecraft 1.21: capsules come back with the vanilla Loyalty enchantment, a datapack removing capsule:capsule from the item tag capsule:enchantable/recall disables it.")
                 .worldRestart()
                 .define("recallEnchantType", "null");
     }

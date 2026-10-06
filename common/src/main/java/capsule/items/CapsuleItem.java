@@ -4,6 +4,7 @@ import capsule.CapsuleMod;
 import capsule.Config;
 import capsule.StructureSaver;
 import capsule.dispenser.DispenseCapsuleBehavior;
+import capsule.enchantments.CapsuleEnchantments;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
 import capsule.helpers.Spacial;
@@ -19,6 +20,7 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -42,6 +44,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DispenserBlock;
@@ -418,6 +421,21 @@ public class CapsuleItem extends Item {
     @Override
     public boolean isEnchantable(ItemStack stack) {
         return !CapsuleItem.hasState(stack, CapsuleState.ONE_USE);
+    }
+
+    /**
+     * Anvils and /enchant: Loyalty brings a thrown capsule back. NeoForge calls it as IItemExtension#supportsEnchantment,
+     * Fabric through EnchantmentEvents.ALLOW_ENCHANTING.
+     */
+    public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
+        return CapsuleEnchantments.acceptsLoyalty(stack, enchantment) || enchantment.value().isSupportedItem(stack);
+    }
+
+    /**
+     * Enchanting tables, see supportsEnchantment. NeoForge calls it as IItemExtension#isPrimaryItemFor.
+     */
+    public boolean isPrimaryItemFor(ItemStack stack, Holder<Enchantment> enchantment) {
+        return CapsuleEnchantments.acceptsLoyalty(stack, enchantment) || enchantment.value().isPrimaryItem(stack);
     }
 
     @Override

@@ -1,16 +1,12 @@
 package capsule.enchantments;
 
 import capsule.helpers.Spacial;
+import capsule.items.ThrownCapsules;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.List;
-import java.util.Objects;
 
 public class RecallEnchant {
     protected static final Logger LOGGER = LogManager.getLogger(RecallEnchant.class);
@@ -33,22 +29,15 @@ public class RecallEnchant {
     }
 
     public static void onWorldTickEvent(ServerLevel world) {
-        List<? extends ItemEntity> recallEntities = world.getEntities(EntityType.ITEM, CapsuleEnchantments.hasRecallEnchant);
-        List<ItemEntity> recallItemEntities = recallEntities.stream()
-                .filter(Objects::nonNull)
-                .map(entity -> (ItemEntity) entity)
-                .toList();
-
-        for (ItemEntity entity : recallItemEntities) {
-            Entity owner = entity.getOwner();
-            if (shouldRecall(entity)) {
+        for (ItemEntity entity : ThrownCapsules.in(world)) {
+            if (CapsuleEnchantments.comesBack(entity.getItem()) && shouldRecall(entity)) {
                 // give the item a last tick
                 if (!entity.isInLava()) {
                     entity.tick();
                 }
                 // then recall to inventory
                 if (entity.isAlive()) {
-                    pickupItemBack(entity, world.getPlayerByUUID(owner.getUUID()));
+                    pickupItemBack(entity, world.getPlayerByUUID(entity.getOwner().getUUID()));
                 }
             }
         }

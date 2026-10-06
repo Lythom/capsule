@@ -2,7 +2,6 @@ package capsule.command;
 
 import capsule.Config;
 import capsule.StructureSaver;
-import capsule.enchantments.CapsuleEnchantments;
 import capsule.helpers.Capsule;
 import capsule.helpers.Files;
 import capsule.helpers.NBTHelper;
@@ -41,6 +40,7 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -145,7 +145,7 @@ public class CapsuleCommand {
                                 )
                         )
                 )
-                // giveLinked <rewardTemplateName> [playerName] [withRecall]
+                // giveLinked <rewardTemplateName> [playerName] [withLoyalty]
                 .then(Commands.literal("giveLinked")
                         .requires((player) -> player.hasPermission(2))
                         .then(Commands.argument("rewardTemplateName", string())
@@ -153,8 +153,8 @@ public class CapsuleCommand {
                                 .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName"), false))
                                 .then(Commands.argument("target", player())
                                         .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), false))
-                                        .then(Commands.argument("withRecall", bool())
-                                                .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), getBool(ctx, "withRecall")))
+                                        .then(Commands.argument("withLoyalty", bool())
+                                                .executes(ctx -> executeGiveLinked(getPlayer(ctx, "target"), getString(ctx, "rewardTemplateName"), getBool(ctx, "withLoyalty")))
                                         )
                                 )
                         )
@@ -301,12 +301,12 @@ public class CapsuleCommand {
         return 0;
     }
 
-    private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName, boolean withRecall) throws CommandSyntaxException {
+    private static int executeGiveLinked(ServerPlayer player, String rewardTemplateName, boolean withLoyalty) throws CommandSyntaxException {
         String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
-            if (withRecall) {
-                capsule.enchant(player.serverLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(CapsuleEnchantments.RECALL), 1);
+            if (withLoyalty) {
+                capsule.enchant(player.serverLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(Enchantments.LOYALTY), 1);
             }
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
