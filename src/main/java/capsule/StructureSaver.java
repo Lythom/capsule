@@ -114,7 +114,7 @@ public class StructureSaver {
         if (player != null) template.setAuthor(player.getGameProfile().getName());
         boolean writingOK = templatemanager.writeToFile(new ResourceLocation(capsuleStructureId));
         if (writingOK) {
-            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, true);
             for (Entity e : outCapturedEntities) {
                 if (e instanceof ContainerMinecartEntity) {
                     ContainerMinecartEntity eMinecart = (ContainerMinecartEntity) e;
@@ -172,7 +172,7 @@ public class StructureSaver {
             String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
             boolean written = blueprint.getLeft().writeToFile(new ResourceLocation(capsuleStructureId));
             if (written) {
-                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player);
+                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, true);
                 // check if some remove failed, it should never happen but keep it in case to prevent exploits
                 if (couldNotBeRemoved != null) {
                     return false;
@@ -226,11 +226,12 @@ public class StructureSaver {
     /**
      * Use with caution, delete the blocks at the indicated positions, except those the player may not take.
      *
+     * @param checkClaims false to remove claimed blocks too, as the blocks of a failed deploy
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerWorld
-            world, @Nullable ServerPlayerEntity player) {
-        Predicate<BlockPos> claimed = Claims.denied(world, transferedPositions, player);
+            world, @Nullable ServerPlayerEntity player, boolean checkClaims) {
+        Predicate<BlockPos> claimed = checkClaims ? Claims.denied(world, transferedPositions, player) : pos -> false;
 
         List<BlockPos> couldNotBeRemoved = null;
 
@@ -339,7 +340,7 @@ public class StructureSaver {
             printDeployError(player, err, "Couldn't deploy the capsule");
 
             // rollback
-            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null);
+            removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null, false);
             template.removeOccupiedPositions();
             if (!templateManager.writeToFile(new ResourceLocation(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
