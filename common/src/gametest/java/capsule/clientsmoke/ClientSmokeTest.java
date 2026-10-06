@@ -129,6 +129,7 @@ public class ClientSmokeTest {
         inventoryScenario();
         deployScenario();
         blueprintScenario();
+        previewSurroundingsScenario();
 
         scenario.finallyRun("check the log", () -> {
                     synchronized (log.problems) {
@@ -255,6 +256,19 @@ public class ClientSmokeTest {
                         deployedChestDiamonds + " diamonds, expected " + CHEST_DIAMONDS))
                 .sleep(20)
                 .run("screenshot", () -> screenshot("14-deployed"))
+                .run("aim at the deployed house with the oak hut reward", () -> {
+                    select(5);
+                    mc().player.setXRot(25);
+                })
+                .sleep(5)
+                .run("activate", this::rightClick)
+                .await("activated", 40, () -> mainHandIs(CapsuleState.ONE_USE_ACTIVATED))
+                .sleep(20)
+                .run("screenshot", () -> screenshot("14b-preview-over-deployed"))
+                .run("back to the deployed capsule slot", () -> {
+                    select(0);
+                    mc().player.setXRot(30);
+                })
                 .async("pick up the deployed capsule", 100, () -> onServer(p -> pickUp(p, 0)))
                 .await("deployed capsule in hand", 40, () -> mainHandIs(CapsuleState.DEPLOYED))
                 .sleep(20)
@@ -281,6 +295,24 @@ public class ClientSmokeTest {
                 .await("blueprint deployed", 60, () -> mainHandIs(CapsuleState.DEPLOYED))
                 .sleep(20)
                 .run("screenshot", () -> screenshot("18-blueprint-deployed"));
+    }
+
+    /**
+     * The captured house previewed on a pool, between glass blocks and against a grass bump, in first then third person.
+     */
+    private void previewSurroundingsScenario() {
+        scenario.async("build the surroundings of a deploy spot", 100, () -> onServer(this::prepareSurroundings))
+                .run("select the linked capsule", () -> select(0))
+                .sleep(60)
+                .run("activate", this::rightClick)
+                .await("activated", 40, () -> mainHandIs(CapsuleState.ACTIVATED))
+                .await("full preview received", 100, () -> CapsulePreviewHandler.cachedFullPreview.containsKey(capturedStructure))
+                .sleep(10)
+                .run("screenshot", () -> screenshot("19-preview-water-glass-terrain"))
+                .run("third person view", () -> mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
+                .sleep(10)
+                .run("screenshot", () -> screenshot("20-preview-water-glass-terrain-third-person"))
+                .run("first person view", () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
     }
 
     private static Minecraft mc() {
@@ -350,6 +382,34 @@ public class ClientSmokeTest {
         level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 2 | 16);
         if (level.getBlockEntity(chest) instanceof ChestBlockEntity be) be.setItem(0, new ItemStack(Items.DIAMOND, CHEST_DIAMONDS));
         flyTo(player, 0.5, ground + 3, -4.5, 25);
+    }
+
+    /**
+     * A deploy spot on a pool, glass in front and behind, a grass bump overlapping its side, and the player looking at it.
+     */
+    private void prepareSurroundings(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        BlockPos spot = new BlockPos(48, ground, -24);
+        for (BlockPos pos : BlockPos.betweenClosed(spot.offset(-4, -1, -4), spot.offset(1, -1, 3))) {
+            level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2 | 16);
+        }
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dy = 0; dy <= 3; dy++) {
+                level.setBlock(spot.offset(dx, dy, 4), (dx & 1) == 0 ? Blocks.GLASS.defaultBlockState() : Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(), 2 | 16);
+            }
+        }
+        for (int dy = 0; dy <= 1; dy++) {
+            level.setBlock(spot.offset(-2, dy, -3), Blocks.GLASS.defaultBlockState(), 2 | 16);
+            level.setBlock(spot.offset(-1, dy, -3), Blocks.ORANGE_STAINED_GLASS.defaultBlockState(), 2 | 16);
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(spot.offset(2, 0, -1), spot.offset(5, 0, 1))) {
+            level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 2 | 16);
+        }
+        for (BlockPos pos : BlockPos.betweenClosed(spot.offset(3, 1, -1), spot.offset(5, 1, 0))) {
+            level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 2 | 16);
+        }
+        // looking down at 30°, the eye 4.6 blocks above the ground aims 8 blocks ahead
+        flyTo(player, spot.getX() + 0.5, ground + 3, spot.getZ() - 7.5, 30);
     }
 
     /**
