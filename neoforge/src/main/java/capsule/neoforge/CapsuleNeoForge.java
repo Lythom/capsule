@@ -28,6 +28,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -59,6 +60,7 @@ public class CapsuleNeoForge {
         });
         bus.addListener(EventPriority.LOWEST, (EntityJoinLevelEvent event) -> ThrownCapsules.onEntityLoad(event.getEntity(), event.getLevel()));
         bus.addListener((EntityLeaveLevelEvent event) -> ThrownCapsules.onEntityUnload(event.getEntity(), event.getLevel()));
+        bus.addListener((LevelEvent.Unload event) -> ThrownCapsules.onLevelUnload(event.getLevel()));
         bus.addListener((LootTableLoadEvent event) -> {
             LootPool.Builder pool = CapsuleLootTableHook.capsulePool(event.getName());
             if (pool != null) event.getTable().addPool(pool.name("capsulePool").build());

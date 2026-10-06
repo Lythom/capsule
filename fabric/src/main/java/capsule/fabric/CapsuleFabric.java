@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.item.v1.EnchantmentEvents;
 import net.fabricmc.fabric.api.loot.v3.LootTableEvents;
@@ -65,6 +66,7 @@ public class CapsuleFabric implements ModInitializer {
         ServerTickEvents.END_WORLD_TICK.register(RecallEnchant::onWorldTickEvent);
         ServerEntityEvents.ENTITY_LOAD.register(ThrownCapsules::onEntityLoad);
         ServerEntityEvents.ENTITY_UNLOAD.register(ThrownCapsules::onEntityUnload);
+        ServerWorldEvents.UNLOAD.register((server, level) -> ThrownCapsules.onLevelUnload(level));
         EnchantmentEvents.ALLOW_ENCHANTING.register((enchantment, target, context) ->
                 CapsuleEnchantments.acceptsLoyalty(target, enchantment) ? TriState.TRUE : TriState.DEFAULT);
         AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) ->

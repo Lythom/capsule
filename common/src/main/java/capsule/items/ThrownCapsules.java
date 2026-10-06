@@ -4,19 +4,20 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
  * The capsule item entities of each server level, updated by the loaders' entity load and unload events, so that tick
- * handlers never scan every entity.
+ * handlers never scan every entity. A level is forgotten when it unloads: its item entities get no unload event then.
  */
 public class ThrownCapsules {
-    private static final Map<Level, Set<ItemEntity>> BY_LEVEL = new WeakHashMap<>();
+    private static final Map<Level, Set<ItemEntity>> BY_LEVEL = new HashMap<>();
 
     public static void onEntityLoad(Entity entity, Level level) {
         if (level instanceof ServerLevel && entity instanceof ItemEntity item && item.getItem().getItem() instanceof CapsuleItem) {
@@ -27,6 +28,10 @@ public class ThrownCapsules {
     public static void onEntityUnload(Entity entity, Level level) {
         Set<ItemEntity> capsules = BY_LEVEL.get(level);
         if (capsules != null) capsules.remove(entity);
+    }
+
+    public static void onLevelUnload(LevelAccessor level) {
+        BY_LEVEL.remove(level);
     }
 
     /**

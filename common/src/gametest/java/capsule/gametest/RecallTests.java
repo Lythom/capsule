@@ -205,6 +205,19 @@ public class RecallTests {
         helper.succeed();
     }
 
+    /**
+     * Alone in its batch: it forgets the capsules of the test level.
+     */
+    @GameTest(template = "empty", batch = "levelUnload")
+    public static void unloadedLevelsAreForgotten(GameTestHelper helper) {
+        ItemEntity capsule = drop(helper, CapsuleTestUtils.emptyCapsule(3), new Vec3(2.5, 2, 2.5), null);
+        assertTrue(helper, ThrownCapsules.in(helper.getLevel()).contains(capsule), "the capsule entity should be tracked");
+        ThrownCapsules.onLevelUnload(helper.getLevel());
+        assertTrue(helper, ThrownCapsules.in(helper.getLevel()).isEmpty(), "an unloaded level should not be tracked");
+        helper.killAllEntities();
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void recallLetsAnEarlyCollidingCapsuleDeploy(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
