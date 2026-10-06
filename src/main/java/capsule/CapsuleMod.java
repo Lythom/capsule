@@ -8,6 +8,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleNetwork;
+import capsule.plugins.claims.Claims;
 import capsule.recipes.CapsuleRecipes;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.structure.CapsuleTemplateManager;
@@ -76,6 +77,7 @@ public class CapsuleMod {
     public static void serverStarting(final ServerStartingEvent e) {
         server = e.getServer();
         Config.populateConfigFolders(server);
+        Claims.loadAdapters();
         if (PrefabsBlueprintAggregatorRecipe.instance != null)
             PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getResourceManager());
     }
