@@ -34,23 +34,28 @@ import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.Rotation;
@@ -61,6 +66,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -103,6 +110,8 @@ public class ClientSmokeTest {
     private volatile String blueprintStructure;
     private volatile int deployedChestDiamonds = -1;
     private volatile int blueprintBlocks = -1;
+    private final List<String> moddedBlocks = new ArrayList<>();
+    private volatile int deployedModdedBlocks = -1;
 
     /**
      * Called by the loader entrypoint at client initialization, so that the log is watched from the model loading on.
@@ -132,6 +141,7 @@ public class ClientSmokeTest {
         deployScenario();
         blueprintScenario();
         previewSurroundingsScenario();
+        moddedBlocksScenario();
 
         scenario.finallyRun("check the log", () -> {
                     synchronized (log.problems) {
@@ -336,6 +346,32 @@ public class ClientSmokeTest {
                 .run("first person view", () -> mc().options.setCameraType(CameraType.FIRST_PERSON));
     }
 
+    /**
+     * Blocks of the mods from issues (#76 farmland, #81 Mob Grinding Utils, #94 Integrated Dynamics, #117 Ad Astra) that
+     * are installed, plus vanilla farmland and crops: captured, previewed and deployed.
+     */
+    private void moddedBlocksScenario() {
+        scenario.async("place the modded blocks on a capture base", 100, () -> onServer(this::prepareModdedBlocks))
+                .run("select the capture base, which shows no preview", () -> select(8))
+                .sleep(40)
+                .run("screenshot", () -> screenshot("21-modded-blocks"))
+                .async("capture them", 100, () -> onServer(this::captureModdedBlocks))
+                .run("select the capsule", () -> select(2))
+                .sleep(40)
+                .run("activate", this::rightClick)
+                .await("activated", 40, () -> mainHandIs(CapsuleState.ACTIVATED))
+                .await("full preview received", 100, () -> CapsulePreviewHandler.cachedFullPreview.containsKey(CapsuleItem.getStructureName(mc().player.getMainHandItem())))
+                .sleep(10)
+                .run("screenshot", () -> screenshot("22-modded-blocks-preview"))
+                .run("throw", this::rightClick)
+                .await("deployed", 200, serverCondition(p -> capsuleEntity(p, s -> CapsuleItem.hasState(s, CapsuleState.DEPLOYED)) != null))
+                .async("count the deployed blocks", 100, () -> onServer(p -> deployedModdedBlocks = deployedBlocks(p)))
+                .run("check", () -> scenario.check("the modded blocks deploy", deployedModdedBlocks == moddedBlocks.size(),
+                        deployedModdedBlocks + " blocks deployed, " + moddedBlocks.size() + " captured: " + String.join(" ", moddedBlocks)))
+                .sleep(20)
+                .run("screenshot", () -> screenshot("23-modded-blocks-deployed"));
+    }
+
     private static Minecraft mc() {
         return Minecraft.getInstance();
     }
@@ -403,6 +439,81 @@ public class ClientSmokeTest {
         level.setBlock(chest, Blocks.CHEST.defaultBlockState(), 2 | 16);
         if (level.getBlockEntity(chest) instanceof ChestBlockEntity be) be.setItem(0, new ItemStack(Items.DIAMOND, CHEST_DIAMONDS));
         flyTo(player, 0.5, ground + 3, -4.5, 25);
+    }
+
+    private void prepareModdedBlocks(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        BlockPos marker = moddedBlocksMarkerPos();
+        level.setBlockAndUpdate(marker, CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP));
+        BlockPos floor = marker.above();
+        for (int dx = -2; dx <= 2; dx++) {
+            place(level, floor.offset(dx, 0, -2), "ad_astra:steel_cable");
+            place(level, floor.offset(dx, 0, 0), dx < 2 ? "integrateddynamics:cable" : "integrateddynamics:variablestore");
+        }
+        for (int dx = -2; dx <= 0; dx++) place(level, floor.offset(dx, 0, -1), "ad_astra:desh_fluid_pipe");
+        place(level, floor.offset(2, 0, -1), "ad_astra:oxygen_loader");
+        String[][] fields = {{"minecraft:farmland", "minecraft:wheat"}, {"minecraft:farmland", "farmersdelight:cabbages"},
+                {"farmersdelight:rich_soil_farmland", "farmersdelight:budding_tomatoes"}, {"farmersdelight:rich_soil_farmland", "minecraft:carrots"}};
+        for (int i = 0; i < fields.length; i++) {
+            if (place(level, floor.offset(i - 2, 0, 1), fields[i][0])) place(level, floor.offset(i - 2, 1, 1), fields[i][1]);
+        }
+        place(level, floor.offset(2, 0, 1), "farmersdelight:cooking_pot");
+        place(level, floor.offset(-2, 0, 2), "mob_grinding_utils:dreadful_dirt");
+        place(level, floor.offset(-1, 0, 2), "mob_grinding_utils:delightful_dirt");
+        place(level, floor.offset(1, 0, 2), "farmersdelight:cutting_board");
+        place(level, floor.offset(2, 0, 2), "ad_astra:steel_block");
+        attachPart(player, floor.offset(-1, 0, 0), "integratedtunnels:part_interface_item");
+        attachPart(player, floor.offset(1, 0, 0), "integratedtunnels:part_exporter_item");
+        moddedBlocks.clear();
+        for (BlockPos pos : BlockPos.betweenClosed(floor.offset(-2, 0, -2), floor.offset(2, 4, 2))) {
+            BlockState state = level.getBlockState(pos);
+            if (!state.isAir()) moddedBlocks.add(BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
+        }
+        flyTo(player, marker.getX() + 0.5, ground + 3, marker.getZ() - 7.5, 30);
+    }
+
+    private BlockPos moddedBlocksMarkerPos() {
+        return new BlockPos(-24, ground, 24);
+    }
+
+    /**
+     * Places the block if its mod is installed.
+     */
+    private static boolean place(ServerLevel level, BlockPos pos, String id) {
+        Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(id));
+        block.ifPresent(b -> level.setBlockAndUpdate(pos, b.defaultBlockState()));
+        return block.isPresent();
+    }
+
+    /**
+     * Uses a part item on the top of a cable, as a player attaching it.
+     */
+    private static void attachPart(ServerPlayer player, BlockPos cable, String id) {
+        BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(id)).ifPresent(item -> {
+            ItemStack held = player.getMainHandItem();
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item));
+            player.getMainHandItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(cable).add(0, 0.5, 0), Direction.UP, cable, false)));
+            player.setItemInHand(InteractionHand.MAIN_HAND, held);
+        });
+    }
+
+    private void captureModdedBlocks(ServerPlayer player) {
+        ItemStack capsule = Capsule.newEmptyCapsuleItemStack(0x8B4513, 0xFFD700, CAPTURE_SIZE, false, "Modded blocks", 0);
+        Capsule.captureAtPosition(capsule, player, CAPTURE_SIZE, player.serverLevel(), moddedBlocksMarkerPos().offset(-2, 1, -2));
+        player.getInventory().setItem(2, capsule);
+        flyTo(player, -23.5, ground + 3, -7.5, 30);
+    }
+
+    /**
+     * Non air blocks in the area of the capsule lying around.
+     */
+    private static int deployedBlocks(ServerPlayer player) {
+        CompoundTag spawn = NBTHelper.getOrCreateTag(capsuleEntity(player, s -> true).getItem()).getCompound("spawnPosition");
+        BlockPos start = new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z"));
+        return (int) BlockPos.betweenClosedStream(start, start.offset(CAPTURE_SIZE - 1, CAPTURE_SIZE - 1, CAPTURE_SIZE - 1))
+                .filter(pos -> !player.serverLevel().getBlockState(pos).isAir())
+                .count();
     }
 
     /**
