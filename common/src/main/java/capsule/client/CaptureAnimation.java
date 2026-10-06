@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -22,11 +23,15 @@ import java.util.Map;
 
 /**
  * The captured blocks shrinking into the capsule. The template is not on the client: the animation shows the blocks
- * the client saw when notified, as soon as the server removes them, or a shrinking box when it saw none.
+ * the client saw when notified, as soon as the server removes them, or a shrinking box when it saw none or too many.
  */
 public class CaptureAnimation {
     private static final int DURATION = 16;
-    private static final int MAX_BLOCKS = 4096;
+    static final int MAX_BLOCKS = 4096;
+    /**
+     * Larger cubes shrink as a box: reading all their positions would stall the client.
+     */
+    private static final int MAX_SIZE = 64;
     private static final List<CaptureAnimation> playing = new ArrayList<>();
     /**
      * Frames drawn by capture animations, read by the client smoke test.
@@ -37,7 +42,7 @@ public class CaptureAnimation {
     private final BlockPos origin;
     private final Vec3 target;
     private final AABB box;
-    private final Map<BlockPos, BlockState> standing = new HashMap<>();
+    private final Map<BlockPos, BlockState> standing;
     private final CapsuleTemplateRenderer removed = new CapsuleTemplateRenderer();
     private int age = 0;
 
@@ -55,12 +60,23 @@ public class CaptureAnimation {
         this.origin = center.offset(-size / 2, -size / 2, -size / 2);
         this.target = Vec3.atCenterOf(target.subtract(origin));
         this.box = new AABB(0, 0, 0, size, size, size);
+        this.standing = standing(level, origin, size);
+        removed.templateWorld = new FakeWorld(level);
+    }
+
+    /**
+     * The blocks of the cube from origin and of the row above it, or none when there are more than MAX_BLOCKS.
+     */
+    static Map<BlockPos, BlockState> standing(BlockGetter level, BlockPos origin, int size) {
+        Map<BlockPos, BlockState> standing = new HashMap<>();
+        if (size > MAX_SIZE) return standing;
         for (BlockPos pos : BlockPos.betweenClosed(origin, origin.offset(size - 1, size, size - 1))) {
             BlockState state = level.getBlockState(pos);
-            if (!state.isAir()) standing.put(pos.immutable(), state);
+            if (state.isAir()) continue;
+            if (standing.size() == MAX_BLOCKS) return new HashMap<>();
+            standing.put(pos.immutable(), state);
         }
-        if (standing.size() > MAX_BLOCKS) standing.clear();
-        removed.templateWorld = new FakeWorld(level);
+        return standing;
     }
 
     public static void tick() {
