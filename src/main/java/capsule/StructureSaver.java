@@ -411,7 +411,7 @@ public class StructureSaver {
             template, PlayerEntity actor, PlacementSettings placementsettings) {
         List<BlockPos> expectedOut = template.calculateDeployPositions(worldserver, dest, placementsettings);
         for (BlockPos blockPos : expectedOut) {
-            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() < 0 || !isEntityPlaceEventAllowed(worldserver, blockPos, actor))
+            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() < 0 || !canPlaceBlock(worldserver, blockPos, actor))
                 return false;
         }
         return true;
@@ -421,11 +421,14 @@ public class StructureSaver {
      * Simulate a block placement at all positions to see if anythink revoke the placement of block by the player.
      */
     private static boolean playerCanRemove(ServerWorld worldserver, BlockPos blockPos, @Nullable PlayerEntity player, PlayerEntity actor) {
-        return isEntityPlaceEventAllowed(worldserver, blockPos, actor)
+        return canPlaceBlock(worldserver, blockPos, actor)
                 && (player == null || SecurityCraftOwnerCheck.canTakeBlock(worldserver, blockPos, player));
     }
 
-    private static boolean isEntityPlaceEventAllowed(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
+    /**
+     * Whether protection mods let the player place a block at blockPos, asked with a dirt placement event.
+     */
+    public static boolean canPlaceBlock(ServerWorld worldserver, BlockPos blockPos, PlayerEntity player) {
         BlockSnapshot blocksnapshot = BlockSnapshot.create(worldserver.dimension(), worldserver, blockPos);
         BlockEvent.EntityPlaceEvent event = new BlockEvent.EntityPlaceEvent(blocksnapshot, Blocks.DIRT.defaultBlockState(), player);
         MinecraftForge.EVENT_BUS.post(event);

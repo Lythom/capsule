@@ -68,6 +68,13 @@ minecraft {
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
 
+            // runs ClaimProbeBenchmark once the server started, then stops it (-PmodCompat adds Flan)
+            if (project.hasProperty('claimBenchmark')) {
+                property 'capsule.claimBenchmark', 'true'
+                property 'mixin.env.remapRefMap', 'true'
+                property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+            }
+
             mods {
                 capsule {
                     source sourceSets.main
@@ -104,6 +111,13 @@ repositories {
     }
     maven {
         url "https://www.cursemaven.com"
+    }
+    maven {
+        // Flan for 1.16.5 (Flemmli97), not on Modrinth
+        url "https://gitlab.com/api/v4/projects/21830712/packages/maven"
+        content {
+            includeGroup "io.github.flemmli97"
+        }
     }
 }
 
@@ -142,6 +156,10 @@ dependencies {
 
     // runtimeOnly fg.deobf("curse.maven:immersiveengineering-231951:3099023")
 
+    if (project.hasProperty('modCompat')) {
+        runtimeOnly fg.deobf("io.github.flemmli97:flan:1.16.5-1.7.2:forge", { transitive = false })
+    }
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -151,6 +169,8 @@ test {
 }
 
 jar {
+    // dev only (runServer -PclaimBenchmark)
+    exclude 'capsule/dev/**'
     manifest {
         attributes([
                 "Specification-Title"     : "Capsule",
