@@ -49,7 +49,7 @@ public class BlueprintCapsuleRecipe implements CraftingRecipe {
             ItemStack itemstack = inv.getItem(i);
             nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
             if (itemstack.getItem() instanceof CapsuleItem) {
-                nonnulllist.set(i, itemstack.copy());
+                nonnulllist.set(i, ClearCapsuleRecipe.givenBack(itemstack.copy()));
             }
         }
 

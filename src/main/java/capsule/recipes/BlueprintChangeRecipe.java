@@ -43,7 +43,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
                 blueprintCapsule = itemstack;
             } else if (CapsuleItem.hasStructureLink(itemstack)) {
                 templateCapsule = itemstack;
-                nonnulllist.set(i, templateCapsule.copy());
+                nonnulllist.set(i, ClearCapsuleRecipe.givenBack(templateCapsule.copy()));
             }
 
         }
