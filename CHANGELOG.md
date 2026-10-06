@@ -24,7 +24,7 @@
 - Fix the item frame covering the crafting table in the five starter huts; delete `config/capsule/starters` to get the new huts (#126)
 - Fix prefab blueprint recipes giving back the wrong ingredients once their pattern is moved, and shift-click crafting of blueprints, blueprint changes and recovery capsules also clearing the source capsule (#84)
 - Fix blueprints showing the content they do not have: lectern books, jukebox records and brewing stand bottles
-- Fix capture bases and players who went offline before their capsule landed capturing or deploying in claims: capture bases now act for the player who placed them. Claim mods are asked once per chunk or claim instead of once per block, through the API of Open Parties and Claims and Flan (#91, part 2)
+- Fix capture bases and players who went offline before their capsule landed capturing or deploying in claims: capture bases now act for the player who placed them, and capture bases placed before this version and dispensers can no longer act inside claims (re-place the base to give it an owner). Claim mods are asked once per chunk or claim instead of once per block, through the API of Open Parties and Claims and Flan (#91, part 2)
 - Remove the dead update checker URL, which logged a failed update check at every start
 
 **1.16.5-5.0.76 : preview duration config and custom template load**
