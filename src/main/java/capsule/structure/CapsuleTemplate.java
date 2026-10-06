@@ -149,6 +149,13 @@ public class CapsuleTemplate {
                 listnbt.add(DoubleTag.valueOf(vector3d1.z));
                 compoundnbt.put("Pos", listnbt);
                 compoundnbt.remove("UUID");
+                if (compoundnbt.contains("TileX")) {
+                    // item frames and paintings refuse a saved block far from their position
+                    BlockPos tile = BlockPos.containing(vector3d1);
+                    compoundnbt.putInt("TileX", tile.getX());
+                    compoundnbt.putInt("TileY", tile.getY());
+                    compoundnbt.putInt("TileZ", tile.getZ());
+                }
                 createEntityIgnoreException(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
                     float f = p_242927_6_.mirror(placementIn.getMirror());
                     f = f + (p_242927_6_.getYRot() - p_242927_6_.rotate(placementIn.getRotation()));
