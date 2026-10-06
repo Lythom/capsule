@@ -8,7 +8,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -49,5 +51,19 @@ class CapsuleTemplateManagerTest {
         m.getOrCreateTemplate(reserved);
 
         assertFalse(m.writeToFile(reserved));
+    }
+
+    @Test
+    void missingTemplatesAreEmptyAndNameTheSearchedLocations(@TempDir Path tmp) {
+        CapsuleTemplateManager m = manager(tmp);
+        ResourceLocation missing = new ResourceLocation("prefabs/missing_prefab");
+
+        assertTrue(m.getOrCreateTemplate(missing).getPalette().isEmpty());
+        assertEquals(Arrays.asList(
+                tmp.resolve("prefabs/missing_prefab.schematics").toString(),
+                tmp.resolve("prefabs/missing_prefab.nbt").toString(),
+                "capsule:prefabs/missing_prefab.schematics",
+                "capsule:prefabs/missing_prefab.nbt"
+        ), m.searchedLocations(missing));
     }
 }
