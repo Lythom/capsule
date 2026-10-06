@@ -157,3 +157,22 @@ coordinator only, from the streams' reports.
   keys and the capture-base placer UUID stored in saved data.
 - **Review** – an independent agent runs `scripts/validate-all.sh` from a clean clone and checks every condition above
   with evidence; defects are fixed before the round is reported.
+
+## Round 2b – owner decisions of 2026-10-06 on the round 2 report
+
+- **L1 No lapis tier** – the lapis capsule recipe is removed (blueprints are blue, avoid confusion); the rest of
+  `docs/RECIPES.md` is approved; capsule bodies stay white unless dyed. Recipe tests and docs updated.
+- **L2 No identity, no access inside claims** – every capture or deploy without an identity (vanilla dispensers,
+  capture bases placed before 9.0, any path without a player or placer) is refused inside a claim (adapters and the
+  generic probe), and still allowed outside claims. GameTests on both loaders (counting adapter + a real mod in
+  modCompat).
+- **L3 Protection checked per block** – a single block can be protected, so the generic probe (mods without adapter) must
+  answer per block, not per chunk column. Measure, on 1.21.1 and on 1.16.5, the cost of per-block vs per-chunk probing
+  for capture sizes 3, 11, 31 and 255 (OP), and record the numbers in `docs/CLAIMS.md`. Per-block is adopted when it
+  stays within one server tick (50 ms) for survival sizes (≤ 31, the largest upgraded capsule); the 255 OP figure is
+  reported for the owner. Adapters stay exact per block (Flan, GOML boxes) or per chunk where the mod's claims are
+  chunks (OPAC).
+- **L4 Backport releases prepared** – `dev-1.20`, `dev-1.18`, `dev-1.16` carry L2 and L3 (per block where measured
+  acceptable; 1.16 keeps per block), a final CHANGELOG entry, a working publish path (`publish.sh` with the Forge loader
+  and the right game version, dry-run on each built jar) and a CI config that builds on merge into the version branch;
+  release candidate jars built, boot-tested and handed to the owner. Nothing is pushed to `1.20`, `1.18`, `1.16`.
