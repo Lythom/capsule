@@ -108,6 +108,13 @@ repositories {
     maven {
         url "https://www.cursemaven.com"
     }
+    maven {
+        name 'Modrinth'
+        url 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 dependencies {
@@ -137,6 +144,9 @@ dependencies {
     runtimeOnly fg.deobf("mezz.jei:jei-${minecraft_version}:${jei_version}")
     // compileOnly fg.deobf("curse.maven:security-craft-64760:3577168") // 1.18.1
     compileOnly fg.deobf("curse.maven:security-craft-64760:3696873") // 1.18.2
+    // the claim mods whose API Capsule calls when they are loaded (#91)
+    compileOnly fg.deobf("maven.modrinth:open-parties-and-claims:PJ7R4GPc") // forge-1.18.2-0.32.7
+    compileOnly fg.deobf("maven.modrinth:flan:s6eSPmQi") // 1.18.2-1.11.9-forge
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
