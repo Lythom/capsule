@@ -153,6 +153,15 @@ the loaded recipes and config by `Claims.perBlockMaxSize`: the largest crafted t
 non-overpowered capsule, without empty tag ingredient: netherite 13 by default) plus `capsuleUpgradesLimit` × 2 (10
 upgrades by default): 33. A pack adding a larger tier or more upgrades moves it. It chooses the predicate of
 `Claims.denied` (and of the Flan adapter). A full 33³ box is 35 937 probes, 1.2 times the 31³ measured above.
+The largest tier is read once per set of recipes (`/reload` loads new ones), from copies of the recipe results;
+`capsuleUpgradesLimit` is read on each call.
+
+**Decision (owner): no cap on the per block limit**, modpack makers choose their upgrade limit. The probes grow with the
+cube of the size: from the measures above, 0.2 to 0.3 µs per probe outside claims and 1.7 µs inside a denying claim
+on NeoForge (0.06 to 0.3 µs on Fabric). 20 upgrades (53, 148 877 probes, 5 times 31³): about 30 to 45 ms per
+capture or deploy outside claims and 0.26 s inside a denying claim on NeoForge (10 to 30 ms and 50 ms on Fabric); 50
+upgrades (113, 1.4 million probes, 48 times 31³): about 0.3 to 0.45 s and 2.5 s (0.1 to 0.3 s and 0.5 s on Fabric).
+The server freezes for that time, once per capture or deploy of the largest capsules.
 
 ### Adapter cost (measured)
 

@@ -7,6 +7,7 @@ import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
 import capsule.blocks.CapsuleBlocks;
 import capsule.helpers.Capsule;
+import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.plugins.claims.ClaimAdapter;
@@ -17,11 +18,19 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DispenserBlock;
@@ -33,10 +42,13 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
 import static capsule.gametest.CapsuleTestUtils.capture;
@@ -197,6 +209,35 @@ public class ClaimTests {
             CapsuleTestUtils.removePlayer(stranger);
         }
         helper.succeed();
+    }
+
+    /**
+     * A modpack recipe crafting a capsule of even size: reading the largest survival capsule must not resize the
+     * recipe result. After a reload, so that the new recipes are read. Its own batch: the reload replaces the recipes.
+     */
+    @GameTest(template = "empty", batch = "claimtiers", timeoutTicks = 400)
+    public static void theLargestSurvivalCapsuleLeavesTheRecipesUnchanged(GameTestHelper helper) {
+        MinecraftServer server = helper.getLevel().getServer();
+        ItemStack even = CapsuleTestUtils.emptyCapsule(3);
+        NBTHelper.updateTag(even, tag -> tag.putInt("size", 4));
+        RecipeHolder<ShapedRecipe> evenRecipe = new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "test_even_size"),
+                new ShapedRecipe("", CraftingBookCategory.MISC, ShapedRecipePattern.of(Map.of('#', Ingredient.of(Items.BEDROCK)), "#"), even));
+        CompletableFuture<Integer> largest = server.reloadResources(server.getPackRepository().getSelectedIds()).thenApply(reloaded -> {
+            RecipeManager recipes = server.getRecipeManager();
+            List<RecipeHolder<?>> original = List.copyOf(recipes.getRecipes());
+            recipes.replaceRecipes(Stream.concat(original.stream(), Stream.of(evenRecipe)).toList());
+            try {
+                return Claims.perBlockMaxSize(server);
+            } finally {
+                recipes.replaceRecipes(original);
+            }
+        });
+        helper.succeedWhen(() -> {
+            assertTrue(helper, largest.isDone(), "reloading");
+            int size = NBTHelper.getOrCreateTag(even).getInt("size");
+            assertTrue(helper, size == 4, "the recipe result keeps its size 4, not " + size);
+            assertTrue(helper, largest.join() == 13 + 2 * Config.upgradeLimit, "the largest survival capsule is still netherite with every upgrade");
+        });
     }
 
     @GameTest(template = "empty", batch = "claims")

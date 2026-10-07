@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.ChunkPos;
@@ -55,6 +56,12 @@ public final class Claims {
      */
     private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
     private static boolean modsLoaded = false;
+    /**
+     * The recipes largestTier was read from: a reload replaces them.
+     */
+    @Nullable
+    private static RecipeManager tiersRecipes = null;
+    private static int largestTier = 1;
 
     private Claims() {
     }
@@ -255,13 +262,18 @@ public final class Claims {
      * Above, OP captures and deploys would take seconds, so they are probed per chunk column.
      */
     public static int perBlockMaxSize(MinecraftServer server) {
-        int largestTier = server.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
-                .map(RecipeHolder::value)
-                .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
-                .map(recipe -> recipe.getResultItem(server.registryAccess()))
-                .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
-                .mapToInt(CapsuleItem::getSize)
-                .max().orElse(1);
+        RecipeManager recipes = server.getRecipeManager();
+        if (recipes != tiersRecipes) {
+            // copies: getSize resizes invalid sizes, the recipe results are shared
+            largestTier = recipes.getAllRecipesFor(RecipeType.CRAFTING).stream()
+                    .map(RecipeHolder::value)
+                    .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
+                    .map(recipe -> recipe.getResultItem(server.registryAccess()).copy())
+                    .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
+                    .mapToInt(CapsuleItem::getSize)
+                    .max().orElse(1);
+            tiersRecipes = recipes;
+        }
         return largestTier + Config.upgradeLimit * CapsuleItems.UPGRADE_STEP;
     }
 
