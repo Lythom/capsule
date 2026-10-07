@@ -4,7 +4,7 @@
 
 - Fix server crash or kick with install paths containing reserved Windows names, e.g. Flatpak ATLauncher (#125)
 - Fix furnaces dropping their stored experience on every capture (#122)
-- Fix SecurityCraft blocks being captured by players who do not own them (#119). It needs SecurityCraft 1.9.9 or later: with older versions, SecurityCraft blocks are not captured
+- Fix SecurityCraft blocks being captured by players who do not own them (#119)
 - Fix deploys floating above snow layers and grass (#116)
 - Fix starter and reward capsules sharing block entity data with their template, which emptied Sophisticated Storage containers (#115)
 - Fix "Invalid player data" disconnections with mods serializing loot tables (#109)

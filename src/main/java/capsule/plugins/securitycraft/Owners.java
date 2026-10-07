@@ -1,6 +1,7 @@
 package capsule.plugins.securitycraft;
 
 import net.geforcemods.securitycraft.api.IOwnable;
+import net.geforcemods.securitycraft.api.Owner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -13,12 +14,24 @@ import org.apache.logging.log4j.Logger;
  */
 class Owners {
     private static final Logger LOGGER = LogManager.getLogger(Owners.class);
+    // SecurityCraft before v1.9.9 has no isOwnedBy(Entity), it is asked with an Owner
+    private static boolean legacy;
+    private static boolean warned;
 
     static boolean canTake(ServerLevel level, BlockPos pos, Player player) {
         try {
-            return !(level.getBlockEntity(pos) instanceof IOwnable ownable) || ownable.isOwnedBy(player);
+            if (!(level.getBlockEntity(pos) instanceof IOwnable ownable)) return true;
+            if (!legacy) {
+                try {
+                    return ownable.isOwnedBy(player);
+                } catch (NoSuchMethodError e) {
+                    legacy = true;
+                }
+            }
+            return ownable.isOwnedBy(new Owner(player));
         } catch (RuntimeException | LinkageError e) {
-            LOGGER.warn("Could not check the SecurityCraft owner of the block at {}, it will not be captured", pos, e);
+            if (!warned) LOGGER.warn("Could not check the SecurityCraft owner of the block at {}, blocks whose owner cannot be checked are not captured", pos, e);
+            warned = true;
             return false;
         }
     }
