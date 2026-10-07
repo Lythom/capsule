@@ -121,8 +121,7 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   `claimscale` for registered claim adapters, one per claim mod, `claimprobe` for a box wider than the test area,
   `claimtiers` for recipes replaced after a reload, `claimfailures` for failing adapters, which refuse every capture
   and deploy, `flandepth` for Flan's claim depth config), and must restore what they change (see `ConfigTests`).
-- A bug fix comes with a test that fails before the fix; record the failure message in the commit and in
-  `docs/ISSUE_TRIAGE.md`.
+- A bug fix comes with a test that fails before the fix; record the failure message in the commit.
 
 ### Mods on the GameTest runtime
 
@@ -317,7 +316,7 @@ scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/li
   [16:05:44] [Server thread/INFO]: /capsule giveEmpty [<size>]
   OK: fabric server booted with Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar and stopped cleanly
   ```
-- It also fails when capsule asks an update checker (the dead `updateJSONURL` removed in 760456c).
+- It also fails when capsule asks an update checker (`neoforge.mods.toml` declares no `updateJSONURL`).
 - `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 21, `curl` and `python3`, and network access.
   Downloads (installers, Fabric API, Forge Config API Port, `EXTRA_MODS` of `validate-all.sh`) and the installed NeoForge
   server are cached in `CAPSULE_CACHE` (default `~/.cache/capsule-validation`), outside the repository

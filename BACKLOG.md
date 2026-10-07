@@ -1,8 +1,6 @@
 # Backlog
 
-Work identified on the dev-1.21.1 branch and not done there, after round 2 (`docs/PLAN-ROUND2.md`). Effort: S (hours),
-M (a day or two), L (several days). Triage details and ready-to-post issue comments are in `docs/ISSUE_TRIAGE.md`,
-backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
+Known gaps and possible work, not scheduled. Effort: S (hours), M (a day or two), L (several days).
 
 ## Confirmed gaps
 
@@ -23,8 +21,8 @@ blocks as wireframe. Effort: M.
 ### Preview hidden by translucent terrain in front of it
 Issues: https://github.com/Lythom/capsule/issues/88
 
-The translucent preview (0c1d3aa) is drawn after the translucent terrain: water and stained glass in front of it hide
-it, as they hid the opaque preview. Optional: draw it before the translucent terrain (render stage and depth to
+The translucent preview is drawn after the translucent terrain: water and stained glass in front of it hide it.
+Optional: draw it before the translucent terrain (render stage and depth to
 check). Effort: S to M.
 
 ### Preview and wireframe shadows with Iris
@@ -35,7 +33,7 @@ fired in Iris' shadow pass), and the capture zone wireframe on both loaders (cli
 `*-iris/02-*.png`). Cosmetic; skip drawing during the shadow pass. Effort: S.
 
 ### Creative copy of a deployed capsule shows an empty full preview
-Seen during round 2, not investigated: a deployed capsule copied in creative (middle click) previews nothing. Effort: S.
+Not investigated: a deployed capsule copied in creative (middle click) previews nothing. Effort: S.
 
 ### Fabric: blueprint materials from modded storages
 Blueprint material sources use Transfer API storages; a storage that is not slotted is read as its list of views,
@@ -52,7 +50,8 @@ Effort: S.
 ### Mob Grinding Utils dirt in the preview
 Issues: https://github.com/Lythom/capsule/issues/81
 
-Blocked: Mob Grinding Utils has no 1.21.1 build. The preview hardening (6c5aed7) covers the reported crash pattern.
+Blocked: Mob Grinding Utils has no 1.21.1 build. The full preview skips a block whose placement, shape update or
+model lookup throws (the reported crash), and falls back to the wireframe.
 Check when a build exists (`validate-all.sh --modded` takes its jar). Effort: S.
 
 ### Starter templates named `_stater_*`
@@ -62,11 +61,11 @@ Effort: S.
 ## Tests and tooling
 
 ### Recovery recipe shift-click guard has no test
-fa7b2c2 stops the clear recipe from matching a capsule put back by a blueprint, blueprint change or recovery craft; the
-blueprint cases have GameTests, the recovery one does not. Effort: S.
+The clear recipe does not match a capsule put back by a blueprint, blueprint change or recovery craft; the blueprint
+cases have GameTests, the recovery one does not. Effort: S.
 
 ### Maven Central rate limits
-Maven Central answered 429 (rate limit) to the build machine during round 2. Workaround outside the repository: a
+Maven Central can answer 429 (rate limit) to a build machine. Workaround outside the repository: a
 Gradle init script putting a Maven Central mirror first, passed with `GRADLE_ARGS="-I mirror.gradle"` to the scripts. A committed mirror or a
 retry would make clean clones more reliable. Effort: S.
 
@@ -86,24 +85,42 @@ does both itself (vanilla `GameTestRegistry`, `GameTestTicker`). A NeoForge upda
 ## Platforms and versions
 
 ### Multi-version builds with Stonecutter
-Targets from `docs/VERSIONS.md`: 1.21.1 (NeoForge + Fabric), 1.20.1 (Forge + Fabric), 26.1.2 and 26.2 (NeoForge +
-Fabric; Java 25, unobfuscated, `ResourceLocation` renamed `Identifier` from 1.21.11; 26.2 asked by a user, expected
-small once 26.1 builds). Stonecutter 0.9.x on top of the multiloader layout, one build script per loader (ModDevGradle,
-ModDevGradle legacyforge for Forge 1.20.1, Loom for Fabric), version-specific code behind `//? if` comments. The fixes
-are already backported to the Forge branches `dev-1.20`, `dev-1.18`, `dev-1.16` (`docs/BACKPORTS.md`). Effort: L.
+Targets: 1.21.1 (NeoForge + Fabric), 1.20.1 (Forge + Fabric), 26.1.2 and 26.2 (NeoForge + Fabric). Older versions
+stay on their Forge branches (`1.20`, `1.18`, `1.16`), which take bug fixes only. Effort: L.
+
+Stonecutter 0.9.x on top of the multiloader layout (`common`, one project per loader, platform interfaces loaded with
+`ServiceLoader`):
+
+- one build script per loader: ModDevGradle for NeoForge 1.21.1 and 26.x, ModDevGradle `legacyforge` for Forge 1.20.1
+  (it supports Forge 1.17 to 1.20.1 only), Loom for Fabric;
+- version specific code behind `//? if >=1.21.1 {` style comments, kept small by the platform interfaces;
+- the official Stonecutter multiloader template (codeberg.org/stonecutter/template-multiloader) as reference.
+
+Porting notes:
+
+- **1.20.1**: no data components. Capsule stores its state in `minecraft:custom_data` through `NBTHelper`, and the base
+  color in `minecraft:dyed_color` (`MinecraftNBT`); on 1.20.1 both become plain item NBT (`getTag()`, `display.color`).
+  Networking uses `SimpleChannel` instead of payloads, registries `DeferredRegister` from Forge, enchantments are
+  classes instead of data driven (`recall` must become an `Enchantment` subclass again), recipes and loot tables use the
+  older JSON formats (`item` + `nbt` results), and Java 17.
+- **1.21.5+**: GameTest is data driven `test_instance` registry entries with test environments and a `/test` command;
+  `CapsuleGameTests` and the loader registrations must be rewritten (the test bodies mostly survive).
+- **1.21.11**: `ResourceLocation` is renamed `Identifier` (a plain replacement with Stonecutter).
+- **26.x**: Java 25, unobfuscated game (no intermediary or reobfuscation, Parchment optional), NeoForge versions with
+  four parts (`26.1.2.114`), Loom 1.18+ which needs Gradle running on Java 25.
+- Fabric client GameTests (`fabric-client-gametest-api-v1`) exist from 1.21.4; on 1.21.1 the client smoke test
+  (`scripts/client-smoke.sh`) fills that role.
 
 ### ItemPhysic compatibility
 Issues: https://github.com/Lythom/capsule/issues/72
 
 Later. Thrown capsules deploy from `Item#onEntityItemUpdate` and the item entity collision flags, which ItemPhysic
-replaces. Keep compatibility easy: `ThrownCapsules` (0640895, `common`) already tracks every thrown capsule per level,
+replaces. `ThrownCapsules` (`common`) tracks every thrown capsule per level,
 so a fallback can deploy on `onGround()` or after a timeout without a new scan. Effort: M.
 
 ## Decided, not doing
 
-Owner's review of the backlog, 2026-10-06:
-
-- **Forge 1.21.1**: dropped. 1.21.1 packs are NeoForge and Fabric (`docs/VERSIONS.md`).
+- **Forge 1.21.1**: dropped. 1.21.1 packs are NeoForge and Fabric.
 - **Experience merging into an orb already near a capture** (#122): won't fix, whoever finds it deserves it.
 - **Updated default templates never reach existing installs**: fine, users delete the config folder
   (`config/capsule/loot`, `starters`, `blueprint_whitelist.json`).

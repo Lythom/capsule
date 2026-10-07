@@ -7,8 +7,8 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 ## Loaders ##
 
 Minecraft 1.21.1 builds exist for **NeoForge** and **Fabric** (with Fabric API and Forge Config API Port), from the same
-code: game logic in `common`, loader glue in `neoforge` and `fabric`. Older Minecraft versions use Forge; target
-versions are in [docs/VERSIONS.md](docs/VERSIONS.md).
+code: game logic in `common`, loader glue in `neoforge` and `fabric`. Older Minecraft versions use Forge, each on its
+own branch (`1.20` for 1.20.1, `1.18` for 1.18.2, `1.16` for 1.16.5).
 
 Capsule recipes and information pages show in **JEI**, **REI** and **EMI** on both loaders. Captures and deploys respect
 claim mods (Open Parties and Claims, Flan, Get Off My Lawn and others, see [docs/CLAIMS.md](docs/CLAIMS.md)).
