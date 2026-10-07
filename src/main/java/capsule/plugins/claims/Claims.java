@@ -35,10 +35,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 
 /**
- * Whether claim mods let a player capture or deploy blocks. Mods with an adapter are asked once per chunk or claim;
- * the positions they do not cover are probed with a block placement event, so that claim mods without adapter still
- * protect them: each position up to the largest survival capsule, once per chunk column above. When a loaded protection
- * mod cannot be checked, captures and deploys are refused.
+ * Whether claim mods let a player capture or deploy blocks. Mods with an adapter are asked through their API, once per
+ * chunk or claim (Flan per position, like the probe); the positions they do not cover are probed with a block placement
+ * event, so that claim mods without adapter still protect them: each position up to the largest survival capsule, once
+ * per chunk column above. When a loaded protection mod cannot be checked, captures and deploys are refused.
  */
 public final class Claims {
     private static final Logger LOGGER = LogManager.getLogger(Claims.class);
@@ -72,17 +72,18 @@ public final class Claims {
     }
 
     public interface Factory {
-        ClaimAdapter create() throws ReflectiveOperationException;
+        ClaimAdapter create();
     }
 
     /**
-     * Loads the adapters of the protection mods present, once, when the server starts.
+     * Loads the adapters of the protection mods present, once, when the server starts. Each adapter calls the API of
+     * its mod: lambdas, not constructor references, load an adapter class only when its mod is loaded.
      */
     public static void loadAdapters() {
         if (modsLoaded) return;
         modsLoaded = true;
-        load("openpartiesandclaims", OpenPartiesAndClaimsAdapter::new);
-        load("flan", FlanAdapter::new);
+        load("openpartiesandclaims", () -> new OpenPartiesAndClaimsAdapter());
+        load("flan", () -> new FlanAdapter());
     }
 
     /**
@@ -97,7 +98,7 @@ public final class Claims {
         ClaimAdapter adapter;
         try {
             adapter = factory.create();
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+        } catch (RuntimeException | LinkageError e) {
             adapter = new Unusable(ModList.get().getModContainerById(modId)
                     .map(mod -> mod.getModInfo().getDisplayName() + " " + mod.getModInfo().getVersion())
                     .orElse(modId));
@@ -168,7 +169,7 @@ public final class Claims {
             List<Claim> claims;
             try {
                 claims = adapter.claims(level, box, actor);
-            } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            } catch (RuntimeException | LinkageError e) {
                 if (REPORTED.add(adapter)) {
                     LOGGER.error("Captures and deploys are refused while Capsule cannot check the claims of {}. Please report this incompatibility.", adapter.name(), e);
                 }
@@ -188,7 +189,7 @@ public final class Claims {
             adapterClaims.long2ObjectEntrySet().forEach(e -> claimsByChunk.computeIfAbsent(e.getLongKey(), k -> new ArrayList<>()).add(e.getValue()));
         }
 
-        boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
+        boolean perBlock = perBlock(box);
         LongSet deniedColumns = perBlock ? LongSets.EMPTY_SET : deniedColumns(level, box, claimsByChunk, actor);
 
         return pos -> {
@@ -260,8 +261,15 @@ public final class Claims {
                 .orElse(null);
     }
 
+    /**
+     * Whether the positions of box are probed one by one, else once per chunk column.
+     */
+    static boolean perBlock(BoundingBox box) {
+        return Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
+    }
+
     @Nullable
-    private static BoundingBox intersection(BoundingBox a, BoundingBox b) {
+    static BoundingBox intersection(BoundingBox a, BoundingBox b) {
         if (!a.intersects(b)) return null;
         return new BoundingBox(Math.max(a.minX(), b.minX()), Math.max(a.minY(), b.minY()), Math.max(a.minZ(), b.minZ()),
                 Math.min(a.maxX(), b.maxX()), Math.min(a.maxY(), b.maxY()), Math.min(a.maxZ(), b.maxZ()));

@@ -119,6 +119,13 @@ repositories {
     maven {
         url "https://maven.shedaniel.me"
     }
+    maven {
+        name 'Modrinth'
+        url 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 dependencies {
@@ -160,7 +167,10 @@ dependencies {
 //    modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-forge:${rei_version}"
 //    modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-forge:${rei_version}"
 
-//    compileOnly fg.deobf("curse.maven:security-craft-64760:3696873") // 1.18.2
+    // the protection mods whose API Capsule calls when they are loaded (#91, #119)
+    compileOnly fg.deobf("maven.modrinth:open-parties-and-claims:PkZL3SuC") // forge-1.20.1-0.32.7
+    compileOnly fg.deobf("maven.modrinth:flan:Gh42Sknw") // 1.20.1-1.11.16-forge
+    compileOnly fg.deobf("maven.modrinth:security-craft:PhNy7dJx") // v1.10.2.1
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
