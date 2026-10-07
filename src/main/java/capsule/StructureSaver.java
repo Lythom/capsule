@@ -14,7 +14,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ExperienceOrbEntity;
 import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.item.minecart.ContainerMinecartEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IClearable;
@@ -118,10 +117,7 @@ public class StructureSaver {
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
             for (Entity e : outCapturedEntities) {
-                if (e instanceof ContainerMinecartEntity) {
-                    ContainerMinecartEntity eMinecart = (ContainerMinecartEntity) e;
-                    eMinecart.dropContentsWhenDead(false);
-                }
+                IClearable.tryClear(e);
                 e.remove();
             }
             // check if some remove failed, exclude those blocks from the template.
@@ -367,10 +363,7 @@ public class StructureSaver {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
-                if (e instanceof ContainerMinecartEntity) {
-                    ContainerMinecartEntity eMinecart = (ContainerMinecartEntity) e;
-                    eMinecart.dropContentsWhenDead(false);
-                }
+                IClearable.tryClear(e);
                 e.remove();
             }
             return false;
