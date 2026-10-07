@@ -1,10 +1,13 @@
 # Modpack making tools
 
+Features marked [since x.y] need at least that Capsule version: 9.1 is the 1.21.1 release (NeoForge and Fabric). The player features are on the [Home](Home) page.
+
 - [Modpack making tools](#modpack-making-tools)
   * [Types of Capsules](#types-of-capsules)
     + [Standard](#standard)
     + [Rewards](#rewards)
     + [Loots](#loots)
+    + [Starters](#starters)
     + [Blueprints](#blueprints)
         - [Whitelist](#whitelist)
   * [How to](#how-to)
@@ -13,17 +16,24 @@
     + [Add a preconfigured blueprint](#add-a-preconfigured-blueprint)
     + [Relabeling a Capsule](#relabeling-a-capsule)
     + [Setting the author of a capsule](#setting-the-author-of-a-capsule)
-    + [Dying a capsule](#dying-a-capsule)
+    + [Dyeing a capsule](#dyeing-a-capsule)
+    + [Setting a deployment offset](#setting-a-deployment-offset)
     + [Create a Template to be used as Loot](#create-a-template-to-be-used-as-loot)
     + [Test looting system](#test-looting-system)
-    + [Change starters capsules](#change-starters-capsules)
-  * [Submit your templates !](#submit-your-templates--)
+    + [Change starter capsules](#change-starter-capsules)
+  * [Template files](#template-files)
+  * [Configuration](#configuration)
+    + [Excluded blocks](#excluded-blocks)
+    + [Overridable blocks](#overridable-blocks)
+    + [Tags](#tags)
+    + [Recipes](#recipes)
+    + [Loyalty](#loyalty)
+  * [Claims and protection](#claims-and-protection)
+  * [Submit your templates!](#submit-your-templates)
   * [Other tools](#other-tools)
     + [Exporting the item NBT](#exporting-the-item-nbt)
-    + [Exporting a block + TileEntity](#exporting-a-block---tileentity)
+    + [Exporting a block + block entity](#exporting-a-block--block-entity)
   * [Capsule NBT data reference](#capsule-nbt-data-reference)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 
 ## Types of Capsules
@@ -32,67 +42,93 @@ There are 3 types of capsules to know in order to use Capsule as a modpack makin
 
 ### Standard
 
-Standard capsules are live created by players while playing. They are stored in (1.12-)<worldsave>/structures/capsules or (1.16+)/<worldsave>/capsules for each world.
+Standard capsules are created live by players while playing. They are stored in `<worldsave>/structures/capsule` (1.12 and older) or `<worldsave>/capsules` (1.16 and newer) for each world.
 
-When the player capture some new content with an Empty Capsule, a new Template file is created there. Through the game, only this crafted Capsule and the Recovery Capsules linked to it can modify the Template file. In-game commands for modpackmakers are non-destructive on live created capsules, so you can't mess with players contents if using commands on a "live" server. The Template file is empty if the capsule is deployed, and contains the captured region data if the capsule is undeployed, so you want to create rewards from undeployed capsules.
+When the player captures some new content with an Empty Capsule, a new Template file is created there. Through the game, only this crafted Capsule and the Recovery Capsules linked to it can modify the Template file. In-game commands for modpack makers are non-destructive on live created capsules, so you can't mess with players' contents if using commands on a "live" server. The Template file is empty if the capsule is deployed, and contains the captured region data if the capsule is undeployed, so you want to create rewards from undeployed capsules.
 
 #### How to give one
 
-Apart from the player crafting it's own capsule, there are 2 ways to give players preloaded standard (reusable) capsules :
-- [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#givelinked).
-- [since 3.2.95] As starter capsule, given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
+Apart from the player crafting their own capsule, there are 2 ways to give players preloaded standard (reusable) capsules:
+- [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](Commands#givelinked) ([since 9.1] add `true` to give it with Loyalty).
+- [since 3.2.95] As a [starter capsule](#starters), given when the player logs in for the first time.
 
 #### About rotation
 
-Standard capsules can be rotated and mirrored by players using left click / shift+left click while previewing deloyment. All vanilla blocks, tileEntities and non-living entities (minecarts,etc) are supported but modded tileEntities will prevent a rotation by default. This is to prevent messing with modded tileEntities that have specific considerations with their orientation that capsule cannot know.
+Standard capsules can be rotated and mirrored by players using left click / sneak + left click while previewing deployment. All vanilla blocks, block entities and non-living entities (minecarts, etc.) are supported, but modded block entities will prevent a rotation by default. This is to prevent messing with modded block entities that have specific considerations about their orientation that Capsule cannot know.
 
-If you want capsule to still try to rotate some specific block, you can whitelist them for blueprints, it will allow the block both to rotate in regular capsules and be used in blueprints. Checkout the [Blueprint whitelist section](#whitelist).
+If you want Capsule to still try to rotate some specific block, you can whitelist it for blueprints: it will allow the block both to rotate in regular capsules and to be used in blueprints. Check out the [Blueprint whitelist section](#whitelist).
+
+Mirroring can be disabled with `allowMirror = false` (see [Configuration](#configuration)), for example for multiblocks that don't support it.
 
 ### Rewards
 
-Reward capsules are what you would be doing most. They are prepared by modpack maker, and stored in the config/capsule/rewards folder by default.
+Reward capsules are what you would be doing most. They are prepared by the modpack maker, and stored in the `config/capsule/rewards` folder by default (`rewardTemplatesPath`).
 
-Those capsule are always oneUse (item is destroyed when successfully deployed), but the Template file is never emptied. That means a Reward Capsule can be given any number of time to any number of players.
+Those capsules are always one-use (the item is destroyed when successfully deployed), but the Template file is never emptied. That means a Reward Capsule can be given any number of times to any number of players.
 
 #### How to give one
 
 The players won't be able to get those capsules by themselves. They can be given:
 
-- [since 3.2.95] Using the command [`/capsule fromExistingReward <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#fromexistingreward)
+- [since 3.2.95] Using the command [`/capsule fromExistingReward <reward_name> [playerName]`](Commands#fromexistingreward)
 - in another reward or loot capsule (#capsuleception :D)
 - as a quest reward (choose your favorite quest mod)
-- using any mod that can reward an ItemStack with custom nbt data
-- if using a map template, placed anywhere in the world (chest, item frame, be creative !)
+- using any mod that can reward an ItemStack with custom data (see [Exporting the item NBT](#exporting-the-item-nbt))
+- if using a map template, placed anywhere in the world (chest, item frame, be creative!)
 
 
 ### Loots
 
-Loot capsules are reward capsule that appears in the loot table of dungeon chests. They are taken from specifics folders defined in the config file.
+Loot capsules are reward capsules that appear in the loot tables of dungeon chests. They are taken from specific folders defined in the config file.
 
-The Template files located under any of the `lootTemplatesPaths` entry in the config file will be eligible to spawn as loot in dungeon chests. They work the same way as Reward Capsule except they have this additional way to be obtain : the player can find them in a loot chest.
+The Template files located under any of the `lootTemplatesPaths` entries in the config file will be eligible to spawn as loot in dungeon chests. They work the same way as Reward Capsules, except they have this additional way to be obtained: the player can find them in a loot chest.
 
-By default, 3 folders are defined in the config file (in "/config/capsule/loot/…") that can be filled as you wish.
+By default, 3 folders are defined in the config file (`config/capsule/loot/common`, `uncommon` and `rare`, weights 10, 6 and 2) that can be filled as you wish. Each folder has a weight: the chance for the folder to be picked rather than another when selecting a loot. To lower the chance of getting a capsule at all, add an empty folder with a weight.
 
-Each folder will get an entry in the capsule config file on server restart, to be able to configure weight (chance for the folder to be picked rather than another when selecting a loot).
+The chests that can hold a capsule are listed in `lootTablesList` (by default mineshafts, bastions, shipwrecks, desert and jungle temples, end cities, igloos, dungeons, strongholds, villages, buried treasures, pillager outposts, ocean ruins and woodland mansions). Any loot table id works, for example `minecraft:gameplay/fishing/treasure` or `minecraft:entities/villager`.
 
+[since 3.2.102] With `allowBlueprintReward = true` (default), a loot template without entities is given as a pre-charged blueprint instead of a one-use capsule.
+
+### Starters
+
+[since 3.2.95] Starter capsules are standard (reusable) capsules given when a player logs in for the first time. Starters can be added or removed in the `config/capsule/starters` folder (`starterTemplatesPath`). To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`.
+
+[since 3.3.5] `starterMode` chooses what a new player gets: `random` (default, one random starter), `all`, or `none`. An empty `starterTemplatesPath` also disables starters.
 
 ### Blueprints
 
 [since 3.2.95]
 
-Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [https://imgur.com/gallery/vN1sJrf](https://imgur.com/gallery/vN1sJrf) for more information on how to use as a player).
+Blueprint capsules allow players to build structures multiple times by taking materials from the player inventory and any linked inventory. The blueprint makes it easy to build the structure (i.e. a multiblock or a wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible, so it makes it very easy to experiment when placing a structure. See the [blueprint player documentation](Home#blueprints) and [the builder's daydream update](Changelog-1.12.2-Builders-daydream-update) for more information on how to use them as a player.
 
-Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: (1.12-)<worldsave>/structures/capsules or (1.16+)/<worldsave>/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
+Blueprints crafted by players have a dedicated template, created when crafted, that is located in the same folder as standard capsules: `<worldsave>/structures/capsule` (1.12 and older) or `<worldsave>/capsules` (1.16 and newer). They can be identified by their prefix: blueprints are prefixed "B-" and standard capsules "C-".
 
 #### How to give one
 
-Apart from the default player recipe, Blueprints capsules can be accessed in 2 ways :
+Apart from the default player recipe, Blueprint capsules can be obtained in 3 ways:
 - Using a craft recipe of [preconfigured blueprints](#add-a-preconfigured-blueprint) (the modpack maker can provide specific structures to be craftable).
-- using command [`/capsule giveBlueprint <reward_name> [playerName]`](https://github.com/Lythom/capsule/wiki/Commands#giveblueprint).
+- Using the command [`/capsule giveBlueprint <reward_name> [playerName]`](Commands#giveblueprint).
+- As [loot](#loots), pre-charged.
 
 #### Whitelist
 
-By default tile entities are not supported by blueprints. Still, it is possible to allow specific tile entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (ie. "minecraft:chest") or a json object with properties "block" and "keepNBT". Exemple of the immersive engineering conveyor belt that is whitelisted by default:
+By default block entities are not supported by blueprints. Still, it is possible to add specific block entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (i.e. "minecraft:chest") or a JSON object with the properties "block" and "keepNBT".
+
+[since 9.1] The default whitelist covers the 1.21.1 vanilla block entities: signs and hanging signs with their text, banners with their patterns, heads, campfires, shulker boxes, ender chests, decorated pots, chiseled bookshelves, the crafter with its disabled slots, command blocks with their command… Inventories are never kept, and blueprint blocks never show a content they lost (chiseled bookshelf books, lectern book, jukebox record, brewing stand bottles). The file is created on the first start and never updated: on existing installs, delete `config/capsule/blueprint_whitelist.json` to get the new list. After editing the file, use [`/capsule reloadWhitelist`](Commands#reloadwhitelist) or restart.
+
+Example from the default 1.21.1 list, the sign text is kept but nothing else:
+```json
+{
+  "block": "minecraft:oak_sign",
+  "keepNBT": {
+    "front_text": null,
+    "back_text": null,
+    "is_waxed": null
+  }
+},
+```
+
+Example of the Immersive Engineering conveyor belt, which was whitelisted by default on 1.12.2:
 ```json
 {
   "block": "immersiveengineering:conveyor",
@@ -104,59 +140,63 @@ By default tile entities are not supported by blueprints. Still, it is possible 
   }
 },
 ```
-In this example, the conveyor block will be allowed in blueprints,
-- the NBT properties of the tile entity listed under `keepNBT` will be preserved in the blueprints,
-- all unlisted properties will be removed. Typically, only configuration should be kept, "items" or inventory properties if kept would lead to dupe issues.
+In this example, the conveyor block will be allowed in blueprints:
+- the NBT properties of the block entity listed under `keepNBT` will be preserved in the blueprints,
+- all unlisted properties will be removed. Typically, only configuration should be kept: "items" or inventory properties, if kept, would lead to dupe issues.
 
-`keepNBT` is a key/value object where almost every property value is `null` except `"conveyorBeltSubtype": "conveyorType"`, it means than the item required to charge this blueprint MUST have the `conveyorType` nbt data in the item, and the value of the item `conveyorType` must match the value of the block nbt `conveyorBeltSubtype` to be a valid material. `null` value means the material item don't requires a specific NBT to be a valid material. In this example it forces the type of conveyor belt in the inventory to match the type of conveyor belt built in the blueprint, not any conveyor belt could be used as item input.
+`keepNBT` is a key/value object where almost every property value is `null` except `"conveyorBeltSubtype": "conveyorType"`: it means that the item required to charge this blueprint MUST have the `conveyorType` NBT data, and the value of the item's `conveyorType` must match the value of the block's `conveyorBeltSubtype` to be a valid material. A `null` value means the material item doesn't require a specific NBT to be a valid material. In this example it forces the type of conveyor belt in the inventory to match the type of conveyor belt built in the blueprint: not any conveyor belt can be used as item input.
 
 Tips: 
-- You can use the [`/capsule exportSeenBlock`](https://github.com/Lythom/capsule/wiki/Commands#exportseenblock) when looking at a block to display its nbt data and know what values should be added
-- x, y, z, Inventory and id properties should not be listed under "keepNBT", indeed you don't want to keep location information (you want them to be forgotten and reset when blueprint is placed) neither inventory information (because it could lead to dupe bugs), and finally id is not actually nbt data.
+- You can use [`/capsule exportSeenBlock`](Commands#exportseenblock) when looking at a block to display its NBT data and know what values should be added.
+- x, y, z, Items/inventory and id properties should not be listed under "keepNBT": you don't want to keep location information (you want it to be forgotten and reset when the blueprint is placed), nor inventory information (because it could lead to dupe bugs), and finally id is not actually NBT data.
 
-Tutorial video: that demonstrate some capsule blueprint configuration using exportSeenBlock command.
+Tutorial video that demonstrates some capsule blueprint configuration using the exportSeenBlock command (1.12.2):
 
 [![Capsule Mod - Configuring blueprint whitelist for tile entities](https://img.youtube.com/vi/6MpXay8rGFw/0.jpg)](https://youtu.be/6MpXay8rGFw)
 
 
 ## How to
 
-Manipulating nbt data can be tricky. Capsule mod include some commands and tools to help modpack makers achieve the creation of the Capsules they need.
+Manipulating NBT data can be tricky. The Capsule mod includes some commands and tools to help modpack makers create the Capsules they need.
 
 ### Create an Empty Capsule
 
-* Use JEI in cheat mod or the creative mode panel
-* Use the command [`/capsule giveEmpty <size>`](https://github.com/Lythom/capsule/wiki/Commands#giveempty)
-* Use the crafting recipe in a workbench.
+* Use a recipe viewer (JEI, REI, EMI) in cheat mode or the creative mode tab
+* Use the command [`/capsule giveEmpty [size] [overpowered]`](Commands#giveempty)
+* Use the crafting recipe in a crafting table.
 
 ### Create a Reward Capsule
 
-This procedure will have you create a template file located under `config/capsule/rewards`. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work on the player game.
+This procedure will have you create a template file located under `config/capsule/rewards`. This config subfolder must be distributed with your pack to have the given capsule item (or any exact copy) work in the player's game.
 
 1. Get an empty capsule,
 2. capture the content you want to reward on a Capture Base,
-3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](https://github.com/Lythom/capsule/wiki/Commands#fromheldcapsule) while having the capsule in main hand. The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
+3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](Commands#fromheldcapsule) while holding the capsule in the main hand ([since 9.1, 1.21.1] without a name, the capsule label is used). The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
 
-To allow more advanced captures :
+To allow more advanced captures:
 
-1. Setup a structure block in save mode
-2. Configure the way you want (you can even capture entities and blocks a capsule wouldn't capture like mobs or monsters or EntityItems on the ground),
-3. Save using a unique name (lowercase only),
-4. Finally use the command [`/capsule fromStructure <structure_name>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structure_name>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content. If the name contains uppercase characters, the capsule won't deploy on linux server (which most of server providers uses).
+1. Set up a structure block in save mode,
+2. configure it the way you want (you can even capture entities a capsule wouldn't capture, like mobs, or items on the ground),
+3. save using a unique name (lowercase only),
+4. finally use the command [`/capsule fromStructure <structure_name>`](Commands#fromstructure) where "<structure_name>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content.
 
 [Click to see Demo of using `/capsule fromStructure <structure_name>`
-![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
+![](images/demo/from-structure-still.png)](images/demo/from-structure.gif)
+
+Template files from other tools also work, see [Template files](#template-files).
 
 
 ### Add a preconfigured blueprint
 
-To add a new craftable preconfigured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>`. A recipe for this preconfigured blueprint will be dynamically created and added to JEI and creative tabs.
+To add a new craftable preconfigured blueprint, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/prefabs/<label_name>` (`prefabsTemplatesPath`). A recipe for this preconfigured blueprint will be dynamically created and added to the recipe viewers and creative tabs after a restart.
 
 Additional notes:
-- The recipe will be created using the `config/prefabs/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with most used blocks in the structure the create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change ingredients and move around 1, 2 and 3 in the json.
-- Blueprints are limited to plain blocks. Tile entities are ignored during blueprint structure copy unless they are listed in the [whitelist](#whitelist).
-- If inside a sub-folder, a mod with the same name as the folder must me loaded to enable the recipe.
-- Ensure the file name is lowercase only, _ will be replaced by spaces and each word is capitalize for the capsule label.
+- The recipe will be created using the `config/capsule/prefab_blueprint_recipe.json` configuration. Capsule will dynamically replace "1", "2" and/or "3" with the most used blocks in the structure to create the final recipe. The blocks from the structure used to craft the recipe are not consumed, so they can be reused to charge the blueprint. You can change the ingredients and move 1, 2 and 3 around in the JSON. The default pattern is `2b3` / `l1l` / ` p ` (b: stone button, l: blue dye, p: paper).
+- Blueprints are limited to plain blocks. Block entities are ignored during the blueprint structure copy unless they are listed in the [whitelist](#whitelist).
+- If inside a subfolder, a mod with the same id as the folder name must be loaded to enable the recipe (i.e. `config/capsule/prefabs/immersiveengineering/arc_furnace.nbt`).
+- Ensure the file name is lowercase only: `_` will be replaced by spaces and each word is capitalized for the capsule label.
+- Default prefabs: castle wall, castle wall corner, castle gate, castle tower corner (and its top), chicken cooker.
+- [since 9.1] Clients and servers must run the same Capsule build: the prefab recipes sent to clients changed in 9.1.
 
 
 ### Relabeling a Capsule
@@ -164,96 +204,211 @@ Additional notes:
 * Non-empty capsules can be labeled using sneak + right click to show the GUI.
 * Renaming a capsule on an anvil is possible, but it will completely override the item naming mechanics and the label will be ignored.
 
-Note : A Loot capsule will always be labelled using the name of the file (without .nbt), The Name Will Be Capitalized.
+Note: A Loot capsule will always be labeled using the name of the file (without .nbt), The Name Will Be Capitalized.
 
 ### Setting the author of a capsule
 
-You may want to feature any creator content (may it be yourself !), so an author can be set to give credit to the person who designed the content by using the command [`/capsule setAuthor <name>`](https://github.com/Lythom/capsule/wiki/Commands#setauthor). The <name> will appear in the Capsule description as "Designed by <name>".
+You may want to feature any creator's content (may it be yourself!), so an author can be set to give credit to the person who designed the content by using the command [`/capsule setAuthor <name>`](Commands#setauthor). The <name> will appear in the Capsule description as "Designed by <name>".
 
-### Dying a capsule
+### Dyeing a capsule
 
-* Base color can be dyed on a workbench by combining the capsule + dyes
-* Base color can be set using the command [`/capsule setBaseColor 0xCCCCCC`](https://github.com/Lythom/capsule/wiki/Commands#setbasecolor) where "CCCCCC" is the hexadecimal code for the color.
-* Material color can be changed using the command [`/capsule materialColor 0xCCCCCC`](https://github.com/Lythom/capsule/wiki/Commands#setmaterialcolor), where "CCCCCC" is the hexadecimal code for the color
-* At the moment, capsule generated as Loot get a random color that cannot be specified.
+* The base color can be dyed in a crafting grid by combining the capsule + dyes.
+* The base color can be set using the command [`/capsule setBaseColor 0xCCCCCC`](Commands#setbasecolor) where "CCCCCC" is the hexadecimal code of the color.
+* The material color can be changed using the command [`/capsule setMaterialColor 0xCCCCCC`](Commands#setmaterialcolor), where "CCCCCC" is the hexadecimal code of the color.
+* At the moment, capsules generated as Loot get a random color that cannot be specified.
+
+### Setting a deployment offset
+
+[since 7.0.91, also in the 1.18.2 builds] [`/capsule setYOffset <yOffset>`](Commands#setyoffset) makes the held capsule deploy higher or lower than the aimed block: for example `-3` for a basement buried 3 blocks deep, or `5` for a platform floating in the air. The offset is saved in the capsule (`yOffset`) and also applies to dispensers.
 
 ### Create a Template to be used as Loot
 
-The template files does NOT include the capsule NBT data, so the options for the Capsule created in the dungeon chest are limited. The Capsule will take the Template file "name" capitalized (Each First Letter Is Uppercase) as its label (without .nbt), the Template file value "author" as its author, and the capsule size will be calculated from the structure size. the template file name itself must be lowercase.
+The template files do NOT include the capsule NBT data, so the options for the Capsule created in the dungeon chest are limited. The Capsule will take the Template file name capitalized (Each First Letter Is Uppercase) as its label (without .nbt), the Template file value "author" as its author, and the capsule size will be calculated from the structure size. The template file name itself must be lowercase.
 
-Take care of setting the structure name and the author correctly when capturing content using either a structureblock in save mode, or an empty capsule.
+Take care of setting the structure name and the author correctly when capturing content using either a structure block in save mode, or an empty capsule.
 
-Steps :
+Steps:
 
 1. [Create a Reward Capsule](#create-a-reward-capsule)
-2. [Set the label](#relabeling-a-capsule) and [Set the author](#setting-the-author-of-a-capsule),
-3. Either :
-    * a. [Submit your creation](#submit-your-templates-) to be distributed with the capsule mod !
-    * b. Copy/paste the Template file from "config/capsule/rewards/<CapsuleName.nbt>" to a valid capsule loot folder (ie. "config/capsule/loots/common/<CapsuleName.nbt>").
+2. [Set the label](#relabeling-a-capsule) and [set the author](#setting-the-author-of-a-capsule),
+3. Either:
+    * a. [Submit your creation](#submit-your-templates) to be distributed with the Capsule mod!
+    * b. Copy/paste the Template file from "config/capsule/rewards/<capsulename.nbt>" to a valid capsule loot folder (i.e. "config/capsule/loot/common/<capsulename.nbt>").
 
-Note: in most cases, schematic templates can be loaded just like nbt templates. Just put your schematic file in the rewards or starters folder to have it work.
-
-Your template now have a chance to spawn in a loot chest !
+Your template now has a chance to spawn in a loot chest!
 
 ### Test looting system
 
-You may want to check if the template are correctly added to the loot table are have a preview of what a random set of capsule loots would look like.
+You may want to check if the templates are correctly added to the loot table and have a preview of what a random set of capsule loots would look like.
 
-1. Use command `/capsule reloadLootList` to read new files added in the folders. If a new folder was added to the config file, a restart is required.
-2. Use command `/capsule giveRandomLoot` to roll among the folders a get a Loot capsule (or not if an empty folder is rolled !)
+1. Use the command `/capsule reloadLootList` to read new files added to the folders. If a new folder was added to the config file, a restart is required.
+2. Use the command `/capsule giveRandomLoot` to roll among the folders and get a Loot capsule (or not, if an empty folder is rolled!)
 
-### Change starters capsules
+### Change starter capsules
 
-Starter capsule are given when the player login for the first time. Starters can be added or removed in the `config/capsule/starters` folder. To make one, first [create a Reward Capsule](#create-a-reward-capsule), then copy the created structure from `config/capsule/rewards/<structure_name>` to `config/capsule/starters/<label_name>`. 
+See [Starters](#starters). The default starters are 5 small huts and 2 houses. On existing installs, delete `config/capsule/starters` to get the updated huts [since 9.1] (the axe item frame no longer covers the crafting table).
 
-See entry `starterMode` in capsule config file to give none or all starters instead of a random one (default value).
+## Template files
 
-## Submit your templates !
+* Formats: structure block `.nbt` files, MCEdit `.schematic` files and Sponge schematics (`.schem` and `.schematic`): v1, v2, and [since 9.1] v3, the WorldEdit 7.3 default. Put them in the rewards, loot, starters or prefabs folders.
+* File names may only contain `a-z 0-9 / . _ -`. [since 9.1] Other files are ignored with a warning in the log (before 9.1, uppercase letters or spaces disconnected players on login).
+* Subfolders are allowed in the rewards, loot and starters folders.
+* `/reload` refreshes the templates, on dedicated servers too.
+* The default loot, starters, prefabs and blueprint whitelist are copied to `config/capsule` on the first start and never updated: delete `config/capsule/loot`, `config/capsule/starters`, `config/capsule/prefabs` or `config/capsule/blueprint_whitelist.json` to get the defaults of a newer Capsule version.
+* Deploying a reward capsule rewrites its template file in the current format: this is intended.
 
-If you followed "Create a Template to be used as Loot" and came up with great Loot templates, you can ask me to include them as a default reward in the mod ! If I believe the structure is not breaking the game and have a place into the mod, it'll be included in the next version of capsule. If the author is set, he/she will be credited in the capsule description when looted by the player.
+## Configuration
 
-2 ways to submit your template .nbt file :
-- on the Discord (https://discord.com/invite/wZpBVdr), please provide a textual description of the content with the file,
+The common configuration is `config/capsule-common.toml` [since 1.15.2] (`config/capsule.cfg` on 1.12.2 and older), the same file on NeoForge, Forge and Fabric. Most entries need a world restart.
+
+| Section | Key | Default | What it does |
+|---|---|---|---|
+| `loot` | `lootTablesList` | vanilla chests (see [Loots](#loots)) | Loot tables that can hold a capsule. |
+| `loot` | `lootTemplatesPaths` | `config/capsule/loot/common` (10), `uncommon` (6), `rare` (2) | Folders of loot templates and their weights. |
+| `loot` | `starterMode` | `random` | `all`, `random` or `none`, see [Starters](#starters). |
+| `loot` | `starterTemplatesPath` | `config/capsule/starters` | Folder of the starters, empty to disable them. |
+| `loot` | `prefabsTemplatesPath` | `config/capsule/prefabs` | Folder of the [preconfigured blueprints](#add-a-preconfigured-blueprint). |
+| `loot` | `rewardTemplatesPath` | `config/capsule/rewards` | Folder of the reward templates used by the commands. |
+| `loot` | `allowBlueprintReward` | `true` | Loot templates without entities are given as pre-charged blueprints. |
+| `loot` | `allowMirror` | `true` | Sneak + left click mirrors the capsule content. Disable for multiblocks that break when mirrored. |
+| `enchants` | `recallEnchantRarity`, `recallEnchantType` | | Unused since 9.1, see [Loyalty](#loyalty). |
+| `balance` | `previewDisplayDuration` | `120` | Ticks a capsule stays activated (preview displayed) after a right click. 20 ticks = 1 second. |
+| `balance` | `capsuleUpgradesLimit` | `10` | Number of upgrades an empty capsule can get, 0 to disable upgrades. |
+| `balance` | `excludedBlocks` | see below | Blocks or tags never captured by standard capsules. |
+| `balance` | `opExcludedBlocks` | see below | Blocks or tags never captured, even by overpowered capsules. |
+
+The client configuration is `config/capsule-client.toml`: `captureAnimation` [since 9.1], see [Client options](Home#client-options).
+
+### Excluded blocks
+
+Overpowered capsules can capture blocks that cannot be captured with standard capsules. The blocks that can be captured only by overpowered capsules are configured by adjusting `excludedBlocks` (standard) and `opExcludedBlocks` (both). Default values in 1.21.1:
+
+```toml
+# List of block ids or tags that will never be captured by a non overpowered capsule. While capturing, the blocks will stay in place.
+excludedBlocks = ["minecraft:spawner", "minecraft:end_portal", "minecraft:end_portal_frame", "minecraft:air", "minecraft:structure_void", "minecraft:bedrock", "ic2:", "refinedstorage:", "bloodmagic:alchemy_table", "tombstone:player_graves"]
+# List of block ids or tags that will never be captured even with an overpowered capsule. While capturing, the blocks will stay in place.
+opExcludedBlocks = ["minecraft:air", "minecraft:structure_void", "minecraft:bedrock", "ic2:", "refinedstorage:", "bloodmagic:alchemy_table", "tombstone:player_graves"]
+```
+
+That means that by default a standard capsule cannot capture mob spawners or end portals whereas overpowered capsules can. Neither can capture bedrock. An entry ending with `:` excludes every block of that mod; mod prefixes usually indicate an incompatibility, see [Known incompatibilities](Known-incompatibilities). [since 1.15.2-4.0.60] Block tags work too, i.e. `minecraft:beds` or `#minecraft:beds`; invalid ids are ignored instead of crashing the game.
+
+Blocks in the [`capsule:excluded` tag](#tags) are never captured either, by any capsule.
+
+[since 9.1] New installs no longer get the 1.12 ids that match nothing on 1.21.1: `superfactorymanager:`, `gregtech:machine`, `gtadditions:`, `mekanism:machineblock` and `mekanism:boundingblock` (Mekanism tags its blocks `c:relocation_not_supported`). `bloodmagic:alchemy_table` stays: it is the id of the alchemy table in Blood Magic for 1.21.1. Existing installs keep their lists.
+
+On 1.20.1, 1.18.2 and 1.16.5 (next builds: 8.0.x, 6.0.x, 5.0.x), new installs get `bloodmagic:alchemytable` (instead of `bloodmagic:alchemy_table`, which matched nothing), the Immersive Engineering wire connectors and `waystones:` in both lists, and no longer get the 1.12 ids that match nothing (`superfactorymanager:`, `gregtech:machine`, `gtadditions:`, `mekanism:machineblock`, `mekanism:boundingblock`). The config file is never rewritten: existing installs keep their lists, add these entries by hand (the full list is on [Known incompatibilities](Known-incompatibilities)) or delete both lists from `config/capsule-common.toml` to get the new defaults. The blocks tagged `#forge:relocation_not_supported` (Mekanism Digital Miner, Refined Storage network blocks…) are excluded through the [`capsule:excluded` tag](#tags), existing installs included.
+
+### Overridable blocks
+
+Overridable blocks are blocks that are simply deleted if they are in the way of a capsule deployment, like grass or snow.
+- Before 1.20.1 there is an entry in the config to list the materials and blocks that are overridable by capsules.
+- Since 1.20.1, the config entry doesn't exist anymore and is replaced by the block tag `capsule:overridable`.
+
+Default value:
+```js
+// file: data/capsule/tags/block/overridable.json (1.21.1; data/capsule/tags/blocks/ before 1.21)
+{
+    "replace": false,
+    "values": [
+        "#minecraft:leaves",
+        "#minecraft:replaceable",
+        "#minecraft:snow"
+    ]
+}
+```
+
+Add blocks with a datapack providing the same file with `"replace": false`.
+
+### Tags
+
+| Tag | Type | Since | Default | What it does |
+|---|---|---|---|---|
+| `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported` and `#c:immovable` (since 1.20.4), `#forge:relocation_not_supported` (next 1.20.1, 1.18.2 and 1.16.5 builds), `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
+| `capsule:overridable` | block | 1.20.1 | leaves, replaceable blocks, snow | Replaced by deploys, see [Overridable blocks](#overridable-blocks). |
+| `capsule:enchantable/recall` | item | 9.1 | `capsule:capsule` | Items that take [Loyalty](#loyalty) and come back when thrown. |
+
+Since 1.21, tag folders are singular (`tags/block`, `tags/item`); before, they are `tags/blocks` and `tags/items`.
+
+### Recipes
+
+Every recipe is a JSON file under `data/capsule/recipe/` [since 1.15] (`recipes/` before 1.21) and can be overridden or removed with a datapack, i.e. to change the material or the size of a tier: the size is the `size` value of the result's `minecraft:custom_data`. The upgrade recipe sets the upgrade ingredient (`upgrade.json`, popped chorus fruit by default).
+
+[since 9.1] The recipes of the modded tiers (`addons_capsule_<metal>`) only load when a mod fills their `c:ingots/<metal>` tag. The full tier table is on the [Home](Home#capsule-tiers) page.
+
+### Loyalty
+
+[since 9.1] Capsules come back with the vanilla Loyalty enchantment instead of Recall. Loyalty can be put on the items of the item tag `capsule:enchantable/recall`: a datapack removing `capsule:capsule` from it (`"replace": true` with an empty list) disables Loyalty on capsules. The weight of Loyalty in enchanting tables is the vanilla one, which a datapack can change. The `recallEnchantRarity` and `recallEnchantType` config entries are unused since 9.1.
+
+Before 9.1, `recallEnchantType` chooses which items can get the Recall enchantment (capsules only by default, `null`), and `recallEnchantRarity` its rarity.
+
+## Claims and protection
+
+[since 9.1] Captures and deploys respect claim mods: Open Parties and Claims and Flan (NeoForge and Fabric) and Get Off My Lawn ReServed (Fabric) are asked through their own API, and any other protection mod through a block placement check (NeoForge placement event, Fabric Common Protection API). The player documentation is in [Claim protection](Home#claim-protection). What server owners should know:
+
+* Protected blocks stay in the world on capture; a deploy or a blueprint undeploy touching a protected block is refused, and the player only gets the claim message.
+* The placement check (and Flan) is asked for every block of captures and deploys up to the size of the largest survival capsule, computed from the config: the largest capsule tier plus 2 per allowed upgrade (`capsuleUpgradesLimit`), so 33x33x33 by default (a netherite capsule with 10 upgrades); 31x31x31 by default on the Forge backports (an emerald capsule with 10 upgrades), 33 with a mod adding platinum. Above, it is asked once per chunk column: a single protected block inside a bigger box may be missed by mods without dedicated support. Capsules that big can't be crafted: they only come from operators and modpack makers (`/capsule giveEmpty`, reward templates), so this is accepted.
+* A large `capsuleUpgradesLimit` (or a larger crafted tier) moves that size up, without cap, and the check costs the cube of the size, on every capture and deploy of the largest capsules. Measured on a 4 core server: a full 31x31x31 box takes 2 to 10 ms (50 ms inside a claim refusing it through the NeoForge placement event); 20 upgrades (53x53x53, 5 times more blocks) about 10 to 45 ms (0.26 s inside such a claim); 50 upgrades (113x113x113, 48 times more) about 0.1 to 0.45 s (2.5 s). The server pauses for that time.
+* A Capture Base acts as the player who placed it (saved as `placer` in its block data); a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.1, vanilla dispensers and other captures or deploys without a player are refused inside claims, whatever the claim allows: re-place the Capture Base to give it an owner.
+* Fail closed: when a loaded claim mod cannot be checked (its API changed in a new version), every capture and deploy is refused with a chat message, and one error is written in the server log, instead of ignoring its claims. Update Capsule, or report it.
+* FTB Chunks and Cadmus are checked on NeoForge (placement event) but not on Fabric yet.
+* The same claim support reaches the next Forge builds of 1.20.1 (8.0.x) and 1.18.2 (6.0.x) with Open Parties and Claims and Flan, and of 1.16.5 (5.0.x) with Flan.
+
+Claim mod developers: see [Getting compatible with Capsule](Getting-compatible-with-capsule#3-if-your-mod-protects-areas-claims).
+
+## Submit your templates!
+
+If you followed "Create a Template to be used as Loot" and came up with great Loot templates, you can ask me to include them as a default reward in the mod! If I believe the structure is not breaking the game and has a place in the mod, it'll be included in the next version of Capsule. If the author is set, they will be credited in the capsule description when looted by the player.
+
+2 ways to submit your template .nbt file:
+- on the Discord (https://discord.gg/wZpBVdr), please provide a textual description of the content with the file,
 - at https://github.com/Lythom/capsule/issues/new?title=[Submission] with a description of the content. 
 
-The see you on the next version of capsule ;)
+Then see you in the next version of Capsule ;)
 
 ## Other tools
 
 ### Exporting the item NBT
 
-The Capsule item is ready but you may need the give command to setup a command block, or the NBT data the configure a mod. Use the command  [`/capsule exportHeldItem`](https://github.com/Lythom/capsule/wiki/Commands#exporthelditem) to generate a the /give command in the chat. Click the message to open the log file and be able to copy/paste it. The last parameter is the NBT data.
+The Capsule item is ready but you may need the give command to set up a command block, or the NBT data to configure a mod. Use the command [`/capsule exportHeldItem`](Commands#exporthelditem) to generate the /give command in the chat. Click the message to open the log file and be able to copy/paste it.
 
-Note : this command will work for any item, not only capsules.
+Note: this command will work for any item, not only capsules.
 
-### Exporting a block + TileEntity
+[since 9.1, Minecraft 1.21.1] Item NBT became data components: the capsule data is the `minecraft:custom_data` component, the base color the `minecraft:dyed_color` component and the enchantments the `minecraft:enchantments` component. The printed command uses the 1.21 component syntax, ready for `/give` or a command block, for example:
 
-Mostly usefull for modders. The command [`/capsule exportSeenBlock`](https://github.com/Lythom/capsule/wiki/Commands#exportseenblock) will create a give command to get an item that would spawn the exact block + TileEntity you are looking at.
+```
+/give @p capsule:capsule[minecraft:custom_data={state:5,oneUse:1b,isReward:1b,structureName:"config/capsule/rewards/my_house",size:7,label:"My House"},minecraft:dyed_color={rgb:16777215,show_in_tooltip:false}]
+```
+
+### Exporting a block + block entity
+
+Mostly useful for modders. The command [`/capsule exportSeenBlock`](Commands#exportseenblock) will create a give command to get an item that would spawn the exact block + block entity you are looking at. It only works in single player (integrated server).
 
 ## Capsule NBT data reference
 
-If you want to create your own capsules or give them using commandblocks, you'll need to properly fill their nbt data. The easiest choice is to get the capsule in-game ("Create a Reward Capsule"), then to use the [`/capsule exportHeldItem`](https://github.com/Lythom/capsule/wiki/Commands#exporthelditem) command while holding the capsule. You can eventually modify the nbt data :
+If you want to create your own capsules or give them using command blocks, you'll need to properly fill their NBT data (the `minecraft:custom_data` component since Minecraft 1.20.5). The easiest choice is to get the capsule in-game ("Create a Reward Capsule"), then to use the [`/capsule exportHeldItem`](Commands#exporthelditem) command while holding the capsule. You can eventually modify the NBT data:
 
 ```
+* int state                                                  // EMPTY(0), ACTIVATED(1), LINKED(2), DEPLOYED(3, also uncharged blueprint), EMPTY_ACTIVATED(4), ONE_USE(5), ONE_USE_ACTIVATED(6), BLUEPRINT(7, charged)
 * int color                                                  // material color
-* tag display : {int color}                                  // base color
+* tag display : {int color}                                  // base color, before 1.20.5 (minecraft:dyed_color component since)
 * int size                                                   // odd number, size of the square side the capsule can hold
 * string label                                               // User customizable label
-* byte overpowered                                           // If the capsule can capture powerfull blocks
-* bool onUse                                                 // if the content of the template must be kept when capsule is deployed.
-* bool isReward                                              // if the template is located in the configured reward folder
+* byte overpowered                                           // If the capsule can capture powerful blocks
+* bool oneUse                                                // if the capsule is destroyed when deployed
+* bool isReward                                              // if the template is located in the configured reward folder (the template is kept when deployed)
 * string author                                              // Name of the player who created the structure. Set using commands.
-* string structureName                                       // name of the template file name without the .nbt extension.
-// Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
+* string structureName                                       // name of the template file without the .nbt extension.
+// Lookup paths are <worldsave>/capsules for non-rewards, and structureName must contain the full path for rewards and loots
 * string prevStructureName                                   // Used to remove older unused blueprint templates
-* tag activetimer : {int starttime}                          // used to time the moment when the capsule must deactivate
-* tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
-* tag occupiedSpawnPositions : [{int blockId, long pos},…]   // remember what position not the recapture is block didn't change
+* tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
+* long undeployAt                                            // [Instant capsules] game time from which a deployed capsule can be undeployed
+* tag spawnPosition : {int x, int y, int z, int dim}         // location where the capsule is currently deployed
 * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
 * int upgraded                                               // How many upgrades the capsule has
-* tag sourceInventory : {int x, int y, int z, int dim    }   // [Blueprints] location of the linked inventory
+* tag sourceInventory : {int x, int y, int z, int dim}       // [Blueprints] location of the linked inventory
 * string mirror                                              // [Blueprints] current mirror mode
 * string rotation                                            // [Blueprints] current rotation mode
-* arr ench:[0:{lvl:1s,id:101s}]
+* int yOffset                                                // [since 7.0.91] deployment offset, -3 deploys the content 3 blocks under the aimed position
 ```
-NBTData reference is also up to date at https://github.com/Lythom/capsule/blob/master/src/main/java/capsule/items/CapsuleItem.java#L79.
+
+The enchantments (Loyalty) are in the `minecraft:enchantments` component, not in the custom data. The NBT data reference is also kept up to date in the code: [CapsuleItem.java](https://github.com/Lythom/capsule/blob/1.21.1/common/src/main/java/capsule/items/CapsuleItem.java).
