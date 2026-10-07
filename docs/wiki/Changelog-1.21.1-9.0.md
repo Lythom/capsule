@@ -146,6 +146,7 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 - The starter huts' axe item frame covered the crafting table ([#126](https://github.com/Lythom/capsule/issues/126))
 - The preview, the capture zone wireframe and the capture animation show with Iris shader packs ([#69](https://github.com/Lythom/capsule/issues/69))
 - Capsules were held edge-on in first and third person
+- The rotation message showed a symbol missing from the Minecraft font
 
 ## Also in this release
 
