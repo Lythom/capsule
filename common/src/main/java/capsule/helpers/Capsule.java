@@ -89,22 +89,18 @@ public class Capsule {
 
         int size = CapsuleItem.getSize(capsule);
 
-        // do the transportation
+        // do the transportation, a failed undeploy gives its own feedback
         if (CapsuleItem.isBlueprint(capsule)) {
-            boolean blueprintMatch = StructureSaver.undeployBlueprint(capsuleWorld, actor, capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule));
-            if (blueprintMatch) {
+            if (StructureSaver.undeployBlueprint(capsuleWorld, actor, capsule, startPos, size, CapsuleItem.getExcludedBlocs(capsule))) {
                 CapsuleItem.setState(capsule, CapsuleState.BLUEPRINT);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 if (playerIn != null) notifyUndeploy(playerIn, startPos, size, null); // no cache clean for blueprints
-            } else if (playerIn != null) {
-                playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintDontMatch"));
             }
         } else {
             CompoundTag tagForName = NBTHelper.getTag(capsule);
             String structureName = tagForName != null ? tagForName.getString("structureName") : "";
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, structureName, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
-            // a failed undeploy gives its own feedback
             if (storageOK) {
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);

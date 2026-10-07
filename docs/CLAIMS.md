@@ -58,7 +58,8 @@ computed before the capture or deploy touches any block:
    column results above.
 
 The capture removes only the allowed positions, as before (protected blocks stay in the world and leave the template);
-a deploy is refused with "not allowed" if any position is denied.
+a deploy, or the undeploy of a blueprint, is refused with "not allowed" if any position is denied, and the player gets
+no other message.
 
 ### Cost
 
@@ -192,6 +193,9 @@ Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My L
   inside a claim open to everybody, a capture base placed before 9.0, a vanilla dispenser and a capture without player
   are refused, and outside it the base and the dispenser deploy; the placer is saved with the base and a deployed base
   acts for its deployer.
+- `ClaimTests.refusedBlueprintsOnlyGiveTheClaimMessage`: a stranger's blueprint undeploy and deploy in a claim, refused
+  by the claim or by an adapter that fails, leave the blocks and only tell "not allowed" or that the claims cannot be
+  checked, not that the area does not match the blueprint.
 - `ClaimTests`, batch `claimfailures` (their adapters refuse everywhere): with an adapter throwing on every query, a
   player's capture and deploy are refused, the block stays, the capsule stays empty, the adapter is asked again by the
   second operation and the player is told each time; with the marker of a mod whose API is missing (`Claims.load` with

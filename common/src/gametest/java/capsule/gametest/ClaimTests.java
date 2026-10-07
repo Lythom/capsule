@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DispenserBlock;
@@ -268,6 +269,70 @@ public class ClaimTests {
         } finally {
             Claims.unregister(claim);
             CapsuleTestUtils.removePlayer(owner);
+        }
+        helper.succeed();
+    }
+
+    static List<String> keys(List<Component> messages) {
+        return messages.stream().map(m -> m.getContents() instanceof TranslatableContents t ? t.getKey() : m.getString()).toList();
+    }
+
+    /**
+     * Blueprint undeploys and deploys refused by the claims, or because they cannot be checked, only say so.
+     */
+    @GameTest(template = "empty", batch = "claims")
+    public static void refusedBlueprintsOnlyGiveTheClaimMessage(GameTestHelper helper) {
+        ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        List<Component> messages = new ArrayList<>();
+        ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0), messages);
+        helper.setBlock(1, 1, 1, Blocks.STONE);
+        ItemStack blueprint = Capsule.newLinkedCapsuleItemStack(CapsuleItem.getStructureName(capture(helper, new BlockPos(1, 1, 1), 1)), 0, 0, 1, false, null, 0);
+        CapsuleItem.setBlueprint(blueprint);
+        CapsuleItem.setState(blueprint, CapsuleState.DEPLOYED);
+        CapsuleItem.duplicateBlueprintTemplate(blueprint, helper.getLevel(), owner);
+        owner.getInventory().add(new ItemStack(Items.STONE));
+        Capsule.reloadBlueprint(blueprint, helper.getLevel(), owner);
+        TestClaim claim = new TestClaim(helper, new BlockPos(0, 1, 0), new BlockPos(8, 4, 8), owner.getUUID());
+        BoundingBox area = claim.area;
+        ClaimAdapter failing = new ClaimAdapter() {
+            public String name() {
+                return "failing";
+            }
+
+            public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer player) {
+                if (!box.intersects(area)) return List.of();
+                throw new IllegalStateException("test.ClaimApi.claims()");
+            }
+        };
+        Claims.register(claim);
+        try {
+            assertTrue(helper, CapsuleTestUtils.deploy(helper, blueprint, new BlockPos(4, 0, 4), owner), "the owner deploys the blueprint in their claim");
+            for (ClaimAdapter refusing : List.of(claim, failing)) {
+                if (refusing == failing) Claims.register(failing);
+                messages.clear();
+                Capsule.resentToCapsule(blueprint, helper.getLevel(), stranger);
+                helper.assertBlockPresent(Blocks.STONE, 4, 1, 4);
+                assertTrue(helper, CapsuleItem.hasState(blueprint, CapsuleState.DEPLOYED), "the blueprint stays deployed");
+                String expected = refusing == claim ? "capsule.error.notAllowed" : "capsule.error.claimCheckFailed";
+                assertTrue(helper, keys(messages).equals(List.of(expected)), "an undeploy refused by " + refusing.name() + " only tells " + expected + ", got " + keys(messages));
+            }
+            Claims.unregister(failing);
+            Capsule.resentToCapsule(blueprint, helper.getLevel(), owner);
+            helper.assertBlockNotPresent(Blocks.STONE, 4, 1, 4);
+            assertTrue(helper, CapsuleItem.hasState(blueprint, CapsuleState.BLUEPRINT), "the owner undeploys the blueprint");
+
+            for (ClaimAdapter refusing : List.of(claim, failing)) {
+                if (refusing == failing) Claims.register(failing);
+                messages.clear();
+                assertTrue(helper, !CapsuleTestUtils.deploy(helper, blueprint, new BlockPos(4, 0, 4), stranger), "the deploy is refused by " + refusing.name());
+                String expected = refusing == claim ? "capsule.error.notAllowed" : "capsule.error.claimCheckFailed";
+                assertTrue(helper, keys(messages).equals(List.of(expected)), "a deploy refused by " + refusing.name() + " only tells " + expected + ", got " + keys(messages));
+            }
+        } finally {
+            Claims.unregister(claim);
+            Claims.unregister(failing);
+            CapsuleTestUtils.removePlayer(owner);
+            CapsuleTestUtils.removePlayer(stranger);
         }
         helper.succeed();
     }
