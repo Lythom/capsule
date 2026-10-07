@@ -23,7 +23,7 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
         if (!(capsule.getItem() instanceof CapsuleItem)) return capsule;
 
         ServerLevel serverWorld = source.level();
-        // capture bases act for the player who placed them; other dispensers, and bases placed before Capsule 9, for nobody
+        // capture bases act for the player who placed them; other dispensers, and bases placed before Capsule 9.1, for nobody
         ServerPlayer actor = source.blockEntity() instanceof BlockEntityCapture base ? Claims.fakePlayer(serverWorld, base.getPlacer()) : null;
         if (CapsuleItem.hasState(capsule, CapsuleItem.CapsuleState.DEPLOYED) && CapsuleItem.getDimension(capsule) != null) {
             try {

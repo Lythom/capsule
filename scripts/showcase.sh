@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Showcase: records the 9.0 features in a real dev client, for the illustrated changelog
+# Showcase: records the 9.1 features in a real dev client, for the illustrated changelog
 # =============================================================================
 #
 # Usage:

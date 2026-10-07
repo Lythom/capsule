@@ -15,7 +15,7 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 
 /**
  * What a claim mod must veto, given a claim of owner where member may build: inside it, a stranger's capture, the
- * capture base the stranger placed, a capture base placed before Capsule 9 and a dispenser are refused, the member's
+ * capture base the stranger placed, a capture base placed before Capsule 9.1 and a dispenser are refused, the member's
  * and owner's capture and the owner's base are allowed; outside it, the stranger's capture and nobody's (a dispenser,
  * the capture of a test capsule) are allowed.
  */

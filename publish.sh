@@ -16,8 +16,8 @@ set -euo pipefail
 #   ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]
 #
 # Examples:
-#   ./publish.sh --dry-run neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.42.jar beta
-#   ./publish.sh fabric/build/libs/Capsule-fabric-1.21.1-9.0.42.jar release
+#   ./publish.sh --dry-run neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.42.jar beta
+#   ./publish.sh fabric/build/libs/Capsule-fabric-1.21.1-9.1.42.jar release
 #
 # Options:
 #   --dry-run  Show the commands that would be executed without actually uploading
@@ -40,7 +40,7 @@ if [ -z "$JAR_FILE" ]; then
     echo "ERROR: No jar file specified."
     echo ""
     echo "Usage: ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]"
-    echo "Example: ./publish.sh neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.42.jar release"
+    echo "Example: ./publish.sh neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.42.jar release"
     exit 1
 fi
 
@@ -52,11 +52,11 @@ fi
 RELEASE_TYPE="${2:-release}"
 MODRINTH_PROJECT_ID="Pt0JOpyz"
 
-# Extract loader and version info from jar name: Capsule-fabric-1.21.1-9.0.42.jar -> fabric, 1.21.1-9.0.42
+# Extract loader and version info from jar name: Capsule-fabric-1.21.1-9.1.42.jar -> fabric, 1.21.1-9.1.42
 JAR_NAME=$(basename "$JAR_FILE")
 LOADER=$(echo "$JAR_NAME" | sed -n 's/^Capsule-\(neoforge\|fabric\)-.*\.jar$/\1/p')
 VERSION=$(echo "$JAR_NAME" | sed 's/^Capsule-[a-z]*-//; s/\.jar$//')
-# Extract MC version: 1.21.1-9.0.42 -> 1.21.1
+# Extract MC version: 1.21.1-9.1.42 -> 1.21.1
 MINECRAFT_VERSION=$(echo "$VERSION" | sed 's/-.*//')
 
 # Loader name as listed by CurseForge, and required dependencies (Modrinth project ids, CurseForge slugs)

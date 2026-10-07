@@ -59,7 +59,7 @@ import static capsule.clientsmoke.ClientSmokeTest.mainHandIs;
 
 /**
  * Dev only, with -Dcapsule.showcase=true on top of -Dcapsule.clientsmoke=true (scripts/showcase.sh): instead of the smoke
- * scenario, stages one scene per feature of the 9.0 changelog, records each with ffmpeg (x11grab of DISPLAY) into
+ * scenario, stages one scene per feature of the 9.1 changelog, records each with ffmpeg (x11grab of DISPLAY) into
  * screenshots/capsule-showcase/NN-scene.mkv and takes PNG stills, for the illustrated changelog of the wiki.
  * -Dcapsule.showcase.scenes=capture,preview,... plays only these scenes (capture always runs: the others use its house).
  */

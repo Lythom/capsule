@@ -52,7 +52,7 @@ public final class Claims {
      */
     private static final Set<ClaimAdapter> REPORTED = ConcurrentHashMap.newKeySet();
     /**
-     * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before Capsule 9).
+     * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before Capsule 9.1).
      */
     private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
     private static boolean modsLoaded = false;

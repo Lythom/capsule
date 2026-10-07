@@ -20,7 +20,7 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     // zone previewed on the client while an empty capsule is held
     private int size = 0;
     private int color = 0;
-    // claim mods check the captures and deploys of the base as this player; bases placed before Capsule 9 have none
+    // claim mods check the captures and deploys of the base as this player; bases placed before Capsule 9.1 have none
     @Nullable
     private UUID placer = null;
 

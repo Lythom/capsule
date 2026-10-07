@@ -5,7 +5,7 @@ How captures and deploys respect protection mods on Minecraft 1.21.1, and why it
 
 ## The question
 
-A capture removes up to 255³ blocks and a deploy places as many. Until Capsule 9.0 each position was checked with a
+A capture removes up to 255³ blocks and a deploy places as many. Until Capsule 9.1 each position was checked with a
 simulated `BlockEvent.EntityPlaceEvent` (dirt) on NeoForge, or `CommonProtection.canPlaceBlock` on Fabric: one query
 per block, and nothing on Fabric for mods without Common Protection API. Firing a real `BreakEvent` per block would let
 every protection mod veto, but it also reaches quests, statistics, vein miners and drop modifiers, and costs one event
@@ -148,7 +148,7 @@ position, by the same rule as the probe (per block up to 31, per chunk column ab
 **Decision (owner): Flan and the generic probe check per chunk column above size 31: accepted, capsules that big are
 admin-only (OP).**
 
-**Decision (owner, before the 9.0 release): the limit is the largest capsule obtainable in survival**, computed from
+**Decision (owner, before the 9.1 release): the limit is the largest capsule obtainable in survival**, computed from
 the loaded recipes and config by `Claims.perBlockMaxSize`: the largest crafted tier (the shaped recipes of a
 non-overpowered capsule, without empty tag ingredient: netherite 13 by default) plus `capsuleUpgradesLimit` × 2 (10
 upgrades by default): 33. A pack adding a larger tier or more upgrades moves it. It chooses the predicate of
@@ -221,7 +221,7 @@ column above.
   `setPlacedBy`) and its captures and deploys are checked as a fake player with that profile, without chat feedback.
   A capture base deployed from a capsule (or blueprint) acts for the player who deployed it, so a captured base does
   not keep acting for its first owner.
-- Nobody: vanilla dispensers, capture bases placed before Capsule 9.0 (no placer: re-placing the base gives it one) and
+- Nobody: vanilla dispensers, capture bases placed before Capsule 9.1 (no placer: re-placing the base gives it one) and
   any other capture or deploy without a player. Nobody may change a position inside an adapter claim, whatever the
   claim allows strangers or fake players. The generic probe asks for an anonymous fake player (`[Capsule]`, a fixed
   UUID that no claim lists as a member), so mods without adapter answer for a stranger. Outside claims nothing
@@ -245,7 +245,7 @@ column above.
   32 wide box (per chunk column, expected); a stranger's capture keeps the
   claimed blocks and their deploy is refused with one query each, the owner's are allowed; a capsule thrown by a player
   who then went offline is refused in a claim; capture bases are checked as the player who placed them, also offline;
-  inside a claim open to everybody, a capture base placed before 9.0, a vanilla dispenser and a capture without player
+  inside a claim open to everybody, a capture base placed before 9.1, a vanilla dispenser and a capture without player
   are refused, and outside it the base and the dispenser deploy; the placer is saved with the base and a deployed base
   acts for its deployer.
 - `ClaimTests.refusedBlueprintsOnlyGiveTheClaimMessage`: a stranger's blueprint undeploy and deploy in a claim, refused
@@ -258,7 +258,7 @@ column above.
 - `OpenPartiesAndClaimsTests` and `FlanTests` (common GameTests, registered when the mod is loaded, `-PmodCompat` on
   both loaders, mods from the Modrinth maven): inside a real claim a stranger's capture and capture base are refused, a
   party or claim group member's and the owner's capture and the owner's capture base are allowed; a capture base placed
-  before 9.0 and a vanilla dispenser are refused; outside the claim (the next chunk for Open Parties and Claims, the next
+  before 9.1 and a vanilla dispenser are refused; outside the claim (the next chunk for Open Parties and Claims, the next
   blocks of the same chunk for Flan) the stranger's capture, a capture without player and a vanilla dispenser are
   allowed. `FlanTests.flanVetoesStrangersInClaimsReachingBelowTheWorld` runs the same with Flan's `defaultClaimDepth`
   -1. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of

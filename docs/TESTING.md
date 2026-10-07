@@ -45,7 +45,7 @@ the release jar in real servers and clients. They are never published: CI publis
 | `scripts/validate-all.sh` | every layer above, with JEI, REI and EMI, and a summary table, see below | non-zero if a step fails |
 
 CI passes the build number with `-Pbuild_id=<n>` (default `SNAPSHOT`), which only changes the jar names
-`neoforge/build/libs/Capsule-neoforge-1.21.1-9.0.<n>.jar` and `fabric/build/libs/Capsule-fabric-1.21.1-9.0.<n>.jar`.
+`neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.<n>.jar` and `fabric/build/libs/Capsule-fabric-1.21.1-9.1.<n>.jar`.
 Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints nothing.
 
 ## Unit tests (JUnit 5)
@@ -281,7 +281,7 @@ scripts/client-smoke.sh fabric
 
 ### Showcase recordings
 
-`scripts/showcase.sh neoforge|fabric [scene,...]` plays staged scenes of the 9.0 features instead of the smoke scenario
+`scripts/showcase.sh neoforge|fabric [scene,...]` plays staged scenes of the 9.1 features instead of the smoke scenario
 (`-Pshowcase`, `-Dcapsule.showcase=true`, class `Showcase`, never active otherwise and never in the jars) and records
 each with ffmpeg (x11grab of the Xvfb display), plus PNG stills, for the illustrated changelog. Scenes: `title`,
 `modmenu` (Mod Menu in `EXTRA_MODS`, Fabric), `capture` (always played), `preview`, `deploy`, `loyalty`, `enchanting`,
@@ -308,14 +308,14 @@ scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/li
   jar passes.
 - Expected output per jar, for example:
   ```
-  == fabric: Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar in /tmp/smoke-fabric.QnmLgQ
+  == fabric: Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar in /tmp/smoke-fabric.QnmLgQ
   [16:05:43] [Server thread/INFO]: Done (8.999s)! For help, type "help"
-  	- capsule 1.21.1-9.0.SNAPSHOT
+  	- capsule 1.21.1-9.1.SNAPSHOT
   	   \-- common-protection-api 1.0.0
   	- fabric-api 0.116.17+1.21.1
   	- forgeconfigapiport 21.1.6
   [16:05:44] [Server thread/INFO]: /capsule giveEmpty [<size>]
-  OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped cleanly
+  OK: fabric server booted with Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar and stopped cleanly
   ```
 - It also fails when capsule asks an update checker (the dead `updateJSONURL` removed in 760456c).
 - `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 21, `curl` and `python3`, and network access.
@@ -340,12 +340,12 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
   jar does not bundle (the version comes from the Fabric API pom); the test mod jar is remapped like the release jar.
 - Expected output: the same summary as `runGameTestServer`, then `OK`:
   ```
-  == neoforge: Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar + Capsule-neoforge-1.21.1-9.0.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.dMMlJn
+  == neoforge: Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar + Capsule-neoforge-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.dMMlJn
   [11:06:18] [Server thread/INFO] [minecraft/GameTestServer]: All 95 required tests passed :)
-  OK: All 95 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
-  == fabric: Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar + Capsule-fabric-1.21.1-9.0.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.eYuJF4
+  OK: All 95 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
+  == fabric: Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar + Capsule-fabric-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.eYuJF4
   [11:07:27] [Server thread/INFO]: All 93 required tests passed :)
-  OK: All 93 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  OK: All 93 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   ```
 - Exit code 0 when every jar passes. A failure prints the failed tests and keeps the server directory:
   ```
@@ -367,7 +367,7 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
   ```
   EXTRA_MODS="$(ls ~/.cache/capsule-validation/modcompat/fabric/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh fabric/build/libs/Capsule-fabric-*.jar
   ...
-  OK: All 98 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  OK: All 98 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   ```
 
 ## Everything at once
@@ -405,12 +405,12 @@ scripts/validate-all.sh --all      # everything
   PASS   GameTests Fabric                            0m31s  All 93 required tests passed
   PASS   mod-compat GameTests NeoForge               0m41s  All 103 required tests passed
   PASS   mod-compat GameTests Fabric                 0m31s  All 97 required tests passed
-  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 95 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
-  PASS   GameTests on the Fabric release jar         0m27s  OK: All 93 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
-  PASS   Fabric release jar with the claim mods      0m28s  OK: All 98 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 95 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
+  PASS   GameTests on the Fabric release jar         0m27s  OK: All 93 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
+  PASS   Fabric release jar with the claim mods      0m28s  OK: All 98 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)
   PASS   Fabric release jar: failure reported        0m28s  OK: the failing test was reported (exit status 1)
-  PASS   release jars on dedicated servers           1m00s  OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped
+  PASS   release jars on dedicated servers           1m00s  OK: fabric server booted with Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar and stopped
   PASS   client smoke neoforge-jei                   1m24s  46 checks passed, 0 failed, 0 skipped
   PASS   client smoke neoforge-rei                   1m25s  46 checks passed, 0 failed, 0 skipped
   PASS   client smoke neoforge-emi                   1m23s  46 checks passed, 0 failed, 0 skipped

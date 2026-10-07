@@ -163,7 +163,7 @@ coordinator only, from the streams' reports.
 - **L1 No lapis tier** – the lapis capsule recipe is removed (blueprints are blue, avoid confusion); the rest of
   `docs/RECIPES.md` is approved; capsule bodies stay white unless dyed. Recipe tests and docs updated.
 - **L2 No identity, no access inside claims** – every capture or deploy without an identity (vanilla dispensers,
-  capture bases placed before 9.0, any path without a player or placer) is refused inside a claim (adapters and the
+  capture bases placed before 9.1, any path without a player or placer) is refused inside a claim (adapters and the
   generic probe), and still allowed outside claims. GameTests on both loaders (counting adapter + a real mod in
   modCompat).
 - **L3 Protection checked per block** – a single block can be protected, so the generic probe (mods without adapter) must

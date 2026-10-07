@@ -1,6 +1,6 @@
 # Changelog
 
-**1.21.1-9.0.x : Fabric support, Loyalty, claim mods and bug fixes**
+**1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**
 
 - New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build
 - The NeoForge jar is now named `Capsule-neoforge-1.21.1-...jar`, built with ModDevGradle against NeoForge 21.1.255; it requires NeoForge 21.1 or later and Minecraft 1.21.1
