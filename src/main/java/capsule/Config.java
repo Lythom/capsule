@@ -188,9 +188,20 @@ public class Config {
 
         // Overridable
         List<Material> overridableMaterials = Arrays.asList(Material.AIR, Material.WATER, Material.LEAVES, Material.REPLACEABLE_PLANT, Material.SNOW);
+        List<Block> unreadable = new ArrayList<>();
         Block[] overridableBlocksList = ForgeRegistries.BLOCKS.getValues().stream()
-                .filter(block -> overridableMaterials.contains(block.defaultBlockState().getMaterial()))
+                .filter(block -> {
+                    try {
+                        return overridableMaterials.contains(block.defaultBlockState().getMaterial());
+                    } catch (RuntimeException | LinkageError e) {
+                        // a block or a mod changing materials failing this early (Snow! Real Magic, #78)
+                        if (unreadable.isEmpty()) LOGGER.error("Cannot read the material of " + block.getRegistryName() + ", it is not overridable by default", e);
+                        unreadable.add(block);
+                        return false;
+                    }
+                })
                 .toArray(Block[]::new);
+        if (unreadable.size() > 1) LOGGER.error(unreadable.size() + " blocks whose material cannot be read are not overridable by default");
 
         overridableBlocksIdsCfg = configBuild.comment("List of block ids that can be overriden while teleporting blocks.\nPut there blocks that the player don't care about (grass, leaves) so they don't prevent the capsule from deploying.")
                 .worldRestart()
