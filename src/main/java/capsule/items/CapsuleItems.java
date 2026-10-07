@@ -21,7 +21,7 @@ import java.util.*;
 
 public class CapsuleItems {
 
-    private static final int UPGRADE_STEP = 2;
+    public static final int UPGRADE_STEP = 2;
 
     public static CapsuleItem CAPSULE;
 
@@ -99,7 +99,7 @@ public class CapsuleItems {
         }
     }
 
-    private static boolean hasNoEmptyTagsIngredient(IRecipe<?> recipe) {
+    public static boolean hasNoEmptyTagsIngredient(IRecipe<?> recipe) {
         return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 

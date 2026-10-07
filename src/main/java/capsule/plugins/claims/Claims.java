@@ -1,11 +1,18 @@
 package capsule.plugins.claims;
 
+import capsule.Config;
+import capsule.items.CapsuleItem;
+import capsule.items.CapsuleItems;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerProfileCache;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
@@ -33,7 +40,7 @@ import java.util.function.Predicate;
 /**
  * Whether claim mods let a player capture or deploy blocks. Flan, which does not listen to the block placement event on
  * 1.16.5, is asked through its API, the positions outside its claims with a block placement event, so that claim mods
- * without adapter protect them: each position up to {@link #PER_BLOCK_MAX_SIZE}, the center of each chunk column above.
+ * without adapter protect them: each position up to {@link #perBlockMaxSize}, the center of each chunk column above.
  * When Flan is loaded but cannot be checked, captures and deploys are refused.
  */
 public final class Claims {
@@ -42,11 +49,6 @@ public final class Claims {
      * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before this version).
      */
     private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
-    /**
-     * Captures and deploys up to this size (the largest upgraded capsule) probe every block, larger ones (OP capsules)
-     * one block per chunk column: one placement event per block of a 255 capsule takes seconds.
-     */
-    public static final int PER_BLOCK_MAX_SIZE = 31;
     private static boolean flanLoaded = false;
     @Nullable
     private static FlanAdapter flan = null;
@@ -58,6 +60,21 @@ public final class Claims {
     private static boolean failureReported = false;
 
     private Claims() {
+    }
+
+    /**
+     * Captures and deploys up to this size, the largest capsule of survival (the largest crafted tier with every
+     * upgrade), probe every block, larger ones (OP capsules) one block per chunk column: one placement event per block
+     * of a 255 capsule takes seconds.
+     */
+    public static int perBlockMaxSize(MinecraftServer server) {
+        int largestTier = server.getRecipeManager().getAllRecipesFor(IRecipeType.CRAFTING).stream()
+                .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
+                .map(IRecipe::getResultItem)
+                .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
+                .mapToInt(CapsuleItem::getSize)
+                .max().orElse(1);
+        return largestTier + Config.upgradeLimit * CapsuleItems.UPGRADE_STEP;
     }
 
     /**
@@ -132,8 +149,8 @@ public final class Claims {
         }
         MutableBoundingBox box = new MutableBoundingBox(min[0], min[1], min[2], max[0], max[1], max[2]);
         ServerPlayerEntity actor = actor(level, player);
-        boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
-        // up to PER_BLOCK_MAX_SIZE, the positions inside Flan claims and those the player may change, by index in box
+        boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= perBlockMaxSize(level.getServer());
+        // up to that size, the positions inside Flan claims and those the player may change, by index in box
         BitSet flanClaimed = new BitSet();
         BitSet flanAllowed = new BitSet();
         // above, the chunk columns denied, and the centers of those Flan does not claim, probed
