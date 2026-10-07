@@ -1,13 +1,13 @@
 # Backports to 1.20.1, 1.18.2 and 1.16.5
 
-The bug fixes of `dev-1.21.1` (round 1: `git log origin/1.21.1..17b69f5`, round 2: `git log 17b69f5..dev-1.21.1`)
-ported to the Forge branches, as decided by the owner: bug fixes only, no enhancements.
+The bug fixes of `dev-1.21.1` (round 1: `git log origin/1.21.1..17b69f5`, round 2: `git log 17b69f5..fe6ef90`,
+round 3: `git log fe6ef90..dev-1.21.1`) ported to the Forge branches, as decided by the owner: bug fixes only, no enhancements.
 
 | Branch | Created from | Minecraft / Forge | JDK | Head |
 |---|---|---|---|---|
-| `dev-1.20` | `1.20` | 1.20.1-47.1.3 | Temurin 17 | 945e59b |
-| `dev-1.18` | `1.18` | 1.18.2-40.1.16 | Temurin 17 | 2661926 |
-| `dev-1.16` | `1.16` | 1.16.5-36.2.31 | Temurin 8 | 6396571 |
+| `dev-1.20` | `1.20` | 1.20.1-47.1.3 | Temurin 17 | ec9508f |
+| `dev-1.18` | `1.18` | 1.18.2-40.1.16 | Temurin 17 | a6755d2 |
+| `dev-1.16` | `1.16` | 1.16.5-36.2.31 | Temurin 8 | 05e11ec |
 
 One commit per fix (or tight group), each naming its `dev-1.21.1` source ("Backport of ..."). Nothing is pushed to
 `1.20`, `1.18` or `1.16`. Each branch's `CHANGELOG.md` has an entry `1.20.1-8.0.BUILD_ID` / `1.18.2-6.0.BUILD_ID` /
@@ -166,6 +166,53 @@ the adapters were asked through the APIs in the reobfuscated jar, without error.
 The rc6 jars (1.20.1 with 0fdd7bc and 1a8859d, 1.18.2 with 56d391b and 4f1d101, 1.16.5 unchanged since rc5) were
 built the same way: `./gradlew build` passes with 9 JUnit tests, and the boot test is OK on the three branches.
 The 1.16.5 rc7 jar (with c4e3042) was built and boot tested the same way.
+
+The rc8 jars (round 3, below) were built the same way: `./gradlew build` passes on the three branches with 9 JUnit
+tests, 0 failures, the boot test is OK on each, and the 1.20.1 known incompatibility scenario (`INCOMPAT=1`, Forge
+1.20.1-47.4.10) passes its 33 checks.
+
+## Round 3 (pre-release fixes)
+
+| Fix (dev-1.21.1 commit) | 1.20.1 (`dev-1.20`) | 1.18.2 (`dev-1.18`) | 1.16.5 (`dev-1.16`) |
+|---|---|---|---|
+| #113 container entities emptied on capture (1.20.4 b8fdf98) and by a failed deploy's rollback (403e6c0) | 03e26be, 57ce4ab (chest boats duped: `ChestBoat.remove` drops its content for a `DISCARDED` removal) | 7d98af3 (no chest boat before 1.19 and minecarts were emptied already; any `Clearable` entity now, for modded ones) | c7c705b (same, `IClearable`) |
+| #78 #68 startup crash when a block's material cannot be read (Snow! Real Magic) | not applicable: no material check, overridable blocks are the `capsule:overridable` tag | ae5c8f9 (try/catch per block, first failure logged with its block, then the count) | fce3523 (same) |
+| Default excluded blocks (known incompatibilities, #121) | 8b2d109, da6fb59 (see below) | e52201e, e27b495 | cb77a28 (Forge 1.16.5 reads the tag's `optional` key, `ForgeHooks.deserializeTagAdditions`) |
+| #99 #84 lapis in the castle kit and blueprint discovery | 137fd51 | 159f983 | 7c68b54 |
+| Structure block `"seed": "LONG"` in the blueprint whitelist (5d20fd7) | fe43e6a | 1af99ff | 0e85def |
+| Claims per block up to the largest survival capsule from the config (b79dbaa) | b6a357c | faa9b01 | 5097f58 |
+| Rotation message glyph (8076892) | d53ef71 (same fonts as 1.21.1: bitmap fonts, then Unifont) | not applicable: the legacy unicode font draws it | not applicable: same |
+| `/capsule exportHeldItem` and `exportSeenBlock` in the 1.20.5 item syntax (5559df4) | not applicable: the NBT syntax is right before 1.20.5 | not applicable | not applicable |
+| `/capsule fromHeldCapsule` without a name (4af3d05) | not done: enhancement on these branches (the name was required since 1.13) | not done | not done |
+
+CHANGELOG commits: ec9508f, a6755d2, 05e11ec.
+
+- **Container entities**: the 1.20.4 fix b8fdf98 never reached `dev-1.20`. On 1.18.2 and 1.16.5 the vanilla
+  container entities are minecarts, which both paths emptied already.
+- **Default excluded blocks**, from the known incompatibilities played on a real 1.20.1 server (`INCOMPAT=1
+  scripts/prod-smoke-forge.sh`, see its header) and the jars of the mods for each version (Modrinth):
+  - `capsule:excluded` includes the optional `#forge:relocation_not_supported`, the tag of Mekanism (Digital Miner,
+    bounding blocks, tubes and on 1.20.1 cables and pipes; 10.4.16.80, 10.2.5.465, 10.1.2.457) and Refined Storage
+    (1.12.4 and 1.10.6; 1.9.18 tags nothing). Forge 1.20.1 and 1.18.2 do not read the tag's Forge `optional` key
+    (1.18.2 `Tag$Builder` reads `values`, `required` and `replace`, javap), so its entries never applied there,
+    `#tombstone:player_graves` included: they now use the vanilla `{"id": ..., "required": false}` form (da6fb59,
+    e27b495), as 1.20.4 does (aa96d01).
+  - `excludedBlocks` and `opExcludedBlocks` defaults: `bloodmagic:alchemytable` instead of `bloodmagic:alchemy_table`
+    (Blood Magic 3.3.8, 3.2.6, 3.1.13); the 20 wire connector blocks of Immersive Engineering, which tags only their
+    block entity types (connectors, relays, transformers, breakers, current transformer, feedthrough, electric
+    lantern, floodlight, razor wire: the `ImmersiveConnectableBlockEntity` subclasses of 10.2.0, javap; same ids in
+    8.4.0 and 5.1.0); `waystones:` (#121), Waystones 14.1.21, 10.2.2 and 7.6.4 tag nothing. Removed the 1.12 ids that
+    match nothing: `superfactorymanager:` (now `sfm:`, the manager moves with its program), `gregtech:machine` and
+    `gtadditions:` (now `gtceu:`, machines move with their content), `mekanism:machineblock` and
+    `mekanism:boundingblock` (now tagged). `ic2:` stays: the namespace of IndustrialCraft ports. Only new installs get
+    config defaults.
+  - 1.20.1 scenario of the rc8 jar on Forge 1.20.1-47.4.10 (Waystones and Balm added): the Digital Miner, the wired
+    connectors (still wired), the Blood Magic table and a waystone stay in place for standard and overpowered
+    capsules; without `refinedstorage:` in the config, the tag keeps the disk drive and controller in place.
+- **Lapis**: the blueprint recipe of the three branches takes `forge:dyes/blue` (blue dye). 1.20.4 replaced the two
+  templates (8ec9143, DataVersion 3700); here the 2 lapis items of the castle kit chest and the two book pages are
+  rewritten in place with a typed NBT round trip, DataVersion 2586 unchanged.
+- **Claims**: emerald 11 + 10 upgrades = 31 by default on these branches, 33 when a mod fills `forge:ingots/platinum`.
 
 ## Notes
 

@@ -42,6 +42,11 @@
 - Fix capture bases looking activated while no empty capsule is held
 - Fix deploys of templates with item frames or paintings logging "Block-attached entity at invalid position"
 - Fix capsule tooltips ending with a "Dyed" line (existing capsules keep it until dyed again)
+- Fix chest boats and other container entities dropping their content when a deploy that failed is rolled back, a dupe (#113)
+- Fix `/capsule exportHeldItem` and `/capsule exportSeenBlock` printing the pre-1.20.5 item syntax, which `/give` refuses
+- `/capsule fromHeldCapsule` without a name names the reward after the label of the held capsule again
+- Fix blueprints with a structure block asking for a structure block item holding its seed (`blueprint_whitelist.json`, new installs only)
+- Fix the rotation message showing a circle instead of "⟳": it now says "Rotation: 90°"
 - Remove the dead update checker URL (a warning on every NeoForge start)
 - The prefab blueprint recipes sent to clients changed: clients and servers must run the same Capsule build
 - Building needs Gradle running on Java 25 (Fabric Loom 1.18); Gradle downloads it when missing. The mod still targets Java 21
