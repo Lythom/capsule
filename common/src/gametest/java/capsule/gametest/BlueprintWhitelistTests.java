@@ -71,6 +71,21 @@ public class BlueprintWhitelistTests {
         helper.succeed();
     }
 
+    /**
+     * The NBT kept in blueprints never tells vanilla items apart: a blueprint asks for the plain item of each block.
+     */
+    @GameTest(template = "empty")
+    public static void vanillaBlocksHaveNoIdentityNBT(GameTestHelper helper) {
+        List<String> identities = Config.blueprintWhitelist.entrySet().stream()
+                .filter(block -> block.getKey().startsWith("minecraft:") && block.getValue() != null)
+                .flatMap(block -> block.getValue().entrySet().stream()
+                        .filter(nbt -> !nbt.getValue().isJsonNull())
+                        .map(nbt -> block.getKey() + " " + nbt.getKey() + " as " + nbt.getValue()))
+                .toList();
+        assertTrue(helper, identities.isEmpty(), "identity NBT of vanilla blocks: " + identities);
+        helper.succeed();
+    }
+
     @GameTest(template = "empty")
     public static void blueprintsNeverKeepInventories(GameTestHelper helper) {
         fill(helper, new BlockPos(0, 1, 0), Blocks.SHULKER_BOX, Items.DIAMOND);
