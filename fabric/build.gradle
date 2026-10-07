@@ -108,6 +108,11 @@ loom {
             runDir 'runs/clientSmoke'
             vmArg '-Dcapsule.clientsmoke=true'
             programArgs '--width', '1280', '--height', '720'
+            // staged scenes recorded for the changelog instead of the smoke scenario, see scripts/showcase.sh
+            if (project.hasProperty('showcase')) {
+                vmArg '-Dcapsule.showcase=true'
+                vmArg "-Dcapsule.showcase.scenes=${project.property('showcase')}"
+            }
         }
         // Runs every capsule GameTest headless then exits, non-zero if a required test failed.
         gameTestServer {

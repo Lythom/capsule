@@ -39,4 +39,9 @@ class EmiProbe implements RecipeViewerProbe {
     public void showRecipes(ItemStack output) {
         EmiApi.displayRecipes(EmiStack.of(output));
     }
+
+    @Override
+    public void search(String text) {
+        EmiApi.setSearchText(text);
+    }
 }

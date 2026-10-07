@@ -279,6 +279,15 @@ scripts/client-smoke.sh fabric
   work on the server thread). Inputs go through the real key mappings (`KeyMapping.click`), server state is set on the
   integrated server thread, and screenshots are the last rendered frame.
 
+### Showcase recordings
+
+`scripts/showcase.sh neoforge|fabric [scene,...]` plays staged scenes of the 9.0 features instead of the smoke scenario
+(`-Pshowcase`, `-Dcapsule.showcase=true`, class `Showcase`, never active otherwise and never in the jars) and records
+each with ffmpeg (x11grab of the Xvfb display), plus PNG stills, for the illustrated changelog. Scenes: `title`,
+`modmenu` (Mod Menu in `EXTRA_MODS`, Fabric), `capture` (always played), `preview`, `deploy`, `loyalty`, `enchanting`,
+`claim` (Flan in `EXTRA_MODS`), `blueprint`, `lava`, `viewer`. Output in `build/showcase/<loader>/`: `.mkv` recordings,
+a GIF of each (`GIF_WIDTH`, `GIF_FPS`) and the PNGs. Needs ffmpeg.
+
 ## Production jar smoke test
 
 `scripts/prod-smoke.sh <jar>...` starts a real dedicated server for each built release jar, outside Gradle:

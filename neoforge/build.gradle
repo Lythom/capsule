@@ -39,6 +39,11 @@ neoForge {
             client()
             systemProperty 'capsule.clientsmoke', 'true'
             programArguments.addAll '--width', '1280', '--height', '720'
+            // staged scenes recorded for the changelog instead of the smoke scenario, see scripts/showcase.sh
+            if (project.hasProperty('showcase')) {
+                systemProperty 'capsule.showcase', 'true'
+                systemProperty 'capsule.showcase.scenes', project.property('showcase').toString()
+            }
         }
 
         // Runs every capsule GameTest headless then exits, with the number of failed required tests as exit code.

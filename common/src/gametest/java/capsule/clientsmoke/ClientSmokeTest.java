@@ -127,24 +127,30 @@ public class ClientSmokeTest {
         if (instance == null) return;
         // toasts and chat would hide parts of the screenshots; the chat is in the log anyway
         mc().getToasts().clear();
-        mc().gui.getChat().clearMessages(false);
+        if (!Showcase.ENABLED) mc().gui.getChat().clearMessages(false);
         instance.scenario.tick();
     }
 
     private ClientSmokeTest() {
         scenario.await("title screen", 20 * 600, () -> mc().getOverlay() == null
-                        && (mc().screen instanceof TitleScreen || mc().screen instanceof AccessibilityOnboardingScreen))
-                .run("create a flat creative world", this::createWorld)
-                .await("world loaded", 20 * 300, () -> mc().level != null && mc().player != null && mc().screen == null)
-                .async("prepare the capture area", 100, () -> onServer(this::prepareCaptureArea))
-                .sleep(80);
+                && (mc().screen instanceof TitleScreen || mc().screen instanceof AccessibilityOnboardingScreen));
+        Showcase showcase = Showcase.ENABLED ? new Showcase(this, scenario) : null;
+        if (showcase != null) showcase.titleScreens();
+        scenario.run("create a flat creative world", this::createWorld)
+                .await("world loaded", 20 * 300, () -> mc().level != null && mc().player != null && mc().screen == null);
 
-        captureScenario();
-        inventoryScenario();
-        deployScenario();
-        blueprintScenario();
-        previewSurroundingsScenario();
-        moddedBlocksScenario();
+        if (showcase != null) {
+            showcase.scenes();
+        } else {
+            scenario.async("prepare the capture area", 100, () -> onServer(this::prepareCaptureArea))
+                    .sleep(80);
+            captureScenario();
+            inventoryScenario();
+            deployScenario();
+            blueprintScenario();
+            previewSurroundingsScenario();
+            moddedBlocksScenario();
+        }
 
         scenario.finallyRun("check the log", () -> {
                     synchronized (log.problems) {
@@ -152,6 +158,9 @@ public class ClientSmokeTest {
                     }
                 })
                 .finallyRun("write the report", this::writeReport)
+                .finallyRun("stop the recording", () -> {
+                    if (showcase != null) showcase.stopRecording();
+                })
                 .finallyRun("leave the world", () -> {
                     if (mc().level != null) {
                         mc().level.disconnect();
@@ -387,7 +396,7 @@ public class ClientSmokeTest {
                 .run("screenshot", () -> screenshot("23-modded-blocks-deployed"));
     }
 
-    private static Minecraft mc() {
+    static Minecraft mc() {
         return Minecraft.getInstance();
     }
 
@@ -404,7 +413,8 @@ public class ClientSmokeTest {
         mc.resizeDisplay();
         try {
             FileUtils.deleteDirectory(mc.gameDirectory.toPath().resolve("saves").resolve(LEVEL_NAME).toFile());
-            FileUtils.deleteDirectory(outputDir().toFile());
+            // the showcase took its title screen shots already
+            if (!Showcase.ENABLED) FileUtils.deleteDirectory(outputDir().toFile());
             Files.createDirectories(outputDir());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -563,7 +573,7 @@ public class ClientSmokeTest {
      * A view from above, flying so that the camera stays where it is put. The teleport goes first: a client player on
      * the ground stops flying.
      */
-    private static void flyTo(ServerPlayer player, double x, double y, double z, float pitch) {
+    static void flyTo(ServerPlayer player, double x, double y, double z, float pitch) {
         player.connection.teleport(x, y, z, 0, pitch);
         player.getAbilities().flying = true;
         player.onUpdateAbilities();
@@ -621,7 +631,7 @@ public class ClientSmokeTest {
         for (int i = 0; i < main.size(); i++) inventory.setItem(9 + i, main.get(i));
     }
 
-    private static ItemStack dyed(ItemStack capsule, DyeColor color) {
+    static ItemStack dyed(ItemStack capsule, DyeColor color) {
         ItemStack copy = capsule.copy();
         MinecraftNBT.setColor(copy, color.getTextureDiffuseColor() & 0xFFFFFF);
         return copy;
@@ -630,7 +640,7 @@ public class ClientSmokeTest {
     /**
      * A charged blueprint of a prefab, as given by /capsule giveBlueprint.
      */
-    private static ItemStack blueprint(ServerPlayer player, String prefabPath) {
+    static ItemStack blueprint(ServerPlayer player, String prefabPath) {
         CapsuleTemplate source = Capsule.getRewardTemplateIfExists(prefabPath, player.getServer());
         int size = Math.max(source.getSize().getX(), Math.max(source.getSize().getY(), source.getSize().getZ())) | 1;
         ItemStack blueprint = Capsule.newEmptyCapsuleItemStack(0x3C44AA, 0xFFFFFF, size, false, "Castle wall", 0);
@@ -644,7 +654,7 @@ public class ClientSmokeTest {
     /**
      * Puts the thrown capsule lying around in the given hotbar slot.
      */
-    private static void pickUp(ServerPlayer player, int slot) {
+    static void pickUp(ServerPlayer player, int slot) {
         ItemEntity entity = capsuleEntity(player, s -> true);
         player.getInventory().setItem(slot, entity.getItem().copy());
         entity.discard();
@@ -663,7 +673,7 @@ public class ClientSmokeTest {
                 .orElse(-1);
     }
 
-    private CompletableFuture<Void> onServer(Consumer<ServerPlayer> action) {
+    CompletableFuture<Void> onServer(Consumer<ServerPlayer> action) {
         IntegratedServer server = mc().getSingleplayerServer();
         UUID id = mc().player.getUUID();
         return server.submit(() -> action.accept(server.getPlayerList().getPlayer(id)));
@@ -672,7 +682,7 @@ public class ClientSmokeTest {
     /**
      * A condition checked on the server thread, polled from the client ticks.
      */
-    private BooleanSupplier serverCondition(Predicate<ServerPlayer> condition) {
+    BooleanSupplier serverCondition(Predicate<ServerPlayer> condition) {
         List<CompletableFuture<Boolean>> pending = new ArrayList<>(1);
         return () -> {
             if (pending.isEmpty()) {
@@ -689,36 +699,36 @@ public class ClientSmokeTest {
      * A capsule lying around. Its stack is only up to date on the server: changes of the stack of an item entity are not
      * synchronized.
      */
-    private static ItemEntity capsuleEntity(ServerPlayer player, Predicate<ItemStack> predicate) {
+    static ItemEntity capsuleEntity(ServerPlayer player, Predicate<ItemStack> predicate) {
         return player.serverLevel().getEntitiesOfClass(ItemEntity.class, new AABB(player.blockPosition()).inflate(32),
                 e -> e.getItem().getItem() instanceof CapsuleItem && predicate.test(e.getItem())).stream().findFirst().orElse(null);
     }
 
-    private static boolean mainHandIs(CapsuleState state) {
+    static boolean mainHandIs(CapsuleState state) {
         return CapsuleItem.hasState(mc().player.getMainHandItem(), state);
     }
 
-    private static void select(int slot) {
+    static void select(int slot) {
         mc().player.getInventory().selected = slot;
     }
 
-    private void rightClick() {
+    void rightClick() {
         KeyMapping.click(mc().options.keyUse.getDefaultKey());
     }
 
-    private void leftClick() {
+    void leftClick() {
         KeyMapping.click(mc().options.keyAttack.getDefaultKey());
     }
 
-    private static void pressKey(KeyMapping key) {
+    static void pressKey(KeyMapping key) {
         mc().screen.keyPressed(key.getDefaultKey().getValue(), 0, 0);
     }
 
-    private static Path outputDir() {
-        return mc().gameDirectory.toPath().resolve(Screenshot.SCREENSHOT_DIR).resolve("capsule-smoke");
+    static Path outputDir() {
+        return mc().gameDirectory.toPath().resolve(Screenshot.SCREENSHOT_DIR).resolve(Showcase.ENABLED ? "capsule-showcase" : "capsule-smoke");
     }
 
-    private void screenshot(String name) {
+    void screenshot(String name) {
         screenshot(name, List.of());
     }
 
@@ -726,7 +736,7 @@ public class ClientSmokeTest {
      * Saves the last rendered frame, and checks that it shows no missing texture and that the given slots (GUI
      * coordinates of 16×16 item slots on the inventory background) are not empty.
      */
-    private void screenshot(String name, List<int[]> itemSlots) {
+    void screenshot(String name, List<int[]> itemSlots) {
         try (NativeImage image = Screenshot.takeScreenshot(mc().getMainRenderTarget())) {
             int missing = 0;
             for (int x = 0; x < image.getWidth(); x++) {
@@ -780,7 +790,7 @@ public class ClientSmokeTest {
     /**
      * The survival inventory with the mouse over a hotbar slot, showing its tooltip.
      */
-    private static class HoverInventoryScreen extends InventoryScreen {
+    static class HoverInventoryScreen extends InventoryScreen {
         private final int hoveredHotbarSlot;
 
         HoverInventoryScreen(int hoveredHotbarSlot) {

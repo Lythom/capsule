@@ -58,6 +58,11 @@ public class JeiSmokePlugin implements IModPlugin, RecipeViewerProbe {
         runtime.getRecipesGui().show(focus(output));
     }
 
+    @Override
+    public void search(String text) {
+        runtime.getIngredientFilter().setFilterText(text);
+    }
+
     private static IFocus<ItemStack> focus(ItemStack stack) {
         return runtime.getJeiHelpers().getFocusFactory().createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, stack);
     }

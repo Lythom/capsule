@@ -1,5 +1,6 @@
 package capsule.clientsmoke;
 
+import me.shedaniel.rei.api.client.REIRuntime;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
@@ -43,6 +44,11 @@ class ReiProbe implements RecipeViewerProbe {
     @Override
     public void showRecipes(ItemStack output) {
         ViewSearchBuilder.builder().addRecipesFor(EntryStack.of(VanillaEntryTypes.ITEM, output)).open();
+    }
+
+    @Override
+    public void search(String text) {
+        if (REIRuntime.getInstance().getSearchTextField() != null) REIRuntime.getInstance().getSearchTextField().setText(text);
     }
 
     private static boolean anyEntry(List<EntryIngredient> ingredients, Predicate<EntryStack<?>> predicate) {

@@ -25,6 +25,12 @@ interface RecipeViewerProbe {
 
     void showRecipes(ItemStack output);
 
+    /**
+     * Filters the item list of the viewer (showcase only).
+     */
+    default void search(String text) {
+    }
+
     static List<RecipeViewerProbe> installed() {
         List<RecipeViewerProbe> probes = new ArrayList<>();
         if (Services.PLATFORM.isModLoaded("jei")) probes.add(new JeiSmokePlugin());
