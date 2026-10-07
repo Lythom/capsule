@@ -33,9 +33,9 @@ the release jar in real servers and clients. They are never published: CI publis
 | `./gradlew check --continue` | every test layer, reporting all of them even if one fails | |
 | `./gradlew :neoforge:test` / `:fabric:test` | JUnit tests of `common/src/test/java` on one loader | non-zero if a test fails |
 | `./gradlew :neoforge:runGameTestServer` | the 91 NeoForge GameTests (89 common + 2 SecurityCraft) on a headless server | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (97) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (98) | number of failed required tests |
 | `./gradlew :fabric:runGameTestServer` | the 89 common GameTests on a headless Fabric server | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (91) | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (92) | number of failed required tests |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
 | `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
 | `scripts/prod-smoke.sh <jar>...` | the release jars on real dedicated servers, see below | non-zero if a jar fails |
@@ -137,13 +137,14 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   Flan; the Fabric one Open Parties and Claims and Flan. `NeoForgeGameTests` registers `WaystonesTests` (#121),
   `SophisticatedStorageTests` (#115) and `WorldEditTests` (#70) only when their mod is loaded; they reference the mods'
   blocks by id, so they compile without them. `OpenPartiesAndClaimsTests` and `FlanTests` (#91, common) compile against
-  the mods (`gametestCompileOnly`) and are registered on both loaders when the mod is loaded. `WorldEditTests` writes
+  the mods (the `compileOnly` API jars Capsule's adapters use) and are registered on both loaders when the mod is
+  loaded. `WorldEditTests` writes
   the Sponge v2 and v3 fixtures with WorldEdit's own clipboard writers. SecurityCraft, always in the NeoForge runtime,
   stops the 1.13 data fixer from upgrading older block entity data, so the MCEdit test skips the item count there.
   ```
   ./gradlew :neoforge:runGameTestServer -PmodCompat
   ...
-  [Server thread/INFO] [minecraft/GameTestServer]: All 97 required tests passed :)
+  [Server thread/INFO] [minecraft/GameTestServer]: All 98 required tests passed :)
   ```
   Get Off My Lawn (Fabric) is not in the runtime: the Loom dev runs do not load the mods nested in its jar.
 - **Servers**: `EXTRA_MODS` adds jars to the server of `scripts/prod-smoke.sh`, for example the mods above and JEI,
@@ -334,8 +335,8 @@ scripts/validate-all.sh --all      # everything
   PASS   unit tests (both loaders)                   0m20s  BUILD SUCCESSFUL
   PASS   GameTests NeoForge                          0m34s  All 91 required tests passed
   PASS   GameTests Fabric                            0m31s  All 89 required tests passed
-  PASS   mod-compat GameTests NeoForge               0m41s  All 97 required tests passed
-  PASS   mod-compat GameTests Fabric                 0m31s  All 91 required tests passed
+  PASS   mod-compat GameTests NeoForge               0m41s  All 98 required tests passed
+  PASS   mod-compat GameTests Fabric                 0m31s  All 92 required tests passed
   PASS   GameTests on the NeoForge release jar       0m25s  OK: All 91 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
   PASS   GameTests on the Fabric release jar         0m27s  OK: All 89 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
   PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)

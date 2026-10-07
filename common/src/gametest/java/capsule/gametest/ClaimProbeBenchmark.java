@@ -1,6 +1,7 @@
 package capsule.gametest;
 
 import capsule.platform.Services;
+import capsule.plugins.claims.Claims;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -16,8 +17,9 @@ import java.util.function.Supplier;
 /**
  * Cost of the generic claim probe (a placement event on NeoForge, Common Protection API on Fabric) asked for every
  * block or once per chunk column of a capture of 3, 11, 31 and 255, by a stranger, outside claims and, when Flan or
- * Open Parties and Claims is loaded (-PmodCompat), inside a claim of each. Registered only with
- * -Dcapsule.gametest.claimBenchmark=true (-PclaimBenchmark); the median times are logged as "claim probe benchmark".
+ * Open Parties and Claims is loaded (-PmodCompat), inside a claim of each; and of the adapters (Claims.denied, which
+ * asks them for the whole box). Registered only with -Dcapsule.gametest.claimBenchmark=true (-PclaimBenchmark); the
+ * median times are logged as "claim probe benchmark".
  */
 public class ClaimProbeBenchmark {
     static final String PROPERTY = "capsule.gametest.claimBenchmark";
@@ -65,6 +67,7 @@ public class ClaimProbeBenchmark {
             int runs = size < 255 ? 7 : 3;
             long[] blockTimes = new long[runs];
             long[] columnTimes = new long[runs];
+            long[] adapterTimes = new long[runs];
             int deniedBlocks = 0;
             int deniedColumns = 0;
             for (int run = 0; run < runs; run++) {
@@ -74,10 +77,13 @@ public class ClaimProbeBenchmark {
                 start = System.nanoTime();
                 deniedColumns = perColumn(helper.getLevel(), box, player);
                 columnTimes[run] = System.nanoTime() - start;
+                start = System.nanoTime();
+                Claims.denied(helper.getLevel(), box, player);
+                adapterTimes[run] = System.nanoTime() - start;
             }
             int columns = ((box.maxX() >> 4) - (box.minX() >> 4) + 1) * ((box.maxZ() >> 4) - (box.minZ() >> 4) + 1);
-            LOGGER.info("claim probe benchmark | {} | {} | size {} | per block: {} probes, {} denied, {} ms | per chunk column: {} probes, {} denied, {} ms | median of {}",
-                    loader, scenario, size, (long) size * size * size, deniedBlocks, median(blockTimes), columns, deniedColumns, median(columnTimes), runs);
+            LOGGER.info("claim probe benchmark | {} | {} | size {} | per block: {} probes, {} denied, {} ms | per chunk column: {} probes, {} denied, {} ms | adapters: {} ms | median of {}",
+                    loader, scenario, size, (long) size * size * size, deniedBlocks, median(blockTimes), columns, deniedColumns, median(columnTimes), median(adapterTimes), runs);
         }
     }
 

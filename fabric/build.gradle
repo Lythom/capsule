@@ -18,6 +18,13 @@ repositories {
             includeGroup 'eu.pb4'
         }
     }
+    maven {
+        name = 'JamiesWhiteShirt (R-tree of Get Off My Lawn)'
+        url = 'https://maven.jamieswhiteshirt.com/libs-release/'
+        content {
+            includeGroup 'com.jamieswhiteshirt'
+        }
+    }
 }
 
 // mod<Gametest...> configurations, remapped like the main mod dependencies
@@ -52,9 +59,14 @@ dependencies {
 
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
 
-    // claim mods (#91): the claim GameTests compile against them, opt-in at runtime with -PmodCompat
-    modGametestCompileOnly "maven.modrinth:open-parties-and-claims:${opac_fabric_version}"
-    modGametestCompileOnly "maven.modrinth:flan:${flan_fabric_version}"
+    // the protection mods whose API Capsule calls when they are loaded (#91, #119); SecurityCraft has no Fabric build,
+    // its NeoForge API compiles the common check, never loaded on Fabric
+    modCompileOnly("maven.modrinth:open-parties-and-claims:${opac_fabric_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:flan:${flan_fabric_version}") { transitive = false }
+    modCompileOnly("maven.modrinth:goml-reserved:${goml_version}") { transitive = false }
+    compileOnly "com.jamieswhiteshirt:rtree-3i-lite-fabric:${rtree_3i_version}"
+    compileOnly("maven.modrinth:security-craft:${securitycraft_version}") { transitive = false }
+    // the claim GameTests run with them with -PmodCompat
     if (project.hasProperty('modCompat')) {
         modGametestRuntimeOnly "maven.modrinth:open-parties-and-claims:${opac_fabric_version}"
         modGametestRuntimeOnly "maven.modrinth:flan:${flan_fabric_version}"

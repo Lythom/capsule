@@ -1,5 +1,6 @@
 package capsule.gametest;
 
+import capsule.plugins.claims.Claims;
 import io.github.flemmli97.flan.api.permission.BuiltinPermission;
 import io.github.flemmli97.flan.claim.Claim;
 import io.github.flemmli97.flan.claim.ClaimStorage;
@@ -8,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.stream.Stream;
@@ -37,6 +39,32 @@ public class FlanTests {
                     storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
                 });
+    }
+
+    /**
+     * Flan's API answers per position: it is asked for each position up to the largest survival capsule, above for the
+     * center of each chunk column. Its own batch: the boxes reach the areas of other tests.
+     */
+    @GameTest(template = "empty17", batch = "flangranularity")
+    public static void flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule(GameTestHelper helper) {
+        ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        // boxes from a chunk corner: the center of their first chunk column is 8 blocks away
+        BlockPos min = new ChunkPos(helper.absolutePos(new BlockPos(8, 1, 8))).getWorldPosition().atY(helper.absolutePos(BlockPos.ZERO).getY() + 1);
+        BlockPos center = min.offset(8, Claims.PER_BLOCK_MAX_SIZE / 2 + 1, 8);
+        BlockPos outside = center.west(8).north(8);
+        ClaimStorage storage = ClaimStorage.get(helper.getLevel());
+        Claim claim = storage.createAdminClaim(center.offset(-1, 0, -1), center.offset(1, 0, 1), helper.getLevel(), false);
+        try {
+            BoundingBox survival = BoundingBox.fromCorners(min, min.offset(Claims.PER_BLOCK_MAX_SIZE - 1, Claims.PER_BLOCK_MAX_SIZE - 1, Claims.PER_BLOCK_MAX_SIZE - 1));
+            assertTrue(helper, Claims.denied(helper.getLevel(), survival, stranger).test(center), "up to " + Claims.PER_BLOCK_MAX_SIZE + " the claim is denied");
+            assertTrue(helper, !Claims.denied(helper.getLevel(), survival, stranger).test(outside), "up to " + Claims.PER_BLOCK_MAX_SIZE + " the rest of its chunk column is allowed");
+            BoundingBox overpowered = BoundingBox.fromCorners(min, min.offset(Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE));
+            assertTrue(helper, Claims.denied(helper.getLevel(), overpowered, stranger).test(outside), "above " + Claims.PER_BLOCK_MAX_SIZE + " the chunk column whose center is claimed is denied");
+        } finally {
+            storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
+            CapsuleTestUtils.removePlayer(stranger);
+        }
+        helper.succeed();
     }
 
     /**

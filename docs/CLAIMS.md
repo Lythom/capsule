@@ -13,8 +13,8 @@ per block. There is no "query only" protection event on NeoForge: each mod check
 listeners. Common Protection API is the only cross-mod query API, on Fabric only, and it answers per position.
 
 Most claim mods keep their claims as chunks or boxes, so the cheap way is to ask each mod for the claims intersecting
-the capsule's box, once per chunk or per claim, through its own API: one small adapter per mod, weakly coupled
-(reflection, used only when the mod is loaded), like `SecurityCraftOwnerCheck`.
+the capsule's box, once per chunk or per claim, through its own public API: one small adapter per mod, compiled
+against the API and used only when the mod is loaded, like `SecurityCraftOwnerCheck`.
 
 ## Mods
 
@@ -25,7 +25,7 @@ CurseForge counts were not collected (CurseForge is not scraped).
 |---|---|---|---|---|---|---|
 | Open Parties and Claims | NeoForge, Fabric | 23.0 M | chunk columns, owner + party + allies | `OpenPACServerAPI.get(MinecraftServer)`; `.getServerClaimsManager().get(ResourceLocation dim, int chunkX, int chunkZ)` → `IPlayerChunkClaimAPI` or null; `.getChunkProtection().hasChunkAccess(UUID, ResourceLocation, int, int)` (0.32.7, both loaders) | two map lookups per chunk, by player id | NeoForge `EntityPlaceEvent`, `BreakEvent`; Fabric: own mixins, no Common Protection API |
 | Yet Another World Protector | NeoForge, Fabric | 267 k | admin regions (boxes) with flags | `FlagEvaluator.processCheck(FlagCheckRequest)`, per position (0.6.3-beta4) | per position | NeoForge `EntityPlaceEvent`, `BreakEvent` |
-| Flan | NeoForge, Fabric | 249 k | boxes (claims from a minimum Y up, sub-claims), permission groups | API: `ClaimHandler.canInteract(ServerPlayer, BlockPos, ResourceLocation)`, per position. Public internals: `ClaimStorage.get(ServerLevel).getClaimsAt(int chunkX, int chunkZ)` → `List<Claim>`; `Claim.getDimensions()` → `ClaimBox(minX, minY, minZ, maxX, maxY, maxZ)`; `Claim.getAllSubclaims()`; `Claim.canInteract(ServerPlayer, ResourceLocation, BlockPos, boolean message)`; `BuiltinPermission.BREAK` (1.12.8, both loaders) | one map lookup per chunk, one permission check per claim | NeoForge `BreakEvent`, `EntityPlaceEvent`, `EntityMultiPlaceEvent`; Fabric: Common Protection API provider |
+| Flan | NeoForge, Fabric | 249 k | boxes (claims from a minimum Y up, sub-claims), permission groups | API (`io.github.flemmli97.flan.api`): `ClaimHandler.canInteract(ServerPlayer, BlockPos, ResourceLocation)`, per position, which is `ClaimHandler.getPermissionStorage(player's ServerLevel).getForPermissionCheck(BlockPos)` → `IPermissionContainer` (the claim at the position, or one container for the world outside claims), then `.canInteract(ServerPlayer, ResourceLocation, BlockPos)`; `BuiltinPermission.BREAK` (1.12.8, both loaders). Its other classes (`ClaimStorage`, `Claim`, `ClaimBox`) are internals | one map lookup and one permission check per position | NeoForge `BreakEvent`, `EntityPlaceEvent`, `EntityMultiPlaceEvent`; Fabric: Common Protection API provider |
 | Hey That's Mine | Fabric | 71 k | container locks, not claims | – | – | – |
 | Get Off My Lawn ReServed | Fabric | 63 k | boxes around claim anchors, in an R-tree | `ClaimUtils.getClaimsInBox(LevelReader, BlockPos, BlockPos)` → `Selection<Entry<ClaimBox, Claim>>`; `ClaimBox.minecraftBox()` → `AABB`; `Claim.hasPermission(UUID)`; `ClaimUtils.isInAdminMode(Player)` (1.13.1+1.21) | one R-tree query, one check per claim | Common Protection API provider |
 | FTB Chunks | NeoForge, Fabric | not on Modrinth | chunk columns, teams | `FTBChunksAPI.api().getManager().getChunk(ChunkDimPos)` → `ClaimedChunk` or null; `.getTeamData().isTeamMember(UUID)`, `isAlly(UUID)`, `canPlayerUse(ServerPlayer, PrivacyProperty)`; `ClaimedChunkManager.shouldPreventInteraction(Entity, InteractionHand, BlockPos, Protection, Entity)` (NeoForge 2101.1.22, maven.ftb.dev) | one lookup per chunk | Architectury block events: NeoForge `EntityPlaceEvent`, `BreakEvent` |
@@ -37,15 +37,19 @@ CurseForge counts were not collected (CurseForge is not scraped).
 `capsule.plugins.claims.Claims.denied(level, box, player)` returns a test of the positions the player may not change,
 computed before the capture or deploy touches any block:
 
-1. **Adapters** (`ClaimAdapter`), loaded when the server starts if their mod id is loaded, their API resolved once by
-   reflection:
+1. **Adapters** (`ClaimAdapter`), loaded if their mod id is loaded, compiled against the public API of their mod:
    - `OpenPartiesAndClaimsAdapter` (both loaders): per chunk of the box, the chunk claim and `hasChunkAccess` by player id.
-   - `FlanAdapter` (both loaders): the claims of each chunk of the box, then one `canInteract(player, BREAK, …)` per claim
-     and sub-claim intersecting the box. A claim is asked at a position outside it, so that it answers for itself and
-     not for one of its sub-claims.
-   - `GetOffMyLawnAdapter` (Fabric): one `getClaimsInBox`, one `hasPermission` per claim (all allowed in admin mode).
+   - `FlanAdapter` (both loaders): Flan's API answers per position only, so it is asked like the generic probe below:
+     each position of the box up to size 31, the center of each chunk column of the box above, whose answer applies
+     to the column. A position whose permission container is not the world's (the one of a position below the world)
+     is in a claim, where the player's `BREAK` permission decides (sub-claims included). The storage is the one of the
+     capture's level: `ClaimHandler.canInteract` would take the player's, another dimension for a player who changed
+     dimension while their capsule flew.
+   - `GetOffMyLawnAdapter` (Fabric, in the `fabric` project): one `getClaimsInBox`, one `hasPermission` per claim (all
+     allowed in admin mode).
 
-   Each returns claims as boxes with an allowed flag. Within a mod the last claim containing a position decides
+   Each returns claims as boxes with an allowed flag (Flan: one per run of positions with the same answer along y, or
+   per chunk column). Within a mod the last claim containing a position decides
    (sub-claims come after their claim); across mods any refusal wins. `Claims.register` lets another mod add an adapter.
 2. **Generic probe** for mods without adapter, through the loader hook kept from before (`Platform.canPlaceBlock`: a
    dirt `EntityPlaceEvent` on NeoForge, `CommonProtection.canPlaceBlock` on Fabric), outside adapter claims:
@@ -69,7 +73,7 @@ Per capture or deploy, for a box of `c` chunk columns crossing `r` claims:
 |---|---|
 | before | one `EntityPlaceEvent` (or Common Protection API call) per block: up to 16.6 M for a 255³ capture |
 | Open Parties and Claims | 2 map lookups per chunk: `2c` |
-| Flan | `c` map lookups + `r` permission checks |
+| Flan | one map lookup per position up to size 31 (at most 29 791), plus a permission check inside claims; above, the same per chunk column: at most `c` |
 | Get Off My Lawn | 1 R-tree query + `r` permission checks |
 | generic probe, size up to 31 | one event (or Common Protection API call) per tested position outside adapter claims: at most 29 791 |
 | generic probe, size above 31 | at most `c` events (or Common Protection API calls); none in chunks covered by adapter claims |
@@ -135,21 +139,51 @@ a denying claim, 0.1 to 3.3 s on Fabric.
 **Decision (owner, round 2b L3): per block up to size 31, per chunk column above.** The worst case above (a claim mod
 without adapter, a full 31³ capture inside its claim) is accepted; above 31 the probe stays per chunk column, to avoid
 multi-second freezes with OP capsules. `Claims.PER_BLOCK_MAX_SIZE` (31) chooses the predicate of `Claims.denied`.
-Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My Lawn exact boxes.
+Adapters: Open Parties and Claims per chunk, Get Off My Lawn exact boxes; Flan, whose public API answers per
+position, by the same rule as the probe (per block up to 31, per chunk column above).
 
-### Weak coupling and failures
+### Adapter cost (measured)
 
-- No Gradle or runtime dependency for players: adapters use reflection on class and method names verified above;
-  Minecraft types in the signatures are class literals, so the lookups also work on Fabric's intermediary names.
+`ClaimProbeBenchmark` also times `Claims.denied` for the whole box, which asks the adapters (and probes the chunk
+columns above 31), with Flan and Open Parties and Claims loaded (`-PmodCompat`). Milliseconds, median of 7 runs (3 for
+255), measured on 2026-10-07 on the same container:
+
+| Loader | Box | 3 | 11 | 31 | 255 |
+|---|---|---|---|---|---|
+| NeoForge | no claim | 0.04 | 0.36 | 0.86 | 3.37 |
+| NeoForge | inside a Flan claim (29 791 positions denied at 31) | 0.11 | 0.55 | 4.39 | 1.51 |
+| NeoForge | inside an Open Parties and Claims claim | 0.03 | 0.14 | 0.74 | 4.69 |
+| Fabric | no claim | 0.01 | 0.13 | 0.77 | 1.30 |
+| Fabric | inside a Flan claim (29 791 positions denied at 31) | 0.15 | 1.18 | 5.67 | 1.33 |
+| Fabric | inside an Open Parties and Claims claim | 0.03 | 0.11 | 0.85 | 2.86 |
+
+Flan per position stays below 6 ms for a full 31³ box inside a claim, an eighth of a tick, and about 1 ms per chunk
+column above.
+
+### Coupling and failures
+
+- No runtime dependency for players: Capsule compiles against the public APIs (`compileOnly`, never shipped):
+  `xaero.pac.common.server.api.OpenPACServerAPI`, `IServerClaimsManagerAPI`, `IChunkProtectionAPI`;
+  `io.github.flemmli97.flan.api` (`ClaimHandler`, `IPermissionStorage`, `IPermissionContainer`, `BuiltinPermission`);
+  `draylar.goml.api.ClaimUtils`, `ClaimBox`, `Claim` (and the R-tree `Selection` and `Entry` it returns); SecurityCraft's
+  `IOwnable`. No reflection. The API signatures only use Minecraft types: `common` and `neoforge` compile against the
+  NeoForge jars (Mojang names), `fabric` against the Fabric jars remapped by Loom (`modCompileOnly`), and the release
+  jar refers to intermediary names like the rest of Capsule (checked with the GameTests of the release jars, below).
+  Get Off My Lawn is Fabric only, so its adapter is in the `fabric` project; SecurityCraft has no Fabric build, its
+  NeoForge jar compiles the common check, which never loads it on Fabric.
+- Each adapter is a class of its own, created by a lambda only when its mod is loaded (`Claims.load`), so the JVM never
+  resolves a missing mod's classes. `SecurityCraftOwnerCheck` calls `Owners`, which uses `IOwnable`, only when
+  SecurityCraft is loaded.
 - **Failures refuse, never allow** (owner decision): when a protection mod is loaded but Capsule cannot use its
   adapter, its claims are unknown, so every capture and deploy is refused until Capsule is updated, instead of
   ignoring the mod. The server never crashes.
-  - An adapter whose API is not found when the server starts (a class or method renamed by a new mod version) is
-    replaced by a marker refusing every capture and deploy, and one error line names the mod, its version and the
-    missing member: "Captures and deploys are refused: Capsule cannot check the claims of Flan 1.12.8, its API was not
-    found (java.lang.NoSuchMethodException: …)".
+  - An adapter that cannot be created when its mod loads is replaced by a marker refusing every capture and deploy,
+    and one error line names the mod, its version and the error: "Captures and deploys are refused: Capsule cannot
+    check the claims of Flan 1.12.8, its API was not found (java.lang.NoClassDefFoundError: …)".
   - An adapter that throws during a query refuses that capture or deploy and stays registered: the next one asks it
-    again. The error and its stack trace are logged once per adapter, not per operation.
+    again. The error and its stack trace are logged once per adapter, not per operation. A class or method renamed
+    by a new mod version shows here, as a `LinkageError` (`NoSuchMethodError`, `NoClassDefFoundError`) on the first
+    query.
   - The acting player is told in chat (`capsule.error.claimCheckFailed`: "Capsule cannot check the claims of Flan:
     captures and deploys are refused. Please report this incompatibility."). Dispensers and capture bases (fake
     players) tell nobody.
@@ -205,8 +239,11 @@ Adapters are unchanged: Open Parties and Claims per chunk, Flan and Get Off My L
   party or claim group member's and the owner's capture and the owner's capture base are allowed; a capture base placed
   before 9.0 and a vanilla dispenser are refused; outside the claim (the next chunk for Open Parties and Claims, the next
   blocks of the same chunk for Flan) the stranger's capture, a capture without player and a vanilla dispenser are
-  allowed.
-- Get Off My Lawn: its adapter is checked against the jar with `javap` only. Its dev runtime fails: the mods it nests
+  allowed. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of
+  a chunk column denies only itself in a 31 wide box, and the whole column in a 32 wide box.
+- The same GameTests run on the release jars with the real mods (`EXTRA_MODS` of `scripts/prod-gametest.sh`), so the
+  API calls are checked in the remapped Fabric jar too.
+- Get Off My Lawn: its adapter compiles against its jar (and the R-tree library from its maven), it is not run. Its dev runtime fails: the mods it nests
   (Cardinal Components, Polymer, …) are not loaded from its jar by the Loom dev runs, and most are not on Modrinth.
 - The GameTest server has no profile cache (real servers do, and both mods need it): `GameTestProfiles` gives it an
   offline one before the server starts, and the scenario adds the test players to it, as players who joined before.

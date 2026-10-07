@@ -9,6 +9,7 @@ import capsule.items.ThrownCapsules;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.StarterLoot;
 import capsule.network.CapsuleNetwork;
+import capsule.plugins.claims.Claims;
 import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
 import net.fabricmc.api.ModInitializer;
@@ -52,6 +53,8 @@ public class CapsuleFabric implements ModInitializer {
 
         CapsuleMod.init();
         CapsuleNetwork.registerPayloads(new FabricPayloadRegistrar());
+        // the claim mod of Fabric only, CapsuleMod.serverStarting loads the others
+        Claims.load("goml", () -> new GetOffMyLawnAdapter());
 
         ServerLifecycleEvents.SERVER_STARTING.register(CapsuleMod::serverStarting);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> CapsuleMod.serverStopped());

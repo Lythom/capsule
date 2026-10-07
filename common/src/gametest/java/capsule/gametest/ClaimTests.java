@@ -106,7 +106,7 @@ public class ClaimTests {
                 return "chunks";
             }
 
-            public List<Claim> claims(ServerLevel level, BoundingBox queried, ServerPlayer player) throws ReflectiveOperationException {
+            public List<Claim> claims(ServerLevel level, BoundingBox queried, ServerPlayer player) {
                 if (!queried.equals(box)) return List.of();
                 return ClaimAdapter.perChunk(level, queried, (x, z) -> {
                     chunkQueries.incrementAndGet();
@@ -357,9 +357,9 @@ public class ClaimTests {
                 return "failing";
             }
 
-            public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer actor) throws ReflectiveOperationException {
+            public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer actor) {
                 queries.incrementAndGet();
-                throw new NoSuchMethodException("test.ClaimApi.claims()");
+                throw new NoSuchMethodError("test.ClaimApi.claims()");
             }
         };
         Claims.register(failing);
@@ -389,7 +389,7 @@ public class ClaimTests {
         List<Component> messages = new ArrayList<>();
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
         ClaimAdapter unusable = Claims.load(CapsuleMod.MODID, () -> {
-            throw new NoSuchMethodException("test.ClaimApi.claims()");
+            throw new NoClassDefFoundError("test/ClaimApi");
         });
         try {
             assertTrue(helper, unusable != null, "a loaded mod without its API is registered as unusable");

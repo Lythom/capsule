@@ -21,9 +21,11 @@ dependencies {
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
     compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
     compileOnly("dev.emi:emi-xplat-mojmap:${emi_version}:api") { transitive = false }
-    // claim mods (#91), same API on both loaders
-    gametestCompileOnly "maven.modrinth:open-parties-and-claims:${opac_neoforge_version}"
-    gametestCompileOnly "maven.modrinth:flan:${flan_neoforge_version}"
+    // the protection mods whose API Capsule calls when they are loaded (#91, #119): their NeoForge jars have the Mojang
+    // names, the loader projects compile against their own
+    compileOnly("maven.modrinth:open-parties-and-claims:${opac_neoforge_version}") { transitive = false }
+    compileOnly("maven.modrinth:flan:${flan_neoforge_version}") { transitive = false }
+    compileOnly("maven.modrinth:security-craft:${securitycraft_version}") { transitive = false }
     // shipped by NeoForge, and on Fabric by Forge Config API Port
     compileOnly "com.electronwill.night-config:core:${night_config_version}"
 }
