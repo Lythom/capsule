@@ -4,6 +4,7 @@ import capsule.plugins.claims.Claims;
 import io.github.flemmli97.flan.api.permission.BuiltinPermission;
 import io.github.flemmli97.flan.claim.Claim;
 import io.github.flemmli97.flan.claim.ClaimStorage;
+import io.github.flemmli97.flan.config.ConfigHandler;
 import io.github.flemmli97.flan.player.ClaimMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -23,6 +24,20 @@ public class FlanTests {
 
     @GameTest(template = "empty17", batch = "flan", timeoutTicks = 200)
     public static void flanVetoesStrangers(GameTestHelper helper) {
+        vetoesStrangers(helper, () -> {});
+    }
+
+    /**
+     * With defaultClaimDepth -1, Flan's claims reach 10 blocks below the world. Its own batch: the config is global.
+     */
+    @GameTest(template = "empty17", batch = "flandepth", timeoutTicks = 200)
+    public static void flanVetoesStrangersInClaimsReachingBelowTheWorld(GameTestHelper helper) {
+        int depth = ConfigHandler.CONFIG.defaultClaimDepth;
+        ConfigHandler.CONFIG.defaultClaimDepth = -1;
+        vetoesStrangers(helper, () -> ConfigHandler.CONFIG.defaultClaimDepth = depth);
+    }
+
+    private static void vetoesStrangers(GameTestHelper helper, Runnable restore) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 0));
         ServerPlayer member = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 16));
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(16, 1, 0));
@@ -38,6 +53,7 @@ public class FlanTests {
                 .run(helper, () -> {
                     storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
+                    restore.run();
                 });
     }
 

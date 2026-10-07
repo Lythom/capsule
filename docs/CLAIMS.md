@@ -41,8 +41,10 @@ computed before the capture or deploy touches any block:
    - `OpenPartiesAndClaimsAdapter` (both loaders): per chunk of the box, the chunk claim and `hasChunkAccess` by player id.
    - `FlanAdapter` (both loaders): Flan's API answers per position only, so it is asked like the generic probe below:
      each position of the box up to size 31, the center of each chunk column of the box above, whose answer applies
-     to the column. A position whose permission container is not the world's (the one of a position below the world)
-     is in a claim, where the player's `BREAK` permission decides (sub-claims included). The storage is the one of the
+     to the column. A position whose permission container is not the world's is in a claim, where the player's `BREAK`
+     permission decides (sub-claims included). The world's is the container of two positions 1024 blocks below the
+     world at opposite corners of it, which no claim spans: claims reach 10 blocks below the world when Flan's
+     `defaultClaimDepth` is -1. The storage is the one of the
      capture's level: `ClaimHandler.canInteract` would take the player's, another dimension for a player who changed
      dimension while their capsule flew.
    - `GetOffMyLawnAdapter` (Fabric, in the `fabric` project): one `getClaimsInBox`, one `hasPermission` per claim (all
@@ -239,7 +241,8 @@ column above.
   party or claim group member's and the owner's capture and the owner's capture base are allowed; a capture base placed
   before 9.0 and a vanilla dispenser are refused; outside the claim (the next chunk for Open Parties and Claims, the next
   blocks of the same chunk for Flan) the stranger's capture, a capture without player and a vanilla dispenser are
-  allowed. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of
+  allowed. `FlanTests.flanVetoesStrangersInClaimsReachingBelowTheWorld` runs the same with Flan's `defaultClaimDepth`
+  -1. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of
   a chunk column denies only itself in a 31 wide box, and the whole column in a 32 wide box.
 - The same GameTests run on the release jars with the real mods (`EXTRA_MODS` of `scripts/prod-gametest.sh`), so the
   API calls are checked in the remapped Fabric jar too.
