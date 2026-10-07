@@ -13,12 +13,14 @@ import org.apache.logging.log4j.Logger;
  */
 class Owners {
     private static final Logger LOGGER = LogManager.getLogger(Owners.class);
+    private static boolean warned;
 
     static boolean canTake(ServerLevel level, BlockPos pos, Player player) {
         try {
             return !(level.getBlockEntity(pos) instanceof IOwnable ownable) || ownable.isOwnedBy(player);
         } catch (RuntimeException | LinkageError e) {
-            LOGGER.warn("Could not check the SecurityCraft owner of the block at {}, it will not be captured", pos, e);
+            if (!warned) LOGGER.warn("Could not check the SecurityCraft owner of the block at {}, blocks whose owner cannot be checked are not captured", pos, e);
+            warned = true;
             return false;
         }
     }
