@@ -33,6 +33,7 @@
 - Fix a new capture base ignoring its first redstone signal
 - Fix template files with uppercase letters or spaces disconnecting players on login, and `.nbt` names being cut
 - Fix invalid ids in the `excludedBlocks` config crashing the game, and block tags in it being ignored
+- Remove the 1.12 ids that match nothing on 1.21.1 from the `excludedBlocks` and `opExcludedBlocks` defaults: `superfactorymanager:`, `gregtech:machine`, `gtadditions:`, `mekanism:machineblock` and `mekanism:boundingblock` (Mekanism tags its blocks `c:relocation_not_supported`, excluded already). Only new installs get config defaults
 - Fix `/reload` not refreshing templates on dedicated servers
 - Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81); checked with Ad Astra, Integrated Dynamics and Farmer's Delight
 - The preview, capture zone wireframe and capture animation show with Iris shader packs (#69)
