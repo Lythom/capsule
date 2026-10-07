@@ -2,7 +2,7 @@
 
 Bring your base! Capsules can capture a region containing any blocks or machines, then deploy and undeploy at will. Inspired by Dragon Ball capsules.
 
-![Deploy / Undeploy demo](https://imgur.com/5q1Q8Uf.gif)
+![Deploy / Undeploy demo](images/demo/deploy-undeploy.gif)
 
 - [Overview](#overview)
   * [Getting started](#getting-started)
@@ -23,7 +23,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 The first capsule you will have access to is made of wood. It's size is 1x1x1 which enables the "instant mode".
 
-> ![empty, stone button, empty - wood plank, chest, wood plank - empty, wood slab, empty](https://imgur.com/cNPwMo5.png)
+> ![empty, stone button, empty - wood plank, chest, wood plank - empty, wood slab, empty](images/recipes/capsule-wood.png)
 > 
 > "Wooden capsule" recipe
 
@@ -36,21 +36,21 @@ If right click open a GUI, try to capture from a distance or while sneaking.
 
 To go bigger you need a capture base. This is where you can initialize a capsule with it's first content. You'll be able to capture the region on the top of it. Place it somewhere just below what you want to capture, or in a free space and build on top of it.
 
-> ![capture-base-recipe.png](https://imgur.com/X7w0NVj.png)
+> ![capture-base-recipe.png](images/recipes/capture-base-before-1.16.5.png)
 > 
 > "Capture Base" recipe
 
 Then you need to craft at least one empty capsule (the top item is a stone button) :
 
-> ![capsule-iron-recipe.png](https://imgur.com/AKGlHQo.png)
+> ![capsule-iron-recipe.png](images/recipes/capsule-iron.png)
 >
 > "Iron Empty Capsule" recipe, default capture size : 1x1x1
 >
-> ![capsule-gold-recipe.png](https://imgur.com/Eb5tAsu.png)
+> ![capsule-gold-recipe.png](images/recipes/capsule-gold.png)
 >
 > "Gold Empty Capsule" recipe, default capture size : 3x3x3
 >
-> ![capsule-diamond-recipe.png](https://imgur.com/hvNMJcm.png)
+> ![capsule-diamond-recipe.png](images/recipes/capsule-diamond.png)
 >
 > "DiamondEmpty Capsule" recipe, default capture size : 5x5x5
 
@@ -64,7 +64,7 @@ Obsidian (9x9x9) and Emerald (11x11x11) capsules also exists, check JEI !
 * Once the content is captured, the capsule can be deployed or undeployed at will. 
 
 [Click to see the Initial capture demo    
-![](https://imgur.com/J10q1ey.png)](https://i.imgur.com/WLG3AeZ.gifv)
+![](images/demo/initial-capture-still.png)](images/demo/initial-capture.gif)
 
 Note that all the capsules can be dyed (affect the base color) and labeled (sneak + right click).
 
@@ -76,19 +76,19 @@ Usage  :
 * Undeploy : Right click the "Deployed" capsule and the content will be stored again into the capsule, wherever it currently is.
 * Label : Sneak + Right click to open the label editing screen.
 
-![Deploy / Undeploy demo](https://imgur.com/5q1Q8Uf.gif)
+![Deploy / Undeploy demo](images/demo/deploy-undeploy.gif)
 
 ## Upgrading ##
 
 You need more space ? Here is the upgrade recipe (only works with empty capsule) :
  
-> ![capsule-upgrade-recipe.png](https://imgur.com/9Jg8pUQ.png)
+> ![capsule-upgrade-recipe.png](images/recipes/capsule-upgrade.png)
 >
 > "capsule upgrade" recipe, default max upgrades : 10
 
 You can add several Popped Chorus Fruit at a time.
 
-> ![Demo Upgrade](https://imgur.com/Oq3wSAZ.gif)
+> ![Demo Upgrade](images/demo/upgrade.gif)
 >
 > Demo Upgrade
 
@@ -96,7 +96,7 @@ You can add several Popped Chorus Fruit at a time.
 
 It's highly recommanded that you create a recovery capsule and place it in a safe place ! If the capsule is lost (thrown in lava, on a cactus (…), at an impossible death location) a recovery capsule will allows you to get back the content.
 
-> ![capsule-recovery-recipe.png](https://imgur.com/pASsF2b.png)
+> ![capsule-recovery-recipe.png](images/recipes/capsule-recovery.png)
 > 
 > "Recovery capsule" recipe
 

@@ -145,7 +145,7 @@ To allow more advanced captures :
 4. Finally use the command [`/capsule fromStructure <structure_name>`](https://github.com/Lythom/capsule/wiki/Commands#fromstructure) where "<structure_name>" is the unique name used previously. The size of the capsule will be calculated to include the whole structure block content. If the name contains uppercase characters, the capsule won't deploy on linux server (which most of server providers uses).
 
 [Click to see Demo of using `/capsule fromStructure <structure_name>`
-![](https://imgur.com/msB7g5I.png)](https://imgur.com/aG5Dt4c.gif)
+![](images/demo/from-structure-still.png)](images/demo/from-structure.gif)
 
 
 ### Add a preconfigured blueprint
