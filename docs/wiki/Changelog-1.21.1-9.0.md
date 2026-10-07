@@ -23,7 +23,7 @@ behind it (#88). Walls, fences and panes no longer go missing from it on NeoForg
 
 ![The preview rotated four times, then mirrored](images/changelog-9.0/02-preview-rotate-mirror.gif)
 
-Left click rotates the preview, sneak + left click mirrors it.
+Left click rotates the preview ("Rotation: 90°" in the chat), sneak + left click mirrors it.
 
 ---
 
@@ -120,8 +120,8 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 - Invalid ids in the `excludedBlocks` config crashed the game, and block tags in it were ignored
 
 **Dupes and lost items**
-- Chest boats, chest minecarts and other container entities no longer drop their items when a deploy is rolled back
-  ([#113](https://github.com/Lythom/capsule/issues/113))
+- Chest boats, chest minecarts and other container entities no longer drop their items when a failed deploy is rolled
+  back ([#113](https://github.com/Lythom/capsule/issues/113))
 - Furnaces dropped their stored experience on every capture ([#122](https://github.com/Lythom/capsule/issues/122))
 - Shift-click crafting of blueprints and recovery capsules created extra capsules, and prefab blueprint recipes gave
   back the wrong items ([#84](https://github.com/Lythom/capsule/issues/84))
@@ -146,7 +146,9 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 - The starter huts' axe item frame covered the crafting table ([#126](https://github.com/Lythom/capsule/issues/126))
 - The preview, the capture zone wireframe and the capture animation show with Iris shader packs ([#69](https://github.com/Lythom/capsule/issues/69))
 - Capsules were held edge-on in first and third person
-- The rotation message showed a symbol missing from the Minecraft font
+- The rotation message showed a circle (a symbol missing from the Minecraft font): it now says "Rotation: 90°"
+- Blueprints with a structure block asked for a structure block item holding its seed (`blueprint_whitelist.json`,
+  new installs only)
 
 ## Also in this release
 
@@ -168,14 +170,23 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 The bug fixes above that apply to these versions reach the next Forge builds: **1.20.1 8.0.x**, **1.18.2 6.0.x** and
 **1.16.5 5.0.x**. They also get
 the claim protection: Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5, and the block placement
-event for the other protection mods. Plus, per version:
+event for the other protection mods, per block up to the largest survival capsule (31 by default there: an emerald
+capsule with 10 upgrades, 33 with a mod adding platinum). Plus:
 
-- 1.20.1: captured chest boats no longer drop their items (the 1.20.4 fix for [#113](https://github.com/Lythom/capsule/issues/113)).
-  New installs also exclude the blocks tagged `forge:relocation_not_supported` (Mekanism Digital Miner, Refined
-  Storage), the Blood Magic alchemy table and the Immersive Engineering wire connectors; existing configs keep their
-  lists, see [Known incompatibilities](Known-incompatibilities).
-- 1.18.2 and 1.16.5: no more startup crash when a mod's block fails while Capsule builds its default config
-  ([#78](https://github.com/Lythom/capsule/issues/78), [#68](https://github.com/Lythom/capsule/issues/68)).
+- Container entities no longer drop their items when captured or when a failed deploy is rolled back
+  ([#113](https://github.com/Lythom/capsule/issues/113)): chest boats and chest minecarts on 1.20.1 (the 1.20.4 fix),
+  modded container entities on 1.18.2 and 1.16.5 (vanilla minecarts were already emptied there).
+- The blocks tagged `forge:relocation_not_supported` (Mekanism Digital Miner, Refined Storage network blocks) are never
+  captured. On 1.20.1 and 1.18.2 the optional entries of `capsule:excluded` were ignored, Tombstone graves included:
+  they now apply. New installs also exclude the Blood Magic alchemy table, the Immersive Engineering wire connectors
+  and waystones ([#121](https://github.com/Lythom/capsule/issues/121)); existing configs keep their lists, see
+  [Known incompatibilities](Known-incompatibilities).
+- The rare castle kit and the blueprint discovery loot give and mention blue dye instead of lapis, like the blueprint
+  recipe ([#99](https://github.com/Lythom/capsule/issues/99), [#84](https://github.com/Lythom/capsule/issues/84)).
+  Delete `config/capsule/loot` to get the updated templates.
+- 1.20.1: the rotation message says "Rotation: 90°" too.
+- 1.18.2 and 1.16.5: Capsule no longer crashes at startup when it can't read a block's material, as reported with
+  Snow! Real Magic ([#78](https://github.com/Lythom/capsule/issues/78), [#68](https://github.com/Lythom/capsule/issues/68)).
 
 The new features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge
 v3 schematics, blueprint whitelist) stay 1.21.1 only.

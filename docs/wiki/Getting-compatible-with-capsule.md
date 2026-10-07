@@ -17,7 +17,7 @@ If so, it shouldn't take long, follow the steps for the version you are targetin
 ### 1.15 or newer
 Add the blocks to exclude to the `capsule:excluded` block tag.
 
-[since 8.0 for 1.20.4] Capsule also excludes the blocks of the common tags `c:relocation_not_supported` and `c:immovable`: if your mod already puts its blocks in one of them (for other moving mods, like Waystones does), there is nothing to do. On 1.20.1, the next 8.0.x build excludes `#forge:relocation_not_supported` in the default config of new installs (existing configs keep their lists): `capsule:excluded` is the safe way there.
+[since 8.0 for 1.20.4] Capsule also excludes the blocks of the common tags `c:relocation_not_supported` and `c:immovable`: if your mod already puts its blocks in one of them (for other moving mods, like Waystones does), there is nothing to do. On 1.20.1, 1.18.2 and 1.16.5, the next builds (8.0.x, 6.0.x, 5.0.x) exclude `#forge:relocation_not_supported` the same way, through `capsule:excluded`; older builds don't, so `capsule:excluded` is the safe way there. Forge 1.20.1 and 1.18.2 ignore the old Forge `"optional"` list of tag files: write optional entries as `{"id": "...", "required": false}`.
 
 Documentation: https://minecraft.wiki/w/Tag.     
 TLDR: there should be a `data/capsule/tags/block/excluded.json` file (`data/capsule/tags/blocks/excluded.json` before Minecraft 1.21) in your mod resources folder that contains something like the example below. Be sure that `replace` is `false` to keep the configuration working for other mods. The block ids to exclude go into the values array.
@@ -55,6 +55,7 @@ Not updated anymore. You can still add the block id in the `capsule.cfg` file un
 [since 9.0] Capsule asks claim mods before capturing or deploying. It respects Open Parties and Claims, Flan and Get Off My Lawn ReServed through their own API, and any other protection mod that:
 
 * NeoForge: cancels the block placement event (`BlockEvent.EntityPlaceEvent`, dirt) that Capsule fires for the acting player at the positions it changes: every position up to the size of the largest survival capsule (33 by default), one position per chunk column for bigger capsules (operators only).
+* Forge 1.20.1, 1.18.2 and 1.16.5 (next builds 8.0.x, 6.0.x, 5.0.x): the same placement event, up to the largest survival capsule of these versions (31 by default, 33 with a mod adding platinum).
 * Fabric: implements [Common Protection API](https://github.com/Patbox/common-protection-api): Capsule asks `CommonProtection.canPlaceBlock` the same way.
 
 The acting player may be a fake player with the profile of the real player (a Capture Base acts for the player who placed it, a capsule thrown by a player who went offline for that player) or the anonymous fake player `[Capsule]` (UUID `9c0b9b7b-b356-41c0-93b2-4bb6afe1586c`) when nobody is behind the capture: refuse it in your claims.

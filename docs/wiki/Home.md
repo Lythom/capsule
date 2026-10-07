@@ -258,7 +258,7 @@ FTB Chunks and Cadmus on Fabric are not supported yet (they don't implement Comm
 * When Capsule cannot check a claim mod that is loaded (its API changed in a newer version), every capture and deploy is refused with a chat message, until Capsule is updated. Please report it!
 * SecurityCraft blocks can only be captured by their owner.
 
-Before 9.0, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.0 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them).
+Before 9.0, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.0 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them). On the next Forge builds of 1.20.1, 1.18.2 and 1.16.5 the largest survival capsule is 31x31x31 by default (an emerald capsule with every upgrade; 33 with a mod adding platinum).
 
 
 ## Recipe viewers ##
@@ -326,7 +326,7 @@ All the information is at [Modpack making](Modpack-making).
 
 **How to move my capsule from a world to a new one?**
 
-1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move; without a name, the capsule label is used). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
+1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move; [since 9.0, 1.21.1] without a name, the capsule label is used). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
 2. [If the new world is on the same server you can skip this step] Copy the file from `<oldServer>/config/capsule/rewards/<someName>.nbt` to `<newServer>/config/capsule/rewards/`.
 3. In the new world, use the command `/capsule giveLinked <someName>` (repeat for each capsule). It will create a standard capsule from the template.
 

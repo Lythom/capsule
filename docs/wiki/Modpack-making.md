@@ -171,7 +171,7 @@ This procedure will have you create a template file located under `config/capsul
 
 1. Get an empty capsule,
 2. capture the content you want to reward on a Capture Base,
-3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](Commands#fromheldcapsule) while holding the capsule in the main hand. The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
+3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](Commands#fromheldcapsule) while holding the capsule in the main hand ([since 9.0, 1.21.1] without a name, the capsule label is used). The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
 
 To allow more advanced captures:
 
@@ -294,7 +294,7 @@ That means that by default a standard capsule cannot capture mob spawners or end
 
 Blocks in the [`capsule:excluded` tag](#tags) are never captured either, by any capsule.
 
-On 1.20.1 (next build, 8.0.x), new installs also get `#forge:relocation_not_supported` (Mekanism Digital Miner, Refined Storage…), `bloodmagic:alchemytable` and the Immersive Engineering wire connectors in both lists. The config file is never rewritten: existing installs keep their lists, add these entries by hand (the full list is on [Known incompatibilities](Known-incompatibilities)) or delete `config/capsule-common.toml` to get the new defaults (this resets the other settings too).
+On 1.20.1, 1.18.2 and 1.16.5 (next builds: 8.0.x, 6.0.x, 5.0.x), new installs get `bloodmagic:alchemytable` (instead of `bloodmagic:alchemy_table`, which matched nothing), the Immersive Engineering wire connectors and `waystones:` in both lists, and no longer get the 1.12 ids that match nothing (`superfactorymanager:`, `gregtech:machine`, `gtadditions:`, `mekanism:machineblock`, `mekanism:boundingblock`). The config file is never rewritten: existing installs keep their lists, add these entries by hand (the full list is on [Known incompatibilities](Known-incompatibilities)) or delete both lists from `config/capsule-common.toml` to get the new defaults. The blocks tagged `#forge:relocation_not_supported` (Mekanism Digital Miner, Refined Storage network blocks…) are excluded through the [`capsule:excluded` tag](#tags), existing installs included.
 
 ### Overridable blocks
 
@@ -321,7 +321,7 @@ Add blocks with a datapack providing the same file with `"replace": false`.
 
 | Tag | Type | Since | Default | What it does |
 |---|---|---|---|---|
-| `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported` and `#c:immovable` (since 1.20.4), `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
+| `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported` and `#c:immovable` (since 1.20.4), `#forge:relocation_not_supported` (next 1.20.1, 1.18.2 and 1.16.5 builds), `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
 | `capsule:overridable` | block | 1.20.1 | leaves, replaceable blocks, snow | Replaced by deploys, see [Overridable blocks](#overridable-blocks). |
 | `capsule:enchantable/recall` | item | 9.0 | `capsule:capsule` | Items that take [Loyalty](#loyalty) and come back when thrown. |
 
@@ -344,7 +344,7 @@ Before 9.0, `recallEnchantType` chooses which items can get the Recall enchantme
 [since 9.0] Captures and deploys respect claim mods: Open Parties and Claims and Flan (NeoForge and Fabric) and Get Off My Lawn ReServed (Fabric) are asked through their own API, and any other protection mod through a block placement check (NeoForge placement event, Fabric Common Protection API). The player documentation is in [Claim protection](Home#claim-protection). What server owners should know:
 
 * Protected blocks stay in the world on capture; a deploy or a blueprint undeploy touching a protected block is refused, and the player only gets the claim message.
-* The placement check (and Flan) is asked for every block of captures and deploys up to the size of the largest survival capsule, computed from the config: the largest capsule tier plus 2 per allowed upgrade (`capsuleUpgradesLimit`), so 33x33x33 by default (a netherite capsule with 10 upgrades). Above, it is asked once per chunk column: a single protected block inside a bigger box may be missed by mods without dedicated support. Capsules that big can't be crafted: they only come from operators and modpack makers (`/capsule giveEmpty`, reward templates), so this is accepted.
+* The placement check (and Flan) is asked for every block of captures and deploys up to the size of the largest survival capsule, computed from the config: the largest capsule tier plus 2 per allowed upgrade (`capsuleUpgradesLimit`), so 33x33x33 by default (a netherite capsule with 10 upgrades); 31x31x31 by default on the Forge backports (an emerald capsule with 10 upgrades), 33 with a mod adding platinum. Above, it is asked once per chunk column: a single protected block inside a bigger box may be missed by mods without dedicated support. Capsules that big can't be crafted: they only come from operators and modpack makers (`/capsule giveEmpty`, reward templates), so this is accepted.
 * A Capture Base acts as the player who placed it (saved as `placer` in its block data); a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.0, vanilla dispensers and other captures or deploys without a player are refused inside claims, whatever the claim allows: re-place the Capture Base to give it an owner.
 * Fail closed: when a loaded claim mod cannot be checked (its API changed in a new version), every capture and deploy is refused with a chat message, and one error is written in the server log, instead of ignoring its claims. Update Capsule, or report it.
 * FTB Chunks and Cadmus are checked on NeoForge (placement event) but not on Fabric yet.
