@@ -19,6 +19,7 @@
     "capsule.tooltip.blueprintUseCharged": "* Right click: instant deploy\n* Sneak+Right click: link inventory",
     "capsule.tooltip.canRotate": "* Left click: rotate\n* Sneak+Left click: mirror",
     "capsule.tooltip.cannotRotate": "Some complex blocks can't rotate",
+    "capsule.rotation": "Rotation: %s°",
     "capsule.tooltip.instant": "Instantaneous",
     "capsule.feedback.linkedToInventory": "Linked to \"%s\" at (x=%s, y=%s, z=%s)",
     "capsule.error.noCaptureBase": "There were no Capture Base around.",

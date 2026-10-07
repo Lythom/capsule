@@ -120,7 +120,7 @@ public class ServerPayloadHandler {
 				}
 			} else {
 				placement.setRotation(placement.getRotation().getRotated(Rotation.CLOCKWISE_90));
-				sendingPlayer.sendSystemMessage(Component.translatable("⟳: " + Capsule.getRotationLabel(placement)));
+				sendingPlayer.sendSystemMessage(Component.translatable("capsule.rotation", Capsule.getRotationLabel(placement)));
 			}
 			CapsuleItem.setPlacement(stack, placement);
 		}
