@@ -118,10 +118,7 @@ public class StructureSaver {
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
             for (Entity e : outCapturedEntities) {
-                if (e instanceof AbstractMinecartContainer) {
-                    AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
-                    eMinecart.clearContent();
-                }
+                Clearable.tryClear(e);
                 e.remove(Entity.RemovalReason.DISCARDED);
             }
             // check if some remove failed, exclude those blocks from the template.
