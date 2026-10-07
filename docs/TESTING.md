@@ -59,10 +59,11 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 
 - Bodies: `common/src/gametest/java`, test structures in `common/src/gametest/resources`. They only use vanilla
   classes (`GameTestHelper`, `@GameTest`), so the same tests run on both loaders.
-- Registration: `CapsuleGameTests` is a `@GameTestGenerator` that turns the `@GameTest` methods of the classes listed
-  in `CapsuleGameTests.TEST_CLASSES` into test functions named after the method (lowercase), using the templates of
-  the `capsule` namespace. NeoForge registers it from `NeoForgeGameTests` (`RegisterGameTestsEvent`), adding
-  `SecurityCraftTests`; Fabric through the `fabric-gametest` entrypoint of `fabric/src/gametest/resources/fabric.mod.json`.
+- Registration: `CapsuleGameTests.testFunctions` turns the `@GameTest` methods of the classes listed in
+  `CapsuleGameTests.TEST_CLASSES` into test functions named after the method (lowercase), using the templates of the
+  `capsule` namespace. Each loader has a `@GameTestGenerator` calling it: NeoForge `NeoForgeGameTests`, registered with
+  `RegisterGameTestsEvent`, adding `SecurityCraftTests`; Fabric `FabricGameTests`, the `fabric-gametest` entrypoint of
+  `fabric/src/gametest/resources/fabric.mod.json`, adding `GetOffMyLawnTests` when Get Off My Lawn is loaded.
 - `-Dcapsule.gametest.failOnPurpose=true` adds `FailureProofTests.failsOnPurpose`, which always fails: it shows that a
   runner reports failures. It is never registered otherwise.
 - `-PclaimBenchmark` (`-Dcapsule.gametest.claimBenchmark=true`) adds `ClaimProbeBenchmark.claimProbeCost`, which logs
@@ -146,7 +147,8 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ...
   [Server thread/INFO] [minecraft/GameTestServer]: All 99 required tests passed :)
   ```
-  Get Off My Lawn (Fabric) is not in the runtime: the Loom dev runs do not load the mods nested in its jar.
+- **GameTests on the release jars** with mods: `EXTRA_MODS` of `scripts/prod-gametest.sh`, see
+  [GameTests on the release jars](#gametests-on-the-release-jars). Get Off My Lawn (Fabric, #91) is tested there only.
 - **Servers**: `EXTRA_MODS` adds jars to the server of `scripts/prod-smoke.sh`, for example the mods above and JEI,
   downloaded from Modrinth (`https://api.modrinth.com/v2/version/<id>` gives the file URL):
   ```
@@ -305,14 +307,27 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
   ```
   `FAIL_ON_PURPOSE=1` registers `FailureProofTests` (`-Dcapsule.gametest.failOnPurpose=true`), never registered otherwise.
 - `TIMEOUT` (seconds, default 1200), `EXTRA_MODS` and `KEEP_SERVER` work as in `prod-smoke.sh`.
+- With the claim mods in `EXTRA_MODS`, their tests run against the release jar too. Get Off My Lawn is tested this way
+  only: it nests 10 libraries in its jar (Cardinal Components, Polymer, sgui, placeholder-api, rtree, Common Protection
+  API, …), which Fabric Loader loads on a real server but the Loom dev runs do not, so it cannot start in
+  `runGameTestServer`. The Fabric test mod compiles against it (`modCompileOnly`) and `FabricGameTests` registers
+  `GetOffMyLawnTests` only when it is loaded, so the test mod never loads its classes otherwise. `validate-all.sh`
+  downloads Get Off My Lawn ReServed 1.13.1, Open Parties and Claims 0.32.7 and Flan 1.12.8 for Fabric (by sha1 from
+  Modrinth, into `CAPSULE_CACHE/modcompat/fabric`):
+  ```
+  EXTRA_MODS="$(ls ~/.cache/capsule-validation/modcompat/fabric/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh fabric/build/libs/Capsule-fabric-*.jar
+  ...
+  OK: All 94 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  ```
 
 ## Everything at once
 
 `scripts/validate-all.sh` runs every automated layer, one step at a time, and prints one summary:
 
 ```
-scripts/validate-all.sh            # build, unit tests, GameTests, mod-compat GameTests, release-jar GameTests and
-                                   # their failure proof, prod smoke, client smoke × {NeoForge, Fabric} × {JEI, REI, EMI}
+scripts/validate-all.sh            # build, unit tests, GameTests, mod-compat GameTests, release-jar GameTests (Fabric
+                                   # also with the claim mods) and their failure proof, prod smoke,
+                                   # client smoke × {NeoForge, Fabric} × {JEI, REI, EMI}
 scripts/validate-all.sh --iris     # + client smoke with Iris, Sodium and MakeUp Ultra Fast on both loaders
 scripts/validate-all.sh --modded   # + client smoke with the mods of #81, #94, #117 and #76 on both loaders
 scripts/validate-all.sh --modpack  # + client smoke in a production NeoForge client with a Connector modpack
@@ -339,6 +354,7 @@ scripts/validate-all.sh --all      # everything
   PASS   mod-compat GameTests Fabric                 0m31s  All 93 required tests passed
   PASS   GameTests on the NeoForge release jar       0m25s  OK: All 91 required tests passed on Capsule-neoforge-1.21.1-9.0.SNAPSHOT.jar
   PASS   GameTests on the Fabric release jar         0m27s  OK: All 89 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
+  PASS   Fabric release jar with the claim mods      0m28s  OK: All 94 required tests passed on Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar
   PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)
   PASS   Fabric release jar: failure reported        0m28s  OK: the failing test was reported (exit status 1)
   PASS   release jars on dedicated servers           1m00s  OK: fabric server booted with Capsule-fabric-1.21.1-9.0.SNAPSHOT.jar and stopped

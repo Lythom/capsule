@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.CapsuleMod;
 import capsule.platform.Services;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.StructureUtils;
 import net.minecraft.gametest.framework.TestFunction;
@@ -12,15 +11,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Registers the @GameTest methods of the capsule test classes the same way on every loader: tests are named after their
- * method and use the templates of the capsule namespace.
+ * Turns the @GameTest methods of the capsule test classes into test functions the same way on every loader: tests are
+ * named after their method and use the templates of the capsule namespace.
  */
 public class CapsuleGameTests {
 
@@ -62,11 +60,6 @@ public class CapsuleGameTests {
         return MOD_TEST_CLASSES.entrySet().stream()
                 .filter(e -> Services.PLATFORM.isModLoaded(e.getKey()))
                 .map(Map.Entry::getValue);
-    }
-
-    @GameTestGenerator
-    public static Collection<TestFunction> generate() {
-        return testFunctions(Stream.concat(TEST_CLASSES.stream(), loadedModTestClasses()));
     }
 
     public static List<TestFunction> testFunctions(Stream<Class<?>> testClasses) {

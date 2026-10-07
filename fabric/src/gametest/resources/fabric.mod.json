@@ -10,7 +10,7 @@
       "capsule.gametest.FabricGameTestSetup"
     ],
     "fabric-gametest": [
-      "capsule.gametest.CapsuleGameTests"
+      "capsule.gametest.FabricGameTests"
     ],
     "client": [
       "capsule.clientsmoke.FabricClientSmoke"

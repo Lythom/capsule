@@ -6,14 +6,12 @@ backports to 1.20.1, 1.18.2 and 1.16.5 in `docs/BACKPORTS.md`.
 
 ## Confirmed gaps
 
-### Claim mods: FTB Chunks and Cadmus on Fabric, Get Off My Lawn runtime test
+### Claim mods: FTB Chunks and Cadmus on Fabric
 Issues: https://github.com/Lythom/capsule/issues/91
 
 - FTB Chunks and Cadmus do not implement Common Protection API, so on Fabric they are not asked at all (on NeoForge the
   placement event probe covers them). An FTB Chunks adapter can be written from the API in `docs/CLAIMS.md`; neither
   mod is on Modrinth, so it needs another way to get them into the GameTest runtime (maven.ftb.dev). Effort: S to M.
-- Get Off My Lawn: the adapter was only checked with `javap`; the Loom dev runs do not load the mods nested in its jar.
-  Test it on a production Fabric server (`scripts/prod-gametest.sh` with `EXTRA_MODS`). Effort: S to M.
 
 ### Integrated Dynamics cables and parts invisible in the full preview
 Issues: https://github.com/Lythom/capsule/issues/94

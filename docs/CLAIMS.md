@@ -144,6 +144,9 @@ multi-second freezes with OP capsules. `Claims.PER_BLOCK_MAX_SIZE` (31) chooses 
 Adapters: Open Parties and Claims per chunk, Get Off My Lawn exact boxes; Flan, whose public API answers per
 position, by the same rule as the probe (per block up to 31, per chunk column above).
 
+**Decision (owner): Flan and the generic probe check per chunk column above size 31: accepted, capsules that big are
+admin-only (OP).**
+
 ### Adapter cost (measured)
 
 `ClaimProbeBenchmark` also times `Claims.denied` for the whole box, which asks the adapters (and probes the chunk
@@ -244,9 +247,13 @@ column above.
   allowed. `FlanTests.flanVetoesStrangersInClaimsReachingBelowTheWorld` runs the same with Flan's `defaultClaimDepth`
   -1. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of
   a chunk column denies only itself in a 31 wide box, and the whole column in a 32 wide box.
+- `GetOffMyLawnTests` (Fabric test mod, registered when Get Off My Lawn is loaded, release jar only): the same scenario
+  in the claim of an anchor placed by the owner, with a trusted player as member; and a stranger is denied the claim in
+  a 32 tall box, whose chunk column is probed above the claim. Get Off My Lawn also answers Common Protection API, so the
+  generic probe alone passes the scenario up to size 31: without the adapter, only the 32 tall box fails.
 - The same GameTests run on the release jars with the real mods (`EXTRA_MODS` of `scripts/prod-gametest.sh`), so the
-  API calls are checked in the remapped Fabric jar too.
-- Get Off My Lawn: its adapter compiles against its jar (and the R-tree library from its maven), it is not run. Its dev runtime fails: the mods it nests
-  (Cardinal Components, Polymer, …) are not loaded from its jar by the Loom dev runs, and most are not on Modrinth.
+  API calls are checked in the remapped Fabric jar too. Get Off My Lawn runs there only: it nests 10 libraries (Cardinal
+  Components, Polymer, sgui, placeholder-api, rtree, Common Protection API, …) that Fabric Loader loads from its jar on
+  a real server but the Loom dev runs do not, so it cannot start in `runGameTestServer -PmodCompat`.
 - The GameTest server has no profile cache (real servers do, and both mods need it): `GameTestProfiles` gives it an
   offline one before the server starts, and the scenario adds the test players to it, as players who joined before.

@@ -10,9 +10,9 @@ set -uo pipefail
 #
 # Runs, in order: the build (jars, loader import check), the unit tests, the GameTests of
 # each loader, the mod-compat GameTests (-PmodCompat) of each loader, the GameTests on the
-# release jars (scripts/prod-gametest.sh) and its failure proof, the release jars on real
-# servers (scripts/prod-smoke.sh), and the client smoke test of each loader with JEI, REI
-# and EMI (scripts/client-smoke.sh). Slower variants, off by default:
+# release jars (scripts/prod-gametest.sh, on Fabric also with the claim mods) and its failure
+# proof, the release jars on real servers (scripts/prod-smoke.sh), and the client smoke test
+# of each loader with JEI, REI and EMI (scripts/client-smoke.sh). Slower variants, off by default:
 #   --iris     client smoke with Iris, Sodium and the MakeUp Ultra Fast shader pack
 #   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76)
 #   --modpack  client smoke in a production NeoForge client with a Sinytra Connector
@@ -117,6 +117,11 @@ step modcompat-neoforge "mod-compat GameTests NeoForge" "${GRADLE[@]}" :neoforge
 step modcompat-fabric "mod-compat GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer -PmodCompat
 step prod-gametest-neoforge "GameTests on the NeoForge release jar" scripts/prod-gametest.sh "$NEO_JAR"
 step prod-gametest-fabric "GameTests on the Fabric release jar" scripts/prod-gametest.sh "$FABRIC_JAR"
+# Get Off My Lawn ReServed 1.13.1+1.21, Open Parties and Claims 0.32.7, Flan 1.12.8: GOML runs on real servers only
+mods "$CACHE/modcompat/fabric" 3c513317d251589d7c13f01f5beb2e4020387999 b992b683056fab2c3f462907901fdc4054a26529 \
+    debe440eeb5440765115b1d50269df9014ba12ea
+step prod-modcompat-fabric "Fabric release jar with the claim mods" \
+    env EXTRA_MODS="$(ls "$CACHE/modcompat/fabric"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-gametest-proof-neoforge "NeoForge release jar: failure reported" expect_failure scripts/prod-gametest.sh "$NEO_JAR"
 step prod-gametest-proof-fabric "Fabric release jar: failure reported" expect_failure scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-smoke "release jars on dedicated servers" scripts/prod-smoke.sh "$NEO_JAR" "$FABRIC_JAR"

@@ -88,7 +88,7 @@ Findings left as they are:
 | JEI 19.57.0.451, REI 16.0.799 (+ Architectury API, Cloth Config), EMI 1.1.24 | CS, each viewer on both loaders | capsule recipes and 14 information pages shown; a recipe for each of the 29 tiers; every recipe Capsule adds (upgrades, clear, recovery, blueprints, 6 prefab blueprints, blueprint change) |
 | WorldEdit 7.3.8 (#70) | GT-mods NeoForge: `worldEditSchematicsDeploy` | pass: the Sponge v2 and v3 fixtures are written by WorldEdit's own clipboard writers, and WorldEdit reads the hand-made MCEdit and Sponge v1 fixtures |
 | Open Parties and Claims 0.32.x, Flan 1.12.8 (#91) | GT-mods, both loaders: `openPartiesAndClaimsVetoesStrangers`, `flanVetoesStrangers` | pass: inside a claim a stranger's capture and capture base are refused, a member's and the owner's allowed; outside the claim allowed |
-| Get Off My Lawn ReServed 1.13.1 (#91, Fabric) | adapter checked with `javap` only | not run: the Loom dev runs do not load the mods nested in its jar |
+| Get Off My Lawn ReServed 1.13.1 (#91, Fabric) | PG Fabric with `EXTRA_MODS` (with Open Parties and Claims and Flan): `getOffMyLawnVetoesStrangers` | pass: inside a claim a stranger's capture and capture base are refused, a trusted player's and the owner's allowed, also above size 31; outside the claim allowed. Not in the GT-mods runtime: the Loom dev runs do not load the mods nested in its jar |
 | Integrated Dynamics 1.38.0 (+ Cyclops Core, Common Capabilities, Integrated Tunnels 1.13.0, Refined Storage 2.0.9 for the dev client), Ad Astra 1.16.26 (+ Resourceful Lib, Common Storage Lib, Resourceful Config), Farmer's Delight 1.3.4 (#94, #117, #76) | CS-modded NeoForge, 25 of 25 checks at the time | no crash, no capsule error; see the screenshot review above |
 | Ad Astra 1.16.26, Farmer's Delight Refabricated 3.2.8 (3.3.x crashes the Fabric dev remapper) | CS-modded Fabric, 20 of 20 checks at the time | no crash, no capsule error |
 | Mob Grinding Utils (#81) | – | blocked: no 1.21.1 build |
@@ -163,7 +163,7 @@ Findings left as they are:
 | Minecart with content undeployed/deployed drops nothing | | yes |
 | Schematics as templates (`.nbt`, MCEdit, Sponge v1–v3, `.schem`) | GT `SchematicTests`, GT-mods `worldEditSchematicsDeploy` | |
 | Item frames deployed on their blocks, no "invalid position" log | GT `deployedItemFramesHangOnTheirBlocks`, `starterCraftingTablesHaveAFreeFace` | |
-| Claim mods (#91) | GT `ClaimTests`; GT-mods Open Parties and Claims and Flan, both loaders | see below |
+| Claim mods (#91) | GT `ClaimTests`; GT-mods Open Parties and Claims and Flan, both loaders; PG Get Off My Lawn, Fabric | see below |
 
 ## Must be validated by a human
 
@@ -172,7 +172,7 @@ production client, the GameTests on the release jars, Iris with one shader pack,
 
 - Multiplayer on a real server with latency: throw and preview synchronisation, previews of other players' capsules,
   the label GUI.
-- Claims on a real server: Flan or Get Off My Lawn (the latter never ran), a capture base placed by a player who is
+- Claims on a real server with real players: Flan or Get Off My Lawn, a capture base placed by a player who is
   offline when it fires, a party member and a stranger.
 - Sounds (no sound device in the container) and keyboard/mouse feel: rotation and mirror controls, relabel GUI.
 - Other shader packs than MakeUp Ultra Fast; OptiFine does not exist for 1.21.1.
