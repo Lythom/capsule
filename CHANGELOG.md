@@ -4,7 +4,7 @@
 
 - New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build
 - The NeoForge jar is now named `Capsule-neoforge-1.21.1-...jar`, built with ModDevGradle against NeoForge 21.1.255; it requires NeoForge 21.1 or later and Minecraft 1.21.1
-- New: vanilla Loyalty brings thrown capsules back and replaces the Recall enchantment (#123, #96). Capsules take Loyalty (any level) from the enchanting table or from a book on the anvil, not the other trident enchantments. Capsules already enchanted with Recall keep coming back; Recall can no longer be obtained. `/capsule giveLinked <template> <player> withLoyalty` replaces `withRecall`
+- New: vanilla Loyalty brings thrown capsules back and replaces the Recall enchantment (#123, #96). Capsules take Loyalty (any level) from the enchanting table or from a book on the anvil, not the other trident enchantments. Capsules already enchanted with Recall keep coming back; Recall can no longer be obtained. `/capsule giveLinked <template> <player> true` gives the capsule with Loyalty (argument `withLoyalty`)
 - New: capsules are fire and lava proof, existing ones included (#123)
 - New capsule tiers: amethyst and quartz (5), prismarine crystals (9) and netherite (13, the vanilla 13³ capsule); with mods: zinc and aluminum (3), osmium (5), brass (7), steel and uranium (9) (#120). Full table in `docs/RECIPES.md`
 - New: translucent full deploy preview, which no longer hides what is behind it (#88). Water and stained glass in front of the preview still hide it
