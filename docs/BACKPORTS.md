@@ -111,7 +111,9 @@ and publish scripts, documentation.
 | CircleCI on version branches only (1.21.1: fbf85d5) | 57c98fd | 0f0eb49 | f20202d |
 | L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
 | Refused blueprint undeploys only give the claim message, refused before any block is removed (8253687) | 19836cb | 855bd47 | 5cb9955 |
-| Claim and SecurityCraft APIs compiled against instead of reflection, Flan per block up to 31 and per chunk column above (dd99a27) | cdb7bec (Open Parties and Claims `forge-1.20.1-0.32.7`, Flan `1.20.1-1.11.16-forge`, SecurityCraft v1.10.2.1, `compileOnly fg.deobf` from the Modrinth maven; SecurityCraft before v1.9.9, whose `isOwnedBy` took a `Player`, keeps its blocks) | a0fffe9 (Open Parties and Claims `forge-1.18.2-0.32.7`, Flan `1.18.2-1.11.9-forge`; SecurityCraft was compiled against already) | 8a7e5c5 (Flan 1.7.2 has the public API too, see below) |
+| Claim and SecurityCraft APIs compiled against instead of reflection, Flan per block up to 31 and per chunk column above (dd99a27) | cdb7bec (Open Parties and Claims `forge-1.20.1-0.32.7`, Flan `1.20.1-1.11.16-forge`, SecurityCraft v1.10.2.1, `compileOnly fg.deobf` from the Modrinth maven; SecurityCraft before v1.9.9, whose `isOwnedBy` took a `Player`, kept its blocks until 1a8859d) | a0fffe9 (Open Parties and Claims `forge-1.18.2-0.32.7`, Flan `1.18.2-1.11.9-forge`; SecurityCraft was compiled against already) | 8a7e5c5 (Flan 1.7.2 has the public API too, see below) |
+| Flan's world outside claims asked 1024 blocks below the world, at opposite corners of it: claims reach 10 blocks below the world with `defaultClaimDepth` -1 (fb9570f) | 0fdd7bc | 56d391b | not applicable: Flan 1.16.5-1.7.2 claims start at y 0 or above (`Math.max(0, …)` in the constructors, `extendDownwards` to a block position; javap), so its reference at y -1 is never claimed |
+| A failing SecurityCraft owner check logged once (616c761) | 1a8859d (and SecurityCraft before v1.9.9, without `isOwnedBy(Entity)`, asked `isOwnedBy(new Owner(player))`: v1.9.8 and v1.10.2.1 have both, javap) | 4f1d101 (the check had no try/catch: a block whose owner cannot be checked is refused) | not ported: its check has no try/catch, as on 1.18.2 before 4f1d101 |
 
 ## Claims on 1.16.5
 
@@ -160,6 +162,9 @@ Production check of the rc5 jars: each booted on a real Forge server with the cl
 Parties and Claims, Flan and SecurityCraft, 1.18.2-40.3.12 with Open Parties and Claims and Flan, the mods needing a
 newer Forge than the branches; 1.16.5-36.2.31 with Flan), and a dispenser deployed a reward capsule from the console:
 the adapters were asked through the APIs in the reobfuscated jar, without error.
+
+The rc6 jars (1.20.1 with 0fdd7bc and 1a8859d, 1.18.2 with 56d391b and 4f1d101, 1.16.5 unchanged since rc5) were
+built the same way: `./gradlew build` passes with 9 JUnit tests, and the boot test is OK on the three branches.
 
 ## Notes
 
