@@ -9,8 +9,8 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.RecipeManager;
 import net.minecraft.item.crafting.ShapedRecipe;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerProfileCache;
@@ -58,6 +58,12 @@ public final class Claims {
     @Nullable
     private static String unusable = null;
     private static boolean failureReported = false;
+    /**
+     * The recipes largestTier was read from: a reload replaces them.
+     */
+    @Nullable
+    private static RecipeManager tiersRecipes = null;
+    private static int largestTier = 1;
 
     private Claims() {
     }
@@ -68,12 +74,17 @@ public final class Claims {
      * of a 255 capsule takes seconds.
      */
     public static int perBlockMaxSize(MinecraftServer server) {
-        int largestTier = server.getRecipeManager().getAllRecipesFor(IRecipeType.CRAFTING).stream()
-                .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
-                .map(IRecipe::getResultItem)
-                .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
-                .mapToInt(CapsuleItem::getSize)
-                .max().orElse(1);
+        RecipeManager recipes = server.getRecipeManager();
+        if (recipes != tiersRecipes) {
+            // copies: getSize resizes invalid sizes, the recipe results are shared
+            largestTier = recipes.getAllRecipesFor(IRecipeType.CRAFTING).stream()
+                    .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
+                    .map(recipe -> recipe.getResultItem().copy())
+                    .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
+                    .mapToInt(CapsuleItem::getSize)
+                    .max().orElse(1);
+            tiersRecipes = recipes;
+        }
         return largestTier + Config.upgradeLimit * CapsuleItems.UPGRADE_STEP;
     }
 
