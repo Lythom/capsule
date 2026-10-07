@@ -7,6 +7,7 @@ import io.github.flemmli97.flan.api.permission.BuiltinPermission;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.List;
@@ -27,10 +28,10 @@ class FlanAdapter implements ClaimAdapter {
     public List<Claim> claims(ServerLevel level, BoundingBox box, ServerPlayer player) {
         // ClaimHandler.canInteract asks the level of the player, here the level of the capture or deploy
         IPermissionStorage storage = ClaimHandler.getPermissionStorage(level);
-        // below the world, no claim
-        BlockPos unclaimed = new BlockPos(box.minX(), level.getMinBuildHeight() - 1, box.minZ());
-        IPermissionContainer world = storage.getForPermissionCheck(unclaimed);
-        if (storage.getForPermissionCheck(unclaimed) != world) throw new IllegalStateException("Flan's world outside claims is not one container");
+        // no claim: far below the world (claims reach 10 blocks below it), at two corners no claim spans
+        int y = level.getMinBuildHeight() - 1024;
+        IPermissionContainer world = storage.getForPermissionCheck(new BlockPos(-Level.MAX_LEVEL_SIZE, y, -Level.MAX_LEVEL_SIZE));
+        if (storage.getForPermissionCheck(new BlockPos(Level.MAX_LEVEL_SIZE, y, Level.MAX_LEVEL_SIZE)) != world) throw new IllegalStateException("Flan's world outside claims is not one container");
         return ClaimAdapter.perPosition(box, pos -> {
             IPermissionContainer claim = storage.getForPermissionCheck(pos);
             return claim == world ? null : claim.canInteract(player, BuiltinPermission.BREAK, pos);
