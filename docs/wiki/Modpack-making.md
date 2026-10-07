@@ -319,7 +319,7 @@ Add blocks with a datapack providing the same file with `"replace": false`.
 
 | Tag | Type | Since | Default | What it does |
 |---|---|---|---|---|
-| `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported`, `#c:immovable`, `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
+| `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported` and `#c:immovable` (since 1.20.4), `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
 | `capsule:overridable` | block | 1.20.1 | leaves, replaceable blocks, snow | Replaced by deploys, see [Overridable blocks](#overridable-blocks). |
 | `capsule:enchantable/recall` | item | 9.0 | `capsule:capsule` | Items that take [Loyalty](#loyalty) and come back when thrown. |
 
