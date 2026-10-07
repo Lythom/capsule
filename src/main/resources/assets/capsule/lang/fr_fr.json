@@ -19,6 +19,7 @@
     "capsule.tooltip.blueprintUseCharged": "* Clic droit: déployer instantanément\n* Accourpis+Clic droit: link inventory",
     "capsule.tooltip.canRotate": "* Clic gauche: rotation\n* Accourpis+Clic gauche: miroir",
     "capsule.tooltip.cannotRotate": "Des blocs trop complexes ne peuvent tourner",
+    "capsule.rotation": "Rotation : %s°",
     "capsule.tooltip.instant": "Instantané",
     "capsule.feedback.linkedToInventory": "Associé à \"%s\" (x=%s, y=%s, z=%s)",
     "capsule.error.noCaptureBase": "Capture impossible : aucun socle de capture à proximité.",

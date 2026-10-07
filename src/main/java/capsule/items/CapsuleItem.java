@@ -498,8 +498,8 @@ public class CapsuleItem extends Item {
             }
             tooltip.add(Component.literal(ChatFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule))));
             StructurePlaceSettings p = getPlacement(capsule);
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "⌯ Symmetry: " + Capsule.getMirrorLabel(p)));
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "⟳ Rotation: " + Capsule.getRotationLabel(p)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "Symmetry: " + Capsule.getMirrorLabel(p)));
+            tooltip.add(Component.literal(ChatFormatting.GOLD + "Rotation: " + Capsule.getRotationLabel(p)));
         }
     }
 
