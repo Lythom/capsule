@@ -4,9 +4,9 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ![Deploy / Undeploy demo](images/demo/deploy-undeploy.gif)
 
-Capsule 9.0 is available for Minecraft 1.21.1 on **NeoForge** and **Fabric** (Fabric needs Fabric API and Forge Config API Port). Minecraft 1.20.1, 1.18.2 and 1.16.5 versions run on **Forge**, see [Previous versions](Previous-versions) for older ones.
+Capsule 9.1 is available for Minecraft 1.21.1 on **NeoForge** and **Fabric** (Fabric needs Fabric API and Forge Config API Port). Minecraft 1.20.1, 1.18.2 and 1.16.5 versions run on **Forge**, see [Previous versions](Previous-versions) for older ones.
 
-Features marked [since x.y] need at least that Capsule version: 9.0 is the 1.21.1 release.
+Features marked [since x.y] need at least that Capsule version: 9.1 is the 1.21.1 release.
 
 This page is the player guide. Modpack makers and server owners: see [Modpack making](Modpack-making) and the [Commands](Commands).
 
@@ -75,7 +75,7 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 >
 > ![capsule-netherite-recipe.png](images/recipes/capsule-netherite.png)
 >
-> [since 9.0] "Netherite Empty Capsule" recipe, default capture size: 13x13x13
+> [since 9.1] "Netherite Empty Capsule" recipe, default capture size: 13x13x13
 
 ### Capsule tiers
 
@@ -84,15 +84,15 @@ Every empty capsule is crafted the same way: a stone button on top, the material
 | Size | Vanilla materials | Materials from other mods |
 |---|---|---|
 | 1 | Wood (planks, chest and wooden slab, see above) | |
-| 3 | Iron | Copper (vanilla copper since 1.17), Tin, Zinc [since 9.0], Aluminum [since 9.0] |
-| 5 | Gold, Amethyst [since 9.0], Quartz [since 9.0] | Lead, Silver, Osmium [since 9.0] |
-| 7 | Diamond | Bronze, Brass [since 9.0], Invar, Nickel |
-| 9 | Obsidian, Prismarine crystals [since 9.0] | Steel [since 9.0], Uranium [since 9.0], Constantan, Electrum |
+| 3 | Iron | Copper (vanilla copper since 1.17), Tin, Zinc [since 9.1], Aluminum [since 9.1] |
+| 5 | Gold, Amethyst [since 9.1], Quartz [since 9.1] | Lead, Silver, Osmium [since 9.1] |
+| 7 | Diamond | Bronze, Brass [since 9.1], Invar, Nickel |
+| 9 | Obsidian, Prismarine crystals [since 9.1] | Steel [since 9.1], Uranium [since 9.1], Constantan, Electrum |
 | 11 | Emerald | Enderium, Lumium, Signalum |
-| 13 | Netherite [since 9.0] | Platinum |
+| 13 | Netherite [since 9.1] | Platinum |
 
 - The modded recipes [since 1.15.2-4.0.51] only show when a mod adds the matching ingot.
-- [since 9.0] Netherite is the vanilla 13x13x13 capsule. An emerald capsule with one [upgrade](#upgrading) or a gold capsule with four also reach 13.
+- [since 9.1] Netherite is the vanilla 13x13x13 capsule. An emerald capsule with one [upgrade](#upgrading) or a gold capsule with four also reach 13.
 - The overpowered capsule (iron ingots and a nether star) is 1x1x1, see [Overpowered Capsules](#overpowered-capsules).
 
 ### Empty Capsule
@@ -100,13 +100,13 @@ Every empty capsule is crafted the same way: a stone button on top, the material
 * Right click: activate. The capsule stays activated for 6 seconds (configurable).
 * Right click while activated: throw the capsule. Throw it near the Capture Base: when it lands, the region in front of the Capture Base is captured.
 * Once the content is captured, the capsule can be deployed or undeployed at will.
-* [since 9.0] The captured blocks are sucked into the capsule with a particle trail (can be turned off, see [Client options](#client-options)).
+* [since 9.1] The captured blocks are sucked into the capsule with a particle trail (can be turned off, see [Client options](#client-options)).
 
 [Click to see the Initial capture demo    
 ![](images/demo/initial-capture-still.png)](images/demo/initial-capture.gif)
 
-[since 9.0] [Click to see the capture animation    
-![Blocks flying into the capsule](images/changelog-9.0/01-capture-animation.jpg)](images/changelog-9.0/01-capture-sucked-in.gif)
+[since 9.1] [Click to see the capture animation    
+![Blocks flying into the capsule](images/changelog-9.1/01-capture-animation.jpg)](images/changelog-9.1/01-capture-sucked-in.gif)
 
 Note that all the capsules can be dyed in a crafting grid with any dye (it changes the base color), and non-empty capsules can be labeled (sneak + right click).
 
@@ -121,9 +121,9 @@ Usage:
 
 ![Deploy / Undeploy demo](images/demo/deploy-undeploy.gif)
 
-[since 9.0] The full preview is translucent: you can see the terrain and blocks behind it. Water and stained glass in front of the preview still hide it.
+[since 9.1] The full preview is translucent: you can see the terrain and blocks behind it. Water and stained glass in front of the preview still hide it.
 
-![Before 9.0 the preview was opaque (left), since 9.0 it is translucent (right)](images/changelog-9.0/02-preview-before-after.jpg)
+![Before 9.1 the preview was opaque (left), since 9.1 it is translucent (right)](images/changelog-9.1/02-preview-before-after.jpg)
 
 Deploying rules:
 
@@ -175,18 +175,18 @@ Put a capsule alone in a crafting grid to get an empty capsule of the same size 
 
 ## Loyalty ##
 
-[since 9.0] Enchant a capsule with the vanilla **Loyalty** enchantment to have it come back into your inventory once thrown: as soon as it has deployed (or touched the ground), it comes back to the player who threw it. When it touches water or lava, it comes back immediately. Without Loyalty you have to pick up the thrown capsule manually.
+[since 9.1] Enchant a capsule with the vanilla **Loyalty** enchantment to have it come back into your inventory once thrown: as soon as it has deployed (or touched the ground), it comes back to the player who threw it. When it touches water or lava, it comes back immediately. Without Loyalty you have to pick up the thrown capsule manually.
 
 * Any level of Loyalty works, from an enchanting table or from a book on an anvil.
 * Capsules only take Loyalty, not the other trident enchantments.
-* Capsules already enchanted with Recall (before 9.0) keep coming back.
+* Capsules already enchanted with Recall (before 9.1) keep coming back.
 
-**Before 9.0 (1.20.1 and older): Recall.** The mod adds its own enchantment, Recall, that works the same way. It is intended to be used on capsules, and can be applied to any enchantable item by configuration (disabled by default), which can be useful against inventory dropping monsters or to prevent unintentional drops. Since 9.0 Recall can no longer be obtained.
+**Before 9.1 (1.21.1-9.0.x and older versions): Recall.** The mod adds its own enchantment, Recall, that works the same way. It is intended to be used on capsules, and can be applied to any enchantable item by configuration (disabled by default), which can be useful against inventory dropping monsters or to prevent unintentional drops. Since 9.1 Recall can no longer be obtained.
 
 
 ## Fire and lava ##
 
-[since 9.0] Capsules are fire and lava proof, existing ones included: a capsule thrown into lava deploys, and with [Loyalty](#loyalty) it comes back. Before 9.0, a capsule thrown in lava or on a cactus is lost: keep a [recovery capsule](#backup)!
+[since 9.1] Capsules are fire and lava proof, existing ones included: a capsule thrown into lava deploys, and with [Loyalty](#loyalty) it comes back. Before 9.1, a capsule thrown in lava or on a cactus is lost: keep a [recovery capsule](#backup)!
 
 
 ## Blueprints ##
@@ -207,12 +207,12 @@ When loaded:
 
 What blueprints can hold:
 - Plain blocks, doors, torches, redstone, fluids (charged with buckets).
-- Blocks with data (chests, signs, banners…) only when they are in the [blueprint whitelist](Modpack-making#whitelist); [since 9.0] most 1.21.1 vanilla blocks are, signs keep their text and banners their patterns. Inventories are never copied: a chest from a blueprint is always empty.
+- Blocks with data (chests, signs, banners…) only when they are in the [blueprint whitelist](Modpack-making#whitelist); [since 9.1] most 1.21.1 vanilla blocks are, signs keep their text and banners their patterns. Inventories are never copied: a chest from a blueprint is always empty.
 - Blocks without an item (potted plants…) cost their items: a flower pot and the flower.
 
 **Prefab blueprints**: some ready-made blueprints (castle walls, gates and towers, a chicken cooker…) have their own crafting recipe, check your recipe viewer. The blocks of the structure used in the recipe are given back.
 
-![A blueprint charged from its linked chest and deployed twice](images/changelog-9.0/09-blueprint-linked-chest.gif)
+![A blueprint charged from its linked chest and deployed twice](images/changelog-9.1/09-blueprint-linked-chest.gif)
 
 
 ## Reward, loot and starter capsules ##
@@ -228,7 +228,7 @@ One-use capsules (including reward and loot capsules) are destroyed once deploye
 
 [since 1.16.5] Put a linked or one-use capsule in a dispenser or a Capture Base and power it with redstone: the content is deployed in front of it. The next signal undeploys it back into the capsule (one-use capsules are consumed). The Capture Base is a dispenser itself, so it can deploy what it captured.
 
-[since 9.0] In claimed areas, a Capture Base acts for the player who placed it, see [Claim protection](#claim-protection).
+[since 9.1] In claimed areas, a Capture Base acts for the player who placed it, see [Claim protection](#claim-protection).
 
 See [Ideas and uses](Ideas-and-uses) for an automation made with other mods.
 
@@ -240,9 +240,9 @@ Capsules respect the claim and protection mods: you can't capture or deploy wher
 * Captures leave the protected blocks in place and take the others.
 * A deploy (or a blueprint undo) touching a protected block is refused entirely, with the message "Capsules can't be used here, it might be a protected area."
 
-![A deploy refused inside another player's Flan claim](images/changelog-9.0/07-claim-refused.gif)
+![A deploy refused inside another player's Flan claim](images/changelog-9.1/07-claim-refused.gif)
 
-[since 9.0] Supported claim mods:
+[since 9.1] Supported claim mods:
 
 | Mod | 1.21.1 | Forge: next builds of 1.20.1 8.0.x, 1.18.2 6.0.x, 1.16.5 5.0.x |
 |---|---|---|
@@ -253,17 +253,17 @@ Capsules respect the claim and protection mods: you can't capture or deploy wher
 
 FTB Chunks and Cadmus on Fabric are not supported yet (they don't implement Common Protection API).
 
-* [since 9.0] A Capture Base acts as the player who placed it, and a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.0, vanilla dispensers and anything else without a player can no longer capture or deploy inside claims: break and place the Capture Base again to give it an owner.
+* [since 9.1] A Capture Base acts as the player who placed it, and a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.1, vanilla dispensers and anything else without a player can no longer capture or deploy inside claims: break and place the Capture Base again to give it an owner.
 * A capsule thrown by a player who then went offline or changed dimension is still checked for that player.
 * When Capsule cannot check a claim mod that is loaded (its API changed in a newer version), every capture and deploy is refused with a chat message, until Capsule is updated. Please report it!
 * SecurityCraft blocks can only be captured by their owner.
 
-Before 9.0, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.0 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them). On the next Forge builds of 1.20.1, 1.18.2 and 1.16.5 the largest survival capsule is 31x31x31 by default (an emerald capsule with every upgrade; 33 with a mod adding platinum).
+Before 9.1, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.1 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them). On the next Forge builds of 1.20.1, 1.18.2 and 1.16.5 the largest survival capsule is 31x31x31 by default (an emerald capsule with every upgrade; 33 with a mod adding platinum).
 
 
 ## Recipe viewers ##
 
-Capsule recipes and information pages show in **JEI**, and [since 9.0] in **REI** and **EMI**, on NeoForge and Fabric: every capsule tier, upgrades, recovery, clearing, blueprints and prefab blueprints.
+Capsule recipes and information pages show in **JEI**, and [since 9.1] in **REI** and **EMI**, on NeoForge and Fabric: every capsule tier, upgrades, recovery, clearing, blueprints and prefab blueprints.
 
 
 ## Overpowered Capsules ##
@@ -282,13 +282,13 @@ Modpack makers can change the list, see [Modpack making](Modpack-making#overrida
 
 `config/capsule-client.toml`:
 
-* `captureAnimation` [since 9.0] (default `true`): show the captured blocks being sucked into the capsule. Captures of more than 4096 blocks or larger than 64 shrink as a box instead.
+* `captureAnimation` [since 9.1] (default `true`): show the captured blocks being sucked into the capsule. Captures of more than 4096 blocks or larger than 64 shrink as a box instead.
 
 The preview, the capture zone wireframe and the capture animation also show with Iris shader packs.
 
 # Changelogs
 
-- [1.21.1: Capsule 9.0](Changelog-1.21.1-9.0) (Fabric, Loyalty, claim mods, new tiers…)
+- [1.21.1: Capsule 9.1](Changelog-1.21.1-9.1) (Fabric, Loyalty, claim mods, new tiers…)
 - [1.12.2: Builder's daydream update](Changelog-1.12.2-Builders-daydream-update) (blueprints showcase)
 - [1.12.2: Bring your base! update](Changelog-1.12.2-Bring-your-base-update)
 - [Ideas and uses](Ideas-and-uses)
@@ -326,7 +326,7 @@ All the information is at [Modpack making](Modpack-making).
 
 **How to move my capsule from a world to a new one?**
 
-1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move; [since 9.0, 1.21.1] without a name, the capsule label is used). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
+1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move; [since 9.1, 1.21.1] without a name, the capsule label is used). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
 2. [If the new world is on the same server you can skip this step] Copy the file from `<oldServer>/config/capsule/rewards/<someName>.nbt` to `<newServer>/config/capsule/rewards/`.
 3. In the new world, use the command `/capsule giveLinked <someName>` (repeat for each capsule). It will create a standard capsule from the template.
 

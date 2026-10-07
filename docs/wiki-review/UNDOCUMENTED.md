@@ -3,9 +3,9 @@
 Compared on 2026-10-07: the wiki at commit 2ff5387 of `capsule.wiki.git` against the `dev-1.21.1` code (`Config.java`,
 `ClientConfig.java`, `CapsuleCommand.java`, `data/capsule/recipe`, `data/capsule/tags`, `en_us.json`, `CapsuleItem`,
 the recipes, the dispenser behavior, `plugins/claims`). "Drafted in" points to the section written on this branch
-(`docs/wiki/`), to review in the diff; "Status" says whether it is documented now or left out, and why. The 9.0
+(`docs/wiki/`), to review in the diff; "Status" says whether it is documented now or left out, and why. The 9.1
 features (Loyalty, fire proof, tiers, translucent preview, capture animation, claims, REI/EMI, Fabric, Sponge v3,
-whitelist update) are not repeated here: they are new, see the 9.0 changelog page.
+whitelist update) are not repeated here: they are new, see the 9.1 changelog page.
 
 ## Player (Home)
 
@@ -31,7 +31,7 @@ whitelist update) are not repeated here: they are new, see the 9.0 changelog pag
 | Prefab blueprints for players | Ready-made blueprint recipes (castle parts, chicken cooker) in the recipe viewers | Home#blueprints | documented |
 | Loot, starter and reward capsules (player view) | Where they come from, one-use behavior, loot as pre-charged blueprints | Home#reward-loot-and-starter-capsules | documented |
 | Dispenser and Capture Base automation | A redstone signal deploys a linked/one-use capsule in front, the next one undeploys it (`DispenseCapsuleBehavior`, since 1.16.5) | Home#automation-with-dispensers | documented |
-| Recipe viewer info pages | Capsule information pages in JEI (REI/EMI since 9.0) | Home#recipe-viewers | documented |
+| Recipe viewer info pages | Capsule information pages in JEI (REI/EMI since 9.1) | Home#recipe-viewers | documented |
 | Overpowered capsule recipe and size | Iron ingots + nether star, size 1 (`capsule_op.json`); bedrock is excluded for OP capsules too now | Home#overpowered-capsules | documented |
 | Where templates are stored | `<world>/capsules`, `C-`/`B-` prefixes (`StructureSaver`) | Home#faq | documented |
 | Beds and respawn | From the 1.12.2 showcase captions | Home#faq | documented |
@@ -65,10 +65,10 @@ whitelist update) are not repeated here: they are new, see the 9.0 changelog pag
 
 | Finding | Status |
 |---|---|
-| `exportHeldItem` printed `/give @p capsule:capsule{...}` (pre-1.20.5 syntax) on 1.21.1 without the other components; `exportSeenBlock` printed `{BlockEntityTag:…}` | fixed in 9.0 (both print the 1.21 component syntax); documented in Commands and Modpack-making, TODO comments removed |
-| `fromHeldCapsule` had no `executes()` without its argument on 1.21.1 | fixed in 9.0 on 1.21.1 (falls back to the capsule label again; the Forge backports always required the name); documented in Commands |
+| `exportHeldItem` printed `/give @p capsule:capsule{...}` (pre-1.20.5 syntax) on 1.21.1 without the other components; `exportSeenBlock` printed `{BlockEntityTag:…}` | fixed in 9.1 (both print the 1.21 component syntax); documented in Commands and Modpack-making, TODO comments removed |
+| `fromHeldCapsule` had no `executes()` without its argument on 1.21.1 | fixed in 9.1 on 1.21.1 (falls back to the capsule label again; the Forge backports always required the name); documented in Commands |
 | `setAuthor` needs an argument (`""` removes the author); the old wiki said "omit it" | documented in Commands |
-| With the default `capsuleUpgradesLimit` (10) a netherite capsule reaches 33, above the claim check's per-block limit of 31 | fixed in 9.0 (limit computed from the config: largest tier + 2 × upgrades limit, 33 by default; 31 on the Forge backports, emerald 11); bigger boxes, checked per chunk column, are operator-only (owner decision); documented in Home, Modpack-making and Getting-compatible |
-| `blueprint_whitelist.json` has `"seed": "LONG"` under `minecraft:structure_block` (a non-null value means "the item must carry a matching `seed`") | it asked for a structure block item holding the same seed: fixed in 9.0 and the Forge backports (`"seed": "LONG"`, new installs only), listed in the 9.0 changelog page |
+| With the default `capsuleUpgradesLimit` (10) a netherite capsule reaches 33, above the claim check's per-block limit of 31 | fixed in 9.1 (limit computed from the config: largest tier + 2 × upgrades limit, 33 by default; 31 on the Forge backports, emerald 11); bigger boxes, checked per chunk column, are operator-only (owner decision); documented in Home, Modpack-making and Getting-compatible |
+| `blueprint_whitelist.json` has `"seed": "LONG"` under `minecraft:structure_block` (a non-null value means "the item must carry a matching `seed`") | it asked for a structure block item holding the same seed: fixed in 9.1 and the Forge backports (`"seed": "LONG"`, new installs only), listed in the 9.1 changelog page |
 | The starter templates are named `_stater_*`: labels show "Stater" | left out: renaming would break existing configs (see the #71 reply) |
 | Default `excludedBlocks` entries from 1.12 that match nothing today (`superfactorymanager:`, `gregtech:machine`, `gtadditions:`, `bloodmagic:alchemy_table`, `mekanism:machineblock`, `mekanism:boundingblock`), from the incompatibility tests | documented in Known-incompatibilities and Modpack-making#excluded-blocks; removed from the 1.20.1 / 1.18.2 / 1.16.5 defaults (new installs get `bloodmagic:alchemytable`, the Immersive Engineering connectors and `waystones:`; `#forge:relocation_not_supported` and the optional entries of `capsule:excluded` now apply there); the 1.21.1 defaults still list them, cleaning them is left to the owner |

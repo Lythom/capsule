@@ -4,7 +4,8 @@ Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/m
 
 | Minecraft | Capsule | Loaders | Status |
 |---|---|---|---|
-| 1.21.1 | 9.0 | NeoForge, Fabric | current version |
+| 1.21.1 | 9.1 | NeoForge, Fabric | current version |
+| 1.21.1 | 9.0 (9.0.113 to 9.0.117) | NeoForge | replaced by 9.1 |
 | 1.20.4 | 8.0 | Forge | replaced by 1.21.1 |
 | 1.20.1 | 8.0 | Forge | bug fixes |
 | 1.19.2 | 7.0 | Forge | not updated anymore |
@@ -17,11 +18,17 @@ Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/m
 | 1.9.4, 1.9 | 1.1 | Forge | not updated anymore |
 | 1.8.9 | 1.0 | Forge | not updated anymore |
 
-The 9.0 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5) reach the next Forge builds: 1.20.1 8.0.x, 1.18.2 6.0.x and 1.16.5 5.0.x. The 9.0 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics) stay 1.21.1 only. See [Backports](Changelog-1.21.1-9.0#backports-to-forge-1201-1182-and-1165).
+The 9.1 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5) reach the next Forge builds: 1.20.1 8.0.x, 1.18.2 6.0.x and 1.16.5 5.0.x. The 9.1 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics) stay 1.21.1 only. See [Backports](Changelog-1.21.1-9.1#backports-to-forge-1201-1182-and-1165).
+
+The 9.0.x builds (9.0.113 to 9.0.117) were the initial NeoForge port from Forge 1.20.4, without the 9.1 features (Fabric, Loyalty, claim mods, new tiers...) and fixes.
 
 The pages of this wiki describe the latest version; features marked [since x.y] need at least that version.
 
 ## What differs in older versions
+
+**1.21.1-9.0.x (NeoForge only)**
+- Capsules come back with the Recall enchantment of the mod instead of vanilla Loyalty; `/capsule giveLinked` takes `withRecall` instead of `withLoyalty`.
+- Capsules burn in fire and lava.
 
 **1.20.4 and older (Capsule 8.0 and before)**
 - Capsules come back with the Recall enchantment of the mod instead of vanilla Loyalty; `/capsule giveLinked` takes `withRecall` instead of `withLoyalty`.

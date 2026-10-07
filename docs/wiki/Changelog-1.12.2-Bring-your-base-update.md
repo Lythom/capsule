@@ -49,7 +49,7 @@ Here the area is claimed using the FTBUtils claiming system: any protected block
 the wild are captured normally.
 It should work with any protection system that prevents a player from taking or placing a block.
 
-> Today (Capsule 9.0 for 1.21.1): see [Claim protection](Home#claim-protection) for the claim mods Capsule supports.
+> Today (Capsule 9.1 for 1.21.1): see [Claim protection](Home#claim-protection) for the claim mods Capsule supports.
 
 ---
 

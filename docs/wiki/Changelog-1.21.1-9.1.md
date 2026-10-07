@@ -1,66 +1,66 @@
-# Capsule 9.0 for Minecraft 1.21.1: Fabric, Loyalty, claim mods
+# Capsule 9.1 for Minecraft 1.21.1: Fabric, Loyalty, claim mods
 
-_Capsule 9.0 brings the mod to Minecraft 1.21.1 on **NeoForge** and **Fabric**, with the same features, recipes and
+_Capsule 9.1 brings the mod to Minecraft 1.21.1 on **NeoForge** and **Fabric**, with the same features, recipes and
 config file on both. Download it on [CurseForge](https://www.curseforge.com/minecraft/mc-mods/capsule/files) or
 [Modrinth](https://modrinth.com/mod/capsule/versions). Full list of changes in the
-[changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md). Recorded in game with Capsule 9.0._
+[changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md). Recorded in game with Capsule 9.1._
 
 ---
 
-![Blocks flying into the capsule during a capture](images/changelog-9.0/01-capture-sucked-in.gif)
+![Blocks flying into the capsule during a capture](images/changelog-9.1/01-capture-sucked-in.gif)
 
 **Capture animation.** Captured blocks are now sucked into the capsule with a particle trail (#106).
 It is client side only: turn it off with `captureAnimation = false` in `config/capsule-client.toml`.
 
 ---
 
-![The old opaque preview next to the new translucent one](images/changelog-9.0/02-preview-before-after.jpg)
+![The old opaque preview next to the new translucent one](images/changelog-9.1/02-preview-before-after.jpg)
 
 **Translucent preview.** Before: the full deploy preview hid the terrain. Now it is translucent, so you see what is
 behind it (#88). Walls, fences and panes no longer go missing from it on NeoForge.
 
 ---
 
-![The preview rotated four times, then mirrored](images/changelog-9.0/02-preview-rotate-mirror.gif)
+![The preview rotated four times, then mirrored](images/changelog-9.1/02-preview-rotate-mirror.gif)
 
 Left click rotates the preview ("Rotation: 90°" in the chat), sneak + left click mirrors it.
 
 ---
 
-![The preview against water, glass and terrain, before and after](images/changelog-9.0/02-preview-water-glass.jpg)
+![The preview against water, glass and terrain, before and after](images/changelog-9.1/02-preview-water-glass.jpg)
 
 The preview against terrain, water and glass, before and after. Water and stained glass in front of the preview still
 hide it.
 
 ---
 
-![A hut deployed by a thrown capsule, then brought back](images/changelog-9.0/03-deploy-undeploy.gif)
+![A hut deployed by a thrown capsule, then brought back](images/changelog-9.1/03-deploy-undeploy.gif)
 
 **Bring your base!** Throw the capsule to deploy, right click it to bring your base back, wherever you are.
 
 ---
 
-![A capsule with Loyalty coming back after its deploy](images/changelog-9.0/04-loyalty-comes-back.gif)
+![A capsule with Loyalty coming back after its deploy](images/changelog-9.1/04-loyalty-comes-back.gif)
 
 **Loyalty.** The vanilla Loyalty enchantment brings thrown capsules back to your hand, and replaces Recall (#123, #96).
 Any level works.
 
 ---
 
-![The enchanting table offering Loyalty III for a capsule](images/changelog-9.0/04-enchanting-table-loyalty.png)
+![The enchanting table offering Loyalty III for a capsule](images/changelog-9.1/04-enchanting-table-loyalty.png)
 
 Get it from the enchanting table, or from a book on an anvil. Capsules already enchanted with Recall keep coming back.
 
 ---
 
-![A capsule thrown into lava deploys the hut there](images/changelog-9.0/05-lava-proof.gif)
+![A capsule thrown into lava deploys the hut there](images/changelog-9.1/05-lava-proof.gif)
 
 **Fire and lava proof.** Capsules no longer burn, existing ones included: a capsule thrown into lava deploys, and comes
 back with Loyalty.
 
 ---
 
-![The netherite capsule in the inventory, with every capsule in JEI](images/changelog-9.0/06-jei-capsule-tiers.png)
+![The netherite capsule in the inventory, with every capsule in JEI](images/changelog-9.1/06-jei-capsule-tiers.png)
 
 **New tiers, up to netherite.** Amethyst and quartz (5), prismarine crystals (9) and netherite (13): a 13x13x13 capsule
 with vanilla items only (#120). With mods: zinc and aluminum (3), osmium (5), brass (7), steel and uranium (9). Modded
@@ -74,7 +74,7 @@ The netherite capsule: netherite ingots on each side of the ender pearl.
 
 ---
 
-![A deploy refused inside another player's Flan claim](images/changelog-9.0/07-claim-refused.gif)
+![A deploy refused inside another player's Flan claim](images/changelog-9.1/07-claim-refused.gif)
 
 **Claim protection.** You can't capture or deploy where you are not allowed to build (#91): Open Parties and Claims,
 Flan, Get Off My Lawn ReServed (Fabric) and the protection mods that listen to NeoForge's block placement event or
@@ -83,24 +83,24 @@ refused. Capture Bases act for the player who placed them. See [Claim protection
 
 ---
 
-![Capsule in Mod Menu on Fabric](images/changelog-9.0/08-fabric-mod-menu.png)
+![Capsule in Mod Menu on Fabric](images/changelog-9.1/08-fabric-mod-menu.png)
 
 **Fabric.** The Fabric build (`Capsule-fabric-1.21.1-...jar`) needs Fabric API and Forge Config API Port. The NeoForge
 jar is now named `Capsule-neoforge-1.21.1-...jar` and needs NeoForge 21.1 or later.
 
 ---
 
-![The netherite capsule recipes in EMI](images/changelog-9.0/06-emi-netherite-recipe.png)
+![The netherite capsule recipes in EMI](images/changelog-9.1/06-emi-netherite-recipe.png)
 
 **REI, EMI and JEI.** The capsule recipes and information pages show in REI and EMI, and in JEI on Fabric too. Every
 viewer now shows the recovery and blueprint recipes.
 
 ---
 
-![A blueprint charged from its linked chest, deployed twice](images/changelog-9.0/09-blueprint-linked-chest.gif)
+![A blueprint charged from its linked chest, deployed twice](images/changelog-9.1/09-blueprint-linked-chest.gif)
 
 **Blueprints** take their materials from a linked chest (sneak + right click a chest to link it, left click to charge).
-New in 9.0: signs keep their text and banners their patterns, and heads, campfires, shulker boxes, decorated pots,
+New in 9.1: signs keep their text and banners their patterns, and heads, campfires, shulker boxes, decorated pots,
 chiseled bookshelves and crafters can be used (#101). Blocks without an item, like potted plants, now cost their items
 (#56). See [Blueprints](Home#blueprints).
 
@@ -162,7 +162,7 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
   capsule label again. See [Commands](Commands).
 - **Config files are never overwritten**: existing installs keep their copy. Delete them to get the new defaults:
   `config/capsule/blueprint_whitelist.json` (new whitelist), `config/capsule/starters` (fixed huts),
-  `config/capsule/loot` (fixed loot templates). The Recall entries of `capsule-common.toml` are unused since 9.0.
+  `config/capsule/loot` (fixed loot templates). The Recall entries of `capsule-common.toml` are unused since 9.1.
 - Clients and servers must run the same Capsule build: the prefab blueprint recipes sent to clients changed.
 
 ## Backports to Forge 1.20.1, 1.18.2 and 1.16.5

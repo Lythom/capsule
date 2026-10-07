@@ -21,11 +21,11 @@
 * [Modpack making options](https://github.com/Lythom/capsule/wiki/Modpack-making), so that players can be rewarded with ready-to-deploy structures or loot them in chests.
 * A ton of possibilities! Capsules can be used as an early backpack moving a chest, as a portable ladder, to deploy protecting walls to recover during a fight, to move machines or multiblocks, [and more…](https://github.com/Lythom/capsule/wiki/Ideas-and-uses) Unleash your creativity!
 
-## New in 9.0 (Minecraft 1.21.1)
+## New in 9.1 (Minecraft 1.21.1)
 
-**See it in action in the illustrated [9.0 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.0)!**
+**See it in action in the illustrated [9.1 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.1)!**
 
-![Captured blocks sucked into the capsule](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/01-capture-sucked-in.gif)
+![Captured blocks sucked into the capsule](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.1/01-capture-sucked-in.gif)
 
 * **Fabric** support, next to NeoForge.
 * Thrown capsules come back with vanilla **Loyalty** (it replaces the Recall enchantment).
@@ -38,11 +38,11 @@
 * Sponge v3 and `.schem` schematics as templates, and an updated blueprint whitelist.
 * Lots of bug fixes, also in the next Forge builds for 1.20.1, 1.18.2 and 1.16.5.
 
-![Before: opaque preview. Now: translucent](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/02-preview-before-after.jpg)
+![Before: opaque preview. Now: translucent](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.1/02-preview-before-after.jpg)
 
-![A capsule with Loyalty coming back after its deploy](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/04-loyalty-comes-back.gif)
+![A capsule with Loyalty coming back after its deploy](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.1/04-loyalty-comes-back.gif)
 
-Full list, with pictures, in the [9.0 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.0).
+Full list, with pictures, in the [9.1 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.1).
 
 ## Getting started
 

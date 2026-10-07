@@ -52,7 +52,7 @@ Not updated anymore. You can still add the block id in the `capsule.cfg` file un
 
 ## 3. If your mod protects areas (claims)
 
-[since 9.0] Capsule asks claim mods before capturing or deploying. It respects Open Parties and Claims, Flan and Get Off My Lawn ReServed through their own API, and any other protection mod that:
+[since 9.1] Capsule asks claim mods before capturing or deploying. It respects Open Parties and Claims, Flan and Get Off My Lawn ReServed through their own API, and any other protection mod that:
 
 * NeoForge: cancels the block placement event (`BlockEvent.EntityPlaceEvent`, dirt) that Capsule fires for the acting player at the positions it changes: every position up to the size of the largest survival capsule (33 by default), one position per chunk column for bigger capsules (operators only).
 * Forge 1.20.1, 1.18.2 and 1.16.5 (next builds 8.0.x, 6.0.x, 5.0.x): the same placement event, up to the largest survival capsule of these versions (31 by default, 33 with a mod adding platinum).

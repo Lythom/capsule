@@ -1,6 +1,6 @@
 # Known incompatibilities
 
-Checked on 2026-10-07 with Capsule 9.0 (NeoForge 1.21.1) and Capsule 8.0 (Forge 1.20.1), with the mod versions listed
+Checked on 2026-10-07 with Capsule 9.1 (NeoForge 1.21.1) and Capsule 8.0 (Forge 1.20.1), with the mod versions listed
 below. Each case is an automated test that captures and deploys the mod's blocks in a real game, see
 [How it is tested](#how-it-is-tested). The 1.20.1 cases were played again with a release candidate of the next 8.0.x
 build: 33 checks, none failed.
@@ -21,7 +21,7 @@ is never rewritten: on an existing install, add the entries given below yourself
 
 ## Summary
 
-| Mod | 1.21.1 (Capsule 9.0) | 1.20.1 (Capsule 8.0, next 8.0.x build) |
+| Mod | 1.21.1 (Capsule 9.1) | 1.20.1 (Capsule 8.0, next 8.0.x build) |
 |---|---|---|
 | Corail Tombstone graves | never captured (by design) | never captured (by design) |
 | Refined Storage | excluded by default; works when not excluded | excluded by default, network blocks never captured; disks lost when moved |

@@ -1,6 +1,6 @@
 # Modpack making tools
 
-Features marked [since x.y] need at least that Capsule version: 9.0 is the 1.21.1 release (NeoForge and Fabric). The player features are on the [Home](Home) page.
+Features marked [since x.y] need at least that Capsule version: 9.1 is the 1.21.1 release (NeoForge and Fabric). The player features are on the [Home](Home) page.
 
 - [Modpack making tools](#modpack-making-tools)
   * [Types of Capsules](#types-of-capsules)
@@ -49,7 +49,7 @@ When the player captures some new content with an Empty Capsule, a new Template 
 #### How to give one
 
 Apart from the player crafting their own capsule, there are 2 ways to give players preloaded standard (reusable) capsules:
-- [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](Commands#givelinked) ([since 9.0] add `true` to give it with Loyalty).
+- [since 3.2.95] Using the command [`/capsule giveLinked <reward_name> [playerName]`](Commands#givelinked) ([since 9.1] add `true` to give it with Loyalty).
 - [since 3.2.95] As a [starter capsule](#starters), given when the player logs in for the first time.
 
 #### About rotation
@@ -114,7 +114,7 @@ Apart from the default player recipe, Blueprint capsules can be obtained in 3 wa
 
 By default block entities are not supported by blueprints. Still, it is possible to add specific block entities to the `config/capsule/blueprint_whitelist.json` file to enable them. An entry can consist of the block id (i.e. "minecraft:chest") or a JSON object with the properties "block" and "keepNBT".
 
-[since 9.0] The default whitelist covers the 1.21.1 vanilla block entities: signs and hanging signs with their text, banners with their patterns, heads, campfires, shulker boxes, ender chests, decorated pots, chiseled bookshelves, the crafter with its disabled slots, command blocks with their command… Inventories are never kept, and blueprint blocks never show a content they lost (chiseled bookshelf books, lectern book, jukebox record, brewing stand bottles). The file is created on the first start and never updated: on existing installs, delete `config/capsule/blueprint_whitelist.json` to get the new list. After editing the file, use [`/capsule reloadWhitelist`](Commands#reloadwhitelist) or restart.
+[since 9.1] The default whitelist covers the 1.21.1 vanilla block entities: signs and hanging signs with their text, banners with their patterns, heads, campfires, shulker boxes, ender chests, decorated pots, chiseled bookshelves, the crafter with its disabled slots, command blocks with their command… Inventories are never kept, and blueprint blocks never show a content they lost (chiseled bookshelf books, lectern book, jukebox record, brewing stand bottles). The file is created on the first start and never updated: on existing installs, delete `config/capsule/blueprint_whitelist.json` to get the new list. After editing the file, use [`/capsule reloadWhitelist`](Commands#reloadwhitelist) or restart.
 
 Example from the default 1.21.1 list, the sign text is kept but nothing else:
 ```json
@@ -171,7 +171,7 @@ This procedure will have you create a template file located under `config/capsul
 
 1. Get an empty capsule,
 2. capture the content you want to reward on a Capture Base,
-3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](Commands#fromheldcapsule) while holding the capsule in the main hand ([since 9.0, 1.21.1] without a name, the capsule label is used). The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
+3. finally use the command [`/capsule fromHeldCapsule <structure_name>`](Commands#fromheldcapsule) while holding the capsule in the main hand ([since 9.1, 1.21.1] without a name, the capsule label is used). The structure is now at `config/capsule/rewards/<structure_name>.nbt`.
 
 To allow more advanced captures:
 
@@ -196,7 +196,7 @@ Additional notes:
 - If inside a subfolder, a mod with the same id as the folder name must be loaded to enable the recipe (i.e. `config/capsule/prefabs/immersiveengineering/arc_furnace.nbt`).
 - Ensure the file name is lowercase only: `_` will be replaced by spaces and each word is capitalized for the capsule label.
 - Default prefabs: castle wall, castle wall corner, castle gate, castle tower corner (and its top), chicken cooker.
-- [since 9.0] Clients and servers must run the same Capsule build: the prefab recipes sent to clients changed in 9.0.
+- [since 9.1] Clients and servers must run the same Capsule build: the prefab recipes sent to clients changed in 9.1.
 
 
 ### Relabeling a Capsule
@@ -246,12 +246,12 @@ You may want to check if the templates are correctly added to the loot table and
 
 ### Change starter capsules
 
-See [Starters](#starters). The default starters are 5 small huts and 2 houses. On existing installs, delete `config/capsule/starters` to get the updated huts [since 9.0] (the axe item frame no longer covers the crafting table).
+See [Starters](#starters). The default starters are 5 small huts and 2 houses. On existing installs, delete `config/capsule/starters` to get the updated huts [since 9.1] (the axe item frame no longer covers the crafting table).
 
 ## Template files
 
-* Formats: structure block `.nbt` files, MCEdit `.schematic` files and Sponge schematics (`.schem` and `.schematic`): v1, v2, and [since 9.0] v3, the WorldEdit 7.3 default. Put them in the rewards, loot, starters or prefabs folders.
-* File names may only contain `a-z 0-9 / . _ -`. [since 9.0] Other files are ignored with a warning in the log (before 9.0, uppercase letters or spaces disconnected players on login).
+* Formats: structure block `.nbt` files, MCEdit `.schematic` files and Sponge schematics (`.schem` and `.schematic`): v1, v2, and [since 9.1] v3, the WorldEdit 7.3 default. Put them in the rewards, loot, starters or prefabs folders.
+* File names may only contain `a-z 0-9 / . _ -`. [since 9.1] Other files are ignored with a warning in the log (before 9.1, uppercase letters or spaces disconnected players on login).
 * Subfolders are allowed in the rewards, loot and starters folders.
 * `/reload` refreshes the templates, on dedicated servers too.
 * The default loot, starters, prefabs and blueprint whitelist are copied to `config/capsule` on the first start and never updated: delete `config/capsule/loot`, `config/capsule/starters`, `config/capsule/prefabs` or `config/capsule/blueprint_whitelist.json` to get the defaults of a newer Capsule version.
@@ -271,13 +271,13 @@ The common configuration is `config/capsule-common.toml` [since 1.15.2] (`config
 | `loot` | `rewardTemplatesPath` | `config/capsule/rewards` | Folder of the reward templates used by the commands. |
 | `loot` | `allowBlueprintReward` | `true` | Loot templates without entities are given as pre-charged blueprints. |
 | `loot` | `allowMirror` | `true` | Sneak + left click mirrors the capsule content. Disable for multiblocks that break when mirrored. |
-| `enchants` | `recallEnchantRarity`, `recallEnchantType` | | Unused since 9.0, see [Loyalty](#loyalty). |
+| `enchants` | `recallEnchantRarity`, `recallEnchantType` | | Unused since 9.1, see [Loyalty](#loyalty). |
 | `balance` | `previewDisplayDuration` | `120` | Ticks a capsule stays activated (preview displayed) after a right click. 20 ticks = 1 second. |
 | `balance` | `capsuleUpgradesLimit` | `10` | Number of upgrades an empty capsule can get, 0 to disable upgrades. |
 | `balance` | `excludedBlocks` | see below | Blocks or tags never captured by standard capsules. |
 | `balance` | `opExcludedBlocks` | see below | Blocks or tags never captured, even by overpowered capsules. |
 
-The client configuration is `config/capsule-client.toml`: `captureAnimation` [since 9.0], see [Client options](Home#client-options).
+The client configuration is `config/capsule-client.toml`: `captureAnimation` [since 9.1], see [Client options](Home#client-options).
 
 ### Excluded blocks
 
@@ -323,7 +323,7 @@ Add blocks with a datapack providing the same file with `"replace": false`.
 |---|---|---|---|---|
 | `capsule:excluded` | block | 1.15.2-4.0.60 | `#c:relocation_not_supported` and `#c:immovable` (since 1.20.4), `#forge:relocation_not_supported` (next 1.20.1, 1.18.2 and 1.16.5 builds), `#tombstone:player_graves` | Never captured, by any capsule. See [Getting compatible with Capsule](Getting-compatible-with-capsule). |
 | `capsule:overridable` | block | 1.20.1 | leaves, replaceable blocks, snow | Replaced by deploys, see [Overridable blocks](#overridable-blocks). |
-| `capsule:enchantable/recall` | item | 9.0 | `capsule:capsule` | Items that take [Loyalty](#loyalty) and come back when thrown. |
+| `capsule:enchantable/recall` | item | 9.1 | `capsule:capsule` | Items that take [Loyalty](#loyalty) and come back when thrown. |
 
 Since 1.21, tag folders are singular (`tags/block`, `tags/item`); before, they are `tags/blocks` and `tags/items`.
 
@@ -331,21 +331,21 @@ Since 1.21, tag folders are singular (`tags/block`, `tags/item`); before, they a
 
 Every recipe is a JSON file under `data/capsule/recipe/` [since 1.15] (`recipes/` before 1.21) and can be overridden or removed with a datapack, i.e. to change the material or the size of a tier: the size is the `size` value of the result's `minecraft:custom_data`. The upgrade recipe sets the upgrade ingredient (`upgrade.json`, popped chorus fruit by default).
 
-[since 9.0] The recipes of the modded tiers (`addons_capsule_<metal>`) only load when a mod fills their `c:ingots/<metal>` tag. The full tier table is on the [Home](Home#capsule-tiers) page.
+[since 9.1] The recipes of the modded tiers (`addons_capsule_<metal>`) only load when a mod fills their `c:ingots/<metal>` tag. The full tier table is on the [Home](Home#capsule-tiers) page.
 
 ### Loyalty
 
-[since 9.0] Capsules come back with the vanilla Loyalty enchantment instead of Recall. Loyalty can be put on the items of the item tag `capsule:enchantable/recall`: a datapack removing `capsule:capsule` from it (`"replace": true` with an empty list) disables Loyalty on capsules. The weight of Loyalty in enchanting tables is the vanilla one, which a datapack can change. The `recallEnchantRarity` and `recallEnchantType` config entries are unused since 9.0.
+[since 9.1] Capsules come back with the vanilla Loyalty enchantment instead of Recall. Loyalty can be put on the items of the item tag `capsule:enchantable/recall`: a datapack removing `capsule:capsule` from it (`"replace": true` with an empty list) disables Loyalty on capsules. The weight of Loyalty in enchanting tables is the vanilla one, which a datapack can change. The `recallEnchantRarity` and `recallEnchantType` config entries are unused since 9.1.
 
-Before 9.0, `recallEnchantType` chooses which items can get the Recall enchantment (capsules only by default, `null`), and `recallEnchantRarity` its rarity.
+Before 9.1, `recallEnchantType` chooses which items can get the Recall enchantment (capsules only by default, `null`), and `recallEnchantRarity` its rarity.
 
 ## Claims and protection
 
-[since 9.0] Captures and deploys respect claim mods: Open Parties and Claims and Flan (NeoForge and Fabric) and Get Off My Lawn ReServed (Fabric) are asked through their own API, and any other protection mod through a block placement check (NeoForge placement event, Fabric Common Protection API). The player documentation is in [Claim protection](Home#claim-protection). What server owners should know:
+[since 9.1] Captures and deploys respect claim mods: Open Parties and Claims and Flan (NeoForge and Fabric) and Get Off My Lawn ReServed (Fabric) are asked through their own API, and any other protection mod through a block placement check (NeoForge placement event, Fabric Common Protection API). The player documentation is in [Claim protection](Home#claim-protection). What server owners should know:
 
 * Protected blocks stay in the world on capture; a deploy or a blueprint undeploy touching a protected block is refused, and the player only gets the claim message.
 * The placement check (and Flan) is asked for every block of captures and deploys up to the size of the largest survival capsule, computed from the config: the largest capsule tier plus 2 per allowed upgrade (`capsuleUpgradesLimit`), so 33x33x33 by default (a netherite capsule with 10 upgrades); 31x31x31 by default on the Forge backports (an emerald capsule with 10 upgrades), 33 with a mod adding platinum. Above, it is asked once per chunk column: a single protected block inside a bigger box may be missed by mods without dedicated support. Capsules that big can't be crafted: they only come from operators and modpack makers (`/capsule giveEmpty`, reward templates), so this is accepted.
-* A Capture Base acts as the player who placed it (saved as `placer` in its block data); a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.0, vanilla dispensers and other captures or deploys without a player are refused inside claims, whatever the claim allows: re-place the Capture Base to give it an owner.
+* A Capture Base acts as the player who placed it (saved as `placer` in its block data); a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.1, vanilla dispensers and other captures or deploys without a player are refused inside claims, whatever the claim allows: re-place the Capture Base to give it an owner.
 * Fail closed: when a loaded claim mod cannot be checked (its API changed in a new version), every capture and deploy is refused with a chat message, and one error is written in the server log, instead of ignoring its claims. Update Capsule, or report it.
 * FTB Chunks and Cadmus are checked on NeoForge (placement event) but not on Fabric yet.
 * The same claim support reaches the next Forge builds of 1.20.1 (8.0.x) and 1.18.2 (6.0.x) with Open Parties and Claims and Flan, and of 1.16.5 (5.0.x) with Flan.
@@ -370,7 +370,7 @@ The Capsule item is ready but you may need the give command to set up a command 
 
 Note: this command will work for any item, not only capsules.
 
-[since 9.0, Minecraft 1.21.1] Item NBT became data components: the capsule data is the `minecraft:custom_data` component, the base color the `minecraft:dyed_color` component and the enchantments the `minecraft:enchantments` component. The printed command uses the 1.21 component syntax, ready for `/give` or a command block, for example:
+[since 9.1, Minecraft 1.21.1] Item NBT became data components: the capsule data is the `minecraft:custom_data` component, the base color the `minecraft:dyed_color` component and the enchantments the `minecraft:enchantments` component. The printed command uses the 1.21 component syntax, ready for `/give` or a command block, for example:
 
 ```
 /give @p capsule:capsule[minecraft:custom_data={state:5,oneUse:1b,isReward:1b,structureName:"config/capsule/rewards/my_house",size:7,label:"My House"},minecraft:dyed_color={rgb:16777215,show_in_tooltip:false}]

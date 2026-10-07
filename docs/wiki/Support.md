@@ -9,7 +9,7 @@ Most questions are answered in the [FAQ](Home#faq). To get help, either to use t
 
 Please include:
 
-* the Minecraft version, the loader (NeoForge, Fabric or Forge) and its version, and the Capsule version (from the jar name, i.e. `Capsule-neoforge-1.21.1-9.0.x.jar`);
+* the Minecraft version, the loader (NeoForge, Fabric or Forge) and its version, and the Capsule version (from the jar name, i.e. `Capsule-neoforge-1.21.1-9.1.x.jar`);
 * what you did, what you expected and what happened instead; screenshots help a lot for preview or rendering issues;
 * the log (`logs/latest.log`) or the crash report (`crash-reports/`), uploaded to https://mclo.gs or a gist;
 * the mod list, or the modpack name and version.
