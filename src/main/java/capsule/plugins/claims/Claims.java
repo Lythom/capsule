@@ -27,12 +27,13 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
  * Whether claim mods let a player capture or deploy blocks. Flan, which does not listen to the block placement event on
- * 1.16.5, is asked per position through its API; the other positions are probed with a block placement event, so that
- * claim mods without adapter protect them: every block up to {@link #PER_BLOCK_MAX_SIZE}, once per chunk column above.
+ * 1.16.5, is asked through its API, the positions outside its claims with a block placement event, so that claim mods
+ * without adapter protect them: each position up to {@link #PER_BLOCK_MAX_SIZE}, the center of each chunk column above.
  * When Flan is loaded but cannot be checked, captures and deploys are refused.
  */
 public final class Claims {
@@ -68,7 +69,7 @@ public final class Claims {
         if (!ModList.get().isLoaded("flan")) return;
         try {
             flan = new FlanAdapter();
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+        } catch (RuntimeException | LinkageError e) {
             unusable = ModList.get().getModContainerById("flan")
                     .map(mod -> mod.getModInfo().getDisplayName() + " " + mod.getModInfo().getVersion())
                     .orElse("flan");
@@ -132,38 +133,44 @@ public final class Claims {
         MutableBoundingBox box = new MutableBoundingBox(min[0], min[1], min[2], max[0], max[1], max[2]);
         ServerPlayerEntity actor = actor(level, player);
         boolean perBlock = Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
-        // the positions inside Flan claims and those the player may change, by index in box
+        // up to PER_BLOCK_MAX_SIZE, the positions inside Flan claims and those the player may change, by index in box
         BitSet flanClaimed = new BitSet();
         BitSet flanAllowed = new BitSet();
-        List<BlockPos> columnProbes;
+        // above, the chunk columns denied, and the centers of those Flan does not claim, probed
+        LongSet deniedColumns = new LongOpenHashSet();
+        List<BlockPos> columnProbes = new ArrayList<>();
         try {
-            Object flanClaims = flan == null ? null : flan.storage(level);
-            if (flanClaims != null) {
+            Function<BlockPos, Boolean> flanClaims = flan == null ? pos -> null : flan.claims(level, player);
+            if (perBlock) {
                 for (BlockPos pos : positions) {
-                    Boolean allowed = flan.allowed(flanClaims, pos, player);
+                    Boolean allowed = flanClaims.apply(pos);
                     if (allowed == null) continue;
                     int i = index(box, pos);
                     flanClaimed.set(i);
                     flanAllowed.set(i, allowed);
                 }
+            } else {
+                for (BlockPos center : columnCenters(box)) {
+                    Boolean allowed = flanClaims.apply(center);
+                    if (allowed == null) columnProbes.add(center);
+                    else if (!allowed) deniedColumns.add(column(center));
+                }
             }
-            columnProbes = perBlock ? new ArrayList<>() : columnProbes(box, flanClaims);
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+        } catch (RuntimeException | LinkageError e) {
             if (!failureReported) {
                 failureReported = true;
                 LOGGER.error("Captures and deploys are refused while Capsule cannot check the claims of Flan. Please report this incompatibility.", e);
             }
             return refused(player, flan.name());
         }
-        LongSet deniedColumns = new LongOpenHashSet();
         for (BlockPos probe : columnProbes) {
-            if (!canPlaceBlock(level, probe, actor)) deniedColumns.add(ChunkPos.asLong(probe.getX() >> 4, probe.getZ() >> 4));
+            if (!canPlaceBlock(level, probe, actor)) deniedColumns.add(column(probe));
         }
         return pos -> {
+            if (!perBlock) return deniedColumns.contains(column(pos));
             int i = index(box, pos);
             if (flanClaimed.get(i)) return !flanAllowed.get(i);
-            if (perBlock) return !canPlaceBlock(level, pos, actor);
-            return deniedColumns.contains(ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4));
+            return !canPlaceBlock(level, pos, actor);
         };
     }
 
@@ -174,33 +181,23 @@ public final class Claims {
         return ((pos.getX() - box.x0) * box.getYSpan() + pos.getY() - box.y0) * box.getZSpan() + pos.getZ() - box.z0;
     }
 
+    private static long column(BlockPos pos) {
+        return ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+    }
+
     /**
-     * Where the claims of mods without adapter are probed in each chunk column of box: its center or a corner that no
-     * Flan claim contains, none if Flan claims them all.
+     * The center of each chunk column of box, where Flan and the claims of mods without adapter are asked.
      */
-    private static List<BlockPos> columnProbes(MutableBoundingBox box, @Nullable Object flanClaims) throws ReflectiveOperationException {
-        List<BlockPos> probes = new ArrayList<>();
+    private static List<BlockPos> columnCenters(MutableBoundingBox box) {
+        List<BlockPos> centers = new ArrayList<>();
         for (int chunkX = box.x0 >> 4; chunkX <= box.x1 >> 4; chunkX++) {
             for (int chunkZ = box.z0 >> 4; chunkZ <= box.z1 >> 4; chunkZ++) {
                 MutableBoundingBox column = new MutableBoundingBox(Math.max(box.x0, chunkX << 4), box.y0, Math.max(box.z0, chunkZ << 4),
                         Math.min(box.x1, (chunkX << 4) + 15), box.y1, Math.min(box.z1, (chunkZ << 4) + 15));
-                List<BlockPos> candidates = new ArrayList<>();
-                candidates.add(new BlockPos(column.getCenter()));
-                for (int x : new int[]{column.x0, column.x1}) {
-                    for (int y : new int[]{column.y0, column.y1}) {
-                        for (int z : new int[]{column.z0, column.z1}) {
-                            candidates.add(new BlockPos(x, y, z));
-                        }
-                    }
-                }
-                for (BlockPos candidate : candidates) {
-                    if (flanClaims != null && flan.allowed(flanClaims, candidate, null) != null) continue;
-                    probes.add(candidate);
-                    break;
-                }
+                centers.add(new BlockPos(column.getCenter()));
             }
         }
-        return probes;
+        return centers;
     }
 
     /**
