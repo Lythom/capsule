@@ -110,6 +110,8 @@ and publish scripts, documentation.
 | Claim checks that fail refuse captures and deploys, adapter kept, player told (3c399cc) | cd73eb5 | 6f9252c | 24de839 (Flan asked for the whole operation before the world changes) |
 | CircleCI on version branches only (1.21.1: fbf85d5) | 57c98fd | 0f0eb49 | f20202d |
 | L4 publish script (2e8f4b0) | 901f440 | d3488cf | ad83dfd |
+| Refused blueprint undeploys only give the claim message, refused before any block is removed (8253687) | 19836cb | 855bd47 | 5cb9955 |
+| Claim and SecurityCraft APIs compiled against instead of reflection, Flan per block up to 31 and per chunk column above (dd99a27) | cdb7bec (Open Parties and Claims `forge-1.20.1-0.32.7`, Flan `1.20.1-1.11.16-forge`, SecurityCraft v1.10.2.1, `compileOnly fg.deobf` from the Modrinth maven; SecurityCraft before v1.9.9, whose `isOwnedBy` took a `Player`, keeps its blocks) | a0fffe9 (Open Parties and Claims `forge-1.18.2-0.32.7`, Flan `1.18.2-1.11.9-forge`; SecurityCraft was compiled against already) | 8a7e5c5 (Flan 1.7.2 has the public API too, see below) |
 
 ## Claims on 1.16.5
 
@@ -145,6 +147,19 @@ Since 24de839 Flan is asked for every position (and the chunk columns above size
 the capture or deploy changes the world, so a failing query refuses the whole operation instead of leaving it partial.
 Same benchmark, one launch: 13.5 ms for 31 and 594 ms for 255 without claim, 14.0 ms and 4 353 ms inside a Flan admin
 claim.
+
+Since 8a7e5c5 the adapter compiles against Flan 1.7.2's public API (`io.github.flemmli97.flan.api`:
+`ClaimHandler.getPermissionStorage(ServerWorld)`, `IPermissionStorage.getForPermissionCheck(BlockPos)`,
+`IPermissionContainer.canInteract(ServerPlayerEntity, ClaimPermission, BlockPos)`, `PermissionRegistry.BREAK`; javap on
+`flan-1.16.5-1.7.2-forge.jar`) instead of its internal `ClaimStorage` and `Claim` by reflection, and follows the 1.21.1
+rule: each position up to size 31, the center of each chunk column above (the placement event probes the centers Flan
+does not claim). Same benchmark, one launch: 5.9 ms for 31 and 322 ms for 255 without claim, 14.0 ms and 332 ms inside
+a Flan admin claim.
+
+Production check of the rc5 jars: each booted on a real Forge server with the claim mods (1.20.1-47.4.26 with Open
+Parties and Claims, Flan and SecurityCraft, 1.18.2-40.3.12 with Open Parties and Claims and Flan, the mods needing a
+newer Forge than the branches; 1.16.5-36.2.31 with Flan), and a dispenser deployed a reward capsule from the console:
+the adapters were asked through the APIs in the reobfuscated jar, without error.
 
 ## Notes
 
