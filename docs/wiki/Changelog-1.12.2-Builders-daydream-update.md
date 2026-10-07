@@ -1,7 +1,7 @@
 # Capsule Mod: builder's daydream update (Forge 1.12.2)
 
 _Showcase of the blueprints, published on imgur on 2019-06-05 for Capsule 1.12.2-3.2.91. Full list of changes in the
-[changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md). Click a picture with a ▶ to play its video._
+[changelog](https://github.com/Lythom/capsule/blob/1.21.1/CHANGELOG.md). Click a picture with a ▶ to play its video._
 
 The controls are still the same today; see [Blueprints](Home#blueprints) for the current documentation.
 

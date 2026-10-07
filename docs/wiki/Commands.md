@@ -44,7 +44,7 @@ Give an empty capsule.
 ```
 /capsule giveEmpty [size] [overpowered]
 ```
-* **size** Optional, default 3. Value must be an integer between 1 and 255. Even values will be rounded down.
+* **size** Optional, default 3. Value must be an integer between 1 and 255. Even values are rounded up to the next odd value (4 gives a 5x5x5 capsule).
 * **overpowered** Optional, default false. Value must be true or false.
 
 ---

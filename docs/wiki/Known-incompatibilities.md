@@ -16,8 +16,8 @@ Excluded blocks are never captured: they stay in place when a capsule captures t
   its id to both lists.
 
 On 1.20.1, 1.18.2 and 1.16.5, the next builds also add `bloodmagic:alchemytable`, the Immersive Engineering wire
-connectors and `waystones:` to both lists **for new installs** (and remove 1.12 ids that match nothing). The config file
-is never rewritten: on an existing install, add the entries given below yourself.
+connectors and `waystones:` to both lists **for new installs** (and remove 1.12 ids that match nothing, as 1.21.1-9.1
+does). The config file is never rewritten: on an existing install, add the entries given below yourself.
 
 ## Summary
 
@@ -28,7 +28,7 @@ is never rewritten: on an existing install, add the entries given below yourself
 | Super Factory Manager | moves, program needs relabelling | moves, program needs relabelling |
 | Mekanism Digital Miner | never captured | never captured (before: breaks when moved) |
 | Mekanism, other machines | move with their content | move with their content |
-| Blood Magic alchemy table | not tested (no 1.21.1 version found) | disappears when moved: exclude it (new installs: excluded) |
+| Blood Magic alchemy table | not tested; excluded by default | disappears when moved: exclude it (new installs: excluded) |
 | Immersive Engineering wires | connectors never captured | wires lost when moved: exclude the connectors (new installs: excluded) |
 | GregTech CEu Modern | not tested | moves with its content |
 | Integrated Dynamics | moves; cables and parts not drawn in the preview | not tested |
@@ -54,13 +54,13 @@ Tested: Tombstone 9.5.6 (1.21.1), 9.1.5 (1.20.1).
 **Super Factory Manager**: no crash any more. A moved manager keeps its disk and program, but the disk's labels still
 point to the original inventories, so the program moves nothing until you label the deployed inventories again with the
 Label Gun. Tested: 4.34.0 on 1.21.1 and 1.20.1. (The default `superfactorymanager:` entry is a 1.12 id: the mod is
-`sfm` today and is not excluded.)
+`sfm` today and is not excluded. New installs no longer get it.)
 
 **Blood Magic alchemy table** (1.20.1, Blood Magic 3.3.8): both halves deploy, then disappear as soon as a block next
 to them changes, because each half remembers the other's absolute position. Workaround: exclude
 `bloodmagic:alchemytable` (new installs of the next 8.0.x build do: the table then stays in place), or pick up the table
-before moving your Blood Magic room. The old default `bloodmagic:alchemy_table` matched nothing. No NeoForge 1.21.1
-version was found to test.
+before moving your Blood Magic room. The old default `bloodmagic:alchemy_table` matched nothing on 1.20.1. On 1.21.1 it
+is the table's id (Blood Magic 3.4 sources for 1.21.1), so the defaults exclude it; not tested.
 
 **IndustrialCraft 2**: no version for 1.20.1 or 1.21.1 was found. On 1.12.2, its machines lose their data when moved.
 

@@ -22,7 +22,7 @@ Add the blocks to exclude to the `capsule:excluded` block tag.
 Documentation: https://minecraft.wiki/w/Tag.     
 TLDR: there should be a `data/capsule/tags/block/excluded.json` file (`data/capsule/tags/blocks/excluded.json` before Minecraft 1.21) in your mod resources folder that contains something like the example below. Be sure that `replace` is `false` to keep the configuration working for other mods. The block ids to exclude go into the values array.
 
-Minecraft 1.21 and newer:
+Minecraft 1.18.2 and newer (`data/capsule/tags/blocks/excluded.json` before 1.21):
 ```json
 {
     "replace": false,
@@ -32,7 +32,7 @@ Minecraft 1.21 and newer:
 }
 ```
 
-Minecraft 1.15 to 1.20 (Forge):
+Minecraft 1.15 and 1.16.5 (Forge):
 ```json
 {
     "replace": false,
@@ -42,7 +42,7 @@ Minecraft 1.15 to 1.20 (Forge):
     ]
 }
 ```
-In these examples, an optional entry (`"required": false`, or the Forge `optional` list) should be used if the mod is not a required dependency. The `#` before `tombstone:player_graves` indicates that all the blocks under the tag `tombstone:player_graves` should be included here. The value could also be a block id without `#` to refer to a single block instead of another tag.
+In these examples, an optional entry (`"required": false`, or the Forge `optional` list on 1.15 and 1.16.5) should be used if the mod is not a required dependency. The `#` before `tombstone:player_graves` indicates that all the blocks under the tag `tombstone:player_graves` should be included here. The value could also be a block id without `#` to refer to a single block instead of another tag.
  
 ### 1.12
 Open an issue on GitHub and provide the block id to be excluded by default. I'll update the mod with the new configuration.

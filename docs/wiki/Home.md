@@ -128,7 +128,7 @@ Usage:
 Deploying rules:
 
 * The content cannot be deployed if a block is in the way: the blocks in the way are shown in red in the preview, and nothing is placed. [Overridable blocks](#overridable-blocks) like grass or snow are replaced.
-* Mobs in the way prevent the deploy ("Can't deploy: ... in the way!"). Players don't: they are pushed up on top of the deployed content.
+* Mobs in the way prevent the deploy ("Can't deploy : Cow in the way !" for a cow). Players don't: they are pushed up on top of the deployed content.
 * Capsules deploy on the surface of water or lava, unless you are underwater yourself.
 * Blocks that were already there before the deploy (for example grass the deploy replaced) are not taken back by the undeploy.
 
@@ -256,7 +256,7 @@ FTB Chunks and Cadmus on Fabric are not supported yet (they don't implement Comm
 * [since 9.1] A Capture Base acts as the player who placed it, and a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.1, vanilla dispensers and anything else without a player can no longer capture or deploy inside claims: break and place the Capture Base again to give it an owner.
 * A capsule thrown by a player who then went offline or changed dimension is still checked for that player.
 * When Capsule cannot check a claim mod that is loaded (its API changed in a newer version), every capture and deploy is refused with a chat message, until Capsule is updated. Please report it!
-* SecurityCraft blocks can only be captured by their owner.
+* SecurityCraft blocks: on 1.21.1 nobody can capture them, SecurityCraft tags them `c:relocation_not_supported`. On 1.20.1, 1.18.2 and 1.16.5 only their owner can.
 
 Before 9.1, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.1 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them). On the next Forge builds of 1.20.1, 1.18.2 and 1.16.5 the largest survival capsule is 31x31x31 by default (an emerald capsule with every upgrade; 33 with a mod adding platinum).
 
@@ -292,7 +292,7 @@ The preview, the capture zone wireframe and the capture animation also show with
 - [1.12.2: Builder's daydream update](Changelog-1.12.2-Builders-daydream-update) (blueprints showcase)
 - [1.12.2: Bring your base! update](Changelog-1.12.2-Bring-your-base-update)
 - [Ideas and uses](Ideas-and-uses)
-- Full changelog: https://github.com/Lythom/capsule/blob/master/CHANGELOG.md
+- Full changelog: https://github.com/Lythom/capsule/blob/1.21.1/CHANGELOG.md
 
 # FAQ
 

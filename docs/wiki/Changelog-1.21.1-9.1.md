@@ -3,7 +3,7 @@
 _Capsule 9.1 brings the mod to Minecraft 1.21.1 on **NeoForge** and **Fabric**, with the same features, recipes and
 config file on both. Download it on [CurseForge](https://www.curseforge.com/minecraft/mc-mods/capsule/files) or
 [Modrinth](https://modrinth.com/mod/capsule/versions). Full list of changes in the
-[changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md). Recorded in game with Capsule 9.1._
+[changelog](https://github.com/Lythom/capsule/blob/1.21.1/CHANGELOG.md). Recorded in game with Capsule 9.1._
 
 ---
 
@@ -163,6 +163,7 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 - **Config files are never overwritten**: existing installs keep their copy. Delete them to get the new defaults:
   `config/capsule/blueprint_whitelist.json` (new whitelist), `config/capsule/starters` (fixed huts),
   `config/capsule/loot` (fixed loot templates). The Recall entries of `capsule-common.toml` are unused since 9.1.
+  New installs no longer list the 1.12 ids that match nothing on 1.21.1 in `excludedBlocks` and `opExcludedBlocks`.
 - Clients and servers must run the same Capsule build: the prefab blueprint recipes sent to clients changed.
 
 ## Backports to Forge 1.20.1, 1.18.2 and 1.16.5
@@ -185,8 +186,9 @@ capsule with 10 upgrades, 33 with a mod adding platinum). Plus:
   recipe ([#99](https://github.com/Lythom/capsule/issues/99), [#84](https://github.com/Lythom/capsule/issues/84)).
   Delete `config/capsule/loot` to get the updated templates.
 - 1.20.1: the rotation message says "Rotation: 90°" too.
-- 1.18.2 and 1.16.5: Capsule no longer crashes at startup when it can't read a block's material, as reported with
-  Snow! Real Magic ([#78](https://github.com/Lythom/capsule/issues/78), [#68](https://github.com/Lythom/capsule/issues/68)).
+- 1.18.2 and 1.16.5: Capsule should no longer crash at its startup check when it can't read a block's material, as
+  reported with Snow! Real Magic ([#78](https://github.com/Lythom/capsule/issues/78),
+  [#68](https://github.com/Lythom/capsule/issues/68)). Not tested with Snow! Real Magic: please report.
 
 The new features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge
 v3 schematics, blueprint whitelist) stay 1.21.1 only.

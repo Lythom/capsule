@@ -14,7 +14,7 @@
 
 ## Biggest Features
 
-* [Move your base!](https://github.com/Lythom/capsule/wiki/Changelog-1.12.2-Bring-your-base-update) An entire base packed in a capsule (up to 33x33x33 with a fully upgraded netherite capsule) can be moved entirely, including machines. You can be a real traveler now.
+* [Move your base!](https://github.com/Lythom/capsule/wiki/Changelog-1.12.2-Bring-your-base-update) An entire base packed in a capsule (by default up to 33x33x33 on 1.21.1 with a fully upgraded netherite capsule, 31x31x31 on Forge 1.20.1, 1.18.2 and 1.16.5 with a fully upgraded emerald capsule) can be moved entirely, including machines. You can be a real traveler now.
 * [Build faster with blueprints!](https://github.com/Lythom/capsule/wiki/Changelog-1.12.2-Builders-daydream-update) Blueprint capsules can take materials from chests or other inventories to duplicate a structure. They support rotation and mirroring.
 * [Modpack making options](https://github.com/Lythom/capsule/wiki/Modpack-making), so that players can be rewarded with ready-to-deploy structures or loot them in chests.
 * A ton of possibilities! Capsules can be used as an early backpack moving a chest, as a portable ladder, to deploy protecting walls to recover during a fight, to move machines or multiblocks, [and more…](https://github.com/Lythom/capsule/wiki/Ideas-and-uses) Unleash your creativity!

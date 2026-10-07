@@ -1,6 +1,6 @@
 # Previous versions
 
-Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/mc-mods/capsule/files) and [Modrinth](https://modrinth.com/mod/capsule/versions). The full list of changes is in the [changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md).
+Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/mc-mods/capsule/files) and [Modrinth](https://modrinth.com/mod/capsule/versions). The full list of changes is in the [changelog](https://github.com/Lythom/capsule/blob/1.21.1/CHANGELOG.md).
 
 | Minecraft | Capsule | Loaders | Status |
 |---|---|---|---|

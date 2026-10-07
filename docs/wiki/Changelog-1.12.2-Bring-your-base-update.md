@@ -1,7 +1,7 @@
 # Capsule Mod: 1.12.2 - Bring your base! Update
 
 _Published on imgur on 2017-11-28 for Capsule 1.12.2 (also 1.11.2 and 1.10.2). Full list of changes in the
-[changelog](https://github.com/Lythom/capsule/blob/master/CHANGELOG.md)._
+[changelog](https://github.com/Lythom/capsule/blob/1.21.1/CHANGELOG.md)._
 
 ---
 
