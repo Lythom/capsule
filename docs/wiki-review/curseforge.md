@@ -21,6 +21,10 @@
 
 ## New in 9.0 (Minecraft 1.21.1)
 
+**See it in action in the illustrated [9.0 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.0)!**
+
+![Captured blocks sucked into the capsule](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/01-capture-sucked-in.gif)
+
 * **Fabric** support, next to NeoForge.
 * Thrown capsules come back with vanilla **Loyalty** (it replaces the Recall enchantment).
 * Capsules are **fire and lava proof**.
@@ -30,14 +34,19 @@
 * **Claim mods respected**: Open Parties and Claims, Flan, Get Off My Lawn and other protection mods.
 * Recipes and information pages in **JEI, REI and EMI**.
 * Sponge v3 and `.schem` schematics as templates, and an updated blueprint whitelist.
+* Lots of bug fixes, also in the next Forge builds for 1.20.1, 1.18.2 and 1.16.5.
 
-Full list in the [9.0 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.0).
+![Before: opaque preview. Now: translucent](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/02-preview-before-after.jpg)
+
+![A capsule with Loyalty coming back after its deploy](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/changelog-9.0/04-loyalty-comes-back.gif)
+
+Full list, with pictures, in the [9.0 changelog](https://github.com/Lythom/capsule/wiki/Changelog-1.21.1-9.0).
 
 ## Getting started
 
 The first capsule you will have access to is made of wood. Its size is 1x1x1, which enables the "instant mode".
 
-> ![empty, stone button, empty - wood plank, chest, wood plank - empty, wood slab, empty](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/recipes/capsule-wood.png)
+> ![empty, stone button, empty - planks, chest, planks - empty, wooden slab, empty](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/recipes/capsule-wood.png)
 >
 > "Wooden capsule" recipe
 
@@ -49,6 +58,8 @@ If right clicking opens a GUI, try to capture from a distance or while sneaking.
 
 To get to the big things, you first need a Capture Base. This is where you can initialize a capsule with its first content: place it while looking down, below what you want to capture (or in a free space, and build on top of it), and the region on top of it will be captured.
 
+> ![cobblestone, compass, cobblestone - cobblestone, torch, cobblestone - cobblestone, dispenser, cobblestone](https://raw.githubusercontent.com/wiki/Lythom/capsule/images/recipes/capture-base.png)
+>
 > "Capture Base" recipe: a compass on top, a torch in the middle and a dispenser at the bottom, surrounded by 6 cobblestone.
 
 Then you need an empty capsule (the top item is a stone button):
