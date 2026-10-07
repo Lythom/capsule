@@ -80,7 +80,7 @@ Each folder will get an entry in the capsule config file on server restart, to b
 
 [since 3.2.95]
 
-Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [https://imgur.com/gallery/vN1sJrf](https://imgur.com/gallery/vN1sJrf) for more information on how to use as a player).
+Blueprints capsules allow player to build structures multiple times by taking materials from player inventory and any linked inventory. The blueprint make it easy to build the structure (ie. multiblock or wall pattern) but still requires the player to gather the materials. Rotation, mirror and undeploy are possible so it makes it very easy to experiment when placing a structure. See [blueprint player documentation](https://github.com/Lythom/capsule/wiki#blueprints) and [the builder's daydream update](Changelog-1.12.2-Builders-daydream-update) for more information on how to use as a player).
 
 Blueprints crafted by player have a dedicate template created when crafted that is located in the same folder than standard capsules: (1.12-)<worldsave>/structures/capsules or (1.16+)/<worldsave>/capsules. They can be identified by prefix, blueprints are prefixed "B-" and standard capsules "C-".
 

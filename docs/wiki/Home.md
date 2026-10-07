@@ -14,6 +14,7 @@ Bring your base! Capsules can capture a region containing any blocks or machines
   * [Blueprints](#blueprints)
   * [Overpowered Capsules](#overpowered-capsules)
   * [Overridable blocks](#overridable-blocks)
+- [Changelogs](#changelogs)
 - [FAQ](#faq)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -123,7 +124,7 @@ When loaded :
 - Left click to rotate
 - Sneak + Left click to mirror
 
-See https://imgur.com/gallery/vN1sJrf for a showcase.
+See the [builder's daydream update](Changelog-1.12.2-Builders-daydream-update) for a showcase.
 
 ## Overpowered Capsules ##
 
@@ -170,6 +171,13 @@ Défault value :
     ]
 }
 ```
+
+# Changelogs
+
+- [1.12.2: Builder's daydream update](Changelog-1.12.2-Builders-daydream-update) (blueprints showcase)
+- [1.12.2: Bring your base! update](Changelog-1.12.2-Bring-your-base-update)
+- [Ideas and uses](Ideas-and-uses)
+- Full changelog: https://github.com/Lythom/capsule/blob/master/CHANGELOG.md
 
 # FAQ
 
