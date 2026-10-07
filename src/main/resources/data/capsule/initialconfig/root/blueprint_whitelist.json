@@ -120,7 +120,7 @@
       "posZ": null,
       "powered": null,
       "rotation": null,
-      "seed": "LONG",
+      "seed": null,
       "showair": null,
       "showboundingbox": null,
       "sizeX": null,
