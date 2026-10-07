@@ -1,5 +1,6 @@
 package capsule.gametest;
 
+import capsule.Config;
 import capsule.items.CapsuleItem;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -12,6 +13,8 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
@@ -42,6 +45,30 @@ public class CommandTests {
             assertTrue(helper, error == null, "/" + command + " is refused: " + (error == null ? "" : error.getMessage()));
             ItemStack given = give.getContext().build(command).getArgument("item", ItemInput.class).createItemStack(1, false);
             assertTrue(helper, ItemStack.isSameItemSameComponents(given, capsule), command + " gives " + given.getComponentsPatch() + " instead of " + capsule.getComponentsPatch());
+        } finally {
+            CapsuleTestUtils.removePlayer(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * /capsule fromHeldCapsule without a name names the reward after the label of the held capsule.
+     */
+    @GameTest(template = "empty")
+    public static void heldCapsulesMakeRewardsNamedAfterTheirLabel(GameTestHelper helper) throws CommandSyntaxException {
+        helper.setBlock(1, 1, 1, Blocks.STONE);
+        ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
+        CapsuleItem.setLabel(capsule, "Labelled Reward");
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 4));
+        try {
+            player.setItemInHand(InteractionHand.MAIN_HAND, capsule);
+            run(helper, player, "capsule fromHeldCapsule");
+            List<String> rewards = helper.getEntities(EntityType.ITEM).stream()
+                    .map(ItemEntity::getItem)
+                    .filter(stack -> stack.getItem() instanceof CapsuleItem)
+                    .map(CapsuleItem::getStructureName)
+                    .toList();
+            assertTrue(helper, rewards.equals(List.of(Config.getRewardPathFromName("labelled_reward"))), "expected a reward named after the label, got " + rewards);
         } finally {
             CapsuleTestUtils.removePlayer(player);
         }

@@ -206,6 +206,7 @@ public class CapsuleCommand {
                 // fromHeldCapsule [outputTemplateName]
                 .then(Commands.literal("fromHeldCapsule")
                         .requires((player) -> player.hasPermission(2))
+                        .executes(ctx -> executeFromHeldCapsule(ctx.getSource().getPlayerOrException(), null))
                         .then(Commands.argument("outputTemplateName", string())
                                 .executes(ctx -> executeFromHeldCapsule(ctx.getSource().getPlayerOrException(), getString(ctx, "outputTemplateName")))
                         )
