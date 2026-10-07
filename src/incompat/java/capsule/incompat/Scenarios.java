@@ -14,23 +14,18 @@ import com.refinedmods.refinedstorage.apiimpl.API;
 import com.refinedmods.refinedstorage.blockentity.DiskDriveBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static capsule.incompat.Scenario.block;
 import static capsule.incompat.Scenario.item;
@@ -79,49 +74,48 @@ class Scenarios {
         s.neverCaptured(new BlockPos(1, 1, 1), 3, DRIVE, DRIVE.east());
     }
 
-    static void refinedStorageNotExcluded(Scenario s) {
+    /**
+     * Without refinedstorage: in the config, forge:relocation_not_supported still leaves them in place: a moved disk
+     * drive would lose its disk, the level keeps the network nodes by position.
+     */
+    static void refinedStorageNotInTheConfig(Scenario s) {
         diskDrive(s);
-        List<Block> excluded = Config.excludedBlocks;
-        Config.excludedBlocks = excluded.stream().filter(block -> !ForgeRegistries.BLOCKS.getKey(block).getNamespace().equals("refinedstorage")).toList();
-        ItemStack capsule;
+        List<Block> excluded = Config.excludedBlocks, opExcluded = Config.opExcludedBlocks;
+        Config.excludedBlocks = withoutNamespace(excluded, "refinedstorage");
+        Config.opExcludedBlocks = withoutNamespace(opExcluded, "refinedstorage");
         try {
-            capsule = s.capture(new BlockPos(1, 1, 1), 3, false);
+            s.neverCaptured(new BlockPos(1, 1, 1), 3, DRIVE, DRIVE.east());
         } finally {
             Config.excludedBlocks = excluded;
+            Config.opExcludedBlocks = opExcluded;
         }
-        s.check("a capsule takes the disk drive and the controller", capsule != null && s.get(DRIVE).isAir() && s.get(DRIVE.east()).isAir(), s.get(DRIVE));
-        s.check("the capture drops nothing", dropped(s).isEmpty(), dropped(s));
-        s.check("the capsule deploys", s.deploy(capsule, new BlockPos(1, 1, 1).offset(MOVE), 3), "");
-        BlockPos moved = DRIVE.offset(MOVE);
-        ItemStack disk = s.blockEntity(moved) instanceof DiskDriveBlockEntity drive ? drive.getNode().getDisks().getStackInSlot(0) : ItemStack.EMPTY;
-        s.check("the deployed disk drive has lost its disk, the level kept it by position", disk.isEmpty(),
-                disk + (disk.isEmpty() ? "" : " holding " + storage(s, disk).getStacks()));
+    }
+
+    private static List<Block> withoutNamespace(List<Block> blocks, String namespace) {
+        return blocks.stream().filter(block -> !namespace(block.defaultBlockState()).equals(namespace)).toList();
+    }
+
+    private static String namespace(BlockState state) {
+        return ForgeRegistries.BLOCKS.getKey(state.getBlock()).getNamespace();
     }
 
     /**
-     * Mekanism: a moved Digital Miner could not be broken and stopped working. Capsule 1.20 does not exclude
-     * forge:relocation_not_supported, where Mekanism puts the miner and its bounding blocks.
+     * Mekanism: a moved Digital Miner could not be broken and stopped working, its bounding blocks pointing to its old
+     * position. Mekanism tags the miner and its bounding blocks forge:relocation_not_supported, in capsule:excluded.
      */
     static void mekanismDigitalMiner(Scenario s) {
         s.floor(7);
         s.placeOn(new BlockPos(3, 0, 3), new ItemStack(item("mekanism:digital_miner")));
-        Map<BlockPos, BlockState> miner = BlockPos.betweenClosedStream(new BlockPos(0, 1, 0), new BlockPos(6, 7, 6))
-                .filter(pos -> ForgeRegistries.BLOCKS.getKey(s.get(pos).getBlock()).getNamespace().equals("mekanism"))
-                .collect(Collectors.toMap(BlockPos::immutable, s::get));
-        BlockPos main = miner.keySet().stream().filter(pos -> s.get(pos).is(block("mekanism:digital_miner"))).findFirst().orElseThrow();
-        s.check("the Digital Miner is placed with its bounding blocks", miner.size() > 1, miner.size() + " blocks");
-        ItemStack capsule = s.capture(new BlockPos(0, 1, 0), 7, false);
-        s.check("a capsule takes the miner", capsule != null && miner.keySet().stream().allMatch(pos -> s.get(pos).isAir()), "");
-        s.check("the capsule deploys", s.deploy(capsule, MOVE.above(), 7), "");
-        String deployed = miner.entrySet().stream().filter(e -> s.get(e.getKey().offset(MOVE)) != e.getValue()).map(e -> e.getKey() + "=" + s.get(e.getKey().offset(MOVE))).collect(Collectors.joining(", "));
-        s.check("the miner and its bounding blocks are deployed", deployed.isEmpty(), "missing: [" + deployed + "]");
-        List<BlockPos> mains = miner.keySet().stream().filter(pos -> !pos.equals(main))
-                .map(pos -> NbtUtils.readBlockPos(s.blockEntity(pos.offset(MOVE)).saveWithoutMetadata().getCompound("main"))).distinct().toList();
-        s.check("the deployed bounding blocks point to the original position of the miner", mains.equals(List.of(s.abs(main))),
-                mains + ", miner moved from " + s.abs(main) + " to " + s.abs(main.offset(MOVE)));
-        BlockPos bounding = miner.keySet().stream().filter(pos -> !pos.equals(main)).findFirst().orElseThrow().offset(MOVE);
-        s.level.destroyBlock(s.abs(bounding), false);
-        s.later(2, () -> s.check("breaking a deployed bounding block leaves the miner", s.get(main.offset(MOVE)).is(block("mekanism:digital_miner")), s.get(main.offset(MOVE))));
+        BlockPos[] miner = blocksOf(s, "mekanism", new BlockPos(6, 7, 6));
+        s.check("the Digital Miner is placed with its bounding blocks", miner.length > 1, miner.length + " blocks");
+        s.neverCaptured(new BlockPos(0, 1, 0), 7, miner);
+    }
+
+    /**
+     * The positions of the blocks of a mod in the box from 0, 1, 0 to max.
+     */
+    private static BlockPos[] blocksOf(Scenario s, String namespace, BlockPos max) {
+        return BlockPos.betweenClosedStream(new BlockPos(0, 1, 0), max).filter(pos -> namespace(s.get(pos)).equals(namespace)).map(BlockPos::immutable).toArray(BlockPos[]::new);
     }
 
     static void mekanismBin(Scenario s) {
@@ -129,8 +123,9 @@ class Scenarios {
     }
 
     /**
-     * Immersive Engineering: wires disappeared when their connectors were deployed elsewhere, the level keeps them.
-     * Immersive Engineering 1.20 tags the block entities of its connectors forge:relocation_not_supported, not the blocks.
+     * Immersive Engineering: wires disappeared when their connectors were deployed elsewhere, the level keeps them by
+     * position. Immersive Engineering 1.20 tags the block entities of its connectors forge:relocation_not_supported, not
+     * the blocks: Capsule excludes the connectors by id.
      */
     static void immersiveEngineeringWires(Scenario s) {
         BlockPos first = new BlockPos(1, 1, 1), second = new BlockPos(3, 1, 1);
@@ -142,14 +137,8 @@ class Scenarios {
         GlobalWireNetwork net = GlobalWireNetwork.getNetwork(s.level);
         net.addConnection(new Connection(WireType.COPPER, new ConnectionPoint(s.abs(first), 0), new ConnectionPoint(s.abs(second), 0), net));
         s.check("the connectors are wired", wired(s, net, first, second), "");
-        ItemStack capsule = s.capture(new BlockPos(0, 1, 0), 5, false);
-        s.check("a capsule takes the connectors", capsule != null && s.get(first).isAir() && s.get(second).isAir(), s.get(first));
-        s.check("the capsule deploys", s.deploy(capsule, MOVE.above(), 5), "");
-        s.later(5, () -> {
-            s.check("the connectors are deployed", s.get(first.offset(MOVE)).is(connector) && s.get(second.offset(MOVE)).is(connector), s.get(first.offset(MOVE)));
-            s.check("the deployed connectors are not wired", !wired(s, net, first.offset(MOVE), second.offset(MOVE)), "");
-            s.check("the wire is lost without dropping its coil", dropped(s).isEmpty(), dropped(s));
-        });
+        s.neverCaptured(new BlockPos(0, 1, 0), 5, first, second);
+        s.check("the connectors are still wired", wired(s, net, first, second), "");
     }
 
     private static boolean wired(Scenario s, GlobalWireNetwork net, BlockPos first, BlockPos second) {
@@ -158,7 +147,8 @@ class Scenarios {
     }
 
     /**
-     * GregTech: machines lost their data when moved (1.12). Capsule excludes gregtech:machine, not GregTech CEu Modern.
+     * GregTech: machines lost their data when moved (1.12). Their namespace is gtceu: Capsule no longer lists the
+     * 1.12 gregtech:machine.
      */
     static void gregTechMachine(Scenario s) {
         movesWithContent(s, block("gtceu:lv_electric_furnace"), new ItemStack(Items.RAW_IRON, 8));
@@ -168,8 +158,8 @@ class Scenarios {
     private static final BlockPos A = new BlockPos(1, 1, 1), MANAGER = new BlockPos(3, 1, 1), B = new BlockPos(5, 1, 1), SFM_MOVE = new BlockPos(0, 0, 8);
 
     /**
-     * Super Factory Manager: the manager crashed the game when moved (1.12). Capsule excludes superfactorymanager:,
-     * not sfm:. The disk labels the inventories by position.
+     * Super Factory Manager: the manager crashed the game when moved (1.12). Its namespace is sfm: Capsule no longer
+     * lists the 1.12 superfactorymanager:. The disk labels the inventories by position.
      */
     static void superFactoryManager(Scenario s) {
         s.set(A, Blocks.CHEST);
@@ -206,29 +196,27 @@ class Scenarios {
     }
 
     /**
-     * Blood Magic: the alchemy table disappeared when deployed elsewhere. Capsule excludes bloodmagic:alchemy_table, the
-     * table is bloodmagic:alchemytable. Its two halves hold each other's position.
+     * Blood Magic: the alchemy table disappeared when deployed elsewhere, its two halves hold each other's position.
+     * Capsule excludes bloodmagic:alchemytable (bloodmagic:alchemy_table before, which matched nothing).
      */
     static void bloodMagicAlchemyTable(Scenario s) {
         s.floor(5);
         s.placeOn(new BlockPos(2, 0, 2), new ItemStack(item("bloodmagic:alchemytable")));
-        Block table = block("bloodmagic:alchemytable");
-        List<BlockPos> halves = BlockPos.betweenClosedStream(new BlockPos(0, 1, 0), new BlockPos(4, 2, 4)).filter(pos -> s.get(pos).is(table)).map(BlockPos::immutable).toList();
-        s.check("the alchemy table is placed with its two halves", halves.size() == 2, halves);
-        ItemStack capsule = s.capture(new BlockPos(0, 1, 0), 5, false);
-        s.check("a capsule takes the alchemy table", capsule != null && halves.stream().allMatch(pos -> s.get(pos).isAir()), "");
-        s.check("the capture drops nothing", dropped(s).isEmpty(), dropped(s));
-        s.check("the capsule deploys", s.deploy(capsule, MOVE.above(), 5), "");
-        s.later(2, () -> {
-            List<BlockPos> moved = halves.stream().map(pos -> pos.offset(MOVE)).toList();
-            s.check("both halves are deployed", moved.stream().allMatch(pos -> s.get(pos).is(table)), moved.stream().map(s::get).toList());
-            // a block entity next to the table changing makes each half check the other one
-            BlockPos chest = moved.get(0).north();
-            s.set(chest, Blocks.CHEST);
-            s.blockEntity(chest).setChanged();
-            s.later(2, () -> s.check("the deployed alchemy table disappears after a change next to it", moved.stream().noneMatch(pos -> s.get(pos).is(table)),
-                    moved.stream().map(s::get).toList()));
-        });
+        BlockPos[] halves = blocksOf(s, "bloodmagic", new BlockPos(4, 2, 4));
+        s.check("the alchemy table is placed with its two halves", halves.length == 2, List.of(halves));
+        s.neverCaptured(new BlockPos(0, 1, 0), 5, halves);
+    }
+
+    /**
+     * Waystones: moved waystones left ghost blocks and broke doors (#121). Waystones 1.20 has no relocation tag: Capsule
+     * excludes waystones: by default.
+     */
+    static void waystone(Scenario s) {
+        s.floor(3);
+        s.placeOn(new BlockPos(1, 0, 1), new ItemStack(item("waystones:waystone")));
+        BlockPos[] waystone = blocksOf(s, "waystones", new BlockPos(2, 2, 2));
+        s.check("the waystone is placed with its two halves", waystone.length == 2, List.of(waystone));
+        s.neverCaptured(new BlockPos(0, 1, 0), 3, waystone);
     }
 
     /**
@@ -243,9 +231,5 @@ class Scenarios {
         s.check("the capsule deploys", s.deploy(capsule, source.offset(MOVE), 1), "");
         int count = s.count(source.offset(MOVE), content.getItem());
         s.check("the deployed block holds its " + content, count == content.getCount(), count);
-    }
-
-    private static List<ItemStack> dropped(Scenario s) {
-        return s.level.getEntitiesOfClass(ItemEntity.class, new AABB(s.abs(BlockPos.ZERO), s.abs(new BlockPos(16, 16, 16)))).stream().map(ItemEntity::getItem).toList();
     }
 }

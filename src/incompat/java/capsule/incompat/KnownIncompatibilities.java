@@ -31,13 +31,14 @@ public class KnownIncompatibilities {
     private static final List<Play> PLAYS = List.of(
             new Play("tombstone", "Corail Tombstone graves", Scenarios::tombstoneGraves),
             new Play("refinedstorage", "Refined Storage, default config", Scenarios::refinedStorageExcluded),
-            new Play("refinedstorage", "Refined Storage, not excluded", Scenarios::refinedStorageNotExcluded),
+            new Play("refinedstorage", "Refined Storage, not in the config", Scenarios::refinedStorageNotInTheConfig),
             new Play("mekanism", "Mekanism Digital Miner", Scenarios::mekanismDigitalMiner),
             new Play("mekanism", "Mekanism bin", Scenarios::mekanismBin),
             new Play("immersiveengineering", "Immersive Engineering wires", Scenarios::immersiveEngineeringWires),
             new Play("gtceu", "GregTech CEu machine", Scenarios::gregTechMachine),
             new Play("sfm", "Super Factory Manager", Scenarios::superFactoryManager),
-            new Play("bloodmagic", "Blood Magic alchemy table", Scenarios::bloodMagicAlchemyTable)
+            new Play("bloodmagic", "Blood Magic alchemy table", Scenarios::bloodMagicAlchemyTable),
+            new Play("waystones", "Waystones", Scenarios::waystone)
     );
 
     private record Task(Scenario scenario, long tick, Runnable run) {
