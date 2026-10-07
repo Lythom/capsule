@@ -23,7 +23,6 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.Block;
@@ -362,10 +361,7 @@ public class StructureSaver {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
-                if (e instanceof AbstractMinecartContainer) {
-                    AbstractMinecartContainer eMinecart = (AbstractMinecartContainer) e;
-                    eMinecart.clearContent();
-                }
+                Clearable.tryClear(e);
                 e.remove(Entity.RemovalReason.DISCARDED);
             }
             return false;
