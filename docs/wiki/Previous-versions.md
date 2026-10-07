@@ -1,0 +1,1 @@
+[1.9.4 Guide](https://bitbucket.org/Lythom/mccapsule/wiki/Version%201.9.4%20-%20User%20guide)

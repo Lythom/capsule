@@ -1,0 +1,1 @@
+See https://github.com/Lythom/capsule/wiki#faq
