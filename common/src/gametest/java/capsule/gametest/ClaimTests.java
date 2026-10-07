@@ -1,6 +1,7 @@
 package capsule.gametest;
 
 import capsule.CapsuleMod;
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.blocks.BlockEntityCapture;
@@ -148,17 +149,25 @@ public class ClaimTests {
             Claims.unregister(regions);
         }
 
-        // without adapter claims, the probe asks every position up to the largest survival capsule, each chunk column above
+        // without adapter claims, the probe asks every position up to the largest survival capsule, each chunk column above:
+        // netherite (13) with every upgrade (2 each)
+        int upgradeLimit = Config.upgradeLimit;
         try {
-            for (int probedSize : new int[]{Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE + 1}) {
-                BoundingBox probed = BoundingBox.fromCorners(min.above(), min.above().offset(probedSize - 1, probedSize - 1, probedSize - 1));
-                try (TestProbe probe = new TestProbe(probed, Set.of())) {
-                    countDenied(Claims.denied(helper.getLevel(), probed, player), probed);
-                    int expected = probedSize <= Claims.PER_BLOCK_MAX_SIZE ? probedSize * probedSize * probedSize : columns(probed);
-                    assertTrue(helper, probe.queries.get() == expected, "size " + probedSize + ": " + expected + " probes expected, got " + probe.queries.get());
+            for (int limit : new int[]{10, 4}) {
+                Config.upgradeLimit = limit;
+                int largest = 13 + 2 * limit;
+                assertTrue(helper, Claims.perBlockMaxSize(helper.getLevel().getServer()) == largest, limit + " upgrades: the largest survival capsule is " + largest + ", not " + Claims.perBlockMaxSize(helper.getLevel().getServer()));
+                for (int probedSize : new int[]{largest, largest + 1}) {
+                    BoundingBox probed = BoundingBox.fromCorners(min.above(), min.above().offset(probedSize - 1, probedSize - 1, probedSize - 1));
+                    try (TestProbe probe = new TestProbe(probed, Set.of())) {
+                        countDenied(Claims.denied(helper.getLevel(), probed, player), probed);
+                        int expected = probedSize <= largest ? probedSize * probedSize * probedSize : columns(probed);
+                        assertTrue(helper, probe.queries.get() == expected, limit + " upgrades, size " + probedSize + ": " + expected + " probes expected, got " + probe.queries.get());
+                    }
                 }
             }
         } finally {
+            Config.upgradeLimit = upgradeLimit;
             CapsuleTestUtils.removePlayer(player);
         }
         helper.succeed();
@@ -180,9 +189,10 @@ public class ClaimTests {
             helper.assertBlockPresent(Blocks.STONE, protectedRelative);
             helper.assertBlockNotPresent(Blocks.STONE, 3, 1, 1);
 
-            // expected: above 31 (OP capsules) the probe stays per chunk column and misses a single block
-            BoundingBox overpowered = BoundingBox.fromCorners(protectedBlock, protectedBlock.offset(Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE));
-            assertTrue(helper, !Claims.denied(helper.getLevel(), overpowered, stranger).test(protectedBlock), "above " + Claims.PER_BLOCK_MAX_SIZE + " a single protected block is not seen");
+            // expected: above the largest survival capsule (OP capsules) the probe stays per chunk column and misses a single block
+            int largest = Claims.perBlockMaxSize(helper.getLevel().getServer());
+            BoundingBox overpowered = BoundingBox.fromCorners(protectedBlock, protectedBlock.offset(largest, largest, largest));
+            assertTrue(helper, !Claims.denied(helper.getLevel(), overpowered, stranger).test(protectedBlock), "above " + largest + " a single protected block is not seen");
         } finally {
             CapsuleTestUtils.removePlayer(stranger);
         }

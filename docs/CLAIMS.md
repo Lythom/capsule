@@ -40,7 +40,7 @@ computed before the capture or deploy touches any block:
 1. **Adapters** (`ClaimAdapter`), loaded if their mod id is loaded, compiled against the public API of their mod:
    - `OpenPartiesAndClaimsAdapter` (both loaders): per chunk of the box, the chunk claim and `hasChunkAccess` by player id.
    - `FlanAdapter` (both loaders): Flan's API answers per position only, so it is asked like the generic probe below:
-     each position of the box up to size 31, the center of each chunk column of the box above, whose answer applies
+     each position of the box up to the largest survival capsule (33 by default, below), the center of each chunk column of the box above, whose answer applies
      to the column. A position whose permission container is not the world's is in a claim, where the player's `BREAK`
      permission decides (sub-claims included). The world's is the container of two positions 1024 blocks below the
      world at opposite corners of it, which no claim spans: claims reach 10 blocks below the world when Flan's
@@ -55,12 +55,13 @@ computed before the capture or deploy touches any block:
    (sub-claims come after their claim); across mods any refusal wins. `Claims.register` lets another mod add an adapter.
 2. **Generic probe** for mods without adapter, through the loader hook kept from before (`Platform.canPlaceBlock`: a
    dirt `EntityPlaceEvent` on NeoForge, `CommonProtection.canPlaceBlock` on Fabric), outside adapter claims:
-   - up to size 31 (`Claims.PER_BLOCK_MAX_SIZE`, the largest survival capsule; the size is the box's largest side): each
+   - up to the largest survival capsule (`Claims.perBlockMaxSize`: the largest crafted tier plus
+     `capsuleUpgradesLimit` × 2, 33 by default; the size is the box's largest side): each
      tested position, when it is tested;
    - above (OP capsules): one query per chunk column of the box, at the column's center or a corner that no adapter
      claim covers. Columns fully covered by adapter claims are not probed. The answer applies to the column's positions
      outside adapter claims.
-3. The test of a position is a chunk lookup in the adapter claims, then one probe query up to size 31, a lookup in the
+3. The test of a position is a chunk lookup in the adapter claims, then one probe query up to the largest survival capsule, a lookup in the
    column results above.
 
 The capture removes only the allowed positions, as before (protected blocks stay in the world and leave the template);
@@ -75,22 +76,22 @@ Per capture or deploy, for a box of `c` chunk columns crossing `r` claims:
 |---|---|
 | before | one `EntityPlaceEvent` (or Common Protection API call) per block: up to 16.6 M for a 255³ capture |
 | Open Parties and Claims | 2 map lookups per chunk: `2c` |
-| Flan | one map lookup per position up to size 31 (at most 29 791), plus a permission check inside claims; above, the same per chunk column: at most `c` |
+| Flan | one map lookup per position up to size 33 (at most 35 937), plus a permission check inside claims; above, the same per chunk column: at most `c` |
 | Get Off My Lawn | 1 R-tree query + `r` permission checks |
-| generic probe, size up to 31 | one event (or Common Protection API call) per tested position outside adapter claims: at most 29 791 |
-| generic probe, size above 31 | at most `c` events (or Common Protection API calls); none in chunks covered by adapter claims |
-| per block | one hash lookup and a few box tests, plus the probe event up to size 31 |
+| generic probe, size up to 33 | one event (or Common Protection API call) per tested position outside adapter claims: at most 35 937 |
+| generic probe, size above 33 | at most `c` events (or Common Protection API calls); none in chunks covered by adapter claims |
+| per block | one hash lookup and a few box tests, plus the probe event up to size 33 |
 
 The largest capsule (255) spans at most 17 × 17 = 289 chunk columns. `ClaimTests.claimQueriesScaleWithChunksAndRegionsNotBlocks`
 checks it with counting adapters and a counting probe: exactly one query per chunk for a chunk mod, one for a region mod
 and one probe for the only chunk column they leave unclaimed on a 255³ box, and testing all its 16.6 M positions
-queries nothing more; without adapter claims, testing every position of a 31³ box probes each of them (29 791), of a
-32³ box each chunk column once.
+queries nothing more; without adapter claims, testing every position of a 33³ box probes each of them (35 937), of a
+34³ box each chunk column once, and 21 and 22 with 4 upgrades.
 
 ### The per-block dirt `EntityPlaceEvent` probe on NeoForge
 
-Kept per block, outside adapter claims, for captures and deploys up to size 31: it stays exact for every mod listening
-to the event, single protected blocks included. **Limited** above 31 (OP capsules) to one event per chunk column,
+Kept per block, outside adapter claims, for captures and deploys up to the largest survival capsule (33 by default): it stays exact for every mod listening
+to the event, single protected blocks included. **Limited** above (OP capsules) to one event per chunk column,
 outside adapter claims (and none in columns covered by them): at most 289 events for the largest capsule instead of
 16.6 M. That stays exact for chunk claim mods without adapter (FTB Chunks, and Cadmus if it cancels the event); for box
 based mods without adapter (YAWP regions) and single protected blocks it is approximate: a region or block not
@@ -140,12 +141,18 @@ a denying claim, 0.1 to 3.3 s on Fabric.
 
 **Decision (owner, round 2b L3): per block up to size 31, per chunk column above.** The worst case above (a claim mod
 without adapter, a full 31³ capture inside its claim) is accepted; above 31 the probe stays per chunk column, to avoid
-multi-second freezes with OP capsules. `Claims.PER_BLOCK_MAX_SIZE` (31) chooses the predicate of `Claims.denied`.
+multi-second freezes with OP capsules.
 Adapters: Open Parties and Claims per chunk, Get Off My Lawn exact boxes; Flan, whose public API answers per
 position, by the same rule as the probe (per block up to 31, per chunk column above).
 
 **Decision (owner): Flan and the generic probe check per chunk column above size 31: accepted, capsules that big are
 admin-only (OP).**
+
+**Decision (owner, before the 9.0 release): the limit is the largest capsule obtainable in survival**, computed from
+the loaded recipes and config by `Claims.perBlockMaxSize`: the largest crafted tier (the shaped recipes of a
+non-overpowered capsule, without empty tag ingredient: netherite 13 by default) plus `capsuleUpgradesLimit` × 2 (10
+upgrades by default): 33. A pack adding a larger tier or more upgrades moves it. It chooses the predicate of
+`Claims.denied` (and of the Flan adapter). A full 33³ box is 35 937 probes, 1.2 times the 31³ measured above.
 
 ### Adapter cost (measured)
 
@@ -246,11 +253,13 @@ column above.
   blocks of the same chunk for Flan) the stranger's capture, a capture without player and a vanilla dispenser are
   allowed. `FlanTests.flanVetoesStrangersInClaimsReachingBelowTheWorld` runs the same with Flan's `defaultClaimDepth`
   -1. `FlanTests.flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule`: a small Flan claim around the center of
-  a chunk column denies only itself in a 31 wide box, and the whole column in a 32 wide box.
+  a chunk column denies only itself in a box as wide as the largest survival capsule (33), and the whole column in a
+  box one wider.
 - `GetOffMyLawnTests` (Fabric test mod, registered when Get Off My Lawn is loaded, release jar only): the same scenario
   in the claim of an anchor placed by the owner, with a trusted player as member; and a stranger is denied the claim in
   a 32 tall box, whose chunk column is probed above the claim. Get Off My Lawn also answers Common Protection API, so the
-  generic probe alone passes the scenario up to size 31: without the adapter, only the 32 tall box fails.
+  generic probe alone passes the scenario up to the largest survival capsule: without the adapter, only the box one
+  taller fails.
 - The same GameTests run on the release jars with the real mods (`EXTRA_MODS` of `scripts/prod-gametest.sh`), so the
   API calls are checked in the remapped Fabric jar too. Get Off My Lawn runs there only: it nests 10 libraries (Cardinal
   Components, Polymer, sgui, placeholder-api, rtree, Common Protection API, …) that Fabric Loader loads from its jar on

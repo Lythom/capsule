@@ -45,8 +45,9 @@ public class GetOffMyLawnTests {
         // above the largest survival capsule, mods without adapter are probed at the center of each chunk column, here
         // above the claim
         BlockPos claimed = helper.absolutePos(new BlockPos(2, 1, 2));
-        assertTrue(helper, Claims.denied(helper.getLevel(), BoundingBox.fromCorners(claimed, claimed.above(Claims.PER_BLOCK_MAX_SIZE)), stranger).test(claimed),
-                "above " + Claims.PER_BLOCK_MAX_SIZE + " the claim should still be denied to strangers");
+        int largest = Claims.perBlockMaxSize(helper.getLevel().getServer());
+        assertTrue(helper, Claims.denied(helper.getLevel(), BoundingBox.fromCorners(claimed, claimed.above(largest)), stranger).test(claimed),
+                "above " + largest + " the claim should still be denied to strangers");
 
         new ClaimModScenario(owner, member, stranger, new BlockPos(2, 1, 2), new BlockPos(4, 1, 2), new BlockPos(6, 1, 2), new BlockPos(13, 1, 13),
                 new BlockPos(2, 1, 6), new BlockPos(6, 1, 6), new BlockPos(2, 1, 8), new BlockPos(6, 1, 8), new BlockPos(13, 1, 16))

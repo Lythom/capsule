@@ -65,12 +65,12 @@ public interface ClaimAdapter {
 
     /**
      * The claims of a mod answering per position, asked like the generic probe: each position of box up to
-     * {@link Claims#PER_BLOCK_MAX_SIZE} (one claim per run of the same answer along y), above once per chunk column of
+     * {@link Claims#perBlockMaxSize} (one claim per run of the same answer along y), above once per chunk column of
      * box, at its center.
      */
-    static List<Claim> perPosition(BoundingBox box, PositionQuery query) {
+    static List<Claim> perPosition(ServerLevel level, BoundingBox box, PositionQuery query) {
         List<Claim> claims = new ArrayList<>();
-        if (Claims.perBlock(box)) {
+        if (Claims.perBlock(level, box)) {
             for (int x = box.minX(); x <= box.maxX(); x++) {
                 for (int z = box.minZ(); z <= box.maxZ(); z++) {
                     Boolean run = null;

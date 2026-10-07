@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 
 public class CapsuleItems {
 
-    private static final int UPGRADE_STEP = 2;
+    public static final int UPGRADE_STEP = 2;
 
     public static final Supplier<CapsuleItem> CAPSULE = Services.PLATFORM.register(BuiltInRegistries.ITEM, "capsule", CapsuleItem::new);
 
@@ -110,7 +110,7 @@ public class CapsuleItems {
         }
     }
 
-    private static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
+    public static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
         return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 

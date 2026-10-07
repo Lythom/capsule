@@ -66,16 +66,17 @@ public class FlanTests {
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         // boxes from a chunk corner: the center of their first chunk column is 8 blocks away
         BlockPos min = new ChunkPos(helper.absolutePos(new BlockPos(8, 1, 8))).getWorldPosition().atY(helper.absolutePos(BlockPos.ZERO).getY() + 1);
-        BlockPos center = min.offset(8, Claims.PER_BLOCK_MAX_SIZE / 2 + 1, 8);
+        int largest = Claims.perBlockMaxSize(helper.getLevel().getServer());
+        BlockPos center = min.offset(8, largest / 2 + 1, 8);
         BlockPos outside = center.west(8).north(8);
         ClaimStorage storage = ClaimStorage.get(helper.getLevel());
         Claim claim = storage.createAdminClaim(center.offset(-1, 0, -1), center.offset(1, 0, 1), helper.getLevel(), false);
         try {
-            BoundingBox survival = BoundingBox.fromCorners(min, min.offset(Claims.PER_BLOCK_MAX_SIZE - 1, Claims.PER_BLOCK_MAX_SIZE - 1, Claims.PER_BLOCK_MAX_SIZE - 1));
-            assertTrue(helper, Claims.denied(helper.getLevel(), survival, stranger).test(center), "up to " + Claims.PER_BLOCK_MAX_SIZE + " the claim is denied");
-            assertTrue(helper, !Claims.denied(helper.getLevel(), survival, stranger).test(outside), "up to " + Claims.PER_BLOCK_MAX_SIZE + " the rest of its chunk column is allowed");
-            BoundingBox overpowered = BoundingBox.fromCorners(min, min.offset(Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE, Claims.PER_BLOCK_MAX_SIZE));
-            assertTrue(helper, Claims.denied(helper.getLevel(), overpowered, stranger).test(outside), "above " + Claims.PER_BLOCK_MAX_SIZE + " the chunk column whose center is claimed is denied");
+            BoundingBox survival = BoundingBox.fromCorners(min, min.offset(largest - 1, largest - 1, largest - 1));
+            assertTrue(helper, Claims.denied(helper.getLevel(), survival, stranger).test(center), "up to " + largest + " the claim is denied");
+            assertTrue(helper, !Claims.denied(helper.getLevel(), survival, stranger).test(outside), "up to " + largest + " the rest of its chunk column is allowed");
+            BoundingBox overpowered = BoundingBox.fromCorners(min, min.offset(largest, largest, largest));
+            assertTrue(helper, Claims.denied(helper.getLevel(), overpowered, stranger).test(outside), "above " + largest + " the chunk column whose center is claimed is denied");
         } finally {
             storage.deleteClaim(claim, true, ClaimMode.DEFAULT, helper.getLevel());
             CapsuleTestUtils.removePlayer(stranger);
