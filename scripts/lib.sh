@@ -35,10 +35,20 @@ modrinth_jar() {
 
 # modrinth_file <sha1> <dir>: the Modrinth file with this sha1
 modrinth_file() {
-    local url
-    url="$(curl -fsSL -A "$USER_AGENT" "https://api.modrinth.com/v2/version_file/$1?algorithm=sha1" \
-        | python3 -c 'import json,sys; print(next(f["url"] for f in json.load(sys.stdin)["files"] if f["hashes"]["sha1"] == sys.argv[1]))' "$1")"
-    download "$url" "$2/$(basename "$url" | python3 -c 'import sys,urllib.parse; print(urllib.parse.unquote(sys.stdin.read().strip()))')"
+    modrinth_url "$(curl -fsSL -A "$USER_AGENT" "https://api.modrinth.com/v2/version_file/$1?algorithm=sha1" \
+        | python3 -c 'import json,sys; print(next(f["url"] for f in json.load(sys.stdin)["files"] if f["hashes"]["sha1"] == sys.argv[1]))' "$1")" "$2"
+}
+
+# modrinth_latest <project> <loader> <dir>: the primary file of the newest version of the project for this loader and
+# Minecraft version
+modrinth_latest() {
+    modrinth_url "$(curl -fsSL -A "$USER_AGENT" "https://api.modrinth.com/v2/project/$1/version?loaders=%5B%22$2%22%5D&game_versions=%5B%22$MC_VERSION%22%5D" \
+        | python3 -c 'import json,sys; print(next(f["url"] for f in json.load(sys.stdin)[0]["files"] if f["primary"]))')" "$3"
+}
+
+# modrinth_url <url> <dir>: a Modrinth file, named without spaces or brackets (EXTRA_MODS is split on spaces)
+modrinth_url() {
+    download "$1" "$2/$(basename "$1" | python3 -c 'import re,sys,urllib.parse; print(re.sub(r"[ ()\[\]]", "_", urllib.parse.unquote(sys.stdin.read().strip())))')"
 }
 
 loader_of() {

@@ -97,14 +97,26 @@ dependencies {
 
     // mods from issues (#70, #115, #121), opt-in because they slow every dev run down: -PmodCompat
     if (project.hasProperty('modCompat')) {
-        gametestRuntimeOnly "maven.modrinth:worldedit:${worldedit_version}"
-        gametestRuntimeOnly "maven.modrinth:waystones:${waystones_version}"
-        gametestRuntimeOnly "maven.modrinth:balm:${balm_version}"
-        gametestRuntimeOnly "maven.modrinth:sophisticated-storage:${sophisticated_storage_version}"
-        gametestRuntimeOnly "maven.modrinth:sophisticated-core:${sophisticated_core_version}"
+        gametestRuntimeOnly modrinth('worldedit', worldedit_version)
+        gametestRuntimeOnly modrinth('waystones', waystones_version)
+        gametestRuntimeOnly modrinth('balm', balm_version)
+        gametestRuntimeOnly modrinth('sophisticated-storage', sophisticated_storage_version)
+        gametestRuntimeOnly modrinth('sophisticated-core', sophisticated_core_version)
         // claim mods (#91)
-        gametestRuntimeOnly "maven.modrinth:open-parties-and-claims:${opac_neoforge_version}"
-        gametestRuntimeOnly "maven.modrinth:flan:${flan_neoforge_version}"
+        gametestRuntimeOnly modrinth('open-parties-and-claims', opac_neoforge_version)
+        gametestRuntimeOnly modrinth('flan', flan_neoforge_version)
+    }
+
+    // mods of the known incompatibilities (wiki), opt-in: -Pincompat
+    gametestCompileOnly("maven.modrinth:refined-storage:${refined_storage_version}") { transitive = false }
+    gametestCompileOnly("maven.modrinth:immersiveengineering:${immersive_engineering_version}") { transitive = false }
+    gametestCompileOnly("maven.modrinth:super-factory-manager:${sfm_version}") { transitive = false }
+    if (project.hasProperty('incompat')) {
+        gametestRuntimeOnly modrinth('refined-storage', refined_storage_version)
+        gametestRuntimeOnly modrinth('mekanism', mekanism_version)
+        gametestRuntimeOnly modrinth('immersiveengineering', immersive_engineering_version)
+        gametestRuntimeOnly modrinth('super-factory-manager', sfm_version)
+        gametestRuntimeOnly modrinth('corail-tombstone', tombstone_version)
     }
 }
 
@@ -113,6 +125,12 @@ tasks.named('runGameTestServer') {
     doFirst {
         delete "runs/gameTestServer/world", "runs/gameTestServer/config/capsule", "runs/gameTestServer/initialconfig",
                 "runs/gameTestServer/schematics", "runs/gameTestServer/worldedit-schematics"
+    }
+    // a server failing to start, a mod crashing at load, exits with status 0 too
+    doLast {
+        if (!file('runs/gameTestServer/logs/latest.log').text.contains('required tests passed')) {
+            throw new GradleException('the GameTest server ran no test, see neoforge/runs/gameTestServer/logs/latest.log')
+        }
     }
 }
 

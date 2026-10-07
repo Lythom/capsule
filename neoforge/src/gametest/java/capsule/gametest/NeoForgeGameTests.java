@@ -29,7 +29,11 @@ public class NeoForgeGameTests {
      */
     @GameTestGenerator
     public static Collection<TestFunction> generate() {
-        Stream<Class<?>> optional = Map.of("waystones", WaystonesTests.class, "sophisticatedstorage", SophisticatedStorageTests.class, "worldedit", WorldEditTests.class).entrySet().stream()
+        Stream<Class<?>> optional = Map.of(
+                        "waystones", WaystonesTests.class, "sophisticatedstorage", SophisticatedStorageTests.class, "worldedit", WorldEditTests.class,
+                        // the known incompatibilities (-Pincompat)
+                        "tombstone", TombstoneTests.class, "refinedstorage", RefinedStorageTests.class, "mekanism", MekanismTests.class,
+                        "immersiveengineering", ImmersiveEngineeringTests.class, "sfm", SuperFactoryManagerTests.class).entrySet().stream()
                 .filter(e -> ModList.get().isLoaded(e.getKey()))
                 .map(Map.Entry::getValue);
         return CapsuleGameTests.testFunctions(Stream.of(CapsuleGameTests.TEST_CLASSES.stream(), Stream.of(SecurityCraftTests.class), optional, CapsuleGameTests.loadedModTestClasses()).flatMap(s -> s));

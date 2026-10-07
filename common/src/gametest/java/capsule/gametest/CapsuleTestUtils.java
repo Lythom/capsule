@@ -11,23 +11,31 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.ReferenceCountUtil;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Loader independent helpers shared by the capsule GameTests.
@@ -55,6 +63,35 @@ public class CapsuleTestUtils {
     public static boolean deploy(GameTestHelper helper, ItemStack capsule, BlockPos relativeAnchor, ServerPlayer player) {
         int extendLength = (CapsuleItem.getSize(capsule) - 1) / 2;
         return Capsule.deployCapsule(capsule, helper.absolutePos(relativeAnchor), player, extendLength, helper.getLevel());
+    }
+
+    /**
+     * Captures the cube of the given size at relativeCorner with a standard, then an overpowered capsule: the blocks at
+     * kept stay in place with their block entities, while a stone in the opposite corner is captured each time.
+     */
+    public static void assertNeverCaptured(GameTestHelper helper, BlockPos relativeCorner, int size, BlockPos... kept) {
+        BlockPos stone = relativeCorner.offset(size - 1, size - 1, size - 1);
+        Map<BlockPos, BlockState> states = Arrays.stream(kept).collect(Collectors.toMap(Function.identity(), helper::getBlockState));
+        for (boolean overpowered : new boolean[]{false, true}) {
+            String capsule = overpowered ? "an overpowered capsule" : "a capsule";
+            helper.setBlock(stone, Blocks.STONE);
+            if (!Capsule.captureAtPosition(Capsule.newEmptyCapsuleItemStack(0, 0, size, overpowered, null, 0), null, size, helper.getLevel(), helper.absolutePos(relativeCorner))) {
+                helper.fail(capsule + " failed to capture", relativeCorner);
+            }
+            helper.assertBlockNotPresent(Blocks.STONE, stone);
+            states.forEach((pos, state) -> {
+                assertTrue(helper, helper.getBlockState(pos) == state, capsule + " took " + state + " at " + pos + ", left " + helper.getBlockState(pos));
+                assertTrue(helper, !state.hasBlockEntity() || helper.getLevel().getBlockEntity(helper.absolutePos(pos)) != null, capsule + " took the block entity of " + state + " at " + pos);
+            });
+        }
+    }
+
+    public static Block block(String id) {
+        return BuiltInRegistries.BLOCK.get(ResourceLocation.parse(id));
+    }
+
+    public static Item item(String id) {
+        return BuiltInRegistries.ITEM.get(ResourceLocation.parse(id));
     }
 
     public static CapsuleTemplate template(GameTestHelper helper, ItemStack capsule) {

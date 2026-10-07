@@ -18,7 +18,7 @@ decompiles Minecraft for both loaders (several minutes), later runs take about t
 | Project | Contents |
 |---|---|
 | `common` | all the game logic, assets and data (`src/main`), unit tests (`src/test/java`), GameTest bodies and the client smoke test (`src/gametest/java`, packages `capsule.gametest` and `capsule.clientsmoke`) and test structures (`src/gametest/resources`). Compiled against vanilla Minecraft; `checkLoaderImports` (part of `check`) fails if a common source references `net.neoforged` or `net.fabricmc` |
-| `neoforge` | NeoForge glue; compiles the common sources into `Capsule-neoforge-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule_gametest`, with the GameTests (adding the SecurityCraft, Waystones, Sophisticated Storage and WorldEdit tests) and the client smoke entrypoint |
+| `neoforge` | NeoForge glue; compiles the common sources into `Capsule-neoforge-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule_gametest`, with the GameTests (adding the SecurityCraft, Waystones, Sophisticated Storage, WorldEdit and known incompatibility tests) and the client smoke entrypoint |
 | `fabric` | Fabric glue (Loom); compiles the common sources into `Capsule-fabric-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule-gametest`, with the GameTests and the client smoke entrypoint |
 
 The test mods are packaged too, in `<loader>/build/test-mod/<release jar name>-gametest.jar` (task `testModJar`, part of
@@ -34,8 +34,10 @@ the release jar in real servers and clients. They are never published: CI publis
 | `./gradlew :neoforge:test` / `:fabric:test` | JUnit tests of `common/src/test/java` on one loader | non-zero if a test fails |
 | `./gradlew :neoforge:runGameTestServer` | the 91 NeoForge GameTests (89 common + 2 SecurityCraft) on a headless server | number of failed required tests |
 | `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (99) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (98) | number of failed required tests |
 | `./gradlew :fabric:runGameTestServer` | the 89 common GameTests on a headless Fabric server | number of failed required tests |
 | `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (93) | number of failed required tests |
+| `... -PmodCompatLatest` | with `-PmodCompat` or `-Pincompat`: the newest Modrinth versions of their mods instead of the pinned ones | |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
 | `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
 | `scripts/prod-smoke.sh <jar>...` | the release jars on real dedicated servers, see below | non-zero if a jar fails |
@@ -90,7 +92,8 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
   [Server thread/INFO] [minecraft/GameTestServer]:    - blindthrowdeploysontheground
   ```
-  and the Gradle task fails. The full logs are `<loader>/runs/gameTestServer/logs/latest.log`; on Fabric the failure
+  and the Gradle task fails. It also fails when the server ran no test, for example when a mod crashed at load (the
+  NeoForge GameTest server then exits with status 0). The full logs are `<loader>/runs/gameTestServer/logs/latest.log`; on Fabric the failure
   messages are in `fabric/runs/gameTestServer/logs/debug.log` and in the JUnit report
   `fabric/build/gametest/report.xml`.
 - In a dev client (`./gradlew :neoforge:runClient` or `:fabric:runClient`, creative world with cheats): `/test runall`
@@ -147,6 +150,17 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ...
   [Server thread/INFO] [minecraft/GameTestServer]: All 99 required tests passed :)
   ```
+- **Newest versions**: `-PmodCompatLatest` replaces the pinned version of every mod of `-PmodCompat` and `-Pincompat`
+  with its newest Modrinth version for the loader and Minecraft version (`modrinth` of
+  `buildSrc/src/main/groovy/multiloader-loader.gradle`), and prints both, to see whether a new mod version changes a
+  result:
+  ```
+  ./gradlew :neoforge:runGameTestServer -PmodCompat -Pincompat -PmodCompatLatest
+  ...
+  sophisticated-storage: 1.21.1-1.6.2.2159 (f7c8aEld), pinned Hhf1IKFI
+  ...
+  [Server thread/INFO] [minecraft/GameTestServer]: All 106 required tests passed :)
+  ```
 - **GameTests on the release jars** with mods: `EXTRA_MODS` of `scripts/prod-gametest.sh`, see
   [GameTests on the release jars](#gametests-on-the-release-jars). Get Off My Lawn (Fabric, #91) is tested there only.
 - **Servers**: `EXTRA_MODS` adds jars to the server of `scripts/prod-smoke.sh`, for example the mods above and JEI,
@@ -169,6 +183,33 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   viewer check is left to the pack: the report has a line for each viewer it brings. `EXTRA_MODS` also adds jars to the
   dev client of `scripts/client-smoke.sh`; a mod crashing at startup leaves the client on its crash screen until
   `TIMEOUT`.
+
+### Known incompatibilities
+
+The mods of the wiki page [Known incompatibilities](https://github.com/Lythom/capsule/wiki/Known-incompatibilities),
+loaded by the NeoForge GameTests with `-Pincompat` (Modrinth version ids in `gradle.properties`). `NeoForgeGameTests`
+registers the test class of each mod that is loaded. Each test asserts the current behavior, so that a change of the mod
+or of Capsule shows as a failure, whether it fixes or breaks something:
+
+| Mod (version) | Reported problem | Test | Asserts |
+|---|---|---|---|
+| Corail Tombstone 9.5.6 | moving a player grave duplicates its items | `playerGravesAreNeverCaptured` | standard and overpowered capsules leave graves in place (`tombstone:graves` in `capsule:excluded`, `tombstone:player_graves` excluded by Capsule) |
+| Refined Storage 2.0.9 | machines lose their data when moved | `refinedStorageIsExcludedByDefault`, `diskDriveKeepsItsDiskWhenNotExcluded` | `refinedstorage:` of the default config leaves a disk drive and a controller in place; without it, the disk drive moves with its disk and its 16 diamonds |
+| Mekanism 10.7.19.85 | a moved Digital Miner cannot be broken and stops working | `digitalMinerIsNeverCaptured`, `mekanismBinMovesWithItsContent` | the miner and its bounding blocks stay in place (`c:relocation_not_supported`); a bin moves with its content |
+| Immersive Engineering 12.4.2-194 | wires disappear when deployed elsewhere | `wiredConnectorsAreNeverCaptured` | two LV connectors joined by a copper wire stay in place with the wire (`c:relocation_not_supported`) |
+| Super Factory Manager 4.34.0 | the manager crashes when moved | `managerMovesWithItsProgram` | the manager moves with its disk and program, no crash; the program moves nothing until the inventories are labelled again (labels hold positions), then works |
+
+GregTech CEu Modern 7.0.2 (1.21.1) is not loaded: it does not start on a dedicated server ("Attempted to load class
+net/minecraft/client/multiplayer/ClientLevel for invalid dist DEDICATED_SERVER" with LDLib 1.0.35.a, a missing LDLib class
+with 1.0.41). IndustrialCraft 2 and Blood Magic have no NeoForge 1.21.1 version on Modrinth.
+
+```
+./gradlew :neoforge:runGameTestServer -Pincompat
+...
+[Server thread/INFO] [minecraft/GameTestServer]: All 98 required tests passed :)
+```
+
+`validate-all.sh --incompat` runs them in the dev runtime and on the NeoForge release jar (`EXTRA_MODS`).
 
 ## Client smoke test
 
@@ -331,6 +372,7 @@ scripts/validate-all.sh            # build, unit tests, GameTests, mod-compat Ga
 scripts/validate-all.sh --iris     # + client smoke with Iris, Sodium and MakeUp Ultra Fast on both loaders
 scripts/validate-all.sh --modded   # + client smoke with the mods of #81, #94, #117 and #76 on both loaders
 scripts/validate-all.sh --modpack  # + client smoke in a production NeoForge client with a Connector modpack
+scripts/validate-all.sh --incompat # + GameTests with the mods of the known incompatibilities, dev runtime and release jar
 scripts/validate-all.sh --all      # everything
 ```
 
@@ -338,6 +380,8 @@ scripts/validate-all.sh --all      # everything
   downloads its own Java 25 if the machine has none. Everything downloaded outside Gradle (servers, installers, mods of
   the variants, the modpack, the shader pack, by sha1 from Modrinth) is cached in `CAPSULE_CACHE` (default
   `~/.cache/capsule-validation`). `GRADLE_ARGS` is added to every Gradle call, `MODPACK` overrides the pack.
+  `MODCOMPAT_LATEST=1` runs the mod-compat and incompatibility steps with the newest Modrinth versions of their mods
+  (`-PmodCompatLatest` for Gradle, the newest files for the release jar runs).
 - Every step takes the lock `/tmp/capsule-heavy.lock` (as `flock /tmp/capsule-heavy.lock <command>` does), so it
   waits for any other Minecraft run of the machine and lets others run between its steps.
 - Logs: `build/validate-all/<step>.log` and `summary.txt`; each client smoke run keeps its screenshots, report and logs

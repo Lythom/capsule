@@ -68,8 +68,8 @@ dependencies {
     compileOnly("maven.modrinth:security-craft:${securitycraft_version}") { transitive = false }
     // the claim GameTests run with them with -PmodCompat
     if (project.hasProperty('modCompat')) {
-        modGametestRuntimeOnly "maven.modrinth:open-parties-and-claims:${opac_fabric_version}"
-        modGametestRuntimeOnly "maven.modrinth:flan:${flan_fabric_version}"
+        modGametestRuntimeOnly modrinth('open-parties-and-claims', opac_fabric_version)
+        modGametestRuntimeOnly modrinth('flan', flan_fabric_version)
     }
 }
 

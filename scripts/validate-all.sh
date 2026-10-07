@@ -6,7 +6,7 @@ set -uo pipefail
 # =============================================================================
 #
 # Usage:
-#   scripts/validate-all.sh [--iris] [--modded] [--modpack] [--all]
+#   scripts/validate-all.sh [--iris] [--modded] [--modpack] [--incompat] [--all]
 #
 # Runs, in order: the build (jars, loader import check), the unit tests, the GameTests of
 # each loader, the mod-compat GameTests (-PmodCompat) of each loader, the GameTests on the
@@ -17,7 +17,11 @@ set -uo pipefail
 #   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76)
 #   --modpack  client smoke in a production NeoForge client with a Sinytra Connector
 #              modpack (MODPACK, default forgeulously-optimized:mPRwXMh4)
+#   --incompat GameTests with the mods of the known incompatibilities (-Pincompat), also on
+#              the NeoForge release jar
 #   --all      all of them
+# MODCOMPAT_LATEST=1 runs the mod-compat and incompatibility steps with the newest Modrinth
+# versions of their mods instead of the pinned ones (-PmodCompatLatest).
 #
 # Each step takes the machine-wide lock /tmp/capsule-heavy.lock, so at most one Minecraft
 # runs at a time. Logs: build/validate-all/<step>.log and summary.txt; client smoke runs:
@@ -34,15 +38,17 @@ LOGS="$ROOT/build/validate-all"
 SHOTS="$ROOT/build/client-smoke"
 LOCK=/tmp/capsule-heavy.lock
 GRADLE=(./gradlew ${GRADLE_ARGS:-})
+COMPAT=(${MODCOMPAT_LATEST:+-PmodCompatLatest})
 
-IRIS='' MODDED='' MODPACK_RUN=''
+IRIS='' MODDED='' MODPACK_RUN='' INCOMPAT=''
 for arg in "$@"; do
     case "$arg" in
         --iris) IRIS=1 ;;
         --modded) MODDED=1 ;;
         --modpack) MODPACK_RUN=1 ;;
-        --all) IRIS=1 MODDED=1 MODPACK_RUN=1 ;;
-        *) sed -n '7,20p' "$0"; exit 1 ;;
+        --incompat) INCOMPAT=1 ;;
+        --all) IRIS=1 MODDED=1 MODPACK_RUN=1 INCOMPAT=1 ;;
+        *) sed -n '7,25p' "$0"; exit 1 ;;
     esac
 done
 for tool in java python3 curl xvfb-run flock; do
@@ -105,6 +111,17 @@ mods() {
     done
 }
 
+# compat_mods <dir> <loader> <project:sha1...>: the mods of a mod-compat run, their newest versions with MODCOMPAT_LATEST
+compat_mods() {
+    local dir="$1" loader="$2" mod
+    shift 2
+    rm -rf "$dir"
+    mkdir -p "$dir"
+    for mod in "$@"; do
+        if [ -n "${MODCOMPAT_LATEST:-}" ]; then modrinth_latest "${mod%%:*}" "$loader" "$dir"; else modrinth_file "${mod#*:}" "$dir"; fi > /dev/null
+    done
+}
+
 VERSION="$MC_VERSION-$(prop capsule_version).SNAPSHOT"
 NEO_JAR="neoforge/build/libs/Capsule-neoforge-$VERSION.jar"
 FABRIC_JAR="fabric/build/libs/Capsule-fabric-$VERSION.jar"
@@ -113,13 +130,13 @@ step build "build: jars and loader import check" "${GRADLE[@]}" assemble :common
 step unit-tests "unit tests (both loaders)" "${GRADLE[@]}" :neoforge:test :fabric:test
 step gametest-neoforge "GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer
 step gametest-fabric "GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer
-step modcompat-neoforge "mod-compat GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -PmodCompat
-step modcompat-fabric "mod-compat GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer -PmodCompat
+step modcompat-neoforge "mod-compat GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -PmodCompat "${COMPAT[@]}"
+step modcompat-fabric "mod-compat GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer -PmodCompat "${COMPAT[@]}"
 step prod-gametest-neoforge "GameTests on the NeoForge release jar" scripts/prod-gametest.sh "$NEO_JAR"
 step prod-gametest-fabric "GameTests on the Fabric release jar" scripts/prod-gametest.sh "$FABRIC_JAR"
 # Get Off My Lawn ReServed 1.13.1+1.21, Open Parties and Claims 0.32.7, Flan 1.12.8: GOML runs on real servers only
-mods "$CACHE/modcompat/fabric" 3c513317d251589d7c13f01f5beb2e4020387999 b992b683056fab2c3f462907901fdc4054a26529 \
-    debe440eeb5440765115b1d50269df9014ba12ea
+compat_mods "$CACHE/modcompat/fabric" fabric goml-reserved:3c513317d251589d7c13f01f5beb2e4020387999 \
+    open-parties-and-claims:b992b683056fab2c3f462907901fdc4054a26529 flan:debe440eeb5440765115b1d50269df9014ba12ea
 step prod-modcompat-fabric "Fabric release jar with the claim mods" \
     env EXTRA_MODS="$(ls "$CACHE/modcompat/fabric"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-gametest-proof-neoforge "NeoForge release jar: failure reported" expect_failure scripts/prod-gametest.sh "$NEO_JAR"
@@ -155,6 +172,17 @@ if [ -n "$MODDED" ]; then
     for loader in neoforge fabric; do
         smoke "$loader-modded" "$loader" jei EXTRA_MODS="$(ls "$CACHE/modded/$loader"/*.jar | tr '\n' ' ')"
     done
+fi
+
+if [ -n "$INCOMPAT" ]; then
+    step incompat-neoforge "incompatibility GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -Pincompat "${COMPAT[@]}"
+    # Refined Storage 2.0.9, Mekanism 10.7.19.85, Immersive Engineering 12.4.2-194, Super Factory Manager 4.34.0,
+    # Corail Tombstone 9.5.6
+    compat_mods "$CACHE/incompat/neoforge" neoforge refined-storage:59d8e734ccb6eaab4cdf04093c55872af7a3e23a \
+        mekanism:b78945c40cfe7640408f3fd1e44da385a8c8b805 immersiveengineering:a4e90c2df8009040f6d022433c5d76635944dd59 \
+        super-factory-manager:1c170062c486bd25a1161571b6c3cf9e6371611b corail-tombstone:d830d16caa20b0d23a44ed6b1d339bc22afc2460
+    step prod-incompat-neoforge "NeoForge release jar, incompatible mods" \
+        env EXTRA_MODS="$(ls "$CACHE/incompat/neoforge"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$NEO_JAR"
 fi
 
 if [ -n "$MODPACK_RUN" ]; then

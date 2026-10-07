@@ -44,3 +44,15 @@ tasks.named('processGametestResources', ProcessResources) {
     dependsOn configurations.commonGametestResources
     from configurations.commonGametestResources
 }
+
+// Modrinth maven coordinates of a mod of the mod-compat runtimes: the version id pinned in gradle.properties, or with
+// -PmodCompatLatest the newest version for this loader and Minecraft version
+ext.modrinth = { String slug, String pinned ->
+    if (!project.hasProperty('modCompatLatest')) return "maven.modrinth:$slug:$pinned"
+    def query = "loaders=[\"${project.name}\"]&game_versions=[\"${minecraft_version}\"]".replace('"', '%22').replace('[', '%5B').replace(']', '%5D')
+    def connection = URI.create("https://api.modrinth.com/v2/project/$slug/version?$query").toURL().openConnection()
+    connection.setRequestProperty('User-Agent', 'Lythom/capsule (contact@samuel-bouchet.fr)')
+    def latest = new groovy.json.JsonSlurper().parse(connection.inputStream).first()
+    logger.lifecycle("$slug: ${latest.version_number} (${latest.id}), pinned $pinned")
+    "maven.modrinth:$slug:${latest.id}"
+}

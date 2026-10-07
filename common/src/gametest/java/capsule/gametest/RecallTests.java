@@ -53,7 +53,9 @@ public class RecallTests {
                 .forEach(e -> offered.add(e.enchantment)));
 
         assertTrue(helper, offered.stream().anyMatch(e -> e.is(Enchantments.LOYALTY)), "an enchanting table should offer loyalty on a capsule");
-        assertTrue(helper, offered.stream().allMatch(e -> e.is(Enchantments.LOYALTY)), "only loyalty should be offered on a capsule, got " + offered);
+        // enchantments of other mods may apply to every item (Corail Tombstone's soulbound)
+        assertTrue(helper, offered.stream().filter(e -> e.is(key -> key.location().getNamespace().equals("minecraft"))).allMatch(e -> e.is(Enchantments.LOYALTY)),
+                "only loyalty should be offered on a capsule, got " + offered);
         helper.succeed();
     }
 
