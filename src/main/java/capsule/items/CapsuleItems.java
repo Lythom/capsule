@@ -26,7 +26,7 @@ import java.util.*;
 
 public class CapsuleItems {
 
-    private static final int UPGRADE_STEP = 2;
+    public static final int UPGRADE_STEP = 2;
 
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, CapsuleMod.MODID);
     public static final RegistryObject<CapsuleItem> CAPSULE = ITEMS.register("capsule", CapsuleItem::new);
@@ -106,7 +106,7 @@ public class CapsuleItems {
         }
     }
 
-    private static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
+    public static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
         return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
     }
 

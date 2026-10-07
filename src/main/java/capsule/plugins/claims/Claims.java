@@ -1,5 +1,8 @@
 package capsule.plugins.claims;
 
+import capsule.Config;
+import capsule.items.CapsuleItem;
+import capsule.items.CapsuleItems;
 import capsule.plugins.claims.ClaimAdapter.Claim;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -9,9 +12,12 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -51,10 +57,6 @@ public final class Claims {
      * Asks the claims for captures and deploys without a player (dispensers, capture bases placed before this version).
      */
     private static final GameProfile NOBODY = new GameProfile(UUID.fromString("9c0b9b7b-b356-41c0-93b2-4bb6afe1586c"), "[Capsule]");
-    /**
-     * Largest size probed per block: above, OP captures and deploys would take seconds, so they are probed per chunk column.
-     */
-    public static final int PER_BLOCK_MAX_SIZE = 31;
     private static boolean modsLoaded = false;
 
     private Claims() {
@@ -156,7 +158,7 @@ public final class Claims {
 
     /**
      * The positions of box the player may not change. The adapters are asked here; testing a position outside their
-     * claims probes it when box is at most PER_BLOCK_MAX_SIZE wide, else looks up its chunk column, probed here.
+     * claims probes it when box is at most perBlockMaxSize wide, else looks up its chunk column, probed here.
      *
      * @return null when a protection mod cannot be checked: the operation is refused, the player is told
      */
@@ -189,7 +191,7 @@ public final class Claims {
             adapterClaims.long2ObjectEntrySet().forEach(e -> claimsByChunk.computeIfAbsent(e.getLongKey(), k -> new ArrayList<>()).add(e.getValue()));
         }
 
-        boolean perBlock = perBlock(box);
+        boolean perBlock = perBlock(level, box);
         LongSet deniedColumns = perBlock ? LongSets.EMPTY_SET : deniedColumns(level, box, claimsByChunk, actor);
 
         return pos -> {
@@ -262,10 +264,24 @@ public final class Claims {
     }
 
     /**
+     * Largest size probed per block: the largest capsule of survival, the largest crafted tier with every upgrade.
+     * Above, OP captures and deploys would take seconds, so they are probed per chunk column.
+     */
+    public static int perBlockMaxSize(MinecraftServer server) {
+        int largestTier = server.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
+                .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
+                .map(recipe -> recipe.getResultItem(server.registryAccess()))
+                .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
+                .mapToInt(CapsuleItem::getSize)
+                .max().orElse(1);
+        return largestTier + Config.upgradeLimit * CapsuleItems.UPGRADE_STEP;
+    }
+
+    /**
      * Whether the positions of box are probed one by one, else once per chunk column.
      */
-    static boolean perBlock(BoundingBox box) {
-        return Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= PER_BLOCK_MAX_SIZE;
+    static boolean perBlock(ServerLevel level, BoundingBox box) {
+        return Math.max(box.getXSpan(), Math.max(box.getYSpan(), box.getZSpan())) <= perBlockMaxSize(level.getServer());
     }
 
     @Nullable

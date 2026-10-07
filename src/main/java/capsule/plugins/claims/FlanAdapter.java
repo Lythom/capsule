@@ -32,7 +32,7 @@ class FlanAdapter implements ClaimAdapter {
         int y = level.getMinBuildHeight() - 1024;
         IPermissionContainer world = storage.getForPermissionCheck(new BlockPos(-Level.MAX_LEVEL_SIZE, y, -Level.MAX_LEVEL_SIZE));
         if (storage.getForPermissionCheck(new BlockPos(Level.MAX_LEVEL_SIZE, y, Level.MAX_LEVEL_SIZE)) != world) throw new IllegalStateException("Flan's world outside claims is not one container");
-        return ClaimAdapter.perPosition(box, pos -> {
+        return ClaimAdapter.perPosition(level, box, pos -> {
             IPermissionContainer claim = storage.getForPermissionCheck(pos);
             return claim == world ? null : claim.canInteract(player, BuiltinPermission.BREAK, pos);
         });
