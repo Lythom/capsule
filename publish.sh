@@ -116,7 +116,7 @@ fi
 CHANGELOG=$(awk '/^\*\*[0-9]/{if(found) exit; found=1; next} found' "$CHANGELOG_FILE")
 CHANGELOG="$CHANGELOG
 
-Full changelog: https://github.com/Lythom/capsule/blob/master/CHANGELOG.md"
+Full changelog: https://github.com/Lythom/capsule/blob/$MINECRAFT_VERSION/CHANGELOG.md"
 
 echo "Changelog preview:"
 echo "$CHANGELOG" | head -8
