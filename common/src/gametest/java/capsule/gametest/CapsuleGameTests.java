@@ -30,6 +30,7 @@ public class CapsuleGameTests {
             BundledTemplateContentTests.class,
             CaptureBaseTests.class,
             ClaimTests.class,
+            CommandTests.class,
             ConfigTests.class,
             CoreMechanicsTests.class,
             DeployPositionTests.class,

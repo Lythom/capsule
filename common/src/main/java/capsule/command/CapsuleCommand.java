@@ -24,8 +24,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.ClickEvent.Action;
@@ -590,8 +591,9 @@ public class CapsuleCommand {
                     BlockState state = player.serverLevel().getBlockState(position);
                     BlockEntity blockEntity = player.serverLevel().getBlockEntity(position);
 
-                    String blockEntityTag = blockEntity == null ? "" : "{BlockEntityTag:" + blockEntity.saveWithoutMetadata(player.registryAccess()).toString() + "}";
-                    String command = "/give @p " + BuiltInRegistries.BLOCK.getKey(state.getBlock()) + blockEntityTag + " 1 ";
+                    ItemStack stack = new ItemStack(state.getBlock());
+                    if (blockEntity != null) blockEntity.saveToItem(stack, player.registryAccess());
+                    String command = giveCommand(stack, player.registryAccess());
                     MutableComponent msg = Component.literal(command);
                     player.sendSystemMessage(msg.withStyle(style -> style
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy to clipboard")))
@@ -606,15 +608,18 @@ public class CapsuleCommand {
         return 0;
     }
 
+    /**
+     * The /give command of an item, its components in the 1.20.5 syntax.
+     */
+    private static String giveCommand(ItemStack stack, HolderLookup.Provider registries) {
+        return "/give @p " + new ItemInput(stack.getItemHolder(), stack.getComponentsPatch()).serialize(registries);
+    }
+
     private static int executeExportHeldItem(ServerPlayer player) {
         if (player != null) {
             ItemStack heldItem = player.getMainHandItem();
             if (!heldItem.isEmpty()) {
-
-                CompoundTag tag = NBTHelper.getTag(heldItem);
-                String tagStr = tag != null ? String.valueOf(tag) : "";
-
-                String command = "/give @p " + BuiltInRegistries.ITEM.getKey(heldItem.getItem()) + tagStr + " 1 ";
+                String command = giveCommand(heldItem, player.registryAccess());
                 MutableComponent msg = Component.literal(command);
                 player.sendSystemMessage(msg.withStyle(style -> style
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")))
