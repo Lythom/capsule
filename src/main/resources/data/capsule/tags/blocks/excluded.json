@@ -1,8 +1,13 @@
 {
-    "replace": false,
-    "values": [],
-    "optional": [
-        "#forge:relocation_not_supported",
-        "#tombstone:player_graves"
-    ]
+  "replace": false,
+  "values": [
+    {
+      "id": "#forge:relocation_not_supported",
+      "required": false
+    },
+    {
+      "id": "#tombstone:player_graves",
+      "required": false
+    }
+  ]
 }
