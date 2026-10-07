@@ -138,19 +138,54 @@ public class StructureSaver {
 
     }
 
+    /**
+     * Captures a deployed blueprint back, if the area still matches it and the claims let the player. A refused undeploy
+     * tells the player why.
+     */
     public static boolean undeployBlueprint(ServerLevel worldserver, @Nullable ServerPlayer player, ItemStack blueprintItemStack, BlockPos startPos, int size, List<Block> excluded) {
         Pair<CapsuleTemplateManager, CapsuleTemplate> blueprint = StructureSaver.getTemplate(blueprintItemStack, worldserver);
         CapsuleTemplate blueprintTemplate = blueprint.getRight();
-        if (blueprintTemplate == null) return false;
-
         CapsuleTemplate tempTemplate = new CapsuleTemplate();
-        Map<BlockPos, Block> occupiedPositions = blueprintTemplate.occupiedPositions;
-        Map<BlockPos, Block> legacyItemOccupied = CapsuleItem.getOccupiedSourcePos(blueprintItemStack);
-        if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
-        List<BlockPos> transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
-                excluded, null);
-        List<StructureTemplate.StructureBlockInfo> worldBlocks = tempTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
-        List<StructureTemplate.StructureBlockInfo> blueprintBLocks = blueprintTemplate.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<BlockPos> transferedPositions = null;
+        if (blueprintTemplate != null) {
+            Map<BlockPos, Block> occupiedPositions = blueprintTemplate.occupiedPositions;
+            Map<BlockPos, Block> legacyItemOccupied = CapsuleItem.getOccupiedSourcePos(blueprintItemStack);
+            if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
+            transferedPositions = tempTemplate.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
+                    excluded, null);
+        }
+        if (blueprintTemplate == null || !matches(tempTemplate, blueprintTemplate)) {
+            if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.blueprintDontMatch"));
+            return false;
+        }
+
+        Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
+        if (denied == null) return false;
+        if (transferedPositions.stream().anyMatch(denied)) {
+            if (player != null) player.sendSystemMessage(Component.translatable("capsule.error.notAllowed"));
+            return false;
+        }
+        blueprintTemplate.removeOccupiedPositions();
+        String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
+        boolean written = blueprint.getLeft().writeToFile(new ResourceLocation(capsuleStructureId));
+        if (written) {
+            List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, pos -> false);
+            // check if some remove failed, it should never happen but keep it in case to prevent exploits
+            if (couldNotBeRemoved != null) {
+                return false;
+            }
+        } else {
+            printWriteTemplateError(player, capsuleStructureId);
+        }
+        return true;
+    }
+
+    /**
+     * Whether the blocks of the world match the blueprint, without items in their inventories.
+     */
+    private static boolean matches(CapsuleTemplate world, CapsuleTemplate blueprint) {
+        List<StructureTemplate.StructureBlockInfo> worldBlocks = world.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
+        List<StructureTemplate.StructureBlockInfo> blueprintBLocks = blueprint.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
 
         // compare the 2 lists, assume they are sorted the same since the same script is used to build them.
         if (blueprintBLocks.size() != worldBlocks.size())
@@ -167,26 +202,7 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        blueprintMatch = blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt() == null || !b.nbt().contains("Items") || b.nbt().getList("Items", TAG_COMPOUND).isEmpty());
-
-        if (blueprintMatch) {
-            Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
-            if (denied == null) return false;
-            blueprintTemplate.removeOccupiedPositions();
-            String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
-            boolean written = blueprint.getLeft().writeToFile(new ResourceLocation(capsuleStructureId));
-            if (written) {
-                List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
-                // check if some remove failed, it should never happen but keep it in case to prevent exploits
-                if (couldNotBeRemoved != null) {
-                    return false;
-                }
-            } else {
-                printWriteTemplateError(player, capsuleStructureId);
-            }
-        }
-
-        return blueprintMatch;
+        return blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt() == null || !b.nbt().contains("Items") || b.nbt().getList("Items", TAG_COMPOUND).isEmpty());
     }
 
     public static String serializeComparable(StructureTemplate.StructureBlockInfo b) {
@@ -229,7 +245,7 @@ public class StructureSaver {
     /**
      * Use with caution, delete the blocks at the indicated positions, except those the player may not take.
      *
-     * @param claimed the positions claim mods deny, none for the blocks of a failed deploy
+     * @param claimed the positions claim mods deny, none for the blocks of a failed deploy or of a blueprint checked already
      * @return list of blocks that could not be removed
      */
     public static List<BlockPos> removeTransferedBlockFromWorld(List<BlockPos> transferedPositions, ServerLevel
