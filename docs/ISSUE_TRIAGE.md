@@ -61,7 +61,7 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [82](https://github.com/Lythom/capsule/issues/82) | Crash after world creation (1.16.5) | OBSOLETE | | |
 | [81](https://github.com/Lythom/capsule/issues/81) | Crash with Mob Grinding Utils dirt | CONFIRMED-HARDENED (verification blocked: no 1.21.1 build of the mod) | 6c5aed7 | none (client rendering) |
 | [80](https://github.com/Lythom/capsule/issues/80) | 1.19 won't work on latest Forge | OBSOLETE | | |
-| [78](https://github.com/Lythom/capsule/issues/78) | Crash protection when loading block materials | OBSOLETE (related fix 9f3b73b) | | |
+| [78](https://github.com/Lythom/capsule/issues/78) | Crash protection when loading block materials | OBSOLETE on 1.20.1+ (related fix 9f3b73b); 1.18.2 and 1.16.5 catch the failing materials, untested with Snow! Real Magic: keep open | | |
 | [77](https://github.com/Lythom/capsule/issues/77) | Crash on new world (GDLauncher) | OBSOLETE | | |
 | [76](https://github.com/Lythom/capsule/issues/76) | Crash previewing farmland | VERIFIED | 6c5aed7 | client smoke `--modded`: vanilla farmland and crops, Farmer's Delight 1.3.4 (NeoForge) and Refabricated 3.2.8 (Fabric) |
 | [75](https://github.com/Lythom/capsule/issues/75) | undeployDelay blocks undeploy after restart | CONFIRMED-FIXED | b65ed27 | `instantCapsuleUndeploysAfterRelog`, `legacyUndeployDelayDoesNotBlockUndeploy`: "capsule should be undeployed"; `activatedCapsuleTimesOutAfterRelog`: "activation should time out" |
@@ -69,7 +69,7 @@ Test names refer to GameTests in `common/src/gametest/java/capsule/gametest` or 
 | [71](https://github.com/Lythom/capsule/issues/71) | Invalid resource path on GDLauncher (1.18.2) | OBSOLETE (related fix 5bd81ee) | | |
 | [70](https://github.com/Lythom/capsule/issues/70) | Schematics not loading | CONFIRMED-FIXED | 9c99a3b | `spongeV1SchemDeploys`, `spongeV2SchemDeploys`, `spongeV3SchemDeploys`, `spongeV3SchematicDeploys`: "should be read"; `spongeV2SchematicDeploys`: 0 armor stands instead of 1; `mceditSchematicDeploys`: the chest holds 1 diamonds instead of 5 |
 | [69](https://github.com/Lythom/capsule/issues/69) | Shaders: invisible preview / black screen | VERIFIED (Iris + MakeUp Ultra Fast; a ghost shadow on NeoForge only) | 3d33156 | client smoke `--iris` on both loaders, screenshots reviewed |
-| [68](https://github.com/Lythom/capsule/issues/68) | Startup crash with Snow! Real Magic | OBSOLETE | | |
+| [68](https://github.com/Lythom/capsule/issues/68) | Startup crash with Snow! Real Magic | OBSOLETE on 1.20.1+; 1.18.2 and 1.16.5 catch the failing materials, untested with the mod: keep open | | |
 | [56](https://github.com/Lythom/capsule/issues/56) | ProjectRed wires free in blueprints | CONFIRMED-FIXED | 86600be | `pottedPlantsAreNotFree`: "a flower pot should be required, got {}" |
 
 Totals after round 2: 17 CONFIRMED-FIXED (#91 counted once), 6 DONE (+ #91 part 2), 4 VERIFIED, 1 CONFIRMED-HARDENED,
@@ -78,7 +78,8 @@ Totals after round 2: 17 CONFIRMED-FIXED (#91 counted once), 6 DONE (+ #91 part 
 
 ## Bugs found without an issue
 
-Found while writing the tests and the client smoke test (N1–N13 in round 1, N14–N18 in round 2); each has its own
+Found while writing the tests and the client smoke test (N1–N13 in round 1, N14–N18 in round 2, N19 in the last
+review); each has its own
 commit, with a test that failed before the fix or, for client rendering, before/after screenshots.
 
 | Id | Bug | Commit | Fail-before evidence |
@@ -100,6 +101,7 @@ commit, with a test that failed before the fix or, for client rendering, before/
 | N16 | Deploying item frames or paintings more than 16 blocks from the capture logged "Block-attached entity at invalid position" once per entity | e439d3a | `deployedItemFramesHangOnTheirBlocks`: "invalid position logged" |
 | N17 | Blueprint blocks showed the content they lost (chiseled bookshelf books, lectern book, jukebox record, brewing stand bottles) | 25f9268 | `blueprintsNeverKeepInventories`: "shows a content it does not have" |
 | N18 | JEI on Fabric showed no capsule recipes (lists filled after JEI read them); no viewer showed the recovery and blueprint recipes (special recipes) | 48dbce0 | client smoke: "1 crafting recipes for Empty Capsule, 0 capsule information pages"; "without recipe: [/recovery/240, /blueprint/241]" |
+| N19 | `Claims.perBlockMaxSize` resized the shared result of a capsule recipe of even or too large size (`getSize` fixes the stack it reads), and scanned every recipe on each capture and deploy | f1aead2 | `theLargestSurvivalCapsuleLeavesTheRecipesUnchanged`: "the recipe result keeps its size 4, not 5" |
 
 ## Ready-to-post comments
 
@@ -284,7 +286,9 @@ range, so it cannot be loaded on an incompatible version. Closing.
 
 ### #78
 The code iterating every block material was removed in 1.20.1. The next 1.21.1 build also stops the config from
-crashing on invalid block ids and makes tags work in `excludedBlocks`. Closing.
+crashing on invalid block ids and makes tags work in `excludedBlocks`. The next 1.18.2 and 1.16.5 builds skip and log
+the blocks whose material cannot be read, so they should no longer crash at Capsule's startup check; not tested with
+Snow! Real Magic (#68), whose mixin may make later material reads fail: keeping this open, please report.
 
 ### #77
 Duplicate of #71 (GDLauncher path), fixed since 1.20.x. Closing.
@@ -320,8 +324,9 @@ the pack, and on NeoForge it also casts a shadow. OptiFine does not exist for 1.
 with the shader pack name if the preview is invisible with another pack.
 
 ### #68
-The code that triggered this was removed in 1.20.1, and Capsule no longer touches other mods' blocks during startup.
-Closing.
+The code that triggered this was removed in 1.20.1. On 1.18.2 and 1.16.5 the next builds skip and log the blocks whose
+material cannot be read, so they should no longer crash at Capsule's startup check. Not tested with Snow! Real Magic
+(no Forge 1.18.2 or 1.16.5 build to test with): keeping this open, please report whether it starts and plays.
 
 ### #56
 Fixed in the next 1.21.1 build: blocks without an item (potted plants, attached stems...) are no longer free in

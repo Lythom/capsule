@@ -214,6 +214,26 @@ CHANGELOG commits: ec9508f, a6755d2, 05e11ec.
   rewritten in place with a typed NBT round trip, DataVersion 2586 unchanged.
 - **Claims**: emerald 11 + 10 upgrades = 31 by default on these branches, 33 when a mod fills `forge:ingots/platinum`.
 
+## Before the 9.1 release
+
+| Fix (dev-1.21.1 commit) | 1.20.1 (`dev-1.20`) | 1.18.2 (`dev-1.18`) | 1.16.5 (`dev-1.16`) |
+|---|---|---|---|
+| Largest survival capsule read once per recipe reload, from copies of the recipe results (f1aead2) | d33c468 | 3be2cdd | fe9e833 |
+| 1.12 ids dropped from the excluded blocks defaults (1fe7879) | done in 8b2d109 | done in e52201e | done in cb77a28 |
+| #78 #68: the changelog says the fix is not tested with Snow! Real Magic | not applicable | 5a65df4 | 2e3caba |
+
+- **Claims**: `RecipeManager` is a new instance after each `/reload` on the three versions (`ReloadableServerResources`
+  on 1.20.1 and 1.18.2, `DataPackRegistries` on 1.16.5), the key of the cached largest tier.
+- **Blood Magic**: the backports exclude `bloodmagic:alchemytable`, its id up to 1.20.1; 1.21.1 keeps
+  `bloodmagic:alchemy_table`, the id of Blood Magic 3.4 for 1.21.1 (`AlchemyTableBlock`, branch `1.21.1` of
+  WayofTime/BloodMagic).
+- **#78 #68**: the try/catch per block covers Capsule's startup check only; Snow! Real Magic has no Forge 1.18.2 or
+  1.16.5 build on Modrinth to test with, and its mixin may make later material reads fail: the issues stay open.
+
+The rc9 jars were built the same way: `./gradlew build` passes on the three branches with 9 JUnit tests, 0
+failures, and the boot test is OK on each (`scripts/prod-smoke-forge.sh`, Forge 1.20.1-47.1.3, 1.18.2-40.1.16,
+1.16.5-36.2.31).
+
 ## Notes
 
 - **#100**: the old branches still had the pre-1.20.4 `_rare_castle_kit.nbt`, whose chests held infested cobblestone
