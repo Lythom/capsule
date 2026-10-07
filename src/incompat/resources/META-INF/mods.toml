@@ -1,0 +1,18 @@
+modLoader="javafml"
+loaderVersion="[46,)"
+license="MIT License"
+
+[[mods]]
+modId="capsule_incompat"
+version="1"
+displayName="Capsule known incompatibilities"
+description='''
+Dev only: plays the scenarios of the known incompatibilities when the server starts with -Dcapsule.incompat=true.
+'''
+
+[[dependencies.capsule_incompat]]
+    modId="capsule"
+    mandatory=true
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="BOTH"
