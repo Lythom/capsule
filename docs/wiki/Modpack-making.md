@@ -294,6 +294,8 @@ That means that by default a standard capsule cannot capture mob spawners or end
 
 Blocks in the [`capsule:excluded` tag](#tags) are never captured either, by any capsule.
 
+On 1.20.1 (next build, 8.0.x), new installs also get `#forge:relocation_not_supported` (Mekanism Digital Miner, Refined Storage…), `bloodmagic:alchemytable` and the Immersive Engineering wire connectors in both lists. The config file is never rewritten: existing installs keep their lists, add these entries by hand (the full list is on [Known incompatibilities](Known-incompatibilities)) or delete `config/capsule-common.toml` to get the new defaults (this resets the other settings too).
+
 ### Overridable blocks
 
 Overridable blocks are blocks that are simply deleted if they are in the way of a capsule deployment, like grass or snow.
@@ -342,13 +344,13 @@ Before 9.0, `recallEnchantType` chooses which items can get the Recall enchantme
 [since 9.0] Captures and deploys respect claim mods: Open Parties and Claims and Flan (NeoForge and Fabric) and Get Off My Lawn ReServed (Fabric) are asked through their own API, and any other protection mod through a block placement check (NeoForge placement event, Fabric Common Protection API). The player documentation is in [Claim protection](Home#claim-protection). What server owners should know:
 
 * Protected blocks stay in the world on capture; a deploy or a blueprint undeploy touching a protected block is refused, and the player only gets the claim message.
-* The placement check is made for every block of captures and deploys up to 31x31x31 (the largest survival capsule), and once per chunk column above (overpowered capsules): a single protected block inside a bigger box may be missed by mods without dedicated support.
+* The placement check (and Flan) is asked for every block of captures and deploys up to the size of the largest survival capsule, computed from the config: the largest capsule tier plus 2 per allowed upgrade (`capsuleUpgradesLimit`), so 33x33x33 by default (a netherite capsule with 10 upgrades). Above, it is asked once per chunk column: a single protected block inside a bigger box may be missed by mods without dedicated support. Capsules that big can't be crafted: they only come from operators and modpack makers (`/capsule giveEmpty`, reward templates), so this is accepted.
 * A Capture Base acts as the player who placed it (saved as `placer` in its block data); a Capture Base deployed from a capsule acts for the player who deployed it. Capture Bases placed before 9.0, vanilla dispensers and other captures or deploys without a player are refused inside claims, whatever the claim allows: re-place the Capture Base to give it an owner.
 * Fail closed: when a loaded claim mod cannot be checked (its API changed in a new version), every capture and deploy is refused with a chat message, and one error is written in the server log, instead of ignoring its claims. Update Capsule, or report it.
 * FTB Chunks and Cadmus are checked on NeoForge (placement event) but not on Fabric yet.
-* The same claim support is in the 1.20.1 and 1.18.2 Forge builds released with 9.0 (Open Parties and Claims, Flan), and Flan on 1.16.5.
+* The same claim support reaches the next Forge builds of 1.20.1 (8.0.x) and 1.18.2 (6.0.x) with Open Parties and Claims and Flan, and of 1.16.5 (5.0.x) with Flan.
 
-Mod developers can add support for their claim mod, see [Getting compatible with Capsule](Getting-compatible-with-capsule#3-if-your-mod-protects-areas-claims).
+Claim mod developers: see [Getting compatible with Capsule](Getting-compatible-with-capsule#3-if-your-mod-protects-areas-claims).
 
 ## Submit your templates!
 
@@ -364,12 +366,11 @@ Then see you in the next version of Capsule ;)
 
 ### Exporting the item NBT
 
-The Capsule item is ready but you may need the give command to set up a command block, or the NBT data to configure a mod. Use the command [`/capsule exportHeldItem`](Commands#exporthelditem) to generate the /give command in the chat. Click the message to open the log file and be able to copy/paste it. The last parameter is the NBT data.
+The Capsule item is ready but you may need the give command to set up a command block, or the NBT data to configure a mod. Use the command [`/capsule exportHeldItem`](Commands#exporthelditem) to generate the /give command in the chat. Click the message to open the log file and be able to copy/paste it.
 
 Note: this command will work for any item, not only capsules.
 
-<!-- TODO owner: on 1.21.1 exportHeldItem prints the pre-1.20.5 syntax capsule:capsule{...}, which /give no longer accepts. Until it is fixed, wrap the printed data as below. -->
-[since 9.0, Minecraft 1.21.1] Item NBT became data components: the capsule data is the `minecraft:custom_data` component and the base color the `minecraft:dyed_color` component. The printed data goes in a give command like this:
+[since 9.0, Minecraft 1.21.1] Item NBT became data components: the capsule data is the `minecraft:custom_data` component, the base color the `minecraft:dyed_color` component and the enchantments the `minecraft:enchantments` component. The printed command uses the 1.21 component syntax, ready for `/give` or a command block, for example:
 
 ```
 /give @p capsule:capsule[minecraft:custom_data={state:5,oneUse:1b,isReward:1b,structureName:"config/capsule/rewards/my_house",size:7,label:"My House"},minecraft:dyed_color={rgb:16777215,show_in_tooltip:false}]
@@ -407,4 +408,4 @@ If you want to create your own capsules or give them using command blocks, you'l
 * int yOffset                                                // [since 7.0.91] deployment offset, -3 deploys the content 3 blocks under the aimed position
 ```
 
-The enchantments (Loyalty) are in the `minecraft:enchantments` component, not in the custom data. The NBT data reference is also kept up to date in the code: [CapsuleItem.java](https://github.com/Lythom/capsule/blob/dev-1.21.1/common/src/main/java/capsule/items/CapsuleItem.java).
+The enchantments (Loyalty) are in the `minecraft:enchantments` component, not in the custom data. The NBT data reference is also kept up to date in the code: [CapsuleItem.java](https://github.com/Lythom/capsule/blob/1.21.1/common/src/main/java/capsule/items/CapsuleItem.java).

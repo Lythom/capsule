@@ -60,7 +60,7 @@ Give a standard capsule with preloaded content.
 ```
 * **reward_name*** Required. Name of the structure reward to load from. The template is expected to be in `config/capsule/rewards`, use Tab for autocompletion.
 * **playerName** Optional. Name of the player who will receive the reward.
-* [since 9.0] **withLoyalty** Optional. Default: false. Add the Loyalty enchantment to the capsule if set to true.
+* [since 9.0] **withLoyalty** Optional. Default: false. Add the Loyalty enchantment to the capsule if set to true. Example: `/capsule giveLinked my_house Steve true`.
 * [since 7.0.91, also in the 1.16.5 and 1.18.2 builds, until 9.0] **withRecall** Optional. Default: false. Add the Recall enchantment to the capsule if set to true.
 
 ---
@@ -87,8 +87,7 @@ Tip: click on the result text in the chat to open the client log file and allow 
 /capsule exportHeldItem
 ```
 
-<!-- TODO owner: on 1.21.1 the printed command uses the pre-1.20.5 syntax (capsule:capsule{...}) and leaves out the other components (dyed color, enchantments): /give refuses it. See Modpack-making#exporting-the-item-nbt for the 1.21.1 syntax. -->
-[Minecraft 1.21.1] The printed data is the item's `minecraft:custom_data` component: see [Exporting the item NBT](Modpack-making#exporting-the-item-nbt) for the give command syntax.
+[since 9.0, Minecraft 1.21.1] The printed command uses the 1.21 data component syntax (`capsule:capsule[minecraft:custom_data={...},...]`) with the item's data components, ready for `/give`. See [Exporting the item NBT](Modpack-making#exporting-the-item-nbt).
 
 ---
 ## exportSeenBlock ##
@@ -99,6 +98,8 @@ Tip: click on the result text in the chat to open the client log file and allow 
 
 Print the /give command that would give an item that would spawn the exact block + block entity you are looking at. The block can be any block (not limited to capsules). Only works in single player (integrated server).  
 Tip: click on the result text in the chat to copy the command to the clipboard.
+
+[since 9.0, Minecraft 1.21.1] The block entity data is printed in the 1.21 data component syntax (`minecraft:block_entity_data`) instead of the old `BlockEntityTag`.
 
 ---
 ## fromHeldCapsule ##
@@ -111,11 +112,9 @@ A One Use Capsule linked to the created/updated reward template is given to the 
 **Warning**: If a template already exists with that name in the reward folder, it will be overwritten without confirmation.
 
 ```
-/capsule fromHeldCapsule <outputName>
+/capsule fromHeldCapsule [outputName]
 ```
-* **outputName** Name of the structure to create in the reward folder. Uppercase letters are lowercased, spaces become `_` and `:` becomes `-`. On older versions it is optional and defaults to the capsule label.
-
-<!-- TODO owner: in the 1.21.1 code outputName is required (no executes() without it), unlike older versions where it defaulted to the label. Restore the optional argument or keep this documentation. -->
+* **outputName** Optional, defaults to the capsule label. Name of the structure to create in the reward folder. Uppercase letters are lowercased, spaces become `_` and `:` becomes `-`. (Capsule 9.0.117 required it.)
 
 ---
 ## fromStructure ##

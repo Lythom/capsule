@@ -17,7 +17,7 @@ Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/m
 | 1.9.4, 1.9 | 1.1 | Forge | not updated anymore |
 | 1.8.9 | 1.0 | Forge | not updated anymore |
 
-The 1.20.1, 1.18.2 and 1.16.5 builds released with 9.0 get the 9.0 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5), but not the 9.0 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics).
+The 9.0 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5) reach the next Forge builds: 1.20.1 8.0.x, 1.18.2 6.0.x and 1.16.5 5.0.x. The 9.0 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics) stay 1.21.1 only. See [Backports](Changelog-1.21.1-9.0#backports-to-forge-1201-1182-and-1165).
 
 The pages of this wiki describe the latest version; features marked [since x.y] need at least that version.
 
@@ -42,6 +42,7 @@ The pages of this wiki describe the latest version; features marked [since x.y] 
 - Capsule templates are stored in `<world save>/structures/capsule` instead of `<world save>/capsules`.
 - No `/capsule downloadTemplate` command, and the preview only shows wireframes.
 - See the 1.12.2 showcases: [Builder's daydream update](Changelog-1.12.2-Builders-daydream-update) and [Bring your base! update](Changelog-1.12.2-Bring-your-base-update).
+- The 1.10.2 major update showcase is on imgur: https://imgur.com/a/xCWCX
 
 **1.9.4 and older**
 - Not compatible with later versions: capsules made before 1.10.2 cannot be loaded (deploy everything before updating). The 1.9.4 user guide was hosted on the old Bitbucket wiki, which is no longer available.

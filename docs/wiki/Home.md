@@ -38,9 +38,9 @@ This page is the player guide. Modpack makers and server owners: see [Modpack ma
 
 The first capsule you will have access to is made of wood. Its size is 1x1x1, which enables the "instant mode".
 
-> ![empty, stone button, empty - wood plank, chest, wood plank - empty, wood slab, empty](images/recipes/capsule-wood.png)
+> ![empty, stone button, empty - planks, chest, planks - empty, wooden slab, empty](images/recipes/capsule-wood.png)
 > 
-> "Wooden capsule" recipe
+> "Wooden capsule" recipe: a stone button, a chest between two planks and a wooden slab (any wood)
 
 It means you can capture any block (i.e. a chest or a crafting table) by right clicking it, then deploy and undeploy it instantly by right clicking again with the capsule in hand. No Capture Base is needed, and the preview of the deployment is always displayed.
 
@@ -53,8 +53,8 @@ Capsules work from the main hand only.
 
 To go bigger you need a Capture Base. This is where you can initialize a capsule with its first content.
 
-<!-- media: recipes/capture-base.png, JEI/REI screenshot of the current Capture Base recipe (the old image shows the pre-1.16.5 recipe) -->
-
+> ![cobblestone, compass, cobblestone - cobblestone, torch, cobblestone - cobblestone, dispenser, cobblestone](images/recipes/capture-base.png)
+>
 > "Capture Base" recipe: a compass on top, a torch in the middle and a dispenser at the bottom, surrounded by 6 cobblestone.
 
 [since 1.16.5-5.0.70] The Capture Base is directional, like a dispenser: it captures the region in front of its marked face. Place it while looking down to capture the region on top of it: place it somewhere just below what you want to capture, or in a free space and build on top of it. While you hold an empty capsule, the Capture Base lights up and a wireframe shows the region the capsule would capture.
@@ -72,6 +72,10 @@ Then you need to craft at least one empty capsule (the top item is a stone butto
 > ![capsule-diamond-recipe.png](images/recipes/capsule-diamond.png)
 >
 > "Diamond Empty Capsule" recipe, default capture size: 7x7x7
+>
+> ![capsule-netherite-recipe.png](images/recipes/capsule-netherite.png)
+>
+> [since 9.0] "Netherite Empty Capsule" recipe, default capture size: 13x13x13
 
 ### Capsule tiers
 
@@ -101,7 +105,8 @@ Every empty capsule is crafted the same way: a stone button on top, the material
 [Click to see the Initial capture demo    
 ![](images/demo/initial-capture-still.png)](images/demo/initial-capture.gif)
 
-<!-- media: capture-animation.gif, the 9.0 capture animation (blocks sucked into the capsule) -->
+[since 9.0] [Click to see the capture animation    
+![Blocks flying into the capsule](images/changelog-9.0/01-capture-animation.jpg)](images/changelog-9.0/01-capture-sucked-in.gif)
 
 Note that all the capsules can be dyed in a crafting grid with any dye (it changes the base color), and non-empty capsules can be labeled (sneak + right click).
 
@@ -118,7 +123,7 @@ Usage:
 
 [since 9.0] The full preview is translucent: you can see the terrain and blocks behind it. Water and stained glass in front of the preview still hide it.
 
-<!-- media: translucent-preview.png, the 9.0 translucent preview over terrain -->
+![Before 9.0 the preview was opaque (left), since 9.0 it is translucent (right)](images/changelog-9.0/02-preview-before-after.jpg)
 
 Deploying rules:
 
@@ -207,7 +212,7 @@ What blueprints can hold:
 
 **Prefab blueprints**: some ready-made blueprints (castle walls, gates and towers, a chicken cooker…) have their own crafting recipe, check your recipe viewer. The blocks of the structure used in the recipe are given back.
 
-<!-- media: blueprint.gif, charging a blueprint from a linked chest and deploying it -->
+![A blueprint charged from its linked chest and deployed twice](images/changelog-9.0/09-blueprint-linked-chest.gif)
 
 
 ## Reward, loot and starter capsules ##
@@ -235,9 +240,11 @@ Capsules respect the claim and protection mods: you can't capture or deploy wher
 * Captures leave the protected blocks in place and take the others.
 * A deploy (or a blueprint undo) touching a protected block is refused entirely, with the message "Capsules can't be used here, it might be a protected area."
 
+![A deploy refused inside another player's Flan claim](images/changelog-9.0/07-claim-refused.gif)
+
 [since 9.0] Supported claim mods:
 
-| Mod | 1.21.1 | Forge builds released with 9.0 |
+| Mod | 1.21.1 | Forge: next builds of 1.20.1 8.0.x, 1.18.2 6.0.x, 1.16.5 5.0.x |
 |---|---|---|
 | Open Parties and Claims | NeoForge, Fabric | 1.20.1, 1.18.2 |
 | Flan | NeoForge, Fabric | 1.20.1, 1.18.2, 1.16.5 |
@@ -251,7 +258,7 @@ FTB Chunks and Cadmus on Fabric are not supported yet (they don't implement Comm
 * When Capsule cannot check a claim mod that is loaded (its API changed in a newer version), every capture and deploy is refused with a chat message, until Capsule is updated. Please report it!
 * SecurityCraft blocks can only be captured by their owner.
 
-Before 9.0, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.0 that check is still made for every block of a capsule up to 31x31x31, and once per chunk column for bigger (overpowered) capsules.
+Before 9.0, Capsule checked each block as if the player placed a block there, which works with most protection mods on Forge. Since 9.0 that check is still made for every block of capsules up to the largest survival capsule (33x33x33 with the default config: a netherite capsule with every upgrade), and once per chunk column for bigger capsules, which can't be crafted (only operators and modpack makers give them).
 
 
 ## Recipe viewers ##
@@ -319,7 +326,7 @@ All the information is at [Modpack making](Modpack-making).
 
 **How to move my capsule from a world to a new one?**
 
-1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
+1. In the old world, hold the capsule (undeployed) in your main hand and use the command `/capsule fromHeldCapsule <someName>` (repeat for each capsule to move; without a name, the capsule label is used). It will create a file in `config/capsule/rewards` and give you a one-use capsule you can throw away.
 2. [If the new world is on the same server you can skip this step] Copy the file from `<oldServer>/config/capsule/rewards/<someName>.nbt` to `<newServer>/config/capsule/rewards/`.
 3. In the new world, use the command `/capsule giveLinked <someName>` (repeat for each capsule). It will create a standard capsule from the template.
 
