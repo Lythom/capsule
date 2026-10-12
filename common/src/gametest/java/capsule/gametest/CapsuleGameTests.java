@@ -46,7 +46,8 @@ public class CapsuleGameTests {
             TemplateCopyTests.class,
             ThrowDeployTests.class,
             ThrowQueryTests.class,
-            UndeployDelayTests.class
+            UndeployDelayTests.class,
+            VoidTests.class
     );
 
     /**

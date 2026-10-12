@@ -479,6 +479,35 @@ public class Capsule {
     }
 
     /**
+     * A capsule falling out of the world goes back to its thrower, or to the level spawn when the thrower is offline.
+     */
+    public static void rescueFromVoid(ItemEntity itemEntity) {
+        ServerLevel level = (ServerLevel) itemEntity.getCommandSenderWorld();
+        ItemStack capsule = itemEntity.getItem();
+        CapsuleItem.revertStateFromActivated(capsule);
+        NBTHelper.updateTag(capsule, tag -> tag.remove("deployAt"));
+        Player owner = onlinePlayer(level.getServer(), thrower(itemEntity));
+        if (owner != null) {
+            owner.getInventory().placeItemBackInInventory(capsule.copy());
+            itemEntity.discard();
+        } else {
+            BlockPos spawn = level.getSharedSpawnPos();
+            itemEntity.setDeltaMovement(Vec3.ZERO);
+            itemEntity.teleportTo(spawn.getX() + 0.5, spawn.getY() + 1, spawn.getZ() + 0.5);
+        }
+    }
+
+    @Nullable
+    private static Player onlinePlayer(MinecraftServer server, @Nullable UUID playerId) {
+        if (playerId == null) return null;
+        for (ServerLevel level : server.getAllLevels()) {
+            Player player = level.getPlayerByUUID(playerId);
+            if (player != null) return player;
+        }
+        return null;
+    }
+
+    /**
      * The player who threw the item, also when they are offline or in another level, unlike ItemEntity.getOwner.
      */
     @Nullable

@@ -1,5 +1,9 @@
 # Changelog
 
+**1.21.1-9.2.x : API for mods and modpacks**
+
+- New: a capsule falling out of the world goes back to the inventory of the player who threw it, or to the level spawn when that player is offline
+
 **1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**
 
 - New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build

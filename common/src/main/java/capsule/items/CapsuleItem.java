@@ -731,6 +731,11 @@ public class CapsuleItem extends Item {
     public boolean onEntityItemUpdate(ItemStack capsule, ItemEntity entity) {
         if (capsule == null) return false;
 
+        if (!entity.getCommandSenderWorld().isClientSide && entity.getY() < entity.getCommandSenderWorld().getMinBuildHeight()) {
+            Capsule.rescueFromVoid(entity);
+            return true;
+        }
+
         // Deploying capsule content on collision with a block
         if (!entity.getCommandSenderWorld().isClientSide
                 && entity.tickCount > 2 // avoid immediate collision
