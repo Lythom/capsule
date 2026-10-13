@@ -22,7 +22,15 @@ public class ThrownCapsules {
     public static void onEntityLoad(Entity entity, Level level) {
         if (level instanceof ServerLevel && entity instanceof ItemEntity item && item.getItem().getItem() instanceof CapsuleItem) {
             BY_LEVEL.computeIfAbsent(level, l -> new LinkedHashSet<>()).add(item);
+            keepIfDeployed(item);
         }
+    }
+
+    /**
+     * A deployed capsule lying on the ground never despawns: its content would be left without a capsule.
+     */
+    public static void keepIfDeployed(ItemEntity item) {
+        if (CapsuleItem.hasState(item.getItem(), CapsuleItem.CapsuleState.DEPLOYED)) item.setUnlimitedLifetime();
     }
 
     public static void onEntityUnload(Entity entity, Level level) {

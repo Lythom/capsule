@@ -5,6 +5,7 @@ import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
+import capsule.items.ThrownCapsules;
 import capsule.loot.CapsuleLootEntry;
 import capsule.network.CapsuleUndeployNotifToClient;
 import capsule.platform.ContainerItemSource;
@@ -445,6 +446,7 @@ public class Capsule {
             if (deployed) {
                 itemWorld.playSound(null, itemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
                 showDeployParticules(itemWorld, itemEntity.blockPosition(), size);
+                ThrownCapsules.keepIfDeployed(itemEntity);
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {
                 itemEntity.remove(Entity.RemovalReason.DISCARDED);

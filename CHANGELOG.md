@@ -3,6 +3,7 @@
 **1.21.1-9.2.x : API for mods and modpacks**
 
 - New: a capsule falling out of the world goes back to the inventory of the player who threw it, or to the level spawn when that player is offline
+- A deployed capsule lying on the ground never despawns
 
 **1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**
 

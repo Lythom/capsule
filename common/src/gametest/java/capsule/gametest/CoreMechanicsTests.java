@@ -231,4 +231,16 @@ public class CoreMechanicsTests {
         assertTrue(helper, boats.size() == 2 && boats.stream().allMatch(b -> b.getItem(0).is(Items.DIAMOND)), "the boats keep their diamonds: " + boats);
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void deployedCapsuleOnTheGroundNeverDespawns(GameTestHelper helper) {
+        helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
+        ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
+        deploy(helper, capsule, new BlockPos(4, 0, 4), null);
+        Vec3 pos = helper.absoluteVec(new Vec3(6.5, 1, 6.5));
+        ItemEntity entity = new ItemEntity(helper.getLevel(), pos.x, pos.y, pos.z, capsule, 0, 0, 0);
+        helper.getLevel().addFreshEntity(entity);
+
+        helper.succeedWhen(() -> assertTrue(helper, entity.getAge() < 0, "a deployed capsule on the ground should never despawn, age " + entity.getAge()));
+    }
 }
