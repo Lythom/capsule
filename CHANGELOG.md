@@ -3,6 +3,8 @@
 **1.21.1-9.2.x : API for mods and modpacks**
 
 - New: a capsule falling out of the world goes back to the inventory of the player who threw it, or to the level spawn when that player is offline
+- New: `capsule.api.CapsuleApi` captures, deploys and undeploys capsules from code, positioned by their anchor like a Capture Base, with a rotation and the player that claim mods check
+- New: the world remembers where reusable capsules are deployed (`<world save>/data/capsuleDeployments.dat`). Mods list the deployments in an area and tell which blocks a deployment placed. Capsules deployed before this version are not listed
 - A deployed capsule lying on the ground never despawns
 
 **1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**

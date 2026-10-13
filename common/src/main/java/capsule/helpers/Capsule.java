@@ -14,6 +14,7 @@ import capsule.platform.Services;
 import capsule.plugins.claims.Claims;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import capsule.structure.Deployments;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -103,6 +104,7 @@ public class Capsule {
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, structureName, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
+                Deployments.get(world.getServer()).remove(structureName);
                 CapsuleItem.setState(capsule, CapsuleState.LINKED);
                 CapsuleItem.cleanDeploymentTags(capsule);
                 CapsuleItem.setCanRotate(capsule, template.canRotate());
@@ -154,6 +156,10 @@ public class Capsule {
                     // remove the content from the structure block to prevent dupe using recovery capsule
                     clearTemplate(structureName, world.getServer());
                 }
+            }
+            if (!CapsuleItem.isOneUse(capsule) && !CapsuleItem.isBlueprint(capsule)) {
+                Deployments.get(world.getServer()).add(new Deployments.Deployment(
+                        structureName, world.dimension(), dest, CapsuleItem.getSize(capsule)));
             }
 
             didSpawn = true;

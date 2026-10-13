@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 public class CapsuleGameTests {
 
     public static final List<Class<?>> TEST_CLASSES = List.of(
+            ApiTests.class,
             BlueprintCostTests.class,
             BlueprintCraftingTests.class,
             BlueprintWhitelistTests.class,

@@ -1,10 +1,13 @@
 package capsule.recipes;
 
+import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
+import capsule.structure.Deployments;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -105,9 +108,21 @@ public class ClearCapsuleRecipe extends CustomRecipe {
                 ItemStack copy = itemstack.copy();
                 CapsuleItem.setOneUse(copy);
                 nonnulllist.set(i, copy);
+            } else if (itemstack.getItem() instanceof CapsuleItem) {
+                forgetDeployment(itemstack);
             }
         }
 
         return nonnulllist;
+    }
+
+    /**
+     * The content of a deployed capsule stays in the world for good. Only the server thread has the registry.
+     */
+    private static void forgetDeployment(ItemStack deployedCapsule) {
+        MinecraftServer server = CapsuleMod.server;
+        if (server != null && server.isSameThread()) {
+            Deployments.get(server).remove(CapsuleItem.getStructureName(deployedCapsule));
+        }
     }
 }
