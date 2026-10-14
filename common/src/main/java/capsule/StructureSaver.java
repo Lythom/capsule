@@ -1,6 +1,7 @@
 package capsule;
 
 import capsule.blocks.BlockEntityCapture;
+import capsule.helpers.BlockParts;
 import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.plugins.claims.Claims;
@@ -103,6 +104,13 @@ public class StructureSaver {
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
                 excluded, outCapturedEntities);
+        BlockPos cut = BlockParts.firstCut(worldserver, transferedPositions);
+        if (cut != null) {
+            if (player != null) {
+                player.sendSystemMessage(Component.translatable("capsule.error.cutsBlock", worldserver.getBlockState(cut).getBlock().getName(), cut.toShortString()));
+            }
+            return null;
+        }
         Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
         if (denied == null) return null;
         template.removeOccupiedPositions();

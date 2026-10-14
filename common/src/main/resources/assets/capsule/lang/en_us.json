@@ -29,6 +29,7 @@
     "capsule.error.technicalError": "A technical error occured while using the Capsule Mod. Please check the server logs.",
     "capsule.error.templateNotFound": "Error: the capsule template file %s was not found.",
     "capsule.error.notAllowed": "Capsules can't be used here, it might be a protected area.",
+    "capsule.error.cutsBlock": "Can't capture: the capsule would cut %s in two at %s. Take the whole block or none of it.",
     "capsule.error.claimCheckFailed": "Capsule cannot check the claims of %s: captures and deploys are refused. Please report this incompatibility.",
     "capsule.error.blueprintCreationError": "An error occured during blueprint template creation. This blueprint might not work.",
     "capsule.error.blueprintSourceNotFound": "Blueprint not created: the template %s was not found or is empty. Check the server log for the searched paths.",

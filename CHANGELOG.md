@@ -6,6 +6,7 @@
 - New: `capsule.api.CapsuleApi` captures, deploys and undeploys capsules from code, positioned by their anchor like a Capture Base, with a rotation and the player that claim mods check
 - New: the world remembers where reusable capsules are deployed (`<world save>/data/capsuleDeployments.dat`). Mods list the deployments in an area and tell which blocks a deployment placed. Capsules deployed before this version are not listed
 - A deployed capsule lying on the ground never despawns
+- A capture never cuts a block of two parts in two: when the cube holds one half of a door, a bed, a tall plant or a two-tall modded machine and not the other, the capture is refused with a message and takes nothing. Such a capture used to destroy the other half without a drop and keep a half that vanished on deploy
 
 **1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**
 
