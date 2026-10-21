@@ -32,11 +32,11 @@ the release jar in real servers and clients. They are never published: CI publis
 | `./gradlew build` | compile, jars, and `check` of every project: loader import check, unit tests and GameTests of both loaders | non-zero if anything fails |
 | `./gradlew check --continue` | every test layer, reporting all of them even if one fails | |
 | `./gradlew :neoforge:test` / `:fabric:test` | JUnit tests of `common/src/test/java` on one loader | non-zero if a test fails |
-| `./gradlew :neoforge:runGameTestServer` | the 109 NeoForge GameTests (107 common + 2 SecurityCraft) on a headless server | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (117) | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (116) | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer` | the 107 common GameTests on a headless Fabric server | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (111) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer` | the 110 NeoForge GameTests (108 common + 2 SecurityCraft) on a headless server | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (118) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (117) | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer` | the 108 common GameTests on a headless Fabric server | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (112) | number of failed required tests |
 | `... -PmodCompatLatest` | with `-PmodCompat` or `-Pincompat`: the newest Modrinth versions of their mods instead of the pinned ones | |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
 | `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
@@ -83,8 +83,8 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   Protection API with it, so the claim tests see what the generic probe asks.
 - Expected output, at the end of the console log:
   ```
-  [Server thread/INFO] [minecraft/GameTestServer]: All 109 required tests passed :)      (NeoForge)
-  [Server thread/INFO] (Minecraft) All 107 required tests passed :)                      (Fabric)
+  [Server thread/INFO] [minecraft/GameTestServer]: All 110 required tests passed :)      (NeoForge)
+  [Server thread/INFO] (Minecraft) All 108 required tests passed :)                      (Fabric)
   ```
   On failure each test is reported with its position and message, then the summary:
   ```
@@ -147,7 +147,7 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ```
   ./gradlew :neoforge:runGameTestServer -PmodCompat
   ...
-  [Server thread/INFO] [minecraft/GameTestServer]: All 117 required tests passed :)
+  [Server thread/INFO] [minecraft/GameTestServer]: All 118 required tests passed :)
   ```
 - **Newest versions**: `-PmodCompatLatest` replaces the pinned version of every mod of `-PmodCompat` and `-Pincompat`
   with its newest Modrinth version for the loader and Minecraft version (`modrinth` of
@@ -205,7 +205,7 @@ with 1.0.41). IndustrialCraft 2 and Blood Magic have no NeoForge 1.21.1 version 
 ```
 ./gradlew :neoforge:runGameTestServer -Pincompat
 ...
-[Server thread/INFO] [minecraft/GameTestServer]: All 116 required tests passed :)
+[Server thread/INFO] [minecraft/GameTestServer]: All 117 required tests passed :)
 ```
 
 `validate-all.sh --incompat` runs them in the dev runtime and on the NeoForge release jar (`EXTRA_MODS`).
@@ -340,11 +340,11 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
 - Expected output: the same summary as `runGameTestServer`, then `OK`:
   ```
   == neoforge: Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar + Capsule-neoforge-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.dMMlJn
-  [11:06:18] [Server thread/INFO] [minecraft/GameTestServer]: All 109 required tests passed :)
-  OK: All 109 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
+  [11:06:18] [Server thread/INFO] [minecraft/GameTestServer]: All 110 required tests passed :)
+  OK: All 110 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
   == fabric: Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar + Capsule-fabric-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.eYuJF4
-  [11:07:27] [Server thread/INFO]: All 107 required tests passed :)
-  OK: All 107 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
+  [11:07:27] [Server thread/INFO]: All 108 required tests passed :)
+  OK: All 108 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   ```
 - Exit code 0 when every jar passes. A failure prints the failed tests and keeps the server directory:
   ```
@@ -400,12 +400,12 @@ scripts/validate-all.sh --all      # everything
   RESULT STEP                                         TIME  DETAIL
   PASS   build: jars and loader import check         0m17s  BUILD SUCCESSFUL
   PASS   unit tests (both loaders)                   0m20s  BUILD SUCCESSFUL
-  PASS   GameTests NeoForge                          0m34s  All 109 required tests passed
-  PASS   GameTests Fabric                            0m31s  All 107 required tests passed
-  PASS   mod-compat GameTests NeoForge               0m41s  All 117 required tests passed
-  PASS   mod-compat GameTests Fabric                 0m31s  All 111 required tests passed
-  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 109 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
-  PASS   GameTests on the Fabric release jar         0m27s  OK: All 107 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
+  PASS   GameTests NeoForge                          0m34s  All 110 required tests passed
+  PASS   GameTests Fabric                            0m31s  All 108 required tests passed
+  PASS   mod-compat GameTests NeoForge               0m41s  All 118 required tests passed
+  PASS   mod-compat GameTests Fabric                 0m31s  All 112 required tests passed
+  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 110 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
+  PASS   GameTests on the Fabric release jar         0m27s  OK: All 108 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   PASS   Fabric release jar with the claim mods      0m28s  OK: All 99 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
   PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)
   PASS   Fabric release jar: failure reported        0m28s  OK: the failing test was reported (exit status 1)

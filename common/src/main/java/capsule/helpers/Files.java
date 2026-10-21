@@ -1,6 +1,7 @@
 package capsule.helpers;
 
 import capsule.Config;
+import capsule.structure.AbsolutePositions;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -88,6 +89,20 @@ public class Files {
             }
         }
         return blueprintWhitelist;
+    }
+
+    /**
+     * The rules of the optional config/capsule/position_rules.json, see AbsolutePositions.parseRules.
+     */
+    public static Map<String, AbsolutePositions.Rule> readPositionRules(File capsuleConfigDir) {
+        File rulesFile = new File(capsuleConfigDir, "position_rules.json");
+        if (!rulesFile.exists()) return Map.of();
+        try (final InputStream stream = new FileInputStream(rulesFile)) {
+            return AbsolutePositions.parseRules(GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonArray.class));
+        } catch (Exception e) {
+            LOGGER.error("Couldn't read " + rulesFile.getPath() + ", the default position detection applies to every block", e);
+            return Map.of();
+        }
     }
 
     public static ArrayList<String> populateStarters(File capsuleConfigDir, String starterTemplatesPath, ResourceManager ressourceManager) {

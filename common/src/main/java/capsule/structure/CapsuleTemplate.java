@@ -66,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -481,7 +482,7 @@ public class CapsuleTemplate {
                     JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.state().getBlock());
                     if (allowedNBT != null) {
                         nbt = b.nbt().copy();
-                        nbt.getAllKeys().removeIf(key -> !allowedNBT.has(key));
+                        nbt.getAllKeys().removeIf(key -> !allowedNBT.has(key) && !key.equals(AbsolutePositions.RELATIVE_PATHS));
                     } else {
                         nbt = new CompoundTag();
                     }
@@ -564,6 +565,7 @@ public class CapsuleTemplate {
             BlockPos blockpos1 = new BlockPos(Math.min(startPos.getX(), blockpos.getX()), Math.min(startPos.getY(), blockpos.getY()), Math.min(startPos.getZ(), blockpos.getZ()));
             BlockPos blockpos2 = new BlockPos(Math.max(startPos.getX(), blockpos.getX()), Math.max(startPos.getY(), blockpos.getY()), Math.max(startPos.getZ(), blockpos.getZ()));
             this.size = endPos;
+            Set<BlockPos> leftInPlace = new HashSet<>();
 
             for (BlockPos blockpos3 : BlockPos.betweenClosed(blockpos1, blockpos2)) {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);
@@ -589,10 +591,20 @@ public class CapsuleTemplate {
                     addToLists(template$blockinfo, list, list1, list2);
                     // save a copy
                     transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
+                } else if (!blockstate.isAir()) {
+                    leftInPlace.add(blockpos3.immutable());
                 }
             }
 
             List<StructureTemplate.StructureBlockInfo> list3 = buildInfoList(list, list1, list2);
+            BoundingBox captured = BoundingBox.fromCorners(blockpos1, blockpos2);
+            String dimension = worldIn.dimension().location().toString();
+            for (StructureTemplate.StructureBlockInfo info : list3) {
+                if (info.nbt() != null) {
+                    AbsolutePositions.toRelative(info.nbt(), Config.getPositionRule(info.state().getBlock()), blockpos1,
+                            pos -> captured.isInside(pos) && !leftInPlace.contains(pos), dimension);
+                }
+            }
             this.palettes.clear();
             this.palettes.add(new CapsuleTemplate.Palette(list3));
 
@@ -697,6 +709,7 @@ public class CapsuleTemplate {
                             BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
                             if (blockentity1 != null) {
                                 CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt().copy();
+                                AbsolutePositions.toAbsolute(templateTag, relative -> deployedPos(relative, pos, placementIn), worldIn.getLevel().dimension().location().toString());
                                 templateTag.putInt("x", blockpos.getX());
                                 templateTag.putInt("y", blockpos.getY());
                                 templateTag.putInt("z", blockpos.getZ());
@@ -822,6 +835,13 @@ public class CapsuleTemplate {
             }
         }
         return out;
+    }
+
+    /**
+     * World position of a template position, once the template is deployed at dest.
+     */
+    public BlockPos deployedPos(BlockPos templatePos, BlockPos dest, StructurePlaceSettings placement) {
+        return calculateRelativePosition(placement, templatePos).offset(dest).offset(recenterRotation((size.getX() - 1) / 2, placement));
     }
 
     public static BlockPos recenterRotation(int extendSize, StructurePlaceSettings placement) {

@@ -5,6 +5,7 @@ import capsule.helpers.Files;
 import capsule.helpers.Serialization;
 import capsule.platform.ConfigSpecBuilder;
 import capsule.platform.Services;
+import capsule.structure.AbsolutePositions;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -68,6 +69,7 @@ public class Config {
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static List<String> prefabsTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
+    public static Map<String, AbsolutePositions.Rule> positionRules = Map.of();
     public static List<Block> excludedBlocks;
     public static List<Block> opExcludedBlocks;
     public static List<TagKey<Block>> excludedBlockTags = List.of();
@@ -141,6 +143,7 @@ public class Config {
         ResourceManager ressourceManager = server.getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
+        Config.positionRules = Files.readPositionRules(Config.getCapsuleConfigDir().toFile());
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
         Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath, ressourceManager);
     }
@@ -283,6 +286,13 @@ public class Config {
 
     public static JsonObject getBlueprintAllowedNBT(Block b) {
         return blueprintWhitelist.get(BuiltInRegistries.BLOCK.getKey(b).toString());
+    }
+
+    /**
+     * Which values of the block entity NBT of b are absolute positions, see AbsolutePositions.
+     */
+    public static AbsolutePositions.Rule getPositionRule(Block b) {
+        return AbsolutePositions.ruleFor(positionRules, BuiltInRegistries.BLOCK.getKey(b));
     }
 
     /**
