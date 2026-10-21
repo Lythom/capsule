@@ -100,7 +100,7 @@ public class Files {
         try (final InputStream stream = new FileInputStream(rulesFile)) {
             return AbsolutePositions.parseRules(GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonArray.class));
         } catch (Exception e) {
-            LOGGER.error("Couldn't read " + rulesFile.getPath() + ", the default position detection applies to every block", e);
+            LOGGER.error("Couldn't read " + rulesFile.getPath() + ", only the default position rules apply", e);
             return Map.of();
         }
     }

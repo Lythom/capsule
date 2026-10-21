@@ -69,7 +69,7 @@ public class Config {
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static List<String> prefabsTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
-    public static Map<String, AbsolutePositions.Rule> positionRules = Map.of();
+    public static Map<String, AbsolutePositions.Rule> positionRules = AbsolutePositions.DEFAULT_RULES;
     public static List<Block> excludedBlocks;
     public static List<Block> opExcludedBlocks;
     public static List<TagKey<Block>> excludedBlockTags = List.of();
@@ -143,7 +143,9 @@ public class Config {
         ResourceManager ressourceManager = server.getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
-        Config.positionRules = Files.readPositionRules(Config.getCapsuleConfigDir().toFile());
+        Map<String, AbsolutePositions.Rule> positionRules = new HashMap<>(AbsolutePositions.DEFAULT_RULES);
+        positionRules.putAll(Files.readPositionRules(Config.getCapsuleConfigDir().toFile()));
+        Config.positionRules = positionRules;
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
         Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath, ressourceManager);
     }
@@ -289,10 +291,11 @@ public class Config {
     }
 
     /**
-     * Which values of the block entity NBT of b are absolute positions, see AbsolutePositions.
+     * Which values of the NBT of a block entity or an entity are absolute positions, by block or entity type id, see
+     * AbsolutePositions.
      */
-    public static AbsolutePositions.Rule getPositionRule(Block b) {
-        return AbsolutePositions.ruleFor(positionRules, BuiltInRegistries.BLOCK.getKey(b));
+    public static AbsolutePositions.Rule getPositionRule(ResourceLocation id) {
+        return AbsolutePositions.ruleFor(positionRules, id);
     }
 
     /**

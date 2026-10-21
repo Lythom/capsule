@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -182,6 +183,7 @@ public class CapsuleTemplate {
             BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
             if (boundsIn == null || boundsIn.isInside(blockpos)) {
                 CompoundTag compoundnbt = template$entityinfo.nbt.copy();
+                AbsolutePositions.toAbsolute(compoundnbt, relative -> deployedPos(relative, offsetPos, placementIn), worldIn.getLevel().dimension().location().toString());
                 Vec3 vector3d1 = template$entityinfo.pos; // FORGE: Position will have already been transformed by processEntityInfos
                 ListTag listnbt = new ListTag();
                 listnbt.add(DoubleTag.valueOf(vector3d1.x));
@@ -597,18 +599,23 @@ public class CapsuleTemplate {
             }
 
             List<StructureTemplate.StructureBlockInfo> list3 = buildInfoList(list, list1, list2);
-            BoundingBox captured = BoundingBox.fromCorners(blockpos1, blockpos2);
-            String dimension = worldIn.dimension().location().toString();
-            for (StructureTemplate.StructureBlockInfo info : list3) {
-                if (info.nbt() != null) {
-                    AbsolutePositions.toRelative(info.nbt(), Config.getPositionRule(info.state().getBlock()), blockpos1,
-                            pos -> captured.isInside(pos) && !leftInPlace.contains(pos), dimension);
-                }
-            }
             this.palettes.clear();
             this.palettes.add(new CapsuleTemplate.Palette(list3));
 
             List<Entity> capturedEntities = this.snapshotNonLivingEntitiesFromWorld(worldIn, blockpos1, blockpos2.offset(1, 1, 1));
+
+            BoundingBox captured = BoundingBox.fromCorners(blockpos1, blockpos2);
+            Predicate<BlockPos> moves = pos -> captured.isInside(pos) && !leftInPlace.contains(pos);
+            String dimension = worldIn.dimension().location().toString();
+            for (StructureTemplate.StructureBlockInfo info : list3) {
+                if (info.nbt() != null) {
+                    AbsolutePositions.toRelative(info.nbt(), Config.getPositionRule(BuiltInRegistries.BLOCK.getKey(info.state().getBlock())), blockpos1, moves, dimension);
+                }
+            }
+            for (StructureTemplate.StructureEntityInfo info : this.entities) {
+                ResourceLocation type = ResourceLocation.tryParse(info.nbt.getString("id"));
+                if (type != null) AbsolutePositions.toRelative(info.nbt, Config.getPositionRule(type), blockpos1, moves, dimension);
+            }
             if (outCapturedEntities != null && capturedEntities != null) {
                 outCapturedEntities.addAll(capturedEntities);
             }

@@ -3,12 +3,15 @@ package capsule.gametest;
 import capsule.items.CapsuleItem;
 import capsule.structure.AbsolutePositions;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.LodestoneTracker;
@@ -18,7 +21,9 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.phys.AABB;
 
+import java.util.List;
 import java.util.Optional;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
@@ -43,6 +48,9 @@ public class AbsolutePositionTests {
         ChestBlockEntity chest = helper.getBlockEntity(CHEST);
         chest.setItem(0, compass(helper, LODESTONE));
         chest.setItem(1, compass(helper, OUTSIDE));
+        ItemFrame frame = new ItemFrame(helper.getLevel(), helper.absolutePos(LODESTONE.above()), Direction.UP);
+        frame.setItem(compass(helper, LODESTONE));
+        helper.getLevel().addFreshEntity(frame);
 
         ItemStack capsule = capture(helper, HIVE, 3);
         CompoundTag captured = template(helper, capsule).getPalette().stream()
@@ -62,6 +70,9 @@ public class AbsolutePositionTests {
         ChestBlockEntity deployedChest = (ChestBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(chestPos));
         assertTrue(helper, target(deployedChest.getItem(0)).equals(helper.absolutePos(lodestone)), "the compass should point to the deployed lodestone: " + deployedChest.getItem(0));
         assertTrue(helper, target(deployedChest.getItem(1)).equals(helper.absolutePos(OUTSIDE)), "a compass pointing outside the capsule keeps its target: " + deployedChest.getItem(1));
+        List<ItemFrame> frames = helper.getLevel().getEntities(EntityType.ITEM_FRAME, new AABB(helper.absolutePos(new BlockPos(5, 1, 5))).inflate(4), f -> true);
+        assertTrue(helper, frames.size() == 1, "one item frame should be deployed, got " + frames.size());
+        assertTrue(helper, target(frames.get(0).getItem()).equals(helper.absolutePos(lodestone)), "the compass of the item frame should point to the deployed lodestone: " + frames.get(0).getItem());
         helper.succeed();
     }
 

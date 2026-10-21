@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongArrayTag;
-import net.minecraft.nbt.LongTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Mirror;
@@ -148,26 +147,65 @@ class AbsolutePositionsTest {
     }
 
     @Test
-    void longsArePositionsOnlyUnderTheKeysOfARule() {
+    void longsArePositionsOnlyUnderTheLongsKeysOfARule() {
         long inside = ORIGIN.offset(1, 2, 3).asLong();
-        CompoundTag labels = new CompoundTag();
-        labels.put("a", new LongArrayTag(new long[]{inside, new BlockPos(0, -60, 0).asLong()}));
-        labels.putLong("b", inside);
+        long outside = new BlockPos(0, -60, 0).asLong();
         CompoundTag nbt = new CompoundTag();
-        nbt.put("labels", labels);
-        nbt.putLong("LastUpdate", inside);
+        nbt.putLong("controllerPos", inside);
+        nbt.put("pendingPositions", new LongArrayTag(new long[]{inside, outside}));
+        ListTag storageKeys = new ListTag();
+        CompoundTag storageKey = new CompoundTag();
+        storageKey.putLong("position", inside);
+        storageKeys.add(storageKey);
+        nbt.put("storageKeys", storageKeys);
+        nbt.putLong("currentDirection", inside);
         CompoundTag captured = nbt.copy();
 
         AbsolutePositions.toRelative(captured, Rule.DEFAULT, ORIGIN, INSIDE, OVERWORLD);
         assertEquals(nbt, captured);
 
-        AbsolutePositions.toRelative(captured, new Rule(EnumSet.of(Format.LONG), Set.of("labels")), ORIGIN, INSIDE, OVERWORLD);
+        AbsolutePositions.toRelative(captured, new Rule(Rule.DEFAULT.formats(), Set.of("controllerPos", "pendingPositions", "storageKeys"), Set.of()), ORIGIN, INSIDE, OVERWORLD);
         deploy(captured, new StructurePlaceSettings(), OVERWORLD);
 
         long deployed = DEST.offset(1, 2, 3).asLong();
-        assertEquals(new LongArrayTag(new long[]{deployed, new BlockPos(0, -60, 0).asLong()}), captured.getCompound("labels").get("a"));
-        assertEquals(LongTag.valueOf(deployed), captured.getCompound("labels").get("b"));
-        assertEquals(inside, captured.getLong("LastUpdate"));
+        assertEquals(deployed, captured.getLong("controllerPos"));
+        assertEquals(new LongArrayTag(new long[]{deployed, outside}), captured.get("pendingPositions"));
+        assertEquals(deployed, captured.getList("storageKeys", 10).getCompound(0).getLong("position"));
+        assertEquals(inside, captured.getLong("currentDirection"));
+    }
+
+    @Test
+    void selfRepairingMultiblocksKeepTheirControllerAndLastKnownPos() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("LastKnownPos", NbtUtils.writeBlockPos(ORIGIN.offset(1, 0, 1)));
+        nbt.put("Controller", NbtUtils.writeBlockPos(ORIGIN));
+        CompoundTag before = nbt.copy();
+
+        AbsolutePositions.toRelative(nbt, Rule.DEFAULT, ORIGIN, INSIDE, OVERWORLD);
+
+        assertEquals(before, nbt);
+    }
+
+    @Test
+    void exceptKeysAreNeverPositions() {
+        // Oritech MultiblockMachineController: offsets relative to the machine, inside a capture spanning y = 0
+        BlockPos origin = new BlockPos(-2, 0, -2);
+        CompoundTag core = new CompoundTag();
+        core.putInt("x", 1);
+        core.putInt("y", 0);
+        core.putInt("z", -1);
+        ListTag cores = new ListTag();
+        cores.add(core);
+        CompoundTag nbt = new CompoundTag();
+        nbt.put("connectedCores", cores);
+        CompoundTag captured = nbt.copy();
+        Predicate<BlockPos> inside = BoundingBox.fromCorners(origin, origin.offset(SIZE - 1, SIZE - 1, SIZE - 1))::isInside;
+
+        AbsolutePositions.toRelative(captured, AbsolutePositions.ruleFor(AbsolutePositions.DEFAULT_RULES, ResourceLocation.parse("oritech:pulverizer_block")), origin, inside, OVERWORLD);
+        assertEquals(nbt, captured);
+
+        AbsolutePositions.toRelative(captured, Rule.DEFAULT, origin, inside, OVERWORLD);
+        assertTrue(captured.contains(AbsolutePositions.RELATIVE_PATHS), "without the rule, the offset is taken for a position");
     }
 
     @Test
@@ -199,16 +237,16 @@ class AbsolutePositionsTest {
     void rulesApplyByBlockThenByNamespace() {
         Map<String, Rule> rules = AbsolutePositions.parseRules(JsonParser.parseString("""
                 [
-                  {"block": "sfm:manager", "formats": ["long"], "under": ["sfm:labels"]},
+                  {"block": "somemod:teleporter", "longs": ["target"], "except": ["offset"]},
                   {"block": "othermod:", "formats": []},
                   {"block": "broken:block", "formats": ["float"]},
-                  {"block": "somemod:teleporter", "under": ["target"]}
+                  {"block": "xyzmod:", "formats": ["xyz"]}
                 ]""").getAsJsonArray());
 
-        assertEquals(new Rule(EnumSet.of(Format.LONG), Set.of("sfm:labels")), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("sfm:manager")));
-        assertEquals(Rule.DEFAULT, AbsolutePositions.ruleFor(rules, ResourceLocation.parse("sfm:cable")));
-        assertEquals(new Rule(EnumSet.noneOf(Format.class), Set.of()), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("othermod:anything")));
-        assertEquals(new Rule(Rule.DEFAULT.formats(), Set.of("target")), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("somemod:teleporter")));
+        assertEquals(new Rule(Rule.DEFAULT.formats(), Set.of("target"), Set.of("offset")), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("somemod:teleporter")));
+        assertEquals(Rule.DEFAULT, AbsolutePositions.ruleFor(rules, ResourceLocation.parse("somemod:cable")));
+        assertEquals(new Rule(EnumSet.noneOf(Format.class), Set.of(), Set.of()), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("othermod:anything")));
+        assertEquals(new Rule(EnumSet.of(Format.XYZ), Set.of(), Set.of()), AbsolutePositions.ruleFor(rules, ResourceLocation.parse("xyzmod:anything")));
         assertEquals(Rule.DEFAULT, AbsolutePositions.ruleFor(rules, ResourceLocation.parse("broken:block")));
     }
 }

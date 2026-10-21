@@ -30,14 +30,16 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
- * Absolute world positions stored in block entity NBT: a position of a block that moves with the capsule is stored
- * relative to the template origin at capture, and becomes absolute again at deployment. Other positions are kept.
+ * Absolute world positions stored in block entity and entity NBT: a position of a block that moves with the capsule
+ * is stored relative to the template origin at capture, and becomes absolute again at deployment. Other positions are
+ * kept.
  */
 public class AbsolutePositions {
     protected static final Logger LOGGER = LogManager.getLogger(AbsolutePositions.class);
 
     /**
-     * Key of a block entity NBT in a template: the paths of the positions stored relative to the template origin.
+     * Key of a block entity or entity NBT in a template: the paths of the positions stored relative to the template
+     * origin.
      */
     public static final String RELATIVE_PATHS = "capsule:relative_positions";
     /**
@@ -45,25 +47,41 @@ public class AbsolutePositions {
      */
     private static final String DIMENSION = "dimension";
     private static final List<List<String>> XYZ_KEYS = List.of(List.of("x", "y", "z"), List.of("X", "Y", "Z"));
+    /**
+     * Create multiblocks (fluid tanks, item vaults) and the blocks copying them (TFMG vats, blast stoves, fireboxes)
+     * rebuild themselves when LastKnownPos differs from their position: a tag with LastKnownPos keeps these keys.
+     */
+    private static final Set<String> SELF_REPAIRING_MULTIBLOCK_KEYS = Set.of("LastKnownPos", "Controller");
 
     public enum Format {
         /** [I; x, y, z], written by NbtUtils.writeBlockPos and BlockPos.CODEC */
         INT_ARRAY,
         /** a compound of the int keys x, y, z or X, Y, Z */
-        XYZ,
-        /** BlockPos.asLong, alone or as an element of a long array */
-        LONG
+        XYZ
     }
 
     /**
-     * The values of a block entity NBT that are positions: the values of these formats, under one of these keys when
-     * some are given, anywhere otherwise.
+     * The values of a NBT that are positions: the values of these formats anywhere, the longs (BlockPos.asLong, alone,
+     * in a list or in a long array) under one of the longs keys, never the values under one of the except keys.
      */
-    public record Rule(Set<Format> formats, Set<String> under) {
-        public static final Rule DEFAULT = new Rule(EnumSet.of(Format.INT_ARRAY, Format.XYZ), Set.of());
+    public record Rule(Set<Format> formats, Set<String> longs, Set<String> except) {
+        public static final Rule DEFAULT = new Rule(EnumSet.allOf(Format.class), Set.of(), Set.of());
     }
 
-    private record Capture(Rule rule, BlockPos origin, Predicate<BlockPos> moves, String dimension, ListTag paths) {
+    /**
+     * Rules of the mods whose sources were checked, replaced by a rule of position_rules.json for the same key.
+     */
+    public static final Map<String, Rule> DEFAULT_RULES = Map.of(
+            // IControllerBoundable and ControllerBlockEntityBase of Sophisticated Core
+            "sophisticatedstorage:", new Rule(Rule.DEFAULT.formats(), Set.of("controllerPos", "storagePositions", "storageKeys",
+                    "storageMemberKeys", "connectingBlocks", "nonConnectingBlocks", "linkedBlocks"), Set.of()),
+            // FrameInteractionBlockEntity and LaserArmBlockEntity; connectedCores and connectedAddons hold {x, y, z}
+            // offsets relative to the machine
+            "oritech:", new Rule(Rule.DEFAULT.formats(), Set.of("areaMin", "areaMax", "currentTarget", "target_position", "pendingPositions"),
+                    Set.of("connectedCores", "connectedAddons"))
+    );
+
+    private record Capture(Rule rule, Set<String> except, BlockPos origin, Predicate<BlockPos> moves, String dimension, ListTag paths) {
     }
 
     /**
@@ -71,21 +89,27 @@ public class AbsolutePositions {
      * with a dimension is relative only when it is the dimension of the capture.
      */
     public static void toRelative(CompoundTag nbt, Rule rule, BlockPos origin, Predicate<BlockPos> moves, String dimension) {
-        Capture capture = new Capture(rule, origin, moves, dimension, new ListTag());
-        relativize(nbt, List.of(), rule.under().isEmpty(), capture);
+        Set<String> except = rule.except();
+        if (nbt.contains("LastKnownPos")) {
+            except = new HashSet<>(except);
+            except.addAll(SELF_REPAIRING_MULTIBLOCK_KEYS);
+        }
+        Capture capture = new Capture(rule, except, origin, moves, dimension, new ListTag());
+        relativize(nbt, List.of(), false, capture);
         if (!capture.paths().isEmpty()) nbt.put(RELATIVE_PATHS, capture.paths());
     }
 
-    private static void relativize(Tag container, List<String> path, boolean inScope, Capture capture) {
+    private static void relativize(Tag container, List<String> path, boolean inLongs, Capture capture) {
         if (container instanceof CompoundTag compound) {
             for (String key : List.copyOf(compound.getAllKeys())) {
-                Tag relative = relativeValue(compound.get(key), compound, path, key, inScope || capture.rule().under().contains(key), capture);
+                if (capture.except().contains(key)) continue;
+                Tag relative = relativeValue(compound.get(key), compound, path, key, inLongs || capture.rule().longs().contains(key), capture);
                 if (relative != null) compound.put(key, relative);
             }
-        } else if (container instanceof ListTag || container instanceof LongArrayTag && capture.rule().formats().contains(Format.LONG)) {
+        } else if (container instanceof ListTag || container instanceof LongArrayTag && inLongs) {
             CollectionTag<?> list = (CollectionTag<?>) container;
             for (int i = 0; i < list.size(); i++) {
-                Tag relative = relativeValue(list.get(i), null, path, String.valueOf(i), inScope, capture);
+                Tag relative = relativeValue(list.get(i), null, path, String.valueOf(i), inLongs, capture);
                 if (relative != null) list.setTag(i, relative);
             }
         }
@@ -95,12 +119,12 @@ public class AbsolutePositions {
      * The relative form of value when it is a position that moves, else null once its content is visited.
      */
     @Nullable
-    private static Tag relativeValue(Tag value, @Nullable CompoundTag parent, List<String> parentPath, String key, boolean inScope, Capture capture) {
+    private static Tag relativeValue(Tag value, @Nullable CompoundTag parent, List<String> parentPath, String key, boolean inLongs, Capture capture) {
         List<String> path = new ArrayList<>(parentPath);
         path.add(key);
-        BlockPos pos = inScope ? read(value, capture.rule().formats()) : null;
+        BlockPos pos = read(value, capture.rule().formats(), inLongs);
         if (pos == null) {
-            relativize(value, path, inScope, capture);
+            relativize(value, path, inLongs, capture);
             return null;
         }
         boolean otherDimension = parent != null && parent.contains(DIMENSION, Tag.TAG_STRING) && !parent.getString(DIMENSION).equals(capture.dimension());
@@ -125,7 +149,7 @@ public class AbsolutePositions {
             }
             String key = path.getString(path.size() - 1);
             Tag value = parent == null ? null : child(parent, key);
-            BlockPos relative = value == null ? null : read(value, EnumSet.allOf(Format.class));
+            BlockPos relative = value == null ? null : read(value, EnumSet.allOf(Format.class), true);
             // a blueprint keeps only some keys of the block entity
             if (relative == null) continue;
             Tag absolute = write(value, toWorld.apply(relative));
@@ -153,7 +177,7 @@ public class AbsolutePositions {
     }
 
     @Nullable
-    static BlockPos read(Tag value, Set<Format> formats) {
+    private static BlockPos read(Tag value, Set<Format> formats, boolean longs) {
         if (value instanceof IntArrayTag array && array.size() == 3 && formats.contains(Format.INT_ARRAY)) {
             int[] xyz = array.getAsIntArray();
             return new BlockPos(xyz[0], xyz[1], xyz[2]);
@@ -162,7 +186,7 @@ public class AbsolutePositions {
             List<String> keys = xyzKeys(compound);
             if (keys != null) return new BlockPos(compound.getInt(keys.get(0)), compound.getInt(keys.get(1)), compound.getInt(keys.get(2)));
         }
-        if (value instanceof LongTag packed && formats.contains(Format.LONG)) {
+        if (value instanceof LongTag packed && longs) {
             return BlockPos.of(packed.getAsLong());
         }
         return null;
@@ -189,7 +213,7 @@ public class AbsolutePositions {
 
     /**
      * Reads the rules of config/capsule/position_rules.json, by block id or by namespace written "modid:".
-     * Ex: [{"block": "somemod:teleporter", "formats": ["long"], "under": ["target"]}, {"block": "othermod:", "formats": []}]
+     * Ex: [{"block": "somemod:teleporter", "longs": ["target"], "except": ["offset"]}, {"block": "othermod:", "formats": []}]
      */
     public static Map<String, Rule> parseRules(JsonArray json) {
         Map<String, Rule> rules = new HashMap<>();
@@ -204,16 +228,20 @@ public class AbsolutePositions {
                 } else {
                     formats.addAll(Rule.DEFAULT.formats());
                 }
-                Set<String> under = new HashSet<>();
-                if (rule.has("under")) {
-                    for (JsonElement key : rule.getAsJsonArray("under")) under.add(key.getAsString());
-                }
-                rules.put(rule.get("block").getAsString(), new Rule(formats, Set.copyOf(under)));
+                rules.put(rule.get("block").getAsString(), new Rule(formats, keys(rule, "longs"), keys(rule, "except")));
             } catch (RuntimeException e) {
                 LOGGER.error("Ignored the position rule {}: {}", element, e.toString());
             }
         }
         return rules;
+    }
+
+    private static Set<String> keys(JsonObject rule, String member) {
+        Set<String> keys = new HashSet<>();
+        if (rule.has(member)) {
+            for (JsonElement key : rule.getAsJsonArray(member)) keys.add(key.getAsString());
+        }
+        return Set.copyOf(keys);
     }
 
     public static Rule ruleFor(Map<String, Rule> rules, ResourceLocation blockId) {
