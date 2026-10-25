@@ -25,7 +25,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -92,15 +94,25 @@ public class Files {
     }
 
     /**
-     * The rules of the optional config/capsule/position_rules.json, see AbsolutePositions.parseRules.
+     * The rules of config/capsule/position_rules.json, created with the bundled rules when missing, see
+     * AbsolutePositions.parseRules.
      */
-    public static Map<String, AbsolutePositions.Rule> readPositionRules(File capsuleConfigDir) {
+    public static Map<String, List<String>> populatePositionRules(File capsuleConfigDir, ResourceManager ressourceManager) {
         File rulesFile = new File(capsuleConfigDir, "position_rules.json");
-        if (!rulesFile.exists()) return Map.of();
-        try (final InputStream stream = new FileInputStream(rulesFile)) {
-            return AbsolutePositions.parseRules(GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonArray.class));
+        try {
+            if (!rulesFile.exists()) {
+                Optional<Resource> bundled = ressourceManager.getResource(ResourceLocation.fromNamespaceAndPath("capsule", "initialconfig/root/position_rules.json"));
+                if (bundled.isEmpty()) return Map.of();
+                capsuleConfigDir.mkdirs();
+                try (InputStream stream = bundled.get().open()) {
+                    java.nio.file.Files.copy(stream, rulesFile.toPath());
+                }
+            }
+            try (InputStream stream = new FileInputStream(rulesFile)) {
+                return AbsolutePositions.parseRules(GsonHelper.fromJson(GSON, new InputStreamReader(stream), JsonArray.class));
+            }
         } catch (Exception e) {
-            LOGGER.error("Couldn't read " + rulesFile.getPath() + ", only the default position rules apply", e);
+            LOGGER.error("Couldn't read " + rulesFile.getPath() + ", no block keeps its absolute positions", e);
             return Map.of();
         }
     }

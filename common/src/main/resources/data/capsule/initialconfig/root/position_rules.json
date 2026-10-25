@@ -1,0 +1,31 @@
+[
+  {"id": "minecraft:beehive", "positions": ["flower_pos", "bees[].entity_data.flower_pos"]},
+  {"id": "minecraft:bee_nest", "positions": ["flower_pos", "bees[].entity_data.flower_pos"]},
+  {"id": "create:belt", "positions": ["Controller"]},
+  {"id": "create:rope_pulley", "positions": ["MirrorParent", "MirrorChildren[].Pos"]},
+  {"id": "create:elevator_pulley", "positions": ["MirrorParent", "MirrorChildren[].Pos"]},
+  {"id": "create:factory_gauge", "positions": [
+    "top_left.Targeting[].pos", "top_left.TargetedBy[].position.pos", "top_left.TargetedByLinks[].position.pos",
+    "top_right.Targeting[].pos", "top_right.TargetedBy[].position.pos", "top_right.TargetedByLinks[].position.pos",
+    "bottom_left.Targeting[].pos", "bottom_left.TargetedBy[].position.pos", "bottom_left.TargetedByLinks[].position.pos",
+    "bottom_right.Targeting[].pos", "bottom_right.TargetedBy[].position.pos", "bottom_right.TargetedByLinks[].position.pos"
+  ]},
+  {"id": "tfmg:regular_engine", "positions": ["Controller", "EngineController"]},
+  {"id": "tfmg:turbine_engine", "positions": ["Controller", "EngineController"]},
+  {"id": "tfmg:radial_engine", "positions": ["Controller", "EngineController"]},
+  {"id": "tfmg:large_engine", "positions": ["EngineController"]},
+  {"id": "tfmg:simple_large_engine", "positions": ["EngineController"]},
+  {"id": "tfmg:cable_connector", "positions": ["Connection*.Pos", "Connection*.Pos2"]},
+  {"id": "tfmg:glass_cable_insulator", "positions": ["Connection*.Pos", "Connection*.Pos2"]},
+  {"id": "tfmg:voltage_observer", "positions": ["ObservedPos"]},
+  {"id": "theurgy:sulfuric_flux_emitter", "positions": ["sourcePedestals[].blockPos", "targetPedestal.blockPos", "resultPedestal.blockPos"]},
+  {"id": "theurgy:caloric_flux_emitter", "positions": ["selectedPoints[].blockPos"]},
+  {"id": "sophisticatedstorage:", "positions": ["controllerPos"]},
+  {"id": "sophisticatedstorage:controller", "positions": [
+    "storagePositions[]", "connectingBlocks[]", "nonConnectingBlocks[]", "linkedBlocks[]", "storageKeys[].position", "storageMemberKeys[].position"
+  ]},
+  {"id": "oritech:destroyer_block", "positions": ["areaMin", "areaMax", "currentTarget"]},
+  {"id": "oritech:placer_block", "positions": ["areaMin", "areaMax", "currentTarget"]},
+  {"id": "oritech:fertilizer_block", "positions": ["areaMin", "areaMax", "currentTarget"]},
+  {"id": "oritech:laser_arm_block", "positions": ["target_position", "pendingPositions"]}
+]

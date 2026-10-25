@@ -19,20 +19,20 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
- * Absolute world positions stored in block entity and entity NBT: a position of a block that moves with the capsule
- * is stored relative to the template origin at capture, and becomes absolute again at deployment. Other positions are
- * kept.
+ * Absolute world positions stored in the NBT of the block entities and entities that a rule of
+ * config/capsule/position_rules.json lists: a position of a block that moves with the capsule is stored relative to
+ * the template origin at capture, and becomes absolute again at deployment. Other positions are kept.
+ * <p>
+ * A rule lists paths of NBT keys separated by '.': "key[]" goes through every element of a list, "prefix*" through
+ * every key starting with prefix. The value at a path is a position when it is [I; x, y, z], a compound of the int keys
+ * x, y, z or X, Y, Z, a GlobalPos {dimension, pos}, a long (BlockPos.asLong) or a long array of them.
  */
 public class AbsolutePositions {
     protected static final Logger LOGGER = LogManager.getLogger(AbsolutePositions.class);
@@ -42,165 +42,196 @@ public class AbsolutePositions {
      * origin.
      */
     public static final String RELATIVE_PATHS = "capsule:relative_positions";
-    /**
-     * Sibling key of a position written by GlobalPos.CODEC.
-     */
-    private static final String DIMENSION = "dimension";
     private static final List<List<String>> XYZ_KEYS = List.of(List.of("x", "y", "z"), List.of("X", "Y", "Z"));
-    /**
-     * Create multiblocks (fluid tanks, item vaults) and the blocks copying them (TFMG vats, blast stoves, fireboxes)
-     * rebuild themselves when LastKnownPos differs from their position: a tag with LastKnownPos keeps these keys.
-     */
-    private static final Set<String> SELF_REPAIRING_MULTIBLOCK_KEYS = Set.of("LastKnownPos", "Controller");
 
-    public enum Format {
-        /** [I; x, y, z], written by NbtUtils.writeBlockPos and BlockPos.CODEC */
-        INT_ARRAY,
-        /** a compound of the int keys x, y, z or X, Y, Z */
-        XYZ
+    /**
+     * The paths of the rule of id, else of its namespace, none without rule.
+     */
+    public static List<String> pathsFor(Map<String, List<String>> rules, ResourceLocation id) {
+        List<String> paths = rules.get(id.toString());
+        if (paths == null) paths = rules.get(id.getNamespace() + ":");
+        return paths == null ? List.of() : paths;
     }
 
     /**
-     * The values of a NBT that are positions: the values of these formats anywhere, the longs (BlockPos.asLong, alone,
-     * in a list or in a long array) under one of the longs keys, never the values under one of the except keys.
+     * Stores relative to origin the positions at the rule paths that moves accepts. A GlobalPos is relative only when
+     * it is in the dimension of the capture.
      */
-    public record Rule(Set<Format> formats, Set<String> longs, Set<String> except) {
-        public static final Rule DEFAULT = new Rule(EnumSet.allOf(Format.class), Set.of(), Set.of());
-    }
-
-    /**
-     * Rules of the mods whose sources were checked, replaced by a rule of position_rules.json for the same key.
-     */
-    public static final Map<String, Rule> DEFAULT_RULES = Map.of(
-            // IControllerBoundable and ControllerBlockEntityBase of Sophisticated Core
-            "sophisticatedstorage:", new Rule(Rule.DEFAULT.formats(), Set.of("controllerPos", "storagePositions", "storageKeys",
-                    "storageMemberKeys", "connectingBlocks", "nonConnectingBlocks", "linkedBlocks"), Set.of()),
-            // FrameInteractionBlockEntity and LaserArmBlockEntity; connectedCores and connectedAddons hold {x, y, z}
-            // offsets relative to the machine
-            "oritech:", new Rule(Rule.DEFAULT.formats(), Set.of("areaMin", "areaMax", "currentTarget", "target_position", "pendingPositions"),
-                    Set.of("connectedCores", "connectedAddons"))
-    );
-
-    private record Capture(Rule rule, Set<String> except, BlockPos origin, Predicate<BlockPos> moves, String dimension, ListTag paths) {
-    }
-
-    /**
-     * Stores relative to origin the positions of nbt that the rule selects and that moves accepts. A position written
-     * with a dimension is relative only when it is the dimension of the capture.
-     */
-    public static void toRelative(CompoundTag nbt, Rule rule, BlockPos origin, Predicate<BlockPos> moves, String dimension) {
-        Set<String> except = rule.except();
-        if (nbt.contains("LastKnownPos")) {
-            except = new HashSet<>(except);
-            except.addAll(SELF_REPAIRING_MULTIBLOCK_KEYS);
-        }
-        Capture capture = new Capture(rule, except, origin, moves, dimension, new ListTag());
-        relativize(nbt, List.of(), false, capture);
-        if (!capture.paths().isEmpty()) nbt.put(RELATIVE_PATHS, capture.paths());
-    }
-
-    private static void relativize(Tag container, List<String> path, boolean inLongs, Capture capture) {
-        if (container instanceof CompoundTag compound) {
-            for (String key : List.copyOf(compound.getAllKeys())) {
-                if (capture.except().contains(key)) continue;
-                Tag relative = relativeValue(compound.get(key), compound, path, key, inLongs || capture.rule().longs().contains(key), capture);
-                if (relative != null) compound.put(key, relative);
-            }
-        } else if (container instanceof ListTag || container instanceof LongArrayTag && inLongs) {
-            CollectionTag<?> list = (CollectionTag<?>) container;
-            for (int i = 0; i < list.size(); i++) {
-                Tag relative = relativeValue(list.get(i), null, path, String.valueOf(i), inLongs, capture);
-                if (relative != null) list.setTag(i, relative);
+    public static void toRelative(CompoundTag nbt, List<String> rulePaths, BlockPos origin, Predicate<BlockPos> moves, String dimension) {
+        ListTag converted = new ListTag();
+        for (String rulePath : rulePaths) {
+            for (List<String> path : resolve(nbt, rulePath)) {
+                Tag value = get(nbt, path);
+                BlockPos pos = read(value);
+                if (pos == null || !moves.test(pos) || value instanceof CompoundTag globalPos && isGlobalPos(globalPos) && !globalPos.getString("dimension").equals(dimension)) {
+                    continue;
+                }
+                set(nbt, path, write(value, pos.subtract(origin), null));
+                ListTag pathTag = new ListTag();
+                path.forEach(segment -> pathTag.add(StringTag.valueOf(segment)));
+                converted.add(pathTag);
             }
         }
+        if (!converted.isEmpty()) nbt.put(RELATIVE_PATHS, converted);
     }
 
     /**
-     * The relative form of value when it is a position that moves, else null once its content is visited.
-     */
-    @Nullable
-    private static Tag relativeValue(Tag value, @Nullable CompoundTag parent, List<String> parentPath, String key, boolean inLongs, Capture capture) {
-        List<String> path = new ArrayList<>(parentPath);
-        path.add(key);
-        BlockPos pos = read(value, capture.rule().formats(), inLongs);
-        if (pos == null) {
-            relativize(value, path, inLongs, capture);
-            return null;
-        }
-        boolean otherDimension = parent != null && parent.contains(DIMENSION, Tag.TAG_STRING) && !parent.getString(DIMENSION).equals(capture.dimension());
-        if (otherDimension || !capture.moves().test(pos)) return null;
-        ListTag pathTag = new ListTag();
-        path.forEach(segment -> pathTag.add(StringTag.valueOf(segment)));
-        capture.paths().add(pathTag);
-        return write(value, pos.subtract(capture.origin()));
-    }
-
-    /**
-     * Makes absolute the positions that toRelative stored relative, with toWorld, and sets their dimension.
+     * Makes absolute the positions that toRelative stored relative, with toWorld, in dimension.
      */
     public static void toAbsolute(CompoundTag nbt, UnaryOperator<BlockPos> toWorld, String dimension) {
-        ListTag paths = nbt.getList(RELATIVE_PATHS, Tag.TAG_LIST);
+        convert(nbt, relative -> true, toWorld, dimension);
         nbt.remove(RELATIVE_PATHS);
-        for (int i = 0; i < paths.size(); i++) {
-            ListTag path = paths.getList(i);
-            Tag parent = nbt;
-            for (int j = 0; j < path.size() - 1 && parent != null; j++) {
-                parent = child(parent, path.getString(j));
-            }
-            String key = path.getString(path.size() - 1);
-            Tag value = parent == null ? null : child(parent, key);
-            BlockPos relative = value == null ? null : read(value, EnumSet.allOf(Format.class), true);
-            // a blueprint keeps only some keys of the block entity
-            if (relative == null) continue;
-            Tag absolute = write(value, toWorld.apply(relative));
-            if (parent instanceof CompoundTag compound) {
-                compound.put(key, absolute);
-                if (compound.contains(DIMENSION, Tag.TAG_STRING)) compound.putString(DIMENSION, dimension);
-            } else {
-                ((CollectionTag<?>) parent).setTag(Integer.parseInt(key), absolute);
-            }
+    }
+
+    /**
+     * Makes absolute again the relative positions of blocks that stay in the world, which stayed accepts.
+     */
+    public static void keepAbsolute(CompoundTag nbt, BlockPos origin, Predicate<BlockPos> stayed) {
+        ListTag remaining = convert(nbt, stayed, relative -> relative.offset(origin), null);
+        if (remaining.isEmpty()) {
+            nbt.remove(RELATIVE_PATHS);
+        } else {
+            nbt.put(RELATIVE_PATHS, remaining);
         }
     }
 
+    /**
+     * A copy of nbt where the relative positions are all BlockPos.ZERO: they depend on where the template was captured.
+     */
+    public static CompoundTag withoutRelativePositions(CompoundTag nbt) {
+        CompoundTag copy = nbt.copy();
+        convert(copy, relative -> true, relative -> BlockPos.ZERO, null);
+        copy.remove(RELATIVE_PATHS);
+        return copy;
+    }
+
+    /**
+     * Converts the relative positions that which accepts, and returns the paths of the others.
+     */
+    private static ListTag convert(CompoundTag nbt, Predicate<BlockPos> which, UnaryOperator<BlockPos> conversion, @Nullable String dimension) {
+        ListTag paths = nbt.getList(RELATIVE_PATHS, Tag.TAG_LIST);
+        ListTag remaining = new ListTag();
+        for (int i = 0; i < paths.size(); i++) {
+            ListTag pathTag = paths.getList(i);
+            List<String> path = new ArrayList<>();
+            for (int j = 0; j < pathTag.size(); j++) path.add(pathTag.getString(j));
+            Tag value = get(nbt, path);
+            BlockPos relative = value == null ? null : read(value);
+            // a blueprint keeps only some keys of the block entity
+            if (relative == null) continue;
+            if (which.test(relative)) {
+                set(nbt, path, write(value, conversion.apply(relative), dimension));
+            } else {
+                remaining.add(pathTag);
+            }
+        }
+        return remaining;
+    }
+
+    /**
+     * The paths of the values that rulePath designates in nbt, with list indices, one per element of a long array.
+     */
+    private static List<List<String>> resolve(CompoundTag nbt, String rulePath) {
+        List<List<String>> paths = List.of(List.of());
+        for (String segment : rulePath.split("\\.")) {
+            boolean everyElement = segment.endsWith("[]");
+            String key = everyElement ? segment.substring(0, segment.length() - 2) : segment;
+            List<List<String>> next = new ArrayList<>();
+            for (List<String> path : paths) {
+                if (!(get(nbt, path) instanceof CompoundTag compound)) continue;
+                List<String> keys = key.endsWith("*")
+                        ? compound.getAllKeys().stream().filter(k -> k.startsWith(key.substring(0, key.length() - 1))).sorted().toList()
+                        : compound.contains(key) ? List.of(key) : List.of();
+                for (String match : keys) {
+                    List<String> child = append(path, match);
+                    if (!everyElement) {
+                        next.add(child);
+                    } else if (compound.get(match) instanceof CollectionTag<?> list) {
+                        for (int i = 0; i < list.size(); i++) next.add(append(child, String.valueOf(i)));
+                    }
+                }
+            }
+            paths = next;
+        }
+        List<List<String>> values = new ArrayList<>();
+        for (List<String> path : paths) {
+            if (get(nbt, path) instanceof LongArrayTag longs) {
+                for (int i = 0; i < longs.size(); i++) values.add(append(path, String.valueOf(i)));
+            } else {
+                values.add(path);
+            }
+        }
+        return values;
+    }
+
+    private static List<String> append(List<String> path, String segment) {
+        List<String> appended = new ArrayList<>(path);
+        appended.add(segment);
+        return appended;
+    }
+
     @Nullable
-    private static Tag child(Tag parent, String key) {
-        if (parent instanceof CompoundTag compound) return compound.get(key);
-        if (parent instanceof CollectionTag<?> list) {
-            try {
-                int index = Integer.parseInt(key);
-                return index >= 0 && index < list.size() ? list.get(index) : null;
-            } catch (NumberFormatException e) {
+    private static Tag get(Tag root, List<String> path) {
+        Tag tag = root;
+        for (String segment : path) {
+            if (tag instanceof CompoundTag compound) {
+                tag = compound.get(segment);
+            } else if (tag instanceof CollectionTag<?> list) {
+                int index = Integer.parseInt(segment);
+                tag = index < list.size() ? list.get(index) : null;
+            } else {
                 return null;
             }
         }
-        return null;
+        return tag;
+    }
+
+    private static void set(CompoundTag root, List<String> path, Tag value) {
+        Tag parent = get(root, path.subList(0, path.size() - 1));
+        String key = path.getLast();
+        if (parent instanceof CompoundTag compound) {
+            compound.put(key, value);
+        } else if (parent instanceof CollectionTag<?> list) {
+            list.setTag(Integer.parseInt(key), value);
+        }
     }
 
     @Nullable
-    private static BlockPos read(Tag value, Set<Format> formats, boolean longs) {
-        if (value instanceof IntArrayTag array && array.size() == 3 && formats.contains(Format.INT_ARRAY)) {
+    private static BlockPos read(Tag value) {
+        if (value instanceof IntArrayTag array && array.size() == 3) {
             int[] xyz = array.getAsIntArray();
             return new BlockPos(xyz[0], xyz[1], xyz[2]);
         }
-        if (value instanceof CompoundTag compound && formats.contains(Format.XYZ)) {
+        if (value instanceof LongTag packed) return BlockPos.of(packed.getAsLong());
+        if (value instanceof CompoundTag compound) {
+            if (isGlobalPos(compound)) return read(compound.get("pos"));
             List<String> keys = xyzKeys(compound);
             if (keys != null) return new BlockPos(compound.getInt(keys.get(0)), compound.getInt(keys.get(1)), compound.getInt(keys.get(2)));
-        }
-        if (value instanceof LongTag packed && longs) {
-            return BlockPos.of(packed.getAsLong());
         }
         return null;
     }
 
-    private static Tag write(Tag original, BlockPos pos) {
+    /**
+     * The value with pos in the format of original, and dimension when it is a GlobalPos and dimension is given.
+     */
+    private static Tag write(Tag original, BlockPos pos, @Nullable String dimension) {
         if (original instanceof IntArrayTag) return NbtUtils.writeBlockPos(pos);
         if (original instanceof LongTag) return LongTag.valueOf(pos.asLong());
         CompoundTag compound = ((CompoundTag) original).copy();
+        if (isGlobalPos(compound)) {
+            compound.put("pos", NbtUtils.writeBlockPos(pos));
+            if (dimension != null) compound.putString("dimension", dimension);
+            return compound;
+        }
         List<String> keys = xyzKeys(compound);
         compound.putInt(keys.get(0), pos.getX());
         compound.putInt(keys.get(1), pos.getY());
         compound.putInt(keys.get(2), pos.getZ());
         return compound;
+    }
+
+    private static boolean isGlobalPos(CompoundTag compound) {
+        return compound.contains("dimension", Tag.TAG_STRING) && compound.get("pos") instanceof IntArrayTag pos && pos.size() == 3;
     }
 
     @Nullable
@@ -212,41 +243,20 @@ public class AbsolutePositions {
     }
 
     /**
-     * Reads the rules of config/capsule/position_rules.json, by block id or by namespace written "modid:".
-     * Ex: [{"block": "somemod:teleporter", "longs": ["target"], "except": ["offset"]}, {"block": "othermod:", "formats": []}]
+     * Reads the rules of position_rules.json: [{"id": "<block or entity id, or modid:>", "positions": ["<path>", ...]}].
      */
-    public static Map<String, Rule> parseRules(JsonArray json) {
-        Map<String, Rule> rules = new HashMap<>();
+    public static Map<String, List<String>> parseRules(JsonArray json) {
+        Map<String, List<String>> rules = new HashMap<>();
         for (JsonElement element : json) {
             try {
                 JsonObject rule = element.getAsJsonObject();
-                Set<Format> formats = EnumSet.noneOf(Format.class);
-                if (rule.has("formats")) {
-                    for (JsonElement format : rule.getAsJsonArray("formats")) {
-                        formats.add(Format.valueOf(format.getAsString().toUpperCase(Locale.ROOT)));
-                    }
-                } else {
-                    formats.addAll(Rule.DEFAULT.formats());
-                }
-                rules.put(rule.get("block").getAsString(), new Rule(formats, keys(rule, "longs"), keys(rule, "except")));
+                List<String> paths = new ArrayList<>();
+                for (JsonElement path : rule.getAsJsonArray("positions")) paths.add(path.getAsString());
+                rules.put(rule.get("id").getAsString(), List.copyOf(paths));
             } catch (RuntimeException e) {
                 LOGGER.error("Ignored the position rule {}: {}", element, e.toString());
             }
         }
         return rules;
-    }
-
-    private static Set<String> keys(JsonObject rule, String member) {
-        Set<String> keys = new HashSet<>();
-        if (rule.has(member)) {
-            for (JsonElement key : rule.getAsJsonArray(member)) keys.add(key.getAsString());
-        }
-        return Set.copyOf(keys);
-    }
-
-    public static Rule ruleFor(Map<String, Rule> rules, ResourceLocation blockId) {
-        Rule rule = rules.get(blockId.toString());
-        if (rule == null) rule = rules.get(blockId.getNamespace() + ":");
-        return rule == null ? Rule.DEFAULT : rule;
     }
 }

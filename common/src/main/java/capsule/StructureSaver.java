@@ -6,6 +6,7 @@ import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.plugins.claims.Claims;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
+import capsule.structure.AbsolutePositions;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import capsule.tags.CapsuleTags;
@@ -211,7 +212,8 @@ public class StructureSaver {
     }
 
     public static CompoundTag filterIdentityNBT(StructureTemplate.StructureBlockInfo b) {
-        CompoundTag nbt = b.nbt() != null ? b.nbt().copy() : new CompoundTag();
+        // relative positions depend on where the block was captured, they never identify it
+        CompoundTag nbt = b.nbt() != null ? AbsolutePositions.withoutRelativePositions(b.nbt()) : new CompoundTag();
         List<String> converted = Config.getBlueprintIdentityNBT(b.state().getBlock());
         nbt.getAllKeys().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;

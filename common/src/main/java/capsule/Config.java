@@ -69,7 +69,7 @@ public class Config {
     public static List<String> starterTemplatesList = new ArrayList<>();
     public static List<String> prefabsTemplatesList = new ArrayList<>();
     public static HashMap<String, JsonObject> blueprintWhitelist = new HashMap<>();
-    public static Map<String, AbsolutePositions.Rule> positionRules = AbsolutePositions.DEFAULT_RULES;
+    public static Map<String, List<String>> positionRules = Map.of();
     public static List<Block> excludedBlocks;
     public static List<Block> opExcludedBlocks;
     public static List<TagKey<Block>> excludedBlockTags = List.of();
@@ -143,9 +143,7 @@ public class Config {
         ResourceManager ressourceManager = server.getResourceManager();
         Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, ressourceManager);
         Config.blueprintWhitelist = Files.populateWhitelistConfig(Config.getCapsuleConfigDir().toFile(), ressourceManager);
-        Map<String, AbsolutePositions.Rule> positionRules = new HashMap<>(AbsolutePositions.DEFAULT_RULES);
-        positionRules.putAll(Files.readPositionRules(Config.getCapsuleConfigDir().toFile()));
-        Config.positionRules = positionRules;
+        Config.positionRules = Files.populatePositionRules(Config.getCapsuleConfigDir().toFile(), ressourceManager);
         Config.starterTemplatesList = Files.populateStarters(Config.getCapsuleConfigDir().toFile(), Config.starterTemplatesPath, ressourceManager);
         Config.prefabsTemplatesList = Files.populatePrefabs(Config.getCapsuleConfigDir().toFile(), Config.prefabsTemplatesPath, ressourceManager);
     }
@@ -291,11 +289,11 @@ public class Config {
     }
 
     /**
-     * Which values of the NBT of a block entity or an entity are absolute positions, by block or entity type id, see
+     * The NBT paths of the absolute positions of a block entity or an entity, by block or entity type id, see
      * AbsolutePositions.
      */
-    public static AbsolutePositions.Rule getPositionRule(ResourceLocation id) {
-        return AbsolutePositions.ruleFor(positionRules, id);
+    public static List<String> getPositionPaths(ResourceLocation id) {
+        return AbsolutePositions.pathsFor(positionRules, id);
     }
 
     /**

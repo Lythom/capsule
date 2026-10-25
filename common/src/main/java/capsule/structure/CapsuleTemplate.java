@@ -609,12 +609,12 @@ public class CapsuleTemplate {
             String dimension = worldIn.dimension().location().toString();
             for (StructureTemplate.StructureBlockInfo info : list3) {
                 if (info.nbt() != null) {
-                    AbsolutePositions.toRelative(info.nbt(), Config.getPositionRule(BuiltInRegistries.BLOCK.getKey(info.state().getBlock())), blockpos1, moves, dimension);
+                    AbsolutePositions.toRelative(info.nbt(), Config.getPositionPaths(BuiltInRegistries.BLOCK.getKey(info.state().getBlock())), blockpos1, moves, dimension);
                 }
             }
             for (StructureTemplate.StructureEntityInfo info : this.entities) {
                 ResourceLocation type = ResourceLocation.tryParse(info.nbt.getString("id"));
-                if (type != null) AbsolutePositions.toRelative(info.nbt, Config.getPositionRule(type), blockpos1, moves, dimension);
+                if (type != null) AbsolutePositions.toRelative(info.nbt, Config.getPositionPaths(type), blockpos1, moves, dimension);
             }
             if (outCapturedEntities != null && capturedEntities != null) {
                 outCapturedEntities.addAll(capturedEntities);
@@ -813,6 +813,16 @@ public class CapsuleTemplate {
             for (Palette palette : this.palettes) {
                 palette.blocks.removeIf(blockInfo -> blockPos.subtract(startPos).equals(blockInfo.pos()));
             }
+        }
+        // the positions of the blocks left in the world stay absolute
+        Set<BlockPos> stayed = couldNotBeRemoved.stream().map(pos -> pos.subtract(startPos)).collect(Collectors.toSet());
+        for (Palette palette : this.palettes) {
+            for (StructureTemplate.StructureBlockInfo info : palette.blocks) {
+                if (info.nbt() != null) AbsolutePositions.keepAbsolute(info.nbt(), startPos, stayed::contains);
+            }
+        }
+        for (StructureTemplate.StructureEntityInfo info : this.entities) {
+            AbsolutePositions.keepAbsolute(info.nbt, startPos, stayed::contains);
         }
     }
 
