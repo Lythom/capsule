@@ -37,7 +37,9 @@ import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
+import net.minecraft.world.level.storage.LevelResource;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -223,6 +225,68 @@ public class LinkedTemplateCopyTests {
             assertTrue(helper, deploy(helper, first, new BlockPos(2, 0, 2), player), "the first capsule should deploy again");
             helper.assertBlockPresent(Blocks.AIR, new BlockPos(1, 1, 1));
             helper.assertBlockPresent(Blocks.OAK_PLANKS, new BlockPos(3, 2, 3));
+        } finally {
+            CapsuleTestUtils.removePlayer(player);
+            deleteConfigTemplate(helper, source);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * The world templates copied from source for the test player.
+     */
+    private static int copiesOf(GameTestHelper helper, String source) {
+        String prefix = "c-test-player-" + source.replace("/", "_") + "-";
+        File capsules = helper.getLevel().getServer().getWorldPath(LevelResource.ROOT).resolve("capsules").toFile();
+        String[] copies = capsules.list((dir, name) -> name.startsWith(prefix));
+        return copies == null ? 0 : copies.length;
+    }
+
+    /**
+     * Every crafted capsule in the inventory owns a copy of source, and no other copy was written.
+     */
+    private static void assertOneCopyPerCapsule(GameTestHelper helper, ServerPlayer player, String source, int crafts) {
+        List<ItemStack> crafted = player.getInventory().items.stream().filter(s -> s.getItem() instanceof CapsuleItem).toList();
+        assertTrue(helper, crafted.size() == crafts, "expected " + crafts + " capsules, got " + crafted.size());
+        crafted.forEach(capsule -> assertOwnsACopy(helper, capsule, source));
+        long names = crafted.stream().map(CapsuleItem::getStructureName).distinct().count();
+        assertTrue(helper, names == crafts, "each capsule should get its own template, got " + crafted.stream().map(CapsuleItem::getStructureName).toList());
+        assertTrue(helper, copiesOf(helper, source) == crafts, "no unused template should be written, got " + copiesOf(helper, source) + " for " + crafts + " capsules");
+    }
+
+    @GameTest(template = "empty")
+    public static void shiftCraftGivesOneTemplatePerCapsule(GameTestHelper helper) {
+        String source = configTemplate(helper, "shift_craft");
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        try {
+            withRecipe(helper, taggedCapsule(helper, source, 3), () -> {
+                CraftingMenu menu = craftingMenu(helper, player, 3);
+                menu.clicked(RESULT, 0, ClickType.QUICK_MOVE, player);
+                player.containerMenu = player.inventoryMenu;
+            });
+            assertOneCopyPerCapsule(helper, player, source, 3);
+        } finally {
+            CapsuleTestUtils.removePlayer(player);
+            deleteConfigTemplate(helper, source);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * The inventory grid calls onCraftedBy on a copy of the result only: the crafted capsules get their template on
+     * the next player tick.
+     */
+    @GameTest(template = "empty")
+    public static void inventoryGridShiftCraftGivesOneTemplatePerCapsule(GameTestHelper helper) {
+        String source = configTemplate(helper, "inventory_shift_craft");
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
+        try {
+            withRecipe(helper, taggedCapsule(helper, source, 3), () -> {
+                player.inventoryMenu.getSlot(1).set(new ItemStack(Items.FURNACE, 2));
+                player.inventoryMenu.clicked(RESULT, 0, ClickType.QUICK_MOVE, player);
+            });
+            CapsuleItem.onPlayerTick(player);
+            assertOneCopyPerCapsule(helper, player, source, 2);
         } finally {
             CapsuleTestUtils.removePlayer(player);
             deleteConfigTemplate(helper, source);

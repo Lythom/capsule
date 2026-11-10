@@ -39,7 +39,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -774,7 +777,28 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCraftedBy(ItemStack capsule, Level worldIn, Player playerIn) {
+        // a shift-click also calls onCraftedBy on a copy of the result made before the craft, which would leave an unused
+        // template: only the crafted item itself gets one here, a capsule crafted otherwise gets it from onPlayerTick
+        if (needsTemplateCopy(capsule) && !isCraftedItem(playerIn, capsule)) return;
         copyTemplateIfNeeded(capsule, worldIn, playerIn);
+    }
+
+    /**
+     * Whether stack is the crafted item itself: on the cursor (click), in a slot of the open menu (the result slot
+     * during a shift-click) or in the inventory.
+     */
+    private static boolean isCraftedItem(@Nullable Player player, ItemStack stack) {
+        if (player == null) return false;
+        AbstractContainerMenu menu = player.containerMenu;
+        if (menu.getCarried() == stack) return true;
+        for (Slot slot : menu.slots) {
+            if (slot.getItem() == stack) return true;
+        }
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (inventory.getItem(i) == stack) return true;
+        }
+        return false;
     }
 
     /**
