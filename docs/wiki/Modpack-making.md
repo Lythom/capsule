@@ -149,6 +149,8 @@ In this example, the conveyor block will be allowed in blueprints:
 Tips: 
 - You can use [`/capsule exportSeenBlock`](Commands#exportseenblock) when looking at a block to display its NBT data and know what values should be added.
 - x, y, z, Items/inventory and id properties should not be listed under "keepNBT": you don't want to keep location information (you want it to be forgotten and reset when the blueprint is placed), nor inventory information (because it could lead to dupe bugs), and finally id is not actually NBT data.
+- List under `keepNBT` the keys the block entity needs to load, such as the type or side configuration of a modded machine: a block whitelisted without `keepNBT` is deployed with empty block entity data, which crashes some mods (Modular Machinery Reborn item buses need `ioType`). Never keep the keys holding items, fluids or energy: every blueprint deploy would create them again.
+- [since 9.1] A deployed blueprint can only be undeployed while none of its blocks holds an item, whatever the mod stores it under; items under the `keepNBT` keys are part of the blueprint and do not count.
 
 Tutorial video that demonstrates some capsule blueprint configuration using the exportSeenBlock command (1.12.2):
 
@@ -197,6 +199,7 @@ Additional notes:
 - Ensure the file name is lowercase only: `_` will be replaced by spaces and each word is capitalized for the capsule label.
 - Default prefabs: castle wall, castle wall corner, castle gate, castle tower corner (and its top), chicken cooker.
 - [since 9.1] Clients and servers must run the same Capsule build: the prefab recipes sent to clients changed in 9.1.
+- [since 9.1] When the prefab recipes are created (server start), the server log warns for each prefab about the blocks its blueprints will lack, block entities missing from the [whitelist](#whitelist), with their count and NBT keys: whitelist them before players craft the prefab. A default install logs no warning.
 
 
 ### Relabeling a Capsule
@@ -400,6 +403,7 @@ If you want to create your own capsules or give them using command blocks, you'l
 * string structureName                                       // name of the template file without the .nbt extension.
 // Lookup paths are <worldsave>/capsules for non-rewards, and structureName must contain the full path for rewards and loots
 * string prevStructureName                                   // Used to remove older unused blueprint templates
+* byte templateShouldBeCopied                               // [since 9.1] linked capsules (state 2): get their own copy of the config template structureName when crafted, see below. Blueprints: copy the source template into a blueprint template
 * tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
 * long undeployAt                                            // [Instant capsules] game time from which a deployed capsule can be undeployed
 * tag spawnPosition : {int x, int y, int z, int dim}         // location where the capsule is currently deployed
@@ -410,5 +414,21 @@ If you want to create your own capsules or give them using command blocks, you'l
 * string rotation                                            // [Blueprints] current rotation mode
 * int yOffset                                                // [since 7.0.91] deployment offset, -3 deploys the content 3 blocks under the aimed position
 ```
+
+### Crafting reusable capsules of a template
+
+[since 9.1] A linked capsule (`state:2`) with `templateShouldBeCopied:1b` and a `structureName` under `config/` gets, as soon as it is crafted, the same capsule as [`/capsule giveLinked`](Commands#givelinked): its own copy of the template, which it deploys, captures back and deploys again like any capsule. Each craft gets its own copy. Before 9.1 these capsules deployed nothing. Example of a KubeJS recipe:
+
+```js
+let burnerResearcherCapsule = 'capsule:capsule[custom_data={color:6196919,label:"burner_researcher",size:3,state:2,structureName:"config/capsule/rewards/burner_researcher",templateShouldBeCopied:1b},dyed_color={rgb:8072841}]'
+event.shapeless(burnerResearcherCapsule, ['kubejs:capsule_base', 'minecraft:furnace', 'minecraft:furnace', sheetmetalIron, sheetmetalIron, sheetmetalIron, sheetmetalIron])
+```
+
+- Do not add `sourceInventory`: it makes the capsule a blueprint, whose copy keeps only the whitelisted blocks without their inventories.
+- The copy is complete, like a reward: inventories and any item or fluid saved in the template are created again with each craft. Clean the template before shipping it.
+- Only templates under `config/` are copied. When the template is missing or empty, the server log names it and the searched paths, the player is told, and the capsule refuses to deploy until the template exists (add it, then `/reload`).
+- The copy happens when the item is crafted, or for items made otherwise (Crafter, autocrafters, commands) when it reaches a player inventory, at the latest when the capsule is deployed.
+
+More details in [CAPSULE_FORMATS.md](https://github.com/Lythom/capsule/blob/1.21.1/docs/CAPSULE_FORMATS.md).
 
 The enchantments (Loyalty) are in the `minecraft:enchantments` component, not in the custom data. The NBT data reference is also kept up to date in the code: [CapsuleItem.java](https://github.com/Lythom/capsule/blob/1.21.1/common/src/main/java/capsule/items/CapsuleItem.java).

@@ -128,6 +128,9 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
 - Blocks without an item (potted plants…) were free in blueprints ([#56](https://github.com/Lythom/capsule/issues/56))
 - Starter and reward capsules shared block entity data with their template, which emptied Sophisticated Storage
   containers ([#115](https://github.com/Lythom/capsule/issues/115))
+- Undeploying a blueprint destroyed the items held by blocks that don't keep them in a vanilla inventory list: lectern
+  books, jukebox records, decorated pot items, modded machines (Modular Machinery Reborn item buses…). The undeploy is
+  now refused while a block of the blueprint holds an item
 - SecurityCraft blocks could be captured by players who don't own them ([#119](https://github.com/Lythom/capsule/issues/119))
 - The server now checks capsule throws: no instant capture or deploy from a non-instant capsule or out of reach
   ([#91](https://github.com/Lythom/capsule/issues/91))
@@ -165,11 +168,16 @@ chiseled bookshelves and crafters can be used (#101). Blocks without an item, li
   `config/capsule/loot` (fixed loot templates). The Recall entries of `capsule-common.toml` are unused since 9.1.
   New installs no longer list the 1.12 ids that match nothing on 1.21.1 in `excludedBlocks` and `opExcludedBlocks`.
 - Clients and servers must run the same Capsule build: the prefab blueprint recipes sent to clients changed.
+- **Modpacks**: linked capsules tagged `templateShouldBeCopied` get their own copy of a config template when crafted,
+  like `/capsule giveLinked`, so that recipes (KubeJS…) can give reusable capsules of a template: they used to deploy
+  nothing. See [Crafting reusable capsules of a template](Modpack-making#crafting-reusable-capsules-of-a-template).
+- **Prefabs**: the server log warns, for each prefab, about the blocks its blueprints will lack (block entities
+  missing from the whitelist), with their NBT keys. See [Add a preconfigured blueprint](Modpack-making#add-a-preconfigured-blueprint).
 
 ## Backports to Forge 1.20.1, 1.18.2 and 1.16.5
 
-The bug fixes above that apply to these versions reach the next Forge builds: **1.20.1 8.0.x**, **1.18.2 6.0.x** and
-**1.16.5 5.0.x**. They also get
+The bug fixes above that apply to these versions are in the Forge builds released with 9.1: **1.20.1 8.0.x**,
+**1.18.2 6.0.x** and **1.16.5 5.0.x**, with the `templateShouldBeCopied` capsules and the prefab warning. They also get
 the claim protection: Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5, and the block placement
 event for the other protection mods, per block up to the largest survival capsule (31 by default there: an emerald
 capsule with 10 upgrades, 33 with a mod adding platinum). Plus:
