@@ -103,7 +103,7 @@ Known visual issues:
 | One-use / reward deploys and is consumed | GT `rewardCapsuleDeploysTwice`, `recoveryCapsuleEmptiesSourceTemplate` | throwing a recovery capsule in game |
 | Blueprint recipes (from linked, blueprint, one-use, reward), change recipes | GT `blueprintRecipeCopiesCapsule`, `BlueprintCraftingTests` (crafting menu, click and shift-click, one-use source, blueprint change) | |
 | Blueprint recharge from player inventory, from a linked inventory, from both; materials consumed | GT `blueprintConsumesMaterials` (player inventory), `pottedPlantsAreNotFree` | linked inventory (sneak + right click) and its highlight; Fabric modded storages (Transfer API) |
-| Blueprint world recharge (structure must match, dispenser content) | | yes |
+| Blueprint world recharge (structure must match, dispenser content) | GT `blueprintUndeployKeepsTheItemsOfItsBlocks` (steps 5 to 9, with a chest, a lectern, a jukebox and a decorated pot); UT `BlueprintItemsTest` (items under any NBT key) | steps 1 to 4b (removed or moved block) |
 | Blueprint whitelist (excluded chest message, note block pitch kept) | GT `everyVanillaBlockEntityIsWhitelistedOrExcluded`, `blueprintsNeverKeepInventories` | the excluded chest message, note block pitch |
 | Prefab blueprint recipes generated from `config/capsule/prefabs` | GT `everyBundledTemplateDeploys` (prefabs deploy), `prefabCraft…GivesItsTemplateIngredientsBack` (default and moved pattern), `missingPrefabTemplateIsReported`; CS blueprint from the castle wall prefab, 6 prefab recipes in each viewer | custom prefabs after a restart |
 

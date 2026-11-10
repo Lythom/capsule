@@ -8,8 +8,12 @@ import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import capsule.tags.CapsuleTags;
+import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -25,6 +29,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -171,7 +176,7 @@ public class StructureSaver {
     }
 
     /**
-     * Whether the blocks of the world match the blueprint, without items in their inventories.
+     * Whether the blocks of the world match the blueprint, and hold no items.
      */
     private static boolean matches(CapsuleTemplate world, CapsuleTemplate blueprint) {
         List<StructureTemplate.StructureBlockInfo> worldBlocks = world.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
@@ -192,7 +197,40 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        return blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt() == null || !b.nbt().contains("Items") || b.nbt().getList("Items", TAG_COMPOUND).isEmpty());
+        return blueprintMatch && worldBlocks.stream().noneMatch(StructureSaver::holdsItems);
+    }
+
+    /**
+     * Whether the saved block entity holds items, which removing the block destroys: a non-empty "Items" list (vanilla
+     * containers), or an item stack under any other key (lectern book, mod inventories...). Items in the NBT the
+     * blueprint whitelist keeps are part of the blueprint and do not count.
+     */
+    public static boolean holdsItems(StructureTemplate.StructureBlockInfo b) {
+        CompoundTag nbt = b.nbt();
+        if (nbt == null) return false;
+        if (!nbt.getList("Items", TAG_COMPOUND).isEmpty()) return true;
+        JsonObject keptNBT = Config.getBlueprintAllowedNBT(b.state().getBlock());
+        // the root is the block entity itself, its keys are not an item stack
+        return nbt.getAllKeys().stream().anyMatch(key -> (keptNBT == null || !keptNBT.has(key)) && containsItemStack(nbt.get(key)));
+    }
+
+    private static boolean containsItemStack(Tag tag) {
+        if (tag instanceof CompoundTag compound) {
+            return isItemStack(compound) || compound.getAllKeys().stream().anyMatch(key -> containsItemStack(compound.get(key)));
+        }
+        if (tag instanceof ListTag list) {
+            return list.stream().anyMatch(StructureSaver::containsItemStack);
+        }
+        return false;
+    }
+
+    /**
+     * An item stack as ItemStack.save writes it (count), or in the format before 1.20.5 (Count).
+     */
+    private static boolean isItemStack(CompoundTag tag) {
+        if (!tag.contains("id", Tag.TAG_STRING) || Math.max(tag.getInt("count"), tag.getInt("Count")) <= 0) return false;
+        ResourceLocation id = ResourceLocation.tryParse(tag.getString("id"));
+        return id != null && BuiltInRegistries.ITEM.getOptional(id).filter(item -> item != Items.AIR).isPresent();
     }
 
     public static String serializeComparable(StructureTemplate.StructureBlockInfo b) {

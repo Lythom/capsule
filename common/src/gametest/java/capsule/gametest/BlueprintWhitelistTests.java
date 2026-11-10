@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -27,6 +28,7 @@ import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,14 +102,7 @@ public class BlueprintWhitelistTests {
         ItemStack source = capture(helper, new BlockPos(0, 1, 0), 3);
 
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
-        ItemStack blueprint = Capsule.newLinkedCapsuleItemStack(CapsuleItem.getStructureName(source), 0, 0, 3, false, null, 0);
-        CapsuleItem.setBlueprint(blueprint);
-        CapsuleItem.setState(blueprint, CapsuleState.DEPLOYED);
-        CapsuleItem.duplicateBlueprintTemplate(blueprint, helper.getLevel(), player);
-        Map<StructureSaver.ItemStackKey, Integer> materials = Blueprint.getMaterialList(CapsuleTestUtils.template(helper, blueprint), helper.getLevel(), player);
-        materials.forEach((key, count) -> player.getInventory().add(key.itemStack.copyWithCount(count)));
-        Capsule.reloadBlueprint(blueprint, helper.getLevel(), player);
-        assertTrue(helper, CapsuleTestUtils.deploy(helper, blueprint, new BlockPos(5, 0, 5), player), "blueprint deploy should succeed");
+        deployBlueprint(helper, source, player);
         CapsuleTestUtils.removePlayer(player);
 
         List<String> problems = new ArrayList<>();
@@ -130,6 +125,74 @@ public class BlueprintWhitelistTests {
         }
         assertTrue(helper, problems.isEmpty(), "blueprint problems: " + problems);
         helper.succeed();
+    }
+
+    /**
+     * A blueprint undeploy removes the blocks without keeping what they hold: it is refused while a block entity holds
+     * items, whatever its NBT key. Lectern books are not in a Container, jukebox records and decorated pot items are not
+     * in an "Items" list, like the inventories of many mods.
+     */
+    @GameTest(template = "empty")
+    public static void blueprintUndeployKeepsTheItemsOfItsBlocks(GameTestHelper helper) {
+        helper.setBlock(0, 1, 0, Blocks.CHEST);
+        helper.setBlock(1, 1, 0, Blocks.LECTERN);
+        helper.setBlock(2, 1, 0, Blocks.JUKEBOX);
+        helper.setBlock(0, 1, 2, Blocks.DECORATED_POT);
+        ItemStack source = capture(helper, new BlockPos(0, 1, 0), 3);
+        List<Component> messages = new ArrayList<>();
+        ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
+        try {
+            ItemStack blueprint = deployBlueprint(helper, source, player);
+            // the blocks of the source, deployed from (4, 1, 4)
+            Map<BlockPos, ItemStack> contents = new LinkedHashMap<>();
+            contents.put(new BlockPos(4, 1, 4), new ItemStack(Items.DIAMOND));
+            contents.put(new BlockPos(5, 1, 4), new ItemStack(Items.WRITABLE_BOOK));
+            contents.put(new BlockPos(6, 1, 4), new ItemStack(Items.MUSIC_DISC_CAT));
+            contents.put(new BlockPos(4, 1, 6), new ItemStack(Items.DIAMOND));
+            contents.forEach((pos, item) -> {
+                String block = BuiltInRegistries.BLOCK.getKey(helper.getBlockState(pos).getBlock()).getPath();
+                setContent(helper.getBlockEntity(pos), item.copy());
+                messages.clear();
+                Capsule.resentToCapsule(blueprint, helper.getLevel(), player);
+                assertTrue(helper, CapsuleItem.hasState(blueprint, CapsuleState.DEPLOYED), "the undeploy destroyed the " + item + " of the " + block);
+                BlockEntity be = helper.getBlockEntity(pos);
+                assertTrue(helper, be != null && content(be).is(item.getItem()), "the " + block + " lost its " + item);
+                List<String> keys = ClaimTests.keys(messages);
+                assertTrue(helper, keys.equals(List.of("capsule.error.blueprintDontMatch")), "the refused undeploy of the " + block + " tells blueprintDontMatch, got " + keys);
+                setContent(be, ItemStack.EMPTY);
+            });
+
+            Capsule.resentToCapsule(blueprint, helper.getLevel(), player);
+            assertTrue(helper, CapsuleItem.hasState(blueprint, CapsuleState.BLUEPRINT), "the blueprint undeploys once its blocks are empty, got " + ClaimTests.keys(messages));
+            contents.keySet().forEach(pos -> helper.assertBlockPresent(Blocks.AIR, pos));
+        } finally {
+            CapsuleTestUtils.removePlayer(player);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Deploys a charged blueprint of source, centered on (5, 0, 5), with the materials given to the player.
+     */
+    private static ItemStack deployBlueprint(GameTestHelper helper, ItemStack source, ServerPlayer player) {
+        ItemStack blueprint = Capsule.newLinkedCapsuleItemStack(CapsuleItem.getStructureName(source), 0, 0, CapsuleItem.getSize(source), false, null, 0);
+        CapsuleItem.setBlueprint(blueprint);
+        CapsuleItem.setState(blueprint, CapsuleState.DEPLOYED);
+        CapsuleItem.duplicateBlueprintTemplate(blueprint, helper.getLevel(), player);
+        Map<StructureSaver.ItemStackKey, Integer> materials = Blueprint.getMaterialList(CapsuleTestUtils.template(helper, blueprint), helper.getLevel(), player);
+        materials.forEach((key, count) -> player.getInventory().add(key.itemStack.copyWithCount(count)));
+        Capsule.reloadBlueprint(blueprint, helper.getLevel(), player);
+        assertTrue(helper, CapsuleTestUtils.deploy(helper, blueprint, new BlockPos(5, 0, 5), player), "blueprint deploy should succeed");
+        return blueprint;
+    }
+
+    private static void setContent(BlockEntity be, ItemStack stack) {
+        if (be instanceof LecternBlockEntity lectern) lectern.setBook(stack);
+        else ((Container) be).setItem(0, stack);
+    }
+
+    private static ItemStack content(BlockEntity be) {
+        return be instanceof LecternBlockEntity lectern ? lectern.getBook() : ((Container) be).getItem(0);
     }
 
     private static void fill(GameTestHelper helper, BlockPos pos, Block block, Item item) {
