@@ -8,6 +8,7 @@ import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -45,7 +46,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 public class Blueprint {
@@ -277,9 +280,44 @@ public class Blueprint {
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                     customData.addProperty("size", size);
                     parseTemplate.accept(ResourceLocation.parse(templateName), jsonRecipe, ingredients);
+                    warnBlocksMissingFromBlueprints(templateName, template);
                 }
             });
         }
+    }
+
+    /**
+     * Logs the blocks that the blueprints of a prefab will lack (see CapsuleTemplate.filterFromWhitelist), so that the
+     * modpack maker can whitelist them before a player crafts one.
+     */
+    public static void warnBlocksMissingFromBlueprints(String templateName, CapsuleTemplate template) {
+        Map<String, Integer> counts = new TreeMap<>();
+        Map<String, Set<String>> nbtKeys = new HashMap<>();
+        for (StructureTemplate.StructureBlockInfo block : template.getPalette()) {
+            if (CapsuleTemplate.isKeptInBlueprint(block)) continue;
+            String id = BuiltInRegistries.BLOCK.getKey(block.state().getBlock()).toString();
+            counts.merge(id, 1, Integer::sum);
+            Set<String> keys = nbtKeys.computeIfAbsent(id, k -> new TreeSet<>());
+            keys.addAll(block.nbt().getAllKeys());
+            keys.remove("id"); // the block entity type, given by the block
+        }
+        if (counts.isEmpty()) return;
+
+        StringBuilder blocks = new StringBuilder();
+        counts.forEach((id, count) -> {
+            blocks.append("\n* ").append(id);
+            if (count > 1) blocks.append(" (").append(count).append(" blocks)");
+            Set<String> keys = nbtKeys.get(id);
+            blocks.append(", NBT keys: ").append(keys.isEmpty() ? "none" : String.join(", ", keys));
+        });
+        int total = counts.values().stream().mapToInt(Integer::intValue).sum();
+        LOGGER.warn("Prefab " + templateName + ": its blueprints will lack " + total + (total == 1 ? " block" : " blocks")
+                + " with block entity data not listed in config/capsule/blueprint_whitelist.json:" + blocks
+                + "\nTo keep a block, add it to blueprint_whitelist.json with the NBT keys its block entity needs to load in \"keepNBT\","
+                + " e.g. {\"block\": \"" + counts.keySet().iterator().next() + "\", \"keepNBT\": {\"<key>\": null}}:"
+                + " a block listed without keepNBT is deployed with empty block entity data, which crashes some mods."
+                + " Never keep the keys holding items, fluids or energy, blueprints would duplicate them."
+                + " /capsule reloadWhitelist reloads the file.");
     }
 
     public static List<String> getModEnabledTemplates(List<String> prefabsTemplatesList) {

@@ -16,6 +16,7 @@
 - The starter huts' axe item frame no longer covers the crafting table (#126). Existing installs: delete `config/capsule/starters` to get the new huts
 - Fix prefab blueprint recipes refunding the wrong items when `prefab_blueprint_recipe.json` moves the ingredients, and shift-click crafting a blueprint, blueprint change or recovery recipe turning the source capsule into an extra empty or one-use capsule (#84)
 - Fix blueprints whose source template cannot be read being created empty without any message: the server logs the template and the searched paths, and the player gets an error (#124)
+- The server log now warns, for each prefab recipe, about the blocks its blueprints will lack because their block entity is not in `config/capsule/blueprint_whitelist.json` (modded machines, for example), and lists their NBT keys. Whitelist them with a `keepNBT` naming the keys their block entity needs to load: a block whitelisted without it is deployed with empty block entity data, which crashes some mods (Modular Machinery Reborn item buses need `ioType`)
 - Fix server crash or kick with install paths containing reserved Windows names, e.g. Flatpak ATLauncher (#125)
 - Fix furnaces dropping their stored experience on every capture (#122)
 - Fix SecurityCraft blocks being captured by players who do not own them (#119)

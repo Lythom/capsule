@@ -1,16 +1,22 @@
 package capsule.gametest;
 
 import capsule.Config;
+import capsule.StructureSaver;
+import capsule.helpers.Blueprint;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe;
+import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
@@ -19,7 +25,9 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,6 +58,39 @@ public class BlueprintCraftingTests {
         assertTrue(helper, chat.stream().anyMatch(m -> m.getContents() instanceof TranslatableContents t && t.getKey().equals("capsule.error.blueprintSourceNotFound")),
                 "the player should be told, got " + chat);
         assertTrue(helper, source.equals(CapsuleItem.getStructureName(blueprint)), "no empty blueprint template should be created, got " + CapsuleItem.getStructureName(blueprint));
+        helper.succeed();
+    }
+
+    /**
+     * The server log tells modpack makers which blocks the blueprints of a prefab will lack, before a player crafts one.
+     */
+    @GameTest(template = "empty")
+    public static void prefabBlocksMissingFromBlueprintsAreReported(GameTestHelper helper) {
+        helper.setBlock(0, 1, 0, Blocks.JIGSAW); // block entity not in blueprint_whitelist.json
+        helper.setBlock(1, 1, 0, Blocks.FURNACE); // whitelisted block entity
+        helper.setBlock(2, 1, 0, Blocks.STONE);
+        MinecraftServer server = helper.getLevel().getServer();
+        String prefab = Config.prefabsTemplatesPath + "/unlisted_block_entity";
+        CapsuleTemplateManager prefabFiles = new CapsuleTemplateManager(server.getResourceManager(), new File("."), DataFixers.getDataFixer());
+        StructureSaver.duplicateTemplate(StructureSaver.getTemplateNBTData(CapsuleTestUtils.template(helper, CapsuleTestUtils.capture(helper, new BlockPos(0, 1, 0), 3))), prefab, prefabFiles, server);
+
+        List<ResourceLocation> recipes = new ArrayList<>();
+        try (LogCapture logs = LogCapture.open()) {
+            Blueprint.createDynamicPrefabRecipes(server.getResourceManager(), List.of(prefab), (id, recipe, ingredients) -> recipes.add(id));
+            assertTrue(helper, recipes.size() == 1, "the prefab should get a recipe, got " + recipes);
+            List<String> warnings = logs.containing(prefab);
+            assertTrue(helper, warnings.size() == 1, "one warning should name the prefab, got " + logs.messages());
+            String warning = warnings.get(0);
+            assertTrue(helper, warning.contains("minecraft:jigsaw") && warning.contains("pool") && warning.contains("blueprint_whitelist.json") && warning.contains("keepNBT"),
+                    "the warning should name the lost block, its NBT keys and how to keep it, got " + warning);
+            assertTrue(helper, !warning.contains("minecraft:furnace"), "whitelisted blocks are kept, got " + warning);
+        } finally {
+            try {
+                Files.deleteIfExists(Path.of(prefab + ".nbt"));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         helper.succeed();
     }
 
