@@ -127,6 +127,8 @@ public class CapsuleItem extends Item {
      * string structureName                                       // name of the template file name without the .nbt extension.
      * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
      * string prevStructureName                                   // Used to remove older unused blueprint templates
+     * bool templateShouldBeCopied                                // [Blueprints] copy the source template when crafted. [Linked] copy the config template structureName points at into a template of its own
+     * bool templateCopyFailed                                    // [Linked] the copy failed (missing source), retried only when the capsule is used
      * tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
      * long undeployAt                                            // [Instant capsules] game time from which a deployed capsule can be undeployed
      * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
@@ -752,14 +754,19 @@ public class CapsuleItem extends Item {
     }
 
     /**
-     * Hack: constantly check for player inventory to create a template if not exists.
+     * Hack: constantly check for player inventory to create a template if not exists. Catches the capsules crafted
+     * without onCraftedBy on the result (Crafter, autocrafters) or given by commands. A failed copy is not retried here:
+     * it was reported already, and is retried when the capsule is used.
      */
     public static void onPlayerTick(Player player) {
         if (!player.level().isClientSide) {
             for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
                 ItemStack itemstack = player.getInventory().getItem(i);
-                if (NBTHelper.hasTag(itemstack) && NBTHelper.getOrCreateTag(itemstack).contains("templateShouldBeCopied")) {
-                    duplicateBlueprintTemplate(itemstack, player.level(), player);
+                if (NBTHelper.hasTag(itemstack)) {
+                    CompoundTag tag = NBTHelper.getOrCreateTag(itemstack);
+                    if (tag.contains("templateShouldBeCopied") && !tag.contains("templateCopyFailed")) {
+                        copyTemplateIfNeeded(itemstack, player.level(), player);
+                    }
                 }
             }
         }
@@ -767,7 +774,29 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCraftedBy(ItemStack capsule, Level worldIn, Player playerIn) {
-        duplicateBlueprintTemplate(capsule, worldIn, playerIn);
+        copyTemplateIfNeeded(capsule, worldIn, playerIn);
+    }
+
+    /**
+     * Whether the capsule is a linked capsule waiting for its own copy of a config template (templateShouldBeCopied).
+     * Blueprints get theirs from duplicateBlueprintTemplate, rewards deploy their config template directly.
+     */
+    public static boolean needsTemplateCopy(ItemStack capsule) {
+        return capsule.getItem() instanceof CapsuleItem && NBTHelper.hasTag(capsule)
+                && NBTHelper.getOrCreateTag(capsule).contains("templateShouldBeCopied")
+                && !isBlueprint(capsule) && !isReward(capsule);
+    }
+
+    /**
+     * Gives a crafted capsule the template it must own: blueprints a whitelisted copy of their source, linked capsules
+     * tagged templateShouldBeCopied a complete copy of their config template.
+     */
+    public static void copyTemplateIfNeeded(ItemStack capsule, Level level, @Nullable Player player) {
+        if (isBlueprint(capsule)) {
+            duplicateBlueprintTemplate(capsule, level, player);
+        } else if (!level.isClientSide && needsTemplateCopy(capsule)) {
+            Capsule.copyLinkedTemplate(capsule, (ServerLevel) level, player);
+        }
     }
 
     public static void duplicateBlueprintTemplate(ItemStack capsule, Level worldIn, Player playerIn) {

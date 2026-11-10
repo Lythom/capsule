@@ -37,6 +37,7 @@ public class CapsuleGameTests {
             FurnaceExperienceTests.class,
             InfrastructureTests.class,
             ItemFrameTests.class,
+            LinkedTemplateCopyTests.class,
             LootTests.class,
             PreviewQueryTests.class,
             RecallTests.class,

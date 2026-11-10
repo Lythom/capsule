@@ -101,6 +101,7 @@ Known visual issues:
 | Mirror with sneak + left click (FRONT_BACK, LEFT_RIGHT, none) | UT `mirrorFlipsOneAxis` | in game |
 | Deployed capsule right click undeploys | GT `undeployDeployedCapsule`; CS `15` → `16-undeployed` | |
 | One-use / reward deploys and is consumed | GT `rewardCapsuleDeploysTwice`, `recoveryCapsuleEmptiesSourceTemplate` | throwing a recovery capsule in game |
+| Linked capsule crafted from a config template (`templateShouldBeCopied`, `docs/CAPSULE_FORMATS.md`) | GT `LinkedTemplateCopyTests` (click craft, two crafts, player tick, dispenser, missing source, source outside `config/`, blueprint unchanged) | a KubeJS recipe in game |
 | Blueprint recipes (from linked, blueprint, one-use, reward), change recipes | GT `blueprintRecipeCopiesCapsule`, `BlueprintCraftingTests` (crafting menu, click and shift-click, one-use source, blueprint change) | |
 | Blueprint recharge from player inventory, from a linked inventory, from both; materials consumed | GT `blueprintConsumesMaterials` (player inventory), `pottedPlantsAreNotFree` | linked inventory (sneak + right click) and its highlight; Fabric modded storages (Transfer API) |
 | Blueprint world recharge (structure must match, dispenser content) | GT `blueprintUndeployKeepsTheItemsOfItsBlocks` (steps 5 to 9, with a chest, a lectern, a jukebox and a decorated pot); UT `BlueprintItemsTest` (items under any NBT key) | steps 1 to 4b (removed or moved block) |
