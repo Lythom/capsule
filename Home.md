@@ -198,7 +198,7 @@ Blueprint capsules can be reloaded in order to deploy the same structure several
 **Linking an inventory**: sneak + right click an inventory (chest, barrel…) to use it as a source of building materials. Sneak + right click it again to unlink it.
 
 When unloaded (uncharged), left click in the air to load from the linked inventory and the player inventory. If all materials are available they will be consumed to charge the capsule. Otherwise, the missing materials will be displayed.
-You can also right click to undo the last deployment: the blocks go back into the blueprint, as long as the area still matches the blueprint structure (no removed or added blocks, no items in inventories).
+You can also right click to undo the last deployment: the blocks go back into the blueprint, as long as the area still matches the blueprint structure: no removed or added blocks, and no block holding an item (chests and other inventories, lectern books, jukebox records, modded machines…).
 
 When loaded:
 - Right click to deploy (blueprints are instant: no throw needed)

@@ -18,7 +18,7 @@ Downloads for every version: [CurseForge](https://www.curseforge.com/minecraft/m
 | 1.9.4, 1.9 | 1.1 | Forge | not updated anymore |
 | 1.8.9 | 1.0 | Forge | not updated anymore |
 
-The 9.1 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5) reach the next Forge builds: 1.20.1 8.0.x, 1.18.2 6.0.x and 1.16.5 5.0.x. The 9.1 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics) stay 1.21.1 only. See [Backports](Changelog-1.21.1-9.1#backports-to-forge-1201-1182-and-1165).
+The 9.1 bug fixes and the claim protection (Open Parties and Claims and Flan on 1.20.1 and 1.18.2, Flan on 1.16.5) are in the Forge builds released with 9.1: 1.20.1 8.0.x, 1.18.2 6.0.x and 1.16.5 5.0.x. The 9.1 features (Loyalty, fire proof capsules, new tiers, translucent preview, capture animation, REI and EMI, Sponge v3 schematics) stay 1.21.1 only. See [Backports](Changelog-1.21.1-9.1#backports-to-forge-1201-1182-and-1165).
 
 The 9.0.x builds (9.0.113 to 9.0.117) were the initial NeoForge port from Forge 1.20.4, without the 9.1 features (Fabric, Loyalty, claim mods, new tiers...) and fixes.
 
