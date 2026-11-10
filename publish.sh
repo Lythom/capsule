@@ -140,7 +140,7 @@ if [ "$DRY_RUN" = true ]; then
     echo "curl -s -H 'X-Api-Token: \$CURSEFORGE_TOKEN' \\"
     echo "    'https://minecraft.curseforge.com/api/game/versions'"
     echo ""
-    echo "# 2. Upload file (replace <MC_VERSION_ID>, <LOADER_ID> and <JAVA_ID> by the ids of '$MINECRAFT_VERSION', '$LOADER_NAME' and '$JAVA_NAME' from step 1)"
+    echo "# 2. Upload file (replace <MC_VERSION_ID>, <LOADER_ID> and <JAVA_ID> by the ids of '$MINECRAFT_VERSION', '$LOADER_NAME' and '$JAVA_NAME' from step 1, <CLIENT_ID> and <SERVER_ID> by the ids of 'Client' and 'Server')"
     cat <<DRYEOF
 curl -X POST \\
     -H 'X-Api-Token: \$CURSEFORGE_TOKEN' \\
@@ -148,7 +148,7 @@ curl -X POST \\
   "changelog": $JSON_CHANGELOG,
   "changelogType": "markdown",
   "displayName": "Capsule $VERSION ($LOADER_NAME)",
-  "gameVersions": [<MC_VERSION_ID>, <LOADER_ID>, <JAVA_ID>],
+  "gameVersions": [<MC_VERSION_ID>, <LOADER_ID>, <JAVA_ID>, <CLIENT_ID>, <SERVER_ID>],
   "releaseType": "$RELEASE_TYPE"$CF_RELATIONS_FIELD
 };type=application/json' \\
     -F 'file=@$JAR_FILE;type=application/java-archive' \\
@@ -244,6 +244,29 @@ for v in json.load(sys.stdin):
         CF_GAME_VERSIONS="[$CF_MC_VERSION_ID, $CF_LOADER_ID, $CF_JAVA_ID]"
     else
         echo "WARNING: CurseForge ID not found for $JAVA_NAME, the file is listed without Java version"
+    fi
+
+    # CurseForge requires an environment version: Capsule runs on the client and on the server
+    CF_TYPES_FILE=$(mktemp)
+    curl -s -H "X-Api-Token: $CURSEFORGE_TOKEN" "https://minecraft.curseforge.com/api/game/version-types" > "$CF_TYPES_FILE"
+    CF_ENVIRONMENT_IDS=$(echo "$CF_VERSIONS_JSON" | python3 -c "
+import json, sys
+try:
+    types = [t['id'] for t in json.load(open(sys.argv[1])) if t.get('slug') == 'environment']
+except Exception:
+    types = []
+ids = {}
+for v in json.load(sys.stdin):
+    if v['name'] in ('Client', 'Server') and (not types or v.get('gameVersionTypeID') in types):
+        ids.setdefault(v['name'], v['id'])
+print(', '.join(str(ids[n]) for n in ('Client', 'Server') if n in ids))
+" "$CF_TYPES_FILE" 2>/dev/null || echo "")
+    rm -f "$CF_TYPES_FILE"
+    if [ -n "$CF_ENVIRONMENT_IDS" ]; then
+        echo "CurseForge Client, Server IDs: $CF_ENVIRONMENT_IDS"
+        CF_GAME_VERSIONS="${CF_GAME_VERSIONS%]}, $CF_ENVIRONMENT_IDS]"
+    else
+        echo "WARNING: CurseForge environment versions (Client, Server) not found, CurseForge may refuse the file"
     fi
 
     # ---- Upload to CurseForge ----
