@@ -418,12 +418,20 @@ public class CapsuleTemplate {
         return listnbt;
     }
 
+    /**
+     * Whether blueprints keep this block: blocks without block entity data are kept, the others only if they are in
+     * blueprint_whitelist.json.
+     */
+    public static boolean isKeptInBlueprint(Template.BlockInfo block) {
+        if (block.nbt == null) return true;
+        ResourceLocation registryName = block.state.getBlock().getRegistryName();
+        return registryName != null && Config.blueprintWhitelist.containsKey(registryName.toString());
+    }
+
     public void filterFromWhitelist(List<String> outExcluded) {
         List<Template.BlockInfo> newBlockList = this.getPalette().stream()
                 .filter(b -> {
-                    ResourceLocation registryName = b.state.getBlock().getRegistryName();
-                    boolean included = b.nbt == null
-                            || registryName != null && Config.blueprintWhitelist.containsKey(registryName.toString());
+                    boolean included = isKeptInBlueprint(b);
                     if (!included && outExcluded != null) outExcluded.add(b.state.toString());
                     return included;
                 })

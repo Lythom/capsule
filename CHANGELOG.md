@@ -21,6 +21,7 @@
 - Harden the full deploy preview against crashes with modded blocks (Ad Astra, Integrated Dynamics, farmland, Mob Grinding Utils) (#117, #94, #76, #81)
 - Fix a capsule showing the preview of the previously held capsule right after switching capsules
 - Fix blueprints of a missing or unreadable template doing nothing without a message: the player is told and the server log lists the searched paths (#124)
+- The server log now warns, for each prefab recipe, about the blocks its blueprints will lack because their block entity is not in `config/capsule/blueprint_whitelist.json` (modded machines, for example), and lists their NBT keys. Whitelist them with a `keepNBT` naming the keys their block entity needs to load: a block whitelisted without it is deployed with empty block entity data, which crashes some mods
 - Fix the item frame covering the crafting table in the five starter huts; delete `config/capsule/starters` to get the new huts (#126)
 - Fix prefab blueprint recipes giving back the wrong ingredients once their pattern is moved, and shift-click crafting of blueprints, blueprint changes and recovery capsules also clearing the source capsule (#84)
 - Fix blueprints showing the content they do not have: lectern books, jukebox records and brewing stand bottles
