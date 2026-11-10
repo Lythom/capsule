@@ -2,6 +2,7 @@
 
 **1.16.5-5.0.BUILD_ID : Bug fixes backported from 1.21.1**
 
+- Fix linked capsules tagged `templateShouldBeCopied` (`state:2`) deploying nothing: like `/capsule giveLinked`, they now get their own copy of the config template their `structureName` points at, so that modpacks can craft reusable capsules of a template (`docs/CAPSULE_FORMATS.md`). The copy is complete, inventories included; only templates under `config/` are copied; a missing or empty template is logged, the player told, and the capsule refuses to deploy. Leave out `sourceInventory`: it makes the capsule a blueprint, whose copy keeps only the whitelisted blocks without their inventories
 - Fix server crash or kick with install paths containing reserved Windows names, e.g. Flatpak ATLauncher (#125)
 - Fix furnaces dropping their stored experience on every capture (#122)
 - Fix deploys floating above snow layers and grass (#116)

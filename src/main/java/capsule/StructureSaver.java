@@ -665,6 +665,40 @@ public class StructureSaver {
         return StructureSaver.getTemplateForCapsule(worldServer, path);
     }
 
+    /**
+     * Whether path names a template of the config folder (rewards, starters, prefabs...), the only ones a linked capsule
+     * tagged templateShouldBeCopied may copy. Templates captured by players live in the world folder and are refused.
+     */
+    public static boolean isConfigTemplatePath(@Nullable String path) {
+        if (path == null || path.isEmpty()) return false;
+        String p = path.toLowerCase();
+        String rewards = Config.rewardTemplatesPath == null ? "" : Config.rewardTemplatesPath.toLowerCase();
+        if (!rewards.isEmpty() && !rewards.endsWith("/")) rewards += "/";
+        boolean inConfig = p.startsWith("config/") || !rewards.isEmpty() && p.startsWith(rewards);
+        return inConfig && Arrays.stream(p.split("/")).noneMatch(segment -> segment.equals(".."));
+    }
+
+    /**
+     * The template of the config folder at path, or null when it is missing or empty. Unlike getTemplateForReward, a
+     * missing template is not cached as an empty one, so it is found once the file is added and the server reloaded.
+     */
+    @Nullable
+    public static CapsuleTemplate getConfigTemplate(String path, MinecraftServer server) {
+        ResourceLocation location = ResourceLocation.tryParse(path.toLowerCase());
+        if (location == null) return null;
+        CapsuleTemplate template = getRewardManager(server.getDataPackRegistries().getResourceManager()).getTemplate(location);
+        if (template == null || template.getPalette().isEmpty() && template.entities.isEmpty()) return null;
+        return template;
+    }
+
+    /**
+     * The files and resources searched for the config template at path, for error messages.
+     */
+    public static List<String> searchedConfigLocations(String path, MinecraftServer server) {
+        ResourceLocation location = ResourceLocation.tryParse(path.toLowerCase());
+        return location == null ? new ArrayList<>() : getRewardManager(server.getDataPackRegistries().getResourceManager()).searchedLocations(location);
+    }
+
     public static CompoundNBT getTemplateNBTData(CapsuleTemplate template) {
         if (template == null) return null;
         CompoundNBT data = new CompoundNBT();

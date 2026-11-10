@@ -19,6 +19,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -120,6 +121,8 @@ public class CapsuleItem extends Item {
      * string structureName                                       // name of the template file name without the .nbt extension.
      * // Lookup paths are /<worldsave>/structures/capsule for non-rewards, and structureName must contains the full path for rewards and loots
      * string prevStructureName                                   // Used to remove older unused blueprint templates
+     * bool templateShouldBeCopied                                // [Blueprints] copy the source template when crafted. [Linked] copy the config template structureName points at into a template of its own
+     * bool templateCopyFailed                                    // [Linked] the copy failed (missing source), retried only when the capsule is used
      * tag activetimer : {long starttime}                         // game time of the activation, used to time the moment when the capsule must deactivate
      * tag spawnPosition : {int x, int y, int z, int dim    }     // location where the capsule is currently deployed
      * long deployAt                                              // when thrown with preview, position to deploy the capsule to match preview
@@ -727,15 +730,17 @@ public class CapsuleItem extends Item {
     }
 
     /**
-     * Hack: constantly check for player inventory to create a template if not exists.
+     * Hack: constantly check for player inventory to create a template if not exists. Catches the capsules crafted
+     * without onCraftedBy on the result (inventory grid shift-click, autocrafters) or given by commands. A failed copy is
+     * not retried here: it was reported already, and is retried when the capsule is used.
      */
     @SubscribeEvent
     public static void onTickPlayerEvent(TickEvent.PlayerTickEvent event) {
         if (!event.player.level.isClientSide) {
             for (int i = 0; i < event.player.inventory.getContainerSize(); ++i) {
                 ItemStack itemstack = event.player.inventory.getItem(i);
-                if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied")) {
-                    duplicateBlueprintTemplate(itemstack, event.player.level, event.player);
+                if (itemstack.hasTag() && itemstack.getTag().contains("templateShouldBeCopied") && !itemstack.getTag().contains("templateCopyFailed")) {
+                    copyTemplateIfNeeded(itemstack, event.player.level, event.player);
                 }
             }
         }
@@ -743,7 +748,47 @@ public class CapsuleItem extends Item {
 
     @Override
     public void onCraftedBy(ItemStack capsule, World worldIn, PlayerEntity playerIn) {
-        duplicateBlueprintTemplate(capsule, worldIn, playerIn);
+        // a shift-click also calls onCraftedBy on a copy of the result made before the craft, which would leave an unused
+        // template: only the crafted item itself gets one here, a capsule crafted otherwise gets it from the player tick
+        if (needsTemplateCopy(capsule) && !isCraftedItem(playerIn, capsule)) return;
+        copyTemplateIfNeeded(capsule, worldIn, playerIn);
+    }
+
+    /**
+     * Whether stack is the crafted item itself: on the cursor (click), in a slot of the open menu (the result slot
+     * during a shift-click) or in the inventory.
+     */
+    private static boolean isCraftedItem(@Nullable PlayerEntity player, ItemStack stack) {
+        if (player == null) return false;
+        if (player.inventory.getCarried() == stack) return true;
+        for (Slot slot : player.containerMenu.slots) {
+            if (slot.getItem() == stack) return true;
+        }
+        for (int i = 0; i < player.inventory.getContainerSize(); i++) {
+            if (player.inventory.getItem(i) == stack) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether the capsule is a linked capsule waiting for its own copy of a config template (templateShouldBeCopied).
+     * Blueprints get theirs from duplicateBlueprintTemplate, rewards deploy their config template directly.
+     */
+    public static boolean needsTemplateCopy(ItemStack capsule) {
+        return capsule.getItem() instanceof CapsuleItem && capsule.hasTag() && capsule.getTag().contains("templateShouldBeCopied")
+                && !isBlueprint(capsule) && !isReward(capsule);
+    }
+
+    /**
+     * Gives a crafted capsule the template it must own: blueprints a whitelisted copy of their source, linked capsules
+     * tagged templateShouldBeCopied a complete copy of their config template.
+     */
+    public static void copyTemplateIfNeeded(ItemStack capsule, World level, @Nullable PlayerEntity player) {
+        if (isBlueprint(capsule)) {
+            duplicateBlueprintTemplate(capsule, level, player);
+        } else if (!level.isClientSide && needsTemplateCopy(capsule)) {
+            Capsule.copyLinkedTemplate(capsule, (ServerWorld) level, player);
+        }
     }
 
     public static void duplicateBlueprintTemplate(ItemStack capsule, World worldIn, PlayerEntity playerIn) {

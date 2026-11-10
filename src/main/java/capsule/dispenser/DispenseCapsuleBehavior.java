@@ -37,6 +37,8 @@ public class DispenseCapsuleBehavior extends DefaultDispenseItemBehavior {
                 LOGGER.error("Couldn't resend the content into the capsule", e);
             }
         } else if (CapsuleItem.hasStructureLink(capsule)) {
+            // a capsule out of an autocrafter gets its template before its size is read
+            if (!Capsule.ensureOwnTemplate(capsule, serverWorld, actor)) return capsule;
             final int size = CapsuleItem.getSize(capsule);
             final int extendLength = (size - 1) / 2;
 
