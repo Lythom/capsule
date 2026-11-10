@@ -256,10 +256,16 @@ for v in json.load(sys.stdin):
 METAEOF
     )
 
+    # curl -F cuts a value at its first ";" (the changelog has some): the JSON is read from a file
+    CF_METADATA_FILE=$(mktemp)
+    MR_DATA_FILE=$(mktemp)
+    trap 'rm -f "$CF_METADATA_FILE" "$MR_DATA_FILE"' EXIT
+    printf '%s' "$CF_METADATA" > "$CF_METADATA_FILE"
+
     UPLOAD_FAILED=false
     CF_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "X-Api-Token: $CURSEFORGE_TOKEN" \
-        -F "metadata=$CF_METADATA;type=application/json" \
+        -F "metadata=<$CF_METADATA_FILE;type=application/json" \
         -F "file=@$JAR_FILE;type=application/java-archive" \
         "https://minecraft.curseforge.com/api/projects/$CURSEFORGE_PROJECT_ID/upload-file")
 
@@ -296,9 +302,11 @@ METAEOF
 MREOF
     )
 
+    printf '%s' "$MR_DATA" > "$MR_DATA_FILE"
+
     MR_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: $MODRINTH_TOKEN" \
-        -F "data=$MR_DATA;type=application/json" \
+        -F "data=<$MR_DATA_FILE;type=application/json" \
         -F "mod_file=@$JAR_FILE;type=application/java-archive" \
         "https://api.modrinth.com/v2/version")
 
