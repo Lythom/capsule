@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
@@ -40,3 +40,9 @@ jobs:
       - store_artifacts:
           path: build/libs
           destination: jars
+
+# Builds every push of this branch, as version 2 did without workflows
+workflows:
+  build:
+    jobs:
+      - build
