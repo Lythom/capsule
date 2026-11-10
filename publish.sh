@@ -103,6 +103,13 @@ if [ "$DRY_RUN" = true ]; then
 fi
 echo ""
 
+# CurseForge refuses an empty relations.projects list: the field is left out without dependency
+CF_RELATIONS_FIELD=""
+if [ "$CF_RELATIONS" != "[]" ]; then
+    CF_RELATIONS_FIELD=",
+  \"relations\": {\"projects\": $CF_RELATIONS}"
+fi
+
 # Extract latest changelog entry from CHANGELOG.md
 # Takes everything between the first and second "**X.Y.Z" headers
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
@@ -142,8 +149,7 @@ curl -X POST \\
   "changelogType": "markdown",
   "displayName": "Capsule $VERSION ($LOADER_NAME)",
   "gameVersions": [<MC_VERSION_ID>, <LOADER_ID>],
-  "releaseType": "$RELEASE_TYPE",
-  "relations": {"projects": $CF_RELATIONS}
+  "releaseType": "$RELEASE_TYPE"$CF_RELATIONS_FIELD
 };type=application/json' \\
     -F 'file=@$JAR_FILE;type=application/java-archive' \\
     'https://minecraft.curseforge.com/api/projects/\$CURSEFORGE_PROJECT_ID/upload-file'
@@ -234,8 +240,7 @@ for v in json.load(sys.stdin):
   "changelogType": "markdown",
   "displayName": "Capsule $VERSION ($LOADER_NAME)",
   "gameVersions": $CF_GAME_VERSIONS,
-  "releaseType": "$RELEASE_TYPE",
-  "relations": {"projects": $CF_RELATIONS}
+  "releaseType": "$RELEASE_TYPE"$CF_RELATIONS_FIELD
 }
 METAEOF
     )
@@ -286,24 +291,33 @@ METAEOF
 MREOF
     )
 
-    printf '%s' "$MR_DATA" > "$MR_DATA_FILE"
-
-    MR_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-        -H "Authorization: $MODRINTH_TOKEN" \
-        -F "data=<$MR_DATA_FILE;type=application/json" \
-        -F "mod_file=@$JAR_FILE;type=application/java-archive" \
-        "https://api.modrinth.com/v2/version")
-
-    MR_HTTP_CODE=$(echo "$MR_RESPONSE" | tail -1)
-    MR_BODY=$(echo "$MR_RESPONSE" | sed '$d')
-
-    if [ "$MR_HTTP_CODE" -ge 200 ] && [ "$MR_HTTP_CODE" -lt 300 ]; then
-        echo "Modrinth: SUCCESS (HTTP $MR_HTTP_CODE)"
-        echo "Response: $MR_BODY"
+    # a rerun of the publish job does not publish the version twice
+    MR_EXISTING=$(curl -s -A "Lythom/capsule (contact@samuel-bouchet.fr)" "https://api.modrinth.com/v2/project/$MODRINTH_PROJECT_ID/version" | python3 -c "
+import json, sys
+print(any(v['version_number'] == '$VERSION-$LOADER' for v in json.load(sys.stdin)))
+" 2>/dev/null || echo "")
+    if [ "$MR_EXISTING" = "True" ]; then
+        echo "Modrinth: SKIPPED, $VERSION-$LOADER is already published"
     else
-        echo "Modrinth: FAILED (HTTP $MR_HTTP_CODE)"
-        echo "Response: $MR_BODY"
-        UPLOAD_FAILED=true
+        printf '%s' "$MR_DATA" > "$MR_DATA_FILE"
+
+        MR_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: $MODRINTH_TOKEN" \
+            -F "data=<$MR_DATA_FILE;type=application/json" \
+            -F "mod_file=@$JAR_FILE;type=application/java-archive" \
+            "https://api.modrinth.com/v2/version")
+
+        MR_HTTP_CODE=$(echo "$MR_RESPONSE" | tail -1)
+        MR_BODY=$(echo "$MR_RESPONSE" | sed '$d')
+
+        if [ "$MR_HTTP_CODE" -ge 200 ] && [ "$MR_HTTP_CODE" -lt 300 ]; then
+            echo "Modrinth: SUCCESS (HTTP $MR_HTTP_CODE)"
+            echo "Response: $MR_BODY"
+        else
+            echo "Modrinth: FAILED (HTTP $MR_HTTP_CODE)"
+            echo "Response: $MR_BODY"
+            UPLOAD_FAILED=true
+        fi
     fi
 
     echo ""
