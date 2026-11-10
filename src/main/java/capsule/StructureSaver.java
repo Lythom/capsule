@@ -6,6 +6,7 @@ import capsule.plugins.claims.Claims;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
+import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -17,8 +18,12 @@ import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IClearable;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
@@ -40,6 +45,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -177,7 +183,7 @@ public class StructureSaver {
     }
 
     /**
-     * Whether the blocks of the world match the blueprint, without items in their inventories.
+     * Whether the blocks of the world match the blueprint, and hold no items.
      */
     private static boolean matches(CapsuleTemplate world, CapsuleTemplate blueprint) {
         List<Template.BlockInfo> worldBlocks = world.getPalette().stream().filter(b -> !isFlowingLiquid(b)).collect(Collectors.toList());
@@ -198,7 +204,42 @@ public class StructureSaver {
         boolean blueprintMatch = IntStream.range(0, tempTemplateSorted.size())
                 .allMatch(i -> tempTemplateSorted.get(i).equals(blueprintTemplateSorted.get(i)));
 
-        return blueprintMatch && worldBlocks.stream().allMatch(b -> b.nbt == null || !b.nbt.contains("Items") || b.nbt.getList("Items", Constants.NBT.TAG_COMPOUND).isEmpty());
+        return blueprintMatch && worldBlocks.stream().noneMatch(StructureSaver::holdsItems);
+    }
+
+    /**
+     * Whether the saved block entity holds items, which removing the block destroys: a non-empty "Items" list (vanilla
+     * containers), or an item stack under any other key (lectern book, mod inventories...). Items in the NBT the
+     * blueprint whitelist keeps are part of the blueprint and do not count.
+     */
+    public static boolean holdsItems(Template.BlockInfo b) {
+        CompoundNBT nbt = b.nbt;
+        if (nbt == null) return false;
+        if (!nbt.getList("Items", Constants.NBT.TAG_COMPOUND).isEmpty()) return true;
+        JsonObject keptNBT = Config.getBlueprintAllowedNBT(b.state.getBlock());
+        // the root is the block entity itself, its keys are not an item stack
+        return nbt.getAllKeys().stream().anyMatch(key -> (keptNBT == null || !keptNBT.has(key)) && containsItemStack(nbt.get(key)));
+    }
+
+    private static boolean containsItemStack(INBT tag) {
+        if (tag instanceof CompoundNBT) {
+            CompoundNBT compound = (CompoundNBT) tag;
+            return isItemStack(compound) || compound.getAllKeys().stream().anyMatch(key -> containsItemStack(compound.get(key)));
+        }
+        if (tag instanceof ListNBT) {
+            return ((ListNBT) tag).stream().anyMatch(StructureSaver::containsItemStack);
+        }
+        return false;
+    }
+
+    /**
+     * An item stack as ItemStack.save writes it (Count), or in the format of 1.20.5 and later (count).
+     */
+    private static boolean isItemStack(CompoundNBT tag) {
+        if (!tag.contains("id", Constants.NBT.TAG_STRING) || Math.max(tag.getInt("Count"), tag.getInt("count")) <= 0) return false;
+        ResourceLocation id = ResourceLocation.tryParse(tag.getString("id"));
+        Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
+        return item != null && item != Items.AIR;
     }
 
     public static String serializeComparable(Template.BlockInfo b) {
