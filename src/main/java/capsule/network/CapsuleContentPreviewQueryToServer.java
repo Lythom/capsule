@@ -1,6 +1,7 @@
 package capsule.network;
 
 import capsule.StructureSaver;
+import capsule.helpers.Capsule;
 import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
@@ -74,6 +75,13 @@ public class CapsuleContentPreviewQueryToServer {
             }
 
             ServerLevel serverworld = sendingPlayer.serverLevel();
+            if (CapsuleItem.needsTemplateCopy(capsule)) {
+                // the capsule just reached the inventory: it gets its template now, and the client asks the preview of its new name
+                if (!capsule.getTag().contains("templateCopyFailed")) {
+                    Capsule.copyLinkedTemplate(capsule, serverworld, sendingPlayer);
+                }
+                return;
+            }
             Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(capsule, serverworld);
             CapsuleTemplate template = templatepair.getRight();
 

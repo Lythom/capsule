@@ -1,5 +1,6 @@
 package capsule.helpers;
 
+import capsule.Config;
 import capsule.StructureSaver;
 import capsule.blocks.BlockCapsuleMarker;
 import capsule.items.CapsuleItem;
@@ -124,6 +125,17 @@ public class Capsule {
         // specify target to capture
 
         boolean didSpawn = false;
+
+        if (CapsuleItem.needsTemplateCopy(capsule)) {
+            // never deploy the empty template a capsule without its copy points at
+            if (!copyLinkedTemplate(capsule, world, actor)) {
+                if (capsule.getTag() != null) capsule.getTag().remove("deployAt");
+                CapsuleItem.revertStateFromActivated(capsule);
+                return false;
+            }
+            // the copy may have grown the capsule
+            extendLength = (CapsuleItem.getSize(capsule) - 1) / 2;
+        }
 
         BlockPos dest;
         if (capsule.getTag() != null && capsule.getTag().contains("deployAt")) {
@@ -391,7 +403,7 @@ public class Capsule {
             boolean deployed = deployCapsule(capsule, throwPos, Claims.player(itemWorld, itemEntity.thrower), extendLength, itemWorld);
             if (deployed) {
                 itemWorld.playSound(null, itemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.4F, 0.1F);
-                showDeployParticules(itemWorld, itemEntity.blockPosition(), size);
+                showDeployParticules(itemWorld, itemEntity.blockPosition(), CapsuleItem.getSize(capsule));
             }
             if (deployed && CapsuleItem.isOneUse(capsule)) {
                 itemEntity.remove(Entity.RemovalReason.DISCARDED);
@@ -458,6 +470,70 @@ public class Capsule {
         );
         CapsuleItem.setCanRotate(capsule, srcTemplate.canRotate());
         return capsule;
+    }
+
+    /**
+     * Gives a linked capsule tagged templateShouldBeCopied its own copy of the config template its structureName points
+     * at, as /capsule giveLinked does: a complete copy, inventories included, saved in the world under a new name. The
+     * capsule keeps its colors and label, and grows to the template size if it is smaller.
+     *
+     * @param player who gets the capsule, named in the new template and told when the copy fails; may be null
+     * @return false when the source is outside the config folder, missing or empty, or the copy can't be written: the
+     * capsule keeps its tag and is marked templateCopyFailed, the error is logged and the player told
+     */
+    public static boolean copyLinkedTemplate(ItemStack capsule, ServerLevel level, @Nullable Player player) {
+        String source = CapsuleItem.getStructureName(capsule);
+        MinecraftServer server = level.getServer();
+        boolean allowed = StructureSaver.isConfigTemplatePath(source);
+        CapsuleTemplate template = allowed ? StructureSaver.getConfigTemplate(source, server) : null;
+        if (template == null) {
+            if (allowed) {
+                LOGGER.error("Capsule template {} not copied: template not found or empty, searched {}", source, StructureSaver.searchedConfigLocations(source, server));
+            } else {
+                LOGGER.error("Capsule template {} not copied: templateShouldBeCopied only copies templates of the config folder (config/ or {})", source, Config.rewardTemplatesPath);
+            }
+            capsule.getOrCreateTag().putBoolean("templateCopyFailed", true);
+            if (player != null) {
+                player.sendSystemMessage(Component.translatable(allowed ? "capsule.error.copySourceNotFound" : "capsule.error.copySourceNotAllowed", source));
+            }
+            return false;
+        }
+
+        String owner = player != null ? player.getGameProfile().getName() : "CapsuleMod";
+        String destStructureName = StructureSaver.getUniqueName(level, owner + "-" + source.replace("/", "_"));
+        CapsuleTemplateManager manager = StructureSaver.getTemplateManager(server);
+        if (manager == null || !StructureSaver.duplicateTemplate(StructureSaver.getTemplateNBTData(template), destStructureName, manager, server)) {
+            capsule.getOrCreateTag().putBoolean("templateCopyFailed", true);
+            StructureSaver.printWriteTemplateError(player, destStructureName);
+            return false;
+        }
+
+        // a template larger than the capsule would deploy past the checked destination
+        CapsuleItem.setSize(capsule, Math.max(CapsuleItem.getSize(capsule), largestDimension(template)));
+        CapsuleItem.setStructureName(capsule, destStructureName);
+        boolean activated = CapsuleItem.hasState(capsule, CapsuleState.ACTIVATED) || CapsuleItem.hasState(capsule, CapsuleState.EMPTY_ACTIVATED)
+                || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE_ACTIVATED);
+        boolean oneUse = CapsuleItem.isOneUse(capsule);
+        CapsuleItem.setState(capsule, activated ? (oneUse ? CapsuleState.ONE_USE_ACTIVATED : CapsuleState.ACTIVATED) : (oneUse ? CapsuleState.ONE_USE : CapsuleState.LINKED));
+        CapsuleItem.setCanRotate(capsule, template.canRotate());
+        CompoundTag tag = capsule.getOrCreateTag();
+        tag.remove("templateShouldBeCopied");
+        tag.remove("templateCopyFailed");
+        return true;
+    }
+
+    /**
+     * Copies the template of a linked capsule still tagged templateShouldBeCopied (an item that never went through a
+     * player inventory, from an autocrafter for instance) before it is used.
+     *
+     * @return false when the capsule has no template of its own and must not be used
+     */
+    public static boolean ensureOwnTemplate(ItemStack capsule, ServerLevel level, @Nullable Player player) {
+        return !CapsuleItem.needsTemplateCopy(capsule) || copyLinkedTemplate(capsule, level, player);
+    }
+
+    private static int largestDimension(CapsuleTemplate template) {
+        return Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
     }
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
