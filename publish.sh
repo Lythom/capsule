@@ -70,7 +70,7 @@ case "$LOADER" in
         LOADER_NAME="Fabric"
         # Fabric API, Forge Config API Port
         MR_DEPENDENCIES='[{"project_id": "P7dR8mSH", "dependency_type": "required"}, {"project_id": "ohNO6lps", "dependency_type": "required"}]'
-        CF_RELATIONS='[{"slug": "fabric-api", "type": "requiredDependency"}, {"slug": "forge-config-api-port-fabric", "type": "requiredDependency"}]'
+        CF_RELATIONS='[{"slug": "fabric-api", "type": "requiredDependency"}, {"slug": "forge-config-api-port", "type": "requiredDependency"}]'
         ;;
     *)
         echo "ERROR: Cannot read the loader from $JAR_NAME, expected Capsule-<neoforge|fabric>-<mcversion>-<version>.jar"
