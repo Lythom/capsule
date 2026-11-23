@@ -6,10 +6,13 @@ import capsule.network.LabelEditedMessageToServer;
 import capsule.platform.Services;
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -38,7 +41,7 @@ public class LabelGui extends Screen {
 
     public static void open(Player player) {
         if (player.level().isClientSide()) {
-            Minecraft.getInstance().setScreen(new LabelGui(player));
+            Minecraft.getInstance().gui.setScreen(new LabelGui(player));
         }
     }
 
@@ -67,30 +70,30 @@ public class LabelGui extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        super.keyPressed(keyCode, scanCode, modifiers);
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER) {
+    public boolean keyPressed(KeyEvent event) {
+        super.keyPressed(event);
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE || event.key() == GLFW.GLFW_KEY_ENTER) {
             this.onClose();
         }
-        if (this.textInput.keyPressed(keyCode, scanCode, modifiers)) {
+        if (this.textInput.keyPressed(event)) {
             setCurrentItemLabel(this.textInput.getValue());
         }
         return true;
     }
 
     @Override
-    public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
-        super.charTyped(p_charTyped_1_, p_charTyped_2_);
-        if (this.textInput.charTyped(p_charTyped_1_, p_charTyped_2_)) {
+    public boolean charTyped(CharacterEvent event) {
+        super.charTyped(event);
+        if (this.textInput.charTyped(event)) {
             setCurrentItemLabel(this.textInput.getValue());
         }
         return true;
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-        return this.textInput.mouseClicked(mouseX, mouseY, mouseButton);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        super.mouseClicked(event, doubleClick);
+        return this.textInput.mouseClicked(event, doubleClick);
     }
 
     public void setCurrentItemLabel(String label) {
@@ -102,9 +105,10 @@ public class LabelGui extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 70, 16777215);
-        textInput.render(guiGraphics, mouseX, mouseY, partialTicks);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
+        // text colors are ARGB since 1.21.6: opaque white
+        graphics.centeredText(this.font, this.title, this.width / 2, 70, 0xFFFFFFFF);
+        textInput.extractRenderState(graphics, mouseX, mouseY, partialTicks);
     }
 }
