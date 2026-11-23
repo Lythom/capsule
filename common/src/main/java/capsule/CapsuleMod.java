@@ -11,12 +11,17 @@ import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.structure.CapsuleTemplateManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Consumer;
@@ -45,6 +50,20 @@ public class CapsuleMod {
         CapsuleCreativeTabs.init();
         CapsuleRecipes.init();
         CapsuleLootEntry.init();
+    }
+
+    /**
+     * The id an item of the capsule namespace is registered under, which its properties must carry (setId).
+     */
+    public static ResourceKey<Item> itemKey(String name) {
+        return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MODID, name));
+    }
+
+    /**
+     * The id a block of the capsule namespace is registered under, which its properties must carry (setId).
+     */
+    public static ResourceKey<Block> blockKey(String name) {
+        return ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(MODID, name));
     }
 
     public static PreparableReloadListener reloadListener() {

@@ -1,5 +1,6 @@
 package capsule.items;
 
+import capsule.CapsuleMod;
 import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.platform.Services;
@@ -13,6 +14,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.IntTag;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -33,7 +35,8 @@ public class CapsuleItems {
 
     public static final int UPGRADE_STEP = 2;
 
-    public static final Supplier<CapsuleItem> CAPSULE = Services.PLATFORM.register(BuiltInRegistries.ITEM, "capsule", CapsuleItem::new);
+    public static final Supplier<CapsuleItem> CAPSULE = Services.PLATFORM.register(BuiltInRegistries.ITEM, "capsule",
+            () -> new CapsuleItem(new Item.Properties().setId(CapsuleMod.itemKey("capsule"))));
 
     public static ItemStack withState(CapsuleState state) {
         ItemStack capsule = new ItemStack(CapsuleItems.CAPSULE.get(), 1);

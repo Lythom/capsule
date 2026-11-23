@@ -19,6 +19,7 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.logging.LogUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -29,7 +30,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
@@ -37,9 +37,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -47,6 +49,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -57,6 +60,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -122,7 +126,7 @@ public class CapsuleCommand {
                             if (!sentUsageURL.contains(ctx.getSource().getPlayerOrException().getUUID())) {
                                 final MutableComponent msg = Component.literal(
                                         "see Capsule commands usages at " + ChatFormatting.UNDERLINE + "https://github.com/Lythom/capsule/wiki/Commands")
-                                        .withStyle(style -> style.withClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Lythom/capsule/wiki/Commands")));
+                                        .withStyle(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://github.com/Lythom/capsule/wiki/Commands"))));
                                 ctx.getSource().sendSuccess(() -> msg, false);
                                 sentUsageURL.add(ctx.getSource().getPlayerOrException().getUUID());
                                 count++;
@@ -593,12 +597,21 @@ public class CapsuleCommand {
                     BlockEntity blockEntity = player.level().getBlockEntity(position);
 
                     ItemStack stack = new ItemStack(state.getBlock());
-                    if (blockEntity != null) blockEntity.saveToItem(stack, player.registryAccess());
+                    if (blockEntity != null) {
+                        // what BlockEntity#saveToItem did, as vanilla's pick block with data does now
+                        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(blockEntity.problemPath(), LogUtils.getLogger())) {
+                            TagValueOutput output = TagValueOutput.createWithContext(reporter, player.registryAccess());
+                            blockEntity.saveCustomOnly(output);
+                            blockEntity.removeComponentsFromTag(output);
+                            BlockItem.setBlockEntityData(stack, blockEntity.getType(), output);
+                            stack.applyComponents(blockEntity.collectComponents());
+                        }
+                    }
                     String command = giveCommand(stack, player.registryAccess());
                     MutableComponent msg = Component.literal(command);
                     player.sendSystemMessage(msg.withStyle(style -> style
-                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy to clipboard")))
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, command))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click to copy to clipboard")))
+                            .withClickEvent(new ClickEvent.CopyToClipboard(command))
                     ));
                     return 1;
                 }
@@ -623,8 +636,8 @@ public class CapsuleCommand {
                 String command = giveCommand(heldItem, player.registryAccess());
                 MutableComponent msg = Component.literal(command);
                 player.sendSystemMessage(msg.withStyle(style -> style
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Copy/Paste from client log (click to open)")))
-                        .withClickEvent(new ClickEvent(Action.OPEN_FILE, "logs/latest.log"))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.literal("Copy/Paste from client log (click to open)")))
+                        .withClickEvent(new ClickEvent.OpenFile("logs/latest.log"))
                 ));
                 return 1;
             }

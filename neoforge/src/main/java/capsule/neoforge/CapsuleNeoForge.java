@@ -24,6 +24,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -71,6 +72,10 @@ public class CapsuleNeoForge {
         bus.addListener((PlayerTickEvent.Post event) -> CapsuleItem.onPlayerTick(event.getEntity()));
         bus.addListener((LevelTickEvent.Post event) -> {
             if (event.getLevel() instanceof ServerLevel level) RecallEnchant.onWorldTickEvent(level);
+        });
+        // last, so that one-use capsules stay refused whatever other mods set
+        bus.addListener(EventPriority.LOWEST, (EnchantmentLevelSetEvent event) -> {
+            if (CapsuleItem.refusesEnchantingTable(event.getItem())) event.setEnchantLevel(0);
         });
         bus.addListener((PlayerInteractEvent.LeftClickBlock event) -> {
             if (!event.isCanceled() && CapsuleItem.onLeftClickBlock(event.getEntity(), event.getLevel())) event.setCanceled(true);

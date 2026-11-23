@@ -85,7 +85,7 @@ public class LinkedTemplateCopyTests {
      */
     private static ItemStack taggedCapsule(GameTestHelper helper, String structureName, int size) {
         String item = CapsuleMod.MODID + ":capsule[custom_data={color:6196919,label:\"burner_researcher\",size:" + size + ",state:2,structureName:\""
-                + structureName + "\",templateShouldBeCopied:1b},dyed_color={rgb:8072841}]";
+                + structureName + "\",templateShouldBeCopied:1b},dyed_color=8072841]";
         try {
             ItemParser.ItemResult result = new ItemParser(helper.getLevel().registryAccess()).parse(new StringReader(item));
             return new ItemInput(result.item(), result.components()).createItemStack(1, false);

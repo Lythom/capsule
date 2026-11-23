@@ -11,6 +11,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -104,7 +105,8 @@ public class RecipeTests {
 
         for (ItemStack stack : List.of(capsule, dyed)) {
             DyedItemColor color = stack.get(DataComponents.DYED_COLOR);
-            assertTrue(helper, color != null && !color.showInTooltip(), "the capsule tooltip should not say Dyed: " + color);
+            assertTrue(helper, color != null && !stack.getOrDefault(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT).shows(DataComponents.DYED_COLOR),
+                    "the capsule tooltip should not say Dyed: " + color);
         }
         helper.succeed();
     }

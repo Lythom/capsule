@@ -9,6 +9,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 
@@ -69,7 +70,7 @@ public class UndeployDelayTests {
 
         player.tickCount = 0;
         helper.runAfterDelay(Config.previewDisplayDuration + 5, () -> {
-            capsule.inventoryTick(helper.getLevel(), player, 0, true);
+            capsule.inventoryTick(helper.getLevel(), player, EquipmentSlot.MAINHAND);
             assertTrue(helper, CapsuleItem.hasState(capsule, CapsuleState.LINKED), "activation should time out");
             CapsuleTestUtils.removePlayer(player);
             helper.succeed();

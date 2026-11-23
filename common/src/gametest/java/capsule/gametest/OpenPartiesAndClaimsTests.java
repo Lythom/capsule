@@ -27,7 +27,7 @@ public class OpenPartiesAndClaimsTests {
         ServerPlayer member = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 16));
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(16, 1, 0));
         IServerPartyAPI party = api.getPartyManager().createPartyForOwner(owner);
-        party.addMember(member.getUUID(), PartyMemberRank.MEMBER, member.getGameProfile().getName());
+        party.addMember(member.getUUID(), PartyMemberRank.MEMBER, member.getGameProfile().name());
 
         // the claimed chunk holds the center and the 7 blocks next to it in one direction of each axis (dx, dz)
         BlockPos center = new BlockPos(8, 1, 8);

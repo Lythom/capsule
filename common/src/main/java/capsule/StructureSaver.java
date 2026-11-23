@@ -112,12 +112,12 @@ public class StructureSaver {
         Predicate<BlockPos> denied = Claims.denied(worldserver, transferedPositions, player);
         if (denied == null) return null;
         template.removeOccupiedPositions();
-        if (player != null) template.setAuthor(player.getGameProfile().getName());
+        if (player != null) template.setAuthor(player.getGameProfile().name());
         boolean writingOK = templatemanager.writeToFile(Identifier.parse(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
             for (Entity e : outCapturedEntities) {
-                Clearable.tryClear(e);
+                if (e instanceof Clearable clearable) clearable.clearContent();
                 e.remove(Entity.RemovalReason.DISCARDED);
             }
             // check if some remove failed, exclude those blocks from the template.
@@ -301,7 +301,7 @@ public class StructureSaver {
                         BlockEntity BlockEntity = b.hasBlockEntity() ? world.getBlockEntity(pos) : null;
                         // content of TE have been snapshoted, remove the content
                         if (BlockEntity != null) {
-                            Clearable.tryClear(BlockEntity);
+                            if (BlockEntity instanceof Clearable clearable) clearable.clearContent();
                             world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 20); // from Template.placeInWorld
                         }
 
@@ -391,7 +391,7 @@ public class StructureSaver {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
-                Clearable.tryClear(e);
+                if (e instanceof Clearable clearable) clearable.clearContent();
                 e.remove(Entity.RemovalReason.DISCARDED);
             }
             return false;

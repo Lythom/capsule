@@ -204,7 +204,7 @@ public class Capsule {
      * Captures the content at source into a new template, as actor for claim mods.
      */
     public static boolean captureAtPosition(ItemStack capsule, @Nullable ServerPlayer actor, int size, ServerLevel playerWorld, BlockPos source) {
-        String throwerId = actor != null ? actor.getGameProfile().getName() : "CapsuleMod";
+        String throwerId = actor != null ? actor.getGameProfile().name() : "CapsuleMod";
         String capsuleID = StructureSaver.getUniqueName(playerWorld, throwerId);
         CapsuleTemplate template = StructureSaver.undeploy(playerWorld, actor, capsuleID, source, size, CapsuleItem.getExcludedBlocs(capsule), null);
         boolean storageOK = template != null;
@@ -518,7 +518,7 @@ public class Capsule {
         if (size % 2 == 0)
             size++;
 
-        String destStructureName = StructureSaver.getUniqueName(player.level(), player.getGameProfile().getName() + "-" + srcStructurePath.replace("/", "_"));
+        String destStructureName = StructureSaver.getUniqueName(player.level(), player.getGameProfile().name() + "-" + srcStructurePath.replace("/", "_"));
         ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
                 destStructureName,
                 CapsuleLootEntry.getRandomColor(),
@@ -568,7 +568,7 @@ public class Capsule {
             return false;
         }
 
-        String owner = player != null ? player.getGameProfile().getName() : "CapsuleMod";
+        String owner = player != null ? player.getGameProfile().name() : "CapsuleMod";
         String destStructureName = StructureSaver.getUniqueName(level, owner + "-" + source.replace("/", "_"));
         CapsuleTemplateManager manager = StructureSaver.getTemplateManager(server);
         if (manager == null || !StructureSaver.duplicateTemplate(StructureSaver.getTemplateNBTData(template), destStructureName, manager, server)) {

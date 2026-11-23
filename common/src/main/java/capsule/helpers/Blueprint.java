@@ -104,7 +104,7 @@ public class Blueprint {
 
             } else if (level != null && !state.isAir() && block.asItem() == Items.AIR) {
                 // blocks without item (attached stems, plant bodies...) cost what they are picked as
-                return block.getCloneItemStack(level, BlockPos.ZERO, state);
+                return state.getCloneItemStack(level, BlockPos.ZERO, false);
             }
             ItemStack item = new ItemStack(block.asItem(), 1);
             if (blockNBT != null) {

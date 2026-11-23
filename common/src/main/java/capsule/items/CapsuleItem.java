@@ -20,6 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -35,8 +36,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -45,6 +46,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
@@ -65,6 +67,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
@@ -142,11 +145,14 @@ public class CapsuleItem extends Item {
      * int yOffset                                                // -3 would trying to deploy the content 3 blocks under the aimed position
      * arr ench:[0:{lvl:1s,id:101s}]
      */
-    public CapsuleItem() {
-        super((new Item.Properties())
+    public CapsuleItem(Item.Properties properties) {
+        super(properties
                 .stacksTo(1)
                 .durability(0)
-                .fireResistant());
+                .fireResistant()
+                .enchantable(5)
+                // the dye color is the capsule base color, shown by the item itself
+                .component(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT.withHidden(DataComponents.DYED_COLOR, true)));
         DispenserBlock.registerBehavior(this, new DispenseCapsuleBehavior());
     }
 
@@ -417,14 +423,13 @@ public class CapsuleItem extends Item {
         return output;
     }
 
-    @Override
-    public int getEnchantmentValue() {
-        return 5;
-    }
-
-    @Override
-    public boolean isEnchantable(ItemStack stack) {
-        return !CapsuleItem.hasState(stack, CapsuleState.ONE_USE);
+    /**
+     * Enchanting tables offer nothing for one-use capsules, as Item#isEnchantable(ItemStack) did before Minecraft
+     * 1.21.2 (the anvil still applies books). Minecraft no longer asks the item: NeoForge applies it through
+     * EnchantmentLevelSetEvent, Fabric from a mixin on ItemStack#isEnchantable.
+     */
+    public static boolean refusesEnchantingTable(ItemStack stack) {
+        return stack.getItem() instanceof CapsuleItem && CapsuleItem.hasState(stack, CapsuleState.ONE_USE);
     }
 
     /**
@@ -448,19 +453,19 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack capsule, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack capsule, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag flagIn) {
 
         String author = getAuthor(capsule);
         if (author != null) {
-            tooltip.add(Component.literal(ChatFormatting.DARK_AQUA + "" + ChatFormatting.ITALIC + I18n.get("capsule.tooltip.author") + " " + author + ChatFormatting.RESET));
+            tooltip.accept(Component.literal(ChatFormatting.DARK_AQUA + "" + ChatFormatting.ITALIC + I18n.get("capsule.tooltip.author") + " " + author + ChatFormatting.RESET));
         }
 
         if (CapsuleItem.hasState(capsule, CapsuleState.ONE_USE)) {
-            tooltip.add(Component.literal(I18n.get("capsule.tooltip.one_use").trim()));
+            tooltip.accept(Component.literal(I18n.get("capsule.tooltip.one_use").trim()));
         }
 
         if (isOverpowered(capsule)) {
-            tooltip.add(Component.literal(ChatFormatting.DARK_PURPLE + I18n.get("capsule.tooltip.overpowered") + ChatFormatting.RESET));
+            tooltip.accept(Component.literal(ChatFormatting.DARK_PURPLE + I18n.get("capsule.tooltip.overpowered") + ChatFormatting.RESET));
         }
 
         int size = getSize(capsule);
@@ -472,7 +477,7 @@ public class CapsuleItem extends Item {
         if (isInstantAndUndeployed(capsule) || isBlueprint(capsule)) {
             sizeTxt += " (" + I18n.get("capsule.tooltip.instant").trim() + ")";
         }
-        tooltip.add(Component.literal(I18n.get("capsule.tooltip.size") + ": " + sizeTxt));
+        tooltip.accept(Component.literal(I18n.get("capsule.tooltip.size") + ": " + sizeTxt));
 
 
         if (isBlueprint(capsule)) {
@@ -491,22 +496,22 @@ public class CapsuleItem extends Item {
             }
         }
         if (flagIn == TooltipFlag.Default.ADVANCED) {
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "structureName: " + getStructureName(capsule)));
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "oneUse: " + isOneUse(capsule)));
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "isReward: " + isReward(capsule)));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "structureName: " + getStructureName(capsule)));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "oneUse: " + isOneUse(capsule)));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "isReward: " + isReward(capsule)));
             if (isBlueprint(capsule)) {
-                tooltip.add(Component.literal(ChatFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule)));
+                tooltip.accept(Component.literal(ChatFormatting.GOLD + "sourceInventory: " + getSourceInventoryLocation(capsule) + " in dimension " + getSourceInventoryDimension(capsule)));
             }
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule))));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "color (material): " + Integer.toHexString(getMaterialColor(capsule))));
             StructurePlaceSettings p = getPlacement(capsule);
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "Symmetry: " + Capsule.getMirrorLabel(p)));
-            tooltip.add(Component.literal(ChatFormatting.GOLD + "Rotation: " + Capsule.getRotationLabel(p)));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "Symmetry: " + Capsule.getMirrorLabel(p)));
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + "Rotation: " + Capsule.getRotationLabel(p)));
         }
     }
 
-    public void tooltipAddMultiline(List<Component> tooltip, String key, ChatFormatting formatting) {
+    public void tooltipAddMultiline(Consumer<Component> tooltip, String key, ChatFormatting formatting) {
         for (String s : I18n.get(key).trim().split("\\\n")) {
-            tooltip.add(Component.literal(formatting == null ? s : formatting + s));
+            tooltip.accept(Component.literal(formatting == null ? s : formatting + s));
         }
     }
 
@@ -597,11 +602,11 @@ public class CapsuleItem extends Item {
      * Activate or power throw on right click.
      */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+    public InteractionResult use(Level worldIn, Player playerIn, InteractionHand handIn) {
         ItemStack capsule = playerIn.getItemInHand(handIn);
 
         if (handIn == InteractionHand.OFF_HAND) {
-            return new InteractionResultHolder<>(InteractionResult.FAIL, capsule);
+            return InteractionResult.FAIL;
         }
 
         if (playerIn.isShiftKeyDown() && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE) || CapsuleItem.hasState(capsule, BLUEPRINT))) {
@@ -648,7 +653,8 @@ public class CapsuleItem extends Item {
             }
         }
 
-        return new InteractionResultHolder<>(InteractionResult.SUCCESS, capsule);
+        // the capsule is changed in place, so no heldItemTransformedTo
+        return InteractionResult.SUCCESS;
     }
 
     public void activateCapsule(ItemStack capsule, ServerLevel worldIn, Player playerIn) {
@@ -703,27 +709,24 @@ public class CapsuleItem extends Item {
 
 
     /**
-     * Manage the "activated" state of the capsule.
+     * Manage the "activated" state of the capsule. Called on the server only.
      */
     @Override
-    public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+    public void inventoryTick(ItemStack stack, ServerLevel worldIn, Entity entityIn, @Nullable EquipmentSlot slot) {
+        super.inventoryTick(stack, worldIn, entityIn, slot);
 
-        if (!worldIn.isClientSide()) {
+        // disable capsule after some time
+        CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
 
-            // disable capsule after some time
-            CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
-
-            long now = worldIn.getGameTime();
-            long start = timer.getLong("starttime");
-            if (isActivated(stack) && timer.contains("starttime") && (now >= start + Config.previewDisplayDuration || start > now)) {
-                revertStateFromActivated(stack);
-                worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundSource.BLOCKS, 0.2F, 0.4F);
-            }
-            // special case that can happen in case of crash
-            if (isActivated(stack) && !timer.contains("starttime")) {
-                revertStateFromActivated(stack);
-            }
+        long now = worldIn.getGameTime();
+        long start = timer.getLong("starttime");
+        if (isActivated(stack) && timer.contains("starttime") && (now >= start + Config.previewDisplayDuration || start > now)) {
+            revertStateFromActivated(stack);
+            worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundSource.BLOCKS, 0.2F, 0.4F);
+        }
+        // special case that can happen in case of crash
+        if (isActivated(stack) && !timer.contains("starttime")) {
+            revertStateFromActivated(stack);
         }
     }
 
@@ -774,11 +777,11 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    public void onCraftedBy(ItemStack capsule, Level worldIn, Player playerIn) {
+    public void onCraftedBy(ItemStack capsule, Player playerIn) {
         // a shift-click also calls onCraftedBy on a copy of the result made before the craft, which would leave an unused
         // template: only the crafted item itself gets one here, a capsule crafted otherwise gets it from onPlayerTick
         if (needsTemplateCopy(capsule) && !isCraftedItem(playerIn, capsule)) return;
-        copyTemplateIfNeeded(capsule, worldIn, playerIn);
+        copyTemplateIfNeeded(capsule, playerIn.level(), playerIn);
     }
 
     /**

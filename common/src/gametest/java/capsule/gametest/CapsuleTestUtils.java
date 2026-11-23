@@ -108,7 +108,7 @@ public class CapsuleTestUtils {
     public static void clear(GameTestHelper helper, BlockPos from, BlockPos to) {
         helper.killAllEntities();
         BlockPos.betweenClosed(helper.absolutePos(from), helper.absolutePos(to)).forEach(p -> {
-            Clearable.tryClear(helper.getLevel().getBlockEntity(p));
+            if (helper.getLevel().getBlockEntity(p) instanceof Clearable clearable) clearable.clearContent();
             helper.getLevel().setBlock(p, Blocks.AIR.defaultBlockState(), 2 | 16);
         });
     }

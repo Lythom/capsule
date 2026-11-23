@@ -171,7 +171,7 @@ public class CapsuleTemplateRenderer {
                         BlockState blockstate = Services.PLATFORM.rotate(template$blockinfo.state().mirror(placementSettings.getMirror()), templateWorld, blockpos, placementSettings.getRotation());
                         if (template$blockinfo.nbt() != null) {
                             BlockEntity BlockEntity = templateWorld.getBlockEntity(blockpos);
-                            Clearable.tryClear(BlockEntity);
+                            if (BlockEntity instanceof Clearable clearable) clearable.clearContent();
                             templateWorld.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
                         }
 

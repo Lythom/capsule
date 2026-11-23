@@ -691,7 +691,7 @@ public class CapsuleTemplate {
                         FluidState ifluidstate = placementIn.shouldApplyWaterlogging() ? worldIn.getFluidState(blockpos) : null;
                         BlockState blockstate = Services.PLATFORM.rotate(template$blockinfo.state().mirror(placementIn.getMirror()), worldIn, blockpos, placementIn.getRotation());
                         BlockEntity blockentity = worldIn.getBlockEntity(blockpos);
-                        Clearable.tryClear(blockentity);
+                        if (blockentity instanceof Clearable clearable) clearable.clearContent();
                         worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
 
                         if (worldIn.setBlock(blockpos, blockstate, flags)) {

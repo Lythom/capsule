@@ -12,9 +12,11 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.core.dispenser.BlockSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,8 +26,8 @@ import javax.annotation.Nullable;
 public class BlockCapsuleMarker extends DispenserBlock {
     private static final Logger LOGGER = LogManager.getLogger(BlockCapsuleMarker.class);
 
-    public BlockCapsuleMarker() {
-        super(BlockCapsuleMarker.Properties.of().mapColor(MapColor.STONE)
+    public BlockCapsuleMarker(BlockBehaviour.Properties properties) {
+        super(properties.mapColor(MapColor.STONE)
                 .strength(2.5F)
                 .sound(SoundType.STONE));
     }
@@ -68,7 +70,12 @@ public class BlockCapsuleMarker extends DispenserBlock {
         }
     }
 
-    public void neighborChanged(BlockState pState, Level pLevel, BlockPos pPos, Block pBlock, BlockPos pFromPos, boolean pIsMoving) {
+    /**
+     * Sets TRIGGERED with flag 4 only, not sent to clients: there TRIGGERED is set by CapsulePreviewHandler instead.
+     * DispenserBlock's own version would send it.
+     */
+    @Override
+    protected void neighborChanged(BlockState pState, Level pLevel, BlockPos pPos, Block pBlock, @Nullable Orientation pOrientation, boolean pIsMoving) {
         boolean flag = pLevel.hasNeighborSignal(pPos) || pLevel.hasNeighborSignal(pPos.above());
         boolean flag1 = pState.getValue(TRIGGERED);
         if (flag && !flag1) {
