@@ -38,7 +38,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.AABB;
 import org.apache.commons.lang3.tuple.Pair;
@@ -575,7 +574,7 @@ public class StructureSaver {
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
      */
     public static String getUniqueName(ServerLevel playerWorld, String player) {
-        CapsuleSavedData csd = getCapsuleSavedData(playerWorld.getServer().overworld());
+        CapsuleSavedData csd = getCapsuleSavedData(playerWorld.getServer());
         String p = player.toLowerCase().codePoints()
                 .filter(c -> Identifier.isAllowedInIdentifier((char) c))
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
@@ -597,7 +596,7 @@ public class StructureSaver {
      * Give an id to the capsule that has not already been taken. Ensure that content is not overwritten if capsuleData is removed.
      */
     public static String getBlueprintUniqueName(ServerLevel world) {
-        CapsuleSavedData csd = getCapsuleSavedData(world);
+        CapsuleSavedData csd = getCapsuleSavedData(world.getServer());
         String capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         CapsuleTemplateManager templatemanager = getTemplateManager(world.getServer());
         if (templatemanager == null) {
@@ -698,8 +697,8 @@ public class StructureSaver {
     /**
      * Get the Capsule saving tool that remembers last capsule id.
      */
-    public static CapsuleSavedData getCapsuleSavedData(ServerLevel capsuleWorld) {
-        return capsuleWorld.getDataStorage().computeIfAbsent(new SavedData.Factory<>(CapsuleSavedData::new, CapsuleSavedData::load, null), "capsuleData");
+    public static CapsuleSavedData getCapsuleSavedData(MinecraftServer server) {
+        return server.getDataStorage().computeIfAbsent(CapsuleSavedData.TYPE);
     }
 
     @Nullable
