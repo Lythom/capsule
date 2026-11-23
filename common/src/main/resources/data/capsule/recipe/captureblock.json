@@ -10,17 +10,9 @@
     "#D#"
   ],
   "key": {
-    "#": {
-      "tag": "c:cobblestones"
-    },
-    "D": {
-      "item": "minecraft:dispenser"
-    },
-    "C": {
-      "item": "minecraft:compass"
-    },
-    "T": {
-      "item": "minecraft:torch"
-    }
+    "#": "#c:cobblestones",
+    "D": "minecraft:dispenser",
+    "C": "minecraft:compass",
+    "T": "minecraft:torch"
   }
 }

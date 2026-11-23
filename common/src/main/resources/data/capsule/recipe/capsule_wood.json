@@ -10,10 +10,7 @@
         "color": 12359778,
         "size": 1
       },
-      "minecraft:dyed_color": {
-        "rgb": 11833434,
-        "show_in_tooltip": false
-      }
+      "minecraft:dyed_color": 11833434
     }
   },
   "pattern": [
@@ -22,17 +19,9 @@
     " i "
   ],
   "key": {
-    "#": {
-      "tag": "minecraft:planks"
-    },
-    "b": {
-      "item": "minecraft:stone_button"
-    },
-    "e": {
-      "tag": "c:chests/wooden"
-    },
-    "i": {
-      "tag": "minecraft:wooden_slabs"
-    }
+    "#": "#minecraft:planks",
+    "b": "minecraft:stone_button",
+    "e": "#c:chests/wooden",
+    "i": "#minecraft:wooden_slabs"
   }
 }

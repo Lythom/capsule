@@ -14,11 +14,7 @@
     }
   },
   "ingredients": [
-    {
-      "item": "capsule:capsule"
-    },
-    {
-      "item": "minecraft:glass_bottle"
-    }
+    "capsule:capsule",
+    "minecraft:glass_bottle"
   ]
 }

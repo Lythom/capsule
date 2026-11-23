@@ -1,6 +1,4 @@
 {
   "type": "capsule:upgrade_capsule",
-  "ingredient": {
-    "item": "minecraft:popped_chorus_fruit"
-  }
+  "ingredient": "minecraft:popped_chorus_fruit"
 }

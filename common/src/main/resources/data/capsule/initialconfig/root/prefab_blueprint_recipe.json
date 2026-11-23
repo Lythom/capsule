@@ -13,10 +13,7 @@
         "label": "",
         "size": 1
       },
-      "minecraft:dyed_color": {
-        "rgb": 2963801,
-        "show_in_tooltip": false
-      }
+      "minecraft:dyed_color": 2963801
     }
   },
   "pattern": [
@@ -25,14 +22,8 @@
     " p "
   ],
   "key": {
-    "b": {
-      "item": "minecraft:stone_button"
-    },
-    "p": {
-      "item": "minecraft:paper"
-    },
-    "l": {
-      "item": "minecraft:blue_dye"
-    }
+    "b": "minecraft:stone_button",
+    "p": "minecraft:paper",
+    "l": "minecraft:blue_dye"
   }
 }

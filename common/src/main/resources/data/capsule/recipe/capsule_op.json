@@ -19,17 +19,9 @@
     " i "
   ],
   "key": {
-    "#": {
-      "tag": "c:ingots/iron"
-    },
-    "b": {
-      "item": "minecraft:stone_button"
-    },
-    "e": {
-      "item": "minecraft:nether_star"
-    },
-    "i": {
-      "tag": "c:ingots/iron"
-    }
+    "#": "#c:ingots/iron",
+    "b": "minecraft:stone_button",
+    "e": "minecraft:nether_star",
+    "i": "#c:ingots/iron"
   }
 }

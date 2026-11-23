@@ -35,17 +35,9 @@
     " i "
   ],
   "key": {
-    "#": {
-      "tag": "c:ingots/uranium"
-    },
-    "b": {
-      "item": "minecraft:stone_button"
-    },
-    "e": {
-      "tag": "c:ender_pearls"
-    },
-    "i": {
-      "tag": "c:ingots/iron"
-    }
+    "#": "#c:ingots/uranium",
+    "b": "minecraft:stone_button",
+    "e": "#c:ender_pearls",
+    "i": "#c:ingots/iron"
   }
 }
