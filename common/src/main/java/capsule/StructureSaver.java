@@ -30,7 +30,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -280,13 +280,12 @@ public class StructureSaver {
 
         // disable tileDrop during the operation so that broken block are not
         // itemized on the ground.
-        GameRules.BooleanValue entityDropsGameRule = world.getGameRules().getRule(GameRules.RULE_DOENTITYDROPS);
-        GameRules.BooleanValue tileDropsGameRule = world.getGameRules().getRule(GameRules.RULE_DOBLOCKDROPS);
-
-        boolean flagdoEntityDrops = world.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS);
-        boolean flagdoTileDrops = world.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS);
-        entityDropsGameRule.set(false, world.getServer());
-        tileDropsGameRule.set(false, world.getServer());
+        // entity_drops and block_drops are the 1.21.1 doEntityDrops and doTileDrops
+        GameRules rules = world.getGameRules();
+        boolean flagdoEntityDrops = rules.get(GameRules.ENTITY_DROPS);
+        boolean flagdoTileDrops = rules.get(GameRules.BLOCK_DROPS);
+        rules.set(GameRules.ENTITY_DROPS, false, world.getServer());
+        rules.set(GameRules.BLOCK_DROPS, false, world.getServer());
         StructureSaver.preventItemDrop = true;
 
         // delete everything that as been saved in the capsule
@@ -321,8 +320,8 @@ public class StructureSaver {
         } finally {
             // revert rule to previous value even in case of crash
             StructureSaver.preventItemDrop = false;
-            entityDropsGameRule.set(flagdoEntityDrops, world.getServer());
-            tileDropsGameRule.set(flagdoTileDrops, world.getServer());
+            rules.set(GameRules.ENTITY_DROPS, flagdoEntityDrops, world.getServer());
+            rules.set(GameRules.BLOCK_DROPS, flagdoTileDrops, world.getServer());
         }
 
         return couldNotBeRemoved;

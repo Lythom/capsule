@@ -14,7 +14,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
@@ -33,12 +32,13 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
  */
 public class CapsuleLootEntry extends LootPoolSingletonContainer {
 
-    public static final MapCodec<CapsuleLootEntry> CODEC = RecordCodecBuilder.mapCodec(instance -> instance
+    public static final MapCodec<CapsuleLootEntry> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance
             .group(Codec.STRING.fieldOf("templates_path").forGetter(entry -> entry.templatesPath))
             .and(singletonFields(instance))
             .apply(instance, CapsuleLootEntry::new));
 
-    public static final Supplier<LootPoolEntryType> TYPE = Services.PLATFORM.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, "capsule", () -> new LootPoolEntryType(CODEC));
+    // Since 26.1 the loot pool entry registry holds the map codecs themselves: codec() must return the registered one.
+    public static final Supplier<MapCodec<CapsuleLootEntry>> TYPE = Services.PLATFORM.<MapCodec<CapsuleLootEntry>>register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, "capsule", () -> MAP_CODEC);
 
     public static void init() {
     }
@@ -151,7 +151,7 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
     }
 
     @Override
-    public LootPoolEntryType getType() {
-        return TYPE.get();
+    public MapCodec<CapsuleLootEntry> codec() {
+        return MAP_CODEC;
     }
 }

@@ -20,20 +20,25 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.logging.LogUtils;
+import com.mojang.serialization.Codec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -141,7 +146,7 @@ public class CapsuleCommand {
                         }))
                 // giveEmpty [size] [overpowered]
                 .then(Commands.literal("giveEmpty")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), 3, false))
                         .then(Commands.argument("size", integer(1, CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE))
                                 .executes(ctx -> executeGiveEmpty(ctx.getSource().getPlayerOrException(), getInteger(ctx, "size"), false))
@@ -152,7 +157,7 @@ public class CapsuleCommand {
                 )
                 // giveLinked <rewardTemplateName> [playerName] [withLoyalty]
                 .then(Commands.literal("giveLinked")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveLinked(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName"), false))
@@ -166,7 +171,7 @@ public class CapsuleCommand {
                 )
                 // giveBlueprint <rewardTemplateName> [playerName]
                 .then(Commands.literal("giveBlueprint")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeGiveBlueprint(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
@@ -177,17 +182,17 @@ public class CapsuleCommand {
                 )
                 // exportHeldItem
                 .then(Commands.literal("exportHeldItem")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> executeExportHeldItem(ctx.getSource().getPlayerOrException()))
                 )
                 // exportSeenBlock
                 .then(Commands.literal("exportSeenBlock")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> executeExportSeenBlock(ctx.getSource().getPlayerOrException()))
                 )
                 // fromExistingReward <rewardTemplateName> [playerName]
                 .then(Commands.literal("fromExistingReward")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_REWARD())
                                 .executes(ctx -> executeFromExistingReward(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
@@ -198,7 +203,7 @@ public class CapsuleCommand {
                 )
                 // fromStructure <structureTemplateName> [playerName]
                 .then(Commands.literal("fromStructure")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("rewardTemplateName", string())
                                 .suggests(SUGGEST_TEMPLATE())
                                 .executes(ctx -> executeFromStructure(ctx.getSource().getPlayerOrException(), getString(ctx, "rewardTemplateName")))
@@ -209,7 +214,7 @@ public class CapsuleCommand {
                 )
                 // fromHeldCapsule [outputTemplateName]
                 .then(Commands.literal("fromHeldCapsule")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> executeFromHeldCapsule(ctx.getSource().getPlayerOrException(), null))
                         .then(Commands.argument("outputTemplateName", string())
                                 .executes(ctx -> executeFromHeldCapsule(ctx.getSource().getPlayerOrException(), getString(ctx, "outputTemplateName")))
@@ -217,7 +222,7 @@ public class CapsuleCommand {
                 )
                 // giveRandomLoot [playerName]
                 .then(Commands.literal("giveRandomLoot")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> executeGiveRandomLoot(ctx.getSource().getPlayerOrException()))
                         .then(Commands.argument("target", player())
                                 .executes(ctx -> executeGiveRandomLoot(getPlayer(ctx, "target")))
@@ -225,7 +230,7 @@ public class CapsuleCommand {
                 )
                 // reloadLootList
                 .then(Commands.literal("reloadLootList")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> {
                             ResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -234,7 +239,7 @@ public class CapsuleCommand {
                 )
                 // reloadWhitelist
                 .then(Commands.literal("reloadWhitelist")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> {
                             ResourceManager resourceManager = ctx.getSource().getServer().getResourceManager();
                             Files.populateAndLoadLootList(Config.getCapsuleConfigDir().toFile(), Config.lootTemplatesData, resourceManager);
@@ -245,14 +250,14 @@ public class CapsuleCommand {
                 )
                 // setAuthor <authorName>
                 .then(Commands.literal("setAuthor")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("authorName", string())
                                 .executes(ctx -> executeSetAuthor(ctx.getSource().getPlayerOrException(), getString(ctx, "authorName")))
                         )
                 )
                 // setBaseColor <color>
                 .then(Commands.literal("setBaseColor")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
                                 .executes(ctx -> executeSetBaseColor(ctx.getSource().getPlayerOrException(), getString(ctx, "color")))
@@ -260,7 +265,7 @@ public class CapsuleCommand {
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("setMaterialColor")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("color", string())
                                 .suggests(SUGGEST_COLORS())
                                 .executes(ctx -> executeSetMaterialColor(ctx.getSource().getPlayerOrException(), getString(ctx, "color")))
@@ -268,12 +273,12 @@ public class CapsuleCommand {
                 )
                 // setMaterialColor <color>
                 .then(Commands.literal("downloadTemplate")
-                        .requires((player) -> player.hasPermission(0))
+                        .requires(Commands.hasPermission(Commands.LEVEL_ALL))
                         .executes(ctx -> executeDownloadTemplate(ctx.getSource().getPlayerOrException()))
                 )
                 // setYOffset yOffset
                 .then(Commands.literal("setYOffset")
-                        .requires((player) -> player.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("yOffset", integer())
                                 .executes(ctx -> executeSetYOffset(ctx.getSource().getPlayerOrException(), getInteger(ctx, "yOffset")))
                         )
@@ -588,7 +593,7 @@ public class CapsuleCommand {
     private static int executeExportSeenBlock(ServerPlayer player) {
         if (player != null) {
             if (!player.level().getServer().isDedicatedServer()) {
-                BlockHitResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), 50);
+                BlockHitResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false), 50);
 
                 if (rtc.getType() == HitResult.Type.BLOCK) {
 
@@ -624,9 +629,25 @@ public class CapsuleCommand {
 
     /**
      * The /give command of an item, its components in the 1.20.5 syntax.
+     * ItemInput#serialize was removed in 26.1: this writes what it wrote, "id[key=snbt,!removed_key]".
      */
     private static String giveCommand(ItemStack stack, HolderLookup.Provider registries) {
-        return "/give @p " + new ItemInput(stack.typeHolder(), stack.getComponentsPatch()).serialize(registries);
+        StringBuilder command = new StringBuilder("/give @p ").append(BuiltInRegistries.ITEM.getKey(stack.getItem()));
+        RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
+        StringJoiner components = new StringJoiner(",", "[", "]").setEmptyValue("");
+        for (Map.Entry<DataComponentType<?>, Optional<?>> entry : stack.getComponentsPatch().entrySet()) {
+            Identifier key = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(entry.getKey());
+            if (key == null) continue;
+            if (entry.getValue().isEmpty()) {
+                components.add("!" + key);
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            Codec<Object> codec = (Codec<Object>) entry.getKey().codec();
+            if (codec == null) continue; // transient component, not written to items
+            codec.encodeStart(ops, entry.getValue().get()).result().ifPresent(tag -> components.add(key + "=" + tag));
+        }
+        return command.append(components).toString();
     }
 
     private static int executeExportHeldItem(ServerPlayer player) {
