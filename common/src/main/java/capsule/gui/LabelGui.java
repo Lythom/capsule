@@ -18,7 +18,6 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -72,7 +71,8 @@ public class LabelGui extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         super.keyPressed(event);
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE || event.key() == GLFW.GLFW_KEY_ENTER) {
+        // Escape, Enter or keypad Enter (SDL key codes since 26.3: compare through the event, not raw codes)
+        if (event.isEscape() || event.isConfirmation()) {
             this.onClose();
         }
         if (this.textInput.keyPressed(event)) {

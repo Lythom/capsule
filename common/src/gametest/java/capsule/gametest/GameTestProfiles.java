@@ -33,7 +33,7 @@ public class GameTestProfiles {
                 }
 
                 @Override
-                public Optional<com.mojang.authlib.yggdrasil.response.NameAndId> findProfileByName(String name) {
+                public Optional<com.mojang.authlib.services.response.NameAndId> findProfileByName(String name) {
                     return Optional.empty();
                 }
             };

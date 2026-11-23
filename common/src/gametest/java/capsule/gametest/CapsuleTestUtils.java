@@ -27,6 +27,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeMap;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import java.lang.reflect.Constructor;
+import java.util.Map;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -177,13 +185,33 @@ public class CapsuleTestUtils {
                     .filter(f -> f.getType() == RecipeMap.class).findFirst().orElseThrow();
             field.setAccessible(true);
             RecipeMap original = (RecipeMap) field.get(manager);
-            field.set(manager, RecipeMap.create(Stream.concat(original.values().stream(), extra.stream()).toList()));
+            field.set(manager, recipeMap(Stream.concat(original.values().stream(), extra.stream()).toList()));
             try {
                 return action.get();
             } finally {
                 field.set(manager, original);
             }
         } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * A recipe map of these recipes. Since 26.3 RecipeMap#create reads the recipe registry, so the map is built through
+     * its private constructor (recipes by type, recipes by key), by reflection.
+     */
+    private static RecipeMap recipeMap(List<RecipeHolder<?>> recipes) {
+        ImmutableMultimap.Builder<RecipeType<?>, RecipeHolder<?>> byType = ImmutableMultimap.builder();
+        ImmutableMap.Builder<ResourceKey<Recipe<?>>, RecipeHolder<?>> byKey = ImmutableMap.builder();
+        for (RecipeHolder<?> recipe : recipes) {
+            byType.put(recipe.value().getType(), recipe);
+            byKey.put(recipe.id(), recipe);
+        }
+        try {
+            Constructor<RecipeMap> constructor = RecipeMap.class.getDeclaredConstructor(Multimap.class, Map.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(byType.build(), byKey.buildKeepingLast());
+        } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
         }
     }

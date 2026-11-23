@@ -28,7 +28,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -44,6 +46,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.StringUtil;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -418,7 +421,7 @@ public class CapsuleCommand {
             String author = null;
 
             // template
-            StructureTemplateManager templatemanager = player.level().getStructureManager();
+            StructureTemplateManager templatemanager = player.level().getStructureTemplateManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
             Optional<StructureTemplate> templateO = templatemanager.get(Identifier.parse(path));
             if (templateO.isPresent()) {
@@ -635,17 +638,19 @@ public class CapsuleCommand {
         StringBuilder command = new StringBuilder("/give @p ").append(BuiltInRegistries.ITEM.getKey(stack.getItem()));
         RegistryOps<Tag> ops = registries.createSerializationContext(NbtOps.INSTANCE);
         StringJoiner components = new StringJoiner(",", "[", "]").setEmptyValue("");
-        for (Map.Entry<DataComponentType<?>, Optional<?>> entry : stack.getComponentsPatch().entrySet()) {
-            Identifier key = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(entry.getKey());
+        // DataComponentPatch has no entrySet() since 26.3: the components set, then the removed ones
+        DataComponentPatch.SplitResult patch = stack.getComponentsPatch().split();
+        for (TypedDataComponent<?> component : patch.added()) {
+            Identifier key = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(component.type());
             if (key == null) continue;
-            if (entry.getValue().isEmpty()) {
-                components.add("!" + key);
-                continue;
-            }
             @SuppressWarnings("unchecked")
-            Codec<Object> codec = (Codec<Object>) entry.getKey().codec();
+            Codec<Object> codec = (Codec<Object>) component.type().codec();
             if (codec == null) continue; // transient component, not written to items
-            codec.encodeStart(ops, entry.getValue().get()).result().ifPresent(tag -> components.add(key + "=" + tag));
+            codec.encodeStart(ops, component.value()).result().ifPresent(tag -> components.add(key + "=" + tag));
+        }
+        for (DataComponentType<?> removed : patch.removed()) {
+            Identifier key = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(removed);
+            if (key != null) components.add("!" + key);
         }
         return command.append(components).toString();
     }
@@ -667,7 +672,8 @@ public class CapsuleCommand {
     }
 
     private static void giveCapsule(ItemStack capsule, Player player) {
-        ItemEntity entity = player.drop(capsule, false);
+        // PREDICTED: no swing packet, as in 26.2 where a server side drop did not swing the hand
+        ItemEntity entity = player.drop(capsule, false, Prediction.PREDICTED);
         if (entity == null) return;
         entity.setNoPickUpDelay();
         entity.setThrower(player);

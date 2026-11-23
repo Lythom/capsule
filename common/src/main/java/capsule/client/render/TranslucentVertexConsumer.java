@@ -48,6 +48,12 @@ public record TranslucentVertexConsumer(VertexConsumer delegate, float alpha) im
     }
 
     @Override
+    public VertexConsumer setUv3(float u, float v) {
+        delegate.setUv3(u, v);
+        return this;
+    }
+
+    @Override
     public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
         delegate.setNormal(normalX, normalY, normalZ);
         return this;

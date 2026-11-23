@@ -12,6 +12,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -130,8 +131,8 @@ class Showcase {
                     .run("select Capsule", () -> {
                         // the first entry of the list, left of the screen
                         double x = mc().gui.screen().width / 4.0, y = 48 + 18;
-                        mc().gui.screen().mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
-                        mc().gui.screen().mouseReleased(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)));
+                        mc().gui.screen().mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0)), false);
+                        mc().gui.screen().mouseReleased(new MouseButtonEvent(x, y, new MouseButtonInfo(InputConstants.MOUSE_BUTTON_LEFT, 0)));
                     })
                     .sleep(20)
                     .run("screenshot", () -> test.screenshot("08-mod-menu"))

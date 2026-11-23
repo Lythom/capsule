@@ -11,6 +11,7 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -94,6 +95,7 @@ public class CapsuleGameTests {
                     ResourceKey.create(Registries.TEST_FUNCTION, id),
                     new TestData<>(
                             environment,
+                            Level.OVERWORLD,
                             Identifier.fromNamespaceAndPath(CapsuleMod.MODID, meta.template()),
                             meta.timeoutTicks(),
                             meta.setupTicks(),
