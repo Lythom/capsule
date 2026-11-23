@@ -5,7 +5,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
@@ -71,12 +70,12 @@ public class WaystonesTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void waystoneStaysWhenCapturedWithADoor(GameTestHelper helper) {
         waystoneStaysAndDoorMoves(helper, false);
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void waystoneStaysWhenCapturedWithADoorByAnOverpoweredCapsule(GameTestHelper helper) {
         waystoneStaysAndDoorMoves(helper, true);
     }

@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.StructureSaver;
 import capsule.helpers.Blueprint;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -20,7 +19,7 @@ import static capsule.gametest.CapsuleTestUtils.template;
 
 public class BlueprintCostTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void pottedPlantsAreNotFree(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.POTTED_DANDELION);
         helper.getLevel().setBlock(helper.absolutePos(new BlockPos(1, 2, 1)), Blocks.ATTACHED_MELON_STEM.defaultBlockState(), 2 | 16);
@@ -34,7 +33,7 @@ public class BlueprintCostTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void liquidSourcesAndPistonHeadsKeepTheirCost(GameTestHelper helper) {
         assertCost(helper, Blocks.LAVA.defaultBlockState(), List.of(new ItemStack(Items.LAVA_BUCKET)));
         assertCost(helper, Blocks.WATER.defaultBlockState(), List.of(new ItemStack(Items.WATER_BUCKET)));

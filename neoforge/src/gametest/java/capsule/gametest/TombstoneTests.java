@@ -1,7 +1,6 @@
 package capsule.gametest;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 import static capsule.gametest.CapsuleTestUtils.assertNeverCaptured;
@@ -14,7 +13,7 @@ import static capsule.gametest.CapsuleTestUtils.block;
  */
 public class TombstoneTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void playerGravesAreNeverCaptured(GameTestHelper helper) {
         BlockPos grave = new BlockPos(2, 1, 2);
         helper.setBlock(grave, block("tombstone:grave_simple"));

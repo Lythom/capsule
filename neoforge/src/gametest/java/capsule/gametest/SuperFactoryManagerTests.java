@@ -3,8 +3,8 @@ package capsule.gametest;
 import ca.teamdman.sfm.common.blockentity.ManagerBlockEntity;
 import ca.teamdman.sfm.common.item.DiskItem;
 import ca.teamdman.sfm.common.label.LabelPositionHolder;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
@@ -28,29 +28,29 @@ public class SuperFactoryManagerTests {
     private static final BlockPos MOVE = new BlockPos(7, 0, 8);
 
     private static int count(GameTestHelper helper, BlockPos chest, Item item) {
-        return ((Container) helper.getBlockEntity(chest)).countItem(item);
+        return ((Container) helper.getBlockEntity(chest, BlockEntity.class)).countItem(item);
     }
 
-    @GameTest(template = "empty17", timeoutTicks = 250)
+    @CapsuleGameTest(template = "empty17", timeoutTicks = 250)
     public static void managerMovesWithItsProgram(GameTestHelper helper) {
         helper.setBlock(A, Blocks.CHEST);
         helper.setBlock(A.east(), block("sfm:cable"));
         helper.setBlock(MANAGER, block("sfm:manager"));
         helper.setBlock(MANAGER.east(), block("sfm:cable"));
         helper.setBlock(B, Blocks.CHEST);
-        ((Container) helper.getBlockEntity(A)).setItem(0, new ItemStack(Items.DIAMOND, 8));
+        ((Container) helper.getBlockEntity(A, BlockEntity.class)).setItem(0, new ItemStack(Items.DIAMOND, 8));
         ItemStack disk = new ItemStack(item("sfm:disk"));
         DiskItem.setProgram(disk, PROGRAM);
         LabelPositionHolder.empty().add("a", helper.absolutePos(A)).add("b", helper.absolutePos(B)).save(disk);
-        ((ManagerBlockEntity) helper.getBlockEntity(MANAGER)).setItem(0, disk);
+        helper.getBlockEntity(MANAGER, ManagerBlockEntity.class).setItem(0, disk);
 
         helper.runAfterDelay(45, () -> {
             assertTrue(helper, count(helper, B, Items.DIAMOND) == 8, "the program should move the diamonds from a to b before the capture");
-            ((Container) helper.getBlockEntity(A)).setItem(0, new ItemStack(Items.EMERALD, 8));
+            ((Container) helper.getBlockEntity(A, BlockEntity.class)).setItem(0, new ItemStack(Items.EMERALD, 8));
             ItemStack capsule = CapsuleTestUtils.capture(helper, new BlockPos(1, 1, 0), 5);
             assertTrue(helper, CapsuleTestUtils.deploy(helper, capsule, new BlockPos(10, 0, 10), null), "deploy should succeed");
 
-            ManagerBlockEntity manager = (ManagerBlockEntity) helper.getBlockEntity(MANAGER.offset(MOVE));
+            ManagerBlockEntity manager = helper.getBlockEntity(MANAGER.offset(MOVE), ManagerBlockEntity.class);
             assertTrue(helper, PROGRAM.equals(manager.getProgramString()), "the deployed manager runs " + manager.getProgramString());
             helper.runAfterDelay(45, () -> {
                 int moved = count(helper, B.offset(MOVE), Items.EMERALD);

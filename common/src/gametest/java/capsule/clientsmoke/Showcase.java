@@ -12,7 +12,10 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -106,9 +109,9 @@ class Showcase {
             }
         });
         scenario.run("skip the accessibility onboarding", () -> {
-            if (mc().screen instanceof AccessibilityOnboardingScreen) {
+            if (mc().gui.screen() instanceof AccessibilityOnboardingScreen) {
                 mc().options.onboardAccessibility = false;
-                mc().setScreen(new TitleScreen());
+                mc().gui.setScreen(new TitleScreen());
             }
         });
         if (scene("title")) {
@@ -117,22 +120,22 @@ class Showcase {
         if (scene("modmenu") && Services.PLATFORM.isModLoaded("modmenu")) {
             scenario.run("open Mod Menu", () -> {
                 try {
-                    Screen mods = (Screen) Class.forName("com.terraformersmc.modmenu.gui.ModsScreen").getConstructor(Screen.class).newInstance(mc().screen);
-                    mc().setScreen(mods);
+                    Screen mods = (Screen) Class.forName("com.terraformersmc.modmenu.gui.ModsScreen").getConstructor(Screen.class).newInstance(mc().gui.screen());
+                    mc().gui.setScreen(mods);
                 } catch (ReflectiveOperationException e) {
                     throw new RuntimeException(e);
                 }
-            }).sleep(20).run("search capsule", () -> "capsule".chars().forEach(c -> mc().screen.charTyped((char) c, 0)))
+            }).sleep(20).run("search capsule", () -> "capsule".chars().forEach(c -> mc().gui.screen().charTyped(new CharacterEvent(c))))
                     .sleep(20)
                     .run("select Capsule", () -> {
                         // the first entry of the list, left of the screen
-                        double x = mc().screen.width / 4.0, y = 48 + 18;
-                        mc().screen.mouseClicked(x, y, 0);
-                        mc().screen.mouseReleased(x, y, 0);
+                        double x = mc().gui.screen().width / 4.0, y = 48 + 18;
+                        mc().gui.screen().mouseClicked(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)), false);
+                        mc().gui.screen().mouseReleased(new MouseButtonEvent(x, y, new MouseButtonInfo(0, 0)));
                     })
                     .sleep(20)
                     .run("screenshot", () -> test.screenshot("08-mod-menu"))
-                    .run("back to the title screen", () -> mc().setScreen(new TitleScreen()))
+                    .run("back to the title screen", () -> mc().gui.setScreen(new TitleScreen()))
                     .sleep(20);
         }
     }
@@ -156,8 +159,7 @@ class Showcase {
     private void prepareWorld(ServerPlayer player) {
         ServerLevel level = player.level();
         ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0);
-        level.setDayTime(6000);
-        level.setWeatherParameters(6000, 0, false, false);
+        ClientSmokeTest.calmWorld(level);
         player.getInventory().clearContent();
     }
 
@@ -310,9 +312,9 @@ class Showcase {
                         menu.getSlot(1).set(new ItemStack(Items.LAPIS_LAZULI, 3));
                     }
                 }))
-                .await("enchanting screen", 100, () -> mc().screen instanceof EnchantmentScreen)
+                .await("enchanting screen", 100, () -> mc().gui.screen() instanceof EnchantmentScreen)
                 .sleep(10)
-                .run("hover the third offer", () -> mc().setScreen(new HoverEnchantmentScreen((EnchantmentMenu) mc().player.containerMenu)))
+                .run("hover the third offer", () -> mc().gui.setScreen(new HoverEnchantmentScreen((EnchantmentMenu) mc().player.containerMenu)))
                 .sleep(20)
                 .run("screenshot", () -> test.screenshot("04b-enchanting-table-loyalty"))
                 .run("close", () -> mc().player.closeContainer())
@@ -475,13 +477,13 @@ class Showcase {
                 }))
                 .await("survival mode on the client", 40, () -> !mc().player.hasInfiniteMaterials())
                 .run("search capsule", () -> viewer.search("capsule"))
-                .run("open the inventory on the netherite capsule", () -> mc().setScreen(new ClientSmokeTest.HoverInventoryScreen(0)))
+                .run("open the inventory on the netherite capsule", () -> mc().gui.setScreen(new ClientSmokeTest.HoverInventoryScreen(0)))
                 .sleep(30)
                 .run("screenshot", () -> test.screenshot("06-" + name + "-capsule-tiers"))
                 .run("show the recipe", () -> viewer.showRecipes(netherite[0]))
                 .sleep(30)
                 .run("screenshot", () -> test.screenshot("06-" + name + "-netherite-recipe"))
-                .run("close", () -> mc().setScreen(null))
+                .run("close", () -> mc().gui.setScreen(null))
                 .async("creative mode", 100, () -> test.onServer(p -> p.setGameMode(GameType.CREATIVE)));
     }
 
@@ -568,7 +570,7 @@ class Showcase {
     private void startRecording(String name) {
         stopRecording();
         // the scene's chat only (welcome messages of other mods...)
-        mc().gui.getChat().clearMessages(false);
+        mc().gui.hud.getChat().clearMessages(false);
         var window = mc().getWindow();
         String display = System.getenv().getOrDefault("DISPLAY", ":0");
         ProcessBuilder builder = new ProcessBuilder("ffmpeg", "-y", "-loglevel", "error", "-f", "x11grab", "-draw_mouse", "0",
@@ -611,8 +613,8 @@ class Showcase {
         }
 
         @Override
-        public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-            super.render(guiGraphics, leftPos + 110, topPos + 14 + 19 * 2 + 9, partialTick);
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+            super.extractRenderState(graphics, leftPos + 110, topPos + 14 + 19 * 2 + 9, partialTick);
         }
     }
 }

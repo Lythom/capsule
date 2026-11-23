@@ -5,7 +5,6 @@ import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.Identifier;
@@ -13,7 +12,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,25 +29,24 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
  */
 public class SophisticatedStorageTests {
 
-    private static IItemHandler items(GameTestHelper helper, BlockPos pos) {
-        return helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(pos), null);
+    private static ResourceHandler<ItemResource> items(GameTestHelper helper, BlockPos pos) {
+        return helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(pos), null);
     }
 
     private static int diamonds(GameTestHelper helper, BlockPos pos) {
-        IItemHandler handler = items(helper, pos);
-        int count = 0;
-        for (int slot = 0; handler != null && slot < handler.getSlots(); slot++) {
-            if (handler.getStackInSlot(slot).is(Items.DIAMOND)) count += handler.getStackInSlot(slot).getCount();
-        }
-        return count;
+        ResourceHandler<ItemResource> handler = items(helper, pos);
+        return handler == null ? 0 : NeoForgeTestUtils.count(handler, Items.DIAMOND);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void rewardBarrelsDoNotShareTheirContent(GameTestHelper helper) throws IOException {
         Block barrel = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("sophisticatedstorage", "barrel"));
         BlockPos source = new BlockPos(1, 1, 1);
         helper.setBlock(source, barrel);
-        items(helper, source).insertItem(0, new ItemStack(Items.DIAMOND, 16), false);
+        try (Transaction transaction = Transaction.openRoot()) {
+            items(helper, source).insert(0, ItemResource.of(Items.DIAMOND), 16, transaction);
+            transaction.commit();
+        }
         ItemStack linked = CapsuleTestUtils.capture(helper, source, 1);
         assertTrue(helper, helper.getBlockState(source).isAir(), "the barrel should be captured");
 
@@ -59,8 +59,13 @@ public class SophisticatedStorageTests {
             assertTrue(helper, CapsuleTestUtils.deploy(helper, reward, new BlockPos(4, 0, 4), null), "first deploy should succeed");
             BlockPos first = new BlockPos(4, 1, 4);
             assertTrue(helper, diamonds(helper, first) == 16, "the first barrel should hold 16 diamonds, got " + diamonds(helper, first));
-            IItemHandler handler = items(helper, first);
-            for (int slot = 0; slot < handler.getSlots(); slot++) handler.extractItem(slot, 64, false);
+            ResourceHandler<ItemResource> handler = items(helper, first);
+            try (Transaction transaction = Transaction.openRoot()) {
+                for (int slot = 0; slot < handler.size(); slot++) {
+                    if (!handler.getResource(slot).isEmpty()) handler.extract(slot, handler.getResource(slot), 64, transaction);
+                }
+                transaction.commit();
+            }
 
             assertTrue(helper, CapsuleTestUtils.deploy(helper, reward, new BlockPos(6, 0, 6), null), "second deploy should succeed");
             BlockPos second = new BlockPos(6, 1, 6);

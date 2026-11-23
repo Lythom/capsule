@@ -2,7 +2,6 @@ package capsule.gametest;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +22,7 @@ import static capsule.gametest.CapsuleTestUtils.item;
  */
 public class MekanismTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void digitalMinerIsNeverCaptured(GameTestHelper helper) {
         CapsuleTestUtils.fill(helper, new BlockPos(0, 0, 0), new BlockPos(8, 0, 8), Blocks.STONE.defaultBlockState());
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 1));
@@ -37,7 +36,7 @@ public class MekanismTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void mekanismBinMovesWithItsContent(GameTestHelper helper) {
         BlockPos bin = new BlockPos(1, 1, 1), moved = new BlockPos(4, 1, 4);
         helper.setBlock(bin, block("mekanism:basic_bin"));

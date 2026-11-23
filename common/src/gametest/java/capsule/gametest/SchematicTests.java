@@ -4,8 +4,8 @@ import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.platform.Services;
 import capsule.structure.CapsuleTemplate;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EntityTypes;
@@ -32,7 +32,7 @@ public class SchematicTests {
     public static void buildScene(GameTestHelper helper, BlockPos corner) {
         CapsuleTestUtils.fill(helper, corner, corner.offset(2, 0, 2), Blocks.STONE.defaultBlockState());
         helper.setBlock(corner.offset(1, 1, 1), Blocks.CHEST);
-        ((Container) helper.getBlockEntity(corner.offset(1, 1, 1))).setItem(0, new ItemStack(Items.DIAMOND, 5));
+        ((Container) helper.getBlockEntity(corner.offset(1, 1, 1), BlockEntity.class)).setItem(0, new ItemStack(Items.DIAMOND, 5));
         Vec3 standPos = helper.absoluteVec(Vec3.atBottomCenterOf(corner.offset(0, 1, 0)));
         ArmorStand stand = new ArmorStand(helper.getLevel(), standPos.x, standPos.y, standPos.z);
         helper.getLevel().addFreshEntity(stand);
@@ -73,7 +73,7 @@ public class SchematicTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void vanillaStructureDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/vanilla", true);
     }
@@ -82,7 +82,7 @@ public class SchematicTests {
      * MCEdit block entities are upgraded from Minecraft 1.12.2. SecurityCraft (in the NeoForge GameTest runtime) mixes
      * into the 1.13 data fixer schema, which then leaves data older than 1.13 as is: the diamonds keep their 1.12 count.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void mceditSchematicDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/mcedit", true, !Services.PLATFORM.isModLoaded("securitycraft"));
     }
@@ -90,27 +90,27 @@ public class SchematicTests {
     /**
      * Sponge v1 has no entities.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void spongeV1SchemDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/sponge_v1", false);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void spongeV2SchemDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/sponge_v2", true);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void spongeV2SchematicDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/sponge_v2_as_schematic", true);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void spongeV3SchemDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/sponge_v3", true);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void spongeV3SchematicDeploys(GameTestHelper helper) {
         deploysTheScene(helper, "schematics/sponge_v3_as_schematic", true);
     }

@@ -12,11 +12,9 @@ import capsule.items.CapsuleItem.CapsuleState;
 import capsule.structure.CapsuleTemplate;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.dispenser.BlockSource;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -67,7 +65,7 @@ public class LinkedTemplateCopyTests {
     private static String configTemplate(GameTestHelper helper, String name) {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         helper.setBlock(2, 1, 2, Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(2, 1, 2));
+        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(2, 1, 2), ChestBlockEntity.class);
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         helper.setBlock(3, 2, 3, Blocks.OAK_PLANKS);
         ItemStack captured = capture(helper, new BlockPos(1, 1, 1), 3);
@@ -89,8 +87,7 @@ public class LinkedTemplateCopyTests {
         String item = CapsuleMod.MODID + ":capsule[custom_data={color:6196919,label:\"burner_researcher\",size:" + size + ",state:2,structureName:\""
                 + structureName + "\",templateShouldBeCopied:1b},dyed_color=8072841]";
         try {
-            ItemParser.ItemResult result = new ItemParser(helper.getLevel().registryAccess()).parse(new StringReader(item));
-            return new ItemInput(result.item(), result.components()).createItemStack(1, false);
+            return new ItemParser(helper.getLevel().registryAccess()).parse(new StringReader(item)).createItemStack(1);
         } catch (CommandSyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -168,7 +165,7 @@ public class LinkedTemplateCopyTests {
         BlockPos.betweenClosed(corner, corner.offset(2, 2, 2)).forEach(p -> helper.assertBlockPresent(Blocks.AIR, p));
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void craftedLinkedCapsuleOwnsACopyOfItsTemplate(GameTestHelper helper) {
         String source = configTemplate(helper, "crafted");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -201,7 +198,7 @@ public class LinkedTemplateCopyTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void twoCraftsGiveTwoTemplates(GameTestHelper helper) {
         String source = configTemplate(helper, "two_crafts");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -253,7 +250,7 @@ public class LinkedTemplateCopyTests {
         assertTrue(helper, copiesOf(helper, source) == crafts, "no unused template should be written, got " + copiesOf(helper, source) + " for " + crafts + " capsules");
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void shiftCraftGivesOneTemplatePerCapsule(GameTestHelper helper) {
         String source = configTemplate(helper, "shift_craft");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -275,7 +272,7 @@ public class LinkedTemplateCopyTests {
      * The inventory grid calls onCraftedBy on a copy of the result only: the crafted capsules get their template on
      * the next player tick.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void inventoryGridShiftCraftGivesOneTemplatePerCapsule(GameTestHelper helper) {
         String source = configTemplate(helper, "inventory_shift_craft");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -293,7 +290,7 @@ public class LinkedTemplateCopyTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void taggedCapsuleInTheInventoryIsCopiedOnPlayerTick(GameTestHelper helper) {
         String source = configTemplate(helper, "player_tick");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -315,7 +312,7 @@ public class LinkedTemplateCopyTests {
     /**
      * A tagged capsule that never reached a player, out of a Crafter: the dispenser gives it its template, sized for it.
      */
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void dispensedTaggedCapsuleGetsItsTemplateFirst(GameTestHelper helper) {
         String source = configTemplate(helper, "dispensed");
         DispenserBlockEntity dispenser = ClaimTests.dispenser(helper, new BlockPos(4, 1, 4));
@@ -359,7 +356,7 @@ public class LinkedTemplateCopyTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void missingSourceTemplateIsNeverDeployedEmpty(GameTestHelper helper) {
         String source = Config.rewardTemplatesPath + "/gametest_missing_source";
         assertNeverDeploysEmpty(helper, source, "capsule.error.copySourceNotFound", logs ->
@@ -367,7 +364,7 @@ public class LinkedTemplateCopyTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void sourceOutsideTheConfigFolderIsNotCopied(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         ItemStack captured = capture(helper, new BlockPos(1, 1, 1), 1);
@@ -384,7 +381,7 @@ public class LinkedTemplateCopyTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintWithTemplateShouldBeCopiedKeepsItsBehavior(GameTestHelper helper) {
         String source = configTemplate(helper, "blueprint");
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));

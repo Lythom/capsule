@@ -11,7 +11,9 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -24,17 +26,24 @@ import java.util.stream.Stream;
 public class NeoForgeTestUtils {
 
     /**
-     * The item handlers of the block at pos, unsided first.
+     * The item resource handlers of the block at pos, unsided first.
      */
-    public static Stream<IItemHandler> items(GameTestHelper helper, BlockPos pos) {
+    public static Stream<ResourceHandler<ItemResource>> items(GameTestHelper helper, BlockPos pos) {
         return Stream.concat(Stream.of((Direction) null), Arrays.stream(Direction.values()))
-                .map(side -> helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(pos), side))
+                .map(side -> helper.getLevel().getCapability(Capabilities.Item.BLOCK, helper.absolutePos(pos), side))
                 .filter(Objects::nonNull);
     }
 
+    /**
+     * The number of item in the slots of a handler of the block at pos, the largest of its handlers.
+     */
     public static int count(GameTestHelper helper, BlockPos pos, Item item) {
-        return items(helper, pos).mapToInt(handler -> IntStream.range(0, handler.getSlots())
-                .map(slot -> handler.getStackInSlot(slot).is(item) ? handler.getStackInSlot(slot).getCount() : 0).sum()).max().orElse(0);
+        return items(helper, pos).mapToInt(handler -> count(handler, item)).max().orElse(0);
+    }
+
+    public static int count(ResourceHandler<ItemResource> handler, Item item) {
+        return IntStream.range(0, handler.size())
+                .map(slot -> ItemUtil.getStack(handler, slot).is(item) ? ItemUtil.getStack(handler, slot).getCount() : 0).sum();
     }
 
     /**

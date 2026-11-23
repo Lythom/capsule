@@ -17,19 +17,23 @@ import capsule.items.CapsuleItem.CapsuleState;
 import capsule.items.CapsuleItems;
 import capsule.plugins.RecipeViewerContent;
 import capsule.structure.CapsuleTemplate;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
-import net.minecraft.client.gui.screens.GenericMessageScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.client.renderer.item.ItemPropertyFunction;
+import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
+import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
@@ -37,11 +41,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -54,8 +59,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.block.Block;
@@ -84,6 +89,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -108,6 +114,7 @@ public class ClientSmokeTest {
     private static ClientSmokeTest instance;
 
     private final Scenario scenario = new Scenario();
+    private final AtomicInteger pendingScreenshots = new AtomicInteger();
     private final LogWatcher log = LogWatcher.install();
     private volatile int ground;
     private volatile String capturedStructure;
@@ -127,18 +134,18 @@ public class ClientSmokeTest {
     public static void onClientTick() {
         if (instance == null) return;
         // toasts and chat would hide parts of the screenshots; the chat is in the log anyway
-        mc().getToasts().clear();
-        if (!Showcase.ENABLED) mc().gui.getChat().clearMessages(false);
+        mc().gui.toastManager().clear();
+        if (!Showcase.ENABLED) mc().gui.hud.getChat().clearMessages(false);
         instance.scenario.tick();
     }
 
     private ClientSmokeTest() {
-        scenario.await("title screen", 20 * 600, () -> mc().getOverlay() == null
-                && (mc().screen instanceof TitleScreen || mc().screen instanceof AccessibilityOnboardingScreen));
+        scenario.await("title screen", 20 * 600, () -> mc().gui.overlay() == null
+                && (mc().gui.screen() instanceof TitleScreen || mc().gui.screen() instanceof AccessibilityOnboardingScreen));
         Showcase showcase = Showcase.ENABLED ? new Showcase(this, scenario) : null;
         if (showcase != null) showcase.titleScreens();
         scenario.run("create a flat creative world", this::createWorld)
-                .await("world loaded", 20 * 300, () -> mc().level != null && mc().player != null && mc().screen == null);
+                .await("world loaded", 20 * 300, () -> mc().level != null && mc().player != null && mc().gui.screen() == null);
 
         if (showcase != null) {
             showcase.scenes();
@@ -158,14 +165,15 @@ public class ClientSmokeTest {
                         scenario.check("no capsule warning, missing model/texture or exception in the log", log.problems.isEmpty(), String.join("\n  ", log.problems));
                     }
                 })
+                .finallyAwait("screenshots saved", 20 * 30, () -> pendingScreenshots.get() == 0)
                 .finallyRun("write the report", this::writeReport)
                 .finallyRun("stop the recording", () -> {
                     if (showcase != null) showcase.stopRecording();
                 })
                 .finallyRun("leave the world", () -> {
                     if (mc().level != null) {
-                        mc().level.disconnect();
-                        mc().disconnect(new GenericMessageScreen(Component.literal("Saving")));
+                        mc().level.disconnect(ClientLevel.DEFAULT_QUIT_MESSAGE);
+                        mc().disconnectWithSavingScreen();
                     }
                 })
                 .finallyAwait("world saved", 20 * 60, () -> mc().getSingleplayerServer() == null)
@@ -213,26 +221,26 @@ public class ClientSmokeTest {
                 .run("check the item models", this::checkItemModelStates)
                 .async("survival mode", 100, () -> onServer(p -> p.setGameMode(GameType.SURVIVAL)))
                 .await("survival mode on the client", 40, () -> !mc().player.hasInfiniteMaterials())
-                .run("open the inventory on the linked capsule", () -> mc().setScreen(new HoverInventoryScreen(0)))
+                .run("open the inventory on the linked capsule", () -> mc().gui.setScreen(new HoverInventoryScreen(0)))
                 .sleep(20)
-                .run("screenshot", () -> screenshot("06-inventory-linked-tooltip", ((HoverInventoryScreen) mc().screen).capsuleSlots()))
-                .run("hover the blueprint", () -> mc().setScreen(new HoverInventoryScreen(7)))
+                .run("screenshot", () -> screenshot("06-inventory-linked-tooltip", ((HoverInventoryScreen) mc().gui.screen()).capsuleSlots()))
+                .run("hover the blueprint", () -> mc().gui.setScreen(new HoverInventoryScreen(7)))
                 .sleep(20)
-                .run("screenshot", () -> screenshot("07-inventory-blueprint-tooltip", ((HoverInventoryScreen) mc().screen).capsuleSlots()))
-                .run("close", () -> mc().setScreen(null))
+                .run("screenshot", () -> screenshot("07-inventory-blueprint-tooltip", ((HoverInventoryScreen) mc().gui.screen()).capsuleSlots()))
+                .run("close", () -> mc().gui.setScreen(null))
                 .async("creative mode", 100, () -> onServer(p -> p.setGameMode(GameType.CREATIVE)))
                 .await("creative mode on the client", 40, () -> mc().player.hasInfiniteMaterials())
-                .run("open the creative inventory", () -> mc().setScreen(new CreativeModeInventoryScreen(mc().player, mc().player.connection.enabledFeatures(), false)))
+                .run("open the creative inventory", () -> mc().gui.setScreen(new CreativeModeInventoryScreen(mc().player, mc().player.connection.enabledFeatures(), false)))
                 .sleep(10)
                 .run("select the search tab", () -> pressKey(mc().options.keyChat))
                 .sleep(5)
                 .run("search capsule", () -> {
                     pressKey(mc().options.keyAttack);
-                    "capsule".chars().forEach(c -> mc().screen.charTyped((char) c, 0));
+                    "capsule".chars().forEach(c -> mc().gui.screen().charTyped(new CharacterEvent(c)));
                 })
                 .sleep(20)
                 .run("screenshot", () -> screenshot("08-creative-search"))
-                .run("close", () -> mc().setScreen(null));
+                .run("close", () -> mc().gui.setScreen(null));
         List<RecipeViewerProbe> viewers = RecipeViewerProbe.installed();
         if (viewers.isEmpty()) scenario.run("recipe viewers", () -> scenario.results.add("SKIP recipe viewers: none installed"));
         viewers.forEach(this::recipeViewerScenario);
@@ -265,9 +273,9 @@ public class ClientSmokeTest {
                 })
                 .sleep(20)
                 .run("screenshot", () -> {
-                    if (mc().screen != null) screenshot("09-" + name.toLowerCase(Locale.ROOT) + "-capsule-recipes");
+                    if (mc().gui.screen() != null) screenshot("09-" + name.toLowerCase(Locale.ROOT) + "-capsule-recipes");
                 })
-                .run("close", () -> mc().setScreen(null));
+                .run("close", () -> mc().gui.setScreen(null));
     }
 
     private void deployScenario() {
@@ -411,7 +419,7 @@ public class ClientSmokeTest {
         mc.options.guiScale().set(2);
         mc.options.getSoundSourceOptionInstance(SoundSource.MASTER).set(0.0);
         mc.options.save();
-        mc.resizeDisplay();
+        mc.resizeGui();
         try {
             FileUtils.deleteDirectory(mc.gameDirectory.toPath().resolve("saves").resolve(LEVEL_NAME).toFile());
             // the showcase took its title screen shots already
@@ -420,14 +428,24 @@ public class ClientSmokeTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        GameRules rules = new GameRules();
-        rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
-        rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
-        rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
-        LevelSettings settings = new LevelSettings(LEVEL_NAME, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, rules, WorldDataConfiguration.DEFAULT);
+        // the game rules are set once the world runs, see calmWorld: a fresh level takes the default ones since 26.1
+        LevelSettings settings = new LevelSettings(LEVEL_NAME, GameType.CREATIVE, new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true, WorldDataConfiguration.DEFAULT);
         mc.createWorldOpenFlows().createFreshLevel(LEVEL_NAME, settings, new WorldOptions(0, false, false),
                 registries -> registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
                 new TitleScreen());
+    }
+
+    /**
+     * Noon, clear weather, no day cycle, no weather cycle, no mob spawning: the same frames on every run.
+     */
+    static void calmWorld(ServerLevel level) {
+        MinecraftServer server = level.getServer();
+        GameRules rules = server.getGameRules();
+        rules.set(GameRules.ADVANCE_TIME, false, server);
+        rules.set(GameRules.ADVANCE_WEATHER, false, server);
+        rules.set(GameRules.SPAWN_MOBS, false, server);
+        level.clockManager().setTotalTicks(level.dimensionType().defaultClock().orElseThrow(), 6000);
+        server.setWeatherParameters(6000, 0, false, false);
     }
 
     /**
@@ -436,8 +454,7 @@ public class ClientSmokeTest {
     private void prepareCaptureArea(ServerPlayer player) {
         ServerLevel level = player.level();
         ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0);
-        level.setDayTime(6000);
-        level.setWeatherParameters(6000, 0, false, false);
+        calmWorld(level);
         player.getInventory().clearContent();
         BlockPos marker = markerPos();
         BlockState markerState = CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP);
@@ -589,13 +606,15 @@ public class ClientSmokeTest {
      * Inventory: the other materials, the 16 dye colors, an uncharged blueprint, an upgraded and an enchanted capsule.
      */
     private void checkItemModelStates() {
-        Identifier stateProperty = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state");
+        // the property as the range_dispatch of assets/capsule/items/capsule.json reads it
+        JsonObject json = new JsonObject();
+        json.addProperty("property", CapsuleMod.MODID + ":state");
+        RangeSelectItemModelProperty property = RangeSelectItemModelProperties.MAP_CODEC.codec().parse(JsonOps.INSTANCE, json).result().orElse(null);
         for (int slot = 0; slot < Inventory.getSelectionSize(); slot++) {
             ItemStack stack = mc().player.getInventory().getItem(slot);
             if (!(stack.getItem() instanceof CapsuleItem)) continue;
             CapsuleState state = CapsuleItem.getState(stack);
-            ItemPropertyFunction property = ItemProperties.getProperty(stack, stateProperty);
-            float value = property == null ? -1 : property.call(stack, mc().level, mc().player, 0);
+            float value = property == null ? -1 : property.get(stack, mc().level, mc().player, 0);
             scenario.check("hotbar slot " + slot + " uses the " + state + " model", value == state.getValue(), "capsule:state is " + value);
         }
     }
@@ -722,7 +741,7 @@ public class ClientSmokeTest {
     }
 
     static void pressKey(KeyMapping key) {
-        mc().screen.keyPressed(key.getDefaultKey().getValue(), 0, 0);
+        mc().gui.screen().keyPressed(new KeyEvent(key.getDefaultKey().getValue(), 0, 0));
     }
 
     static Path outputDir() {
@@ -735,44 +754,54 @@ public class ClientSmokeTest {
 
     /**
      * Saves the last rendered frame, and checks that it shows no missing texture and that the given slots (GUI
-     * coordinates of 16×16 item slots on the inventory background) are not empty.
+     * coordinates of 16×16 item slots on the inventory background) are not empty. Since 26.1 the frame is read back
+     * asynchronously: the checks run when it arrives, and the scenario waits for every screenshot before its report.
      */
     void screenshot(String name, List<int[]> itemSlots) {
-        try (NativeImage image = Screenshot.takeScreenshot(mc().getMainRenderTarget())) {
-            int missing = 0;
-            for (int x = 0; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    if (isMissingTextureMagenta(image.getPixelRGBA(x, y))) missing++;
+        double scale = mc().getWindow().getGuiScale();
+        pendingScreenshots.incrementAndGet();
+        Screenshot.takeScreenshot(mc().gameRenderer.mainRenderTarget(), image -> {
+            try (image) {
+                checkScreenshot(name, image, itemSlots, scale);
+                image.writeToFile(outputDir().resolve(name + ".png"));
+            } catch (IOException e) {
+                scenario.check(name + " saved", false, e.toString());
+            } finally {
+                pendingScreenshots.decrementAndGet();
+            }
+        });
+    }
+
+    private void checkScreenshot(String name, NativeImage image, List<int[]> itemSlots, double scale) {
+        int missing = 0;
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                if (isMissingTextureMagenta(image.getPixel(x, y))) missing++;
+            }
+        }
+        scenario.check(name + " has no missing texture", missing <= MAX_MISSING_TEXTURE_PIXELS, missing + " missing texture pixels");
+        int emptySlots = 0;
+        for (int[] slot : itemSlots) {
+            int differing = 0, total = 0;
+            for (int x = (int) (slot[0] * scale); x < (int) ((slot[0] + 16) * scale); x++) {
+                for (int y = (int) (slot[1] * scale); y < (int) ((slot[1] + 16) * scale); y++) {
+                    int c = image.getPixel(x, y);
+                    total++;
+                    if (Math.abs(ARGB.red(c) - SLOT_BACKGROUND) > 12 || Math.abs(ARGB.green(c) - SLOT_BACKGROUND) > 12 || Math.abs(ARGB.blue(c) - SLOT_BACKGROUND) > 12) differing++;
                 }
             }
-            scenario.check(name + " has no missing texture", missing <= MAX_MISSING_TEXTURE_PIXELS, missing + " missing texture pixels");
-            double scale = mc().getWindow().getGuiScale();
-            int emptySlots = 0;
-            for (int[] slot : itemSlots) {
-                int differing = 0, total = 0;
-                for (int x = (int) (slot[0] * scale); x < (int) ((slot[0] + 16) * scale); x++) {
-                    for (int y = (int) (slot[1] * scale); y < (int) ((slot[1] + 16) * scale); y++) {
-                        int c = image.getPixelRGBA(x, y);
-                        total++;
-                        if (Math.abs((c & 0xFF) - SLOT_BACKGROUND) > 12 || Math.abs((c >> 8 & 0xFF) - SLOT_BACKGROUND) > 12 || Math.abs((c >> 16 & 0xFF) - SLOT_BACKGROUND) > 12) differing++;
-                    }
-                }
-                if (differing < total / 8) emptySlots++;
-            }
-            if (!itemSlots.isEmpty()) {
-                scenario.check(name + " shows every item", emptySlots == 0, emptySlots + " of " + itemSlots.size() + " slots look empty");
-            }
-            image.writeToFile(outputDir().resolve(name + ".png"));
-        } catch (IOException e) {
-            scenario.check(name + " saved", false, e.toString());
+            if (differing < total / 8) emptySlots++;
+        }
+        if (!itemSlots.isEmpty()) {
+            scenario.check(name + " shows every item", emptySlots == 0, emptySlots + " of " + itemSlots.size() + " slots look empty");
         }
     }
 
     /**
      * The magenta of the missing texture, possibly darkened by shading.
      */
-    private static boolean isMissingTextureMagenta(int abgr) {
-        int r = abgr & 0xFF, g = abgr >> 8 & 0xFF, b = abgr >> 16 & 0xFF;
+    private static boolean isMissingTextureMagenta(int argb) {
+        int r = ARGB.red(argb), g = ARGB.green(argb), b = ARGB.blue(argb);
         return r > 100 && b > 100 && g < 30 && Math.abs(r - b) < 20;
     }
 
@@ -800,9 +829,9 @@ public class ClientSmokeTest {
         }
 
         @Override
-        public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             Slot slot = menu.slots.stream().filter(s -> s.container instanceof Inventory && s.getContainerSlot() == hoveredHotbarSlot).findFirst().orElseThrow();
-            super.render(guiGraphics, leftPos + slot.x + 8, topPos + slot.y + 8, partialTick);
+            super.extractRenderState(graphics, leftPos + slot.x + 8, topPos + slot.y + 8, partialTick);
         }
 
         List<int[]> capsuleSlots() {

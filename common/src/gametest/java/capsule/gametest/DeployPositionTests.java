@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.helpers.Spacial;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -22,7 +21,7 @@ public class DeployPositionTests {
         return Spacial.getDeployPosition(helper.getLevel(), hit).subtract(helper.absolutePos(BlockPos.ZERO));
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void deployReplacesTheAimedSnowLayer(GameTestHelper helper) {
         helper.setBlock(4, 1, 4, Blocks.STONE);
         helper.setBlock(4, 2, 4, Blocks.SNOW);

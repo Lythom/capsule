@@ -1,7 +1,6 @@
 package capsule.gametest;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +19,7 @@ import java.util.stream.Stream;
  */
 public class OpenPartiesAndClaimsTests {
 
-    @GameTest(template = "empty17", batch = "openpartiesandclaims", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty17", batch = "openpartiesandclaims", timeoutTicks = 200)
     public static void openPartiesAndClaimsVetoesStrangers(GameTestHelper helper) {
         OpenPACServerAPI api = OpenPACServerAPI.get(helper.getLevel().getServer());
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 0));

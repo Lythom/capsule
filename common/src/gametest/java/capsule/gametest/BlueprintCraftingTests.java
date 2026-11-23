@@ -9,7 +9,6 @@ import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -41,7 +40,7 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
 
 public class BlueprintCraftingTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void missingPrefabTemplateIsReported(GameTestHelper helper) {
         List<Component> chat = new ArrayList<>();
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(1, 1, 1), chat);
@@ -65,7 +64,7 @@ public class BlueprintCraftingTests {
     /**
      * The server log tells modpack makers which blocks the blueprints of a prefab will lack, before a player crafts one.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void prefabBlocksMissingFromBlueprintsAreReported(GameTestHelper helper) {
         helper.setBlock(0, 1, 0, Blocks.JIGSAW); // block entity not in blueprint_whitelist.json
         helper.setBlock(1, 1, 0, Blocks.FURNACE); // whitelisted block entity
@@ -149,22 +148,22 @@ public class BlueprintCraftingTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintCraftConsumesItsIngredients(GameTestHelper helper) {
         craftBlueprint(helper, ContainerInput.PICKUP, false, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintShiftCraftConsumesItsIngredients(GameTestHelper helper) {
         craftBlueprint(helper, ContainerInput.QUICK_MOVE, false, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintCraftFromAOneUseCapsuleConsumesItsIngredients(GameTestHelper helper) {
         craftBlueprint(helper, ContainerInput.PICKUP, true, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintShiftCraftFromAOneUseCapsuleConsumesItsIngredients(GameTestHelper helper) {
         craftBlueprint(helper, ContainerInput.QUICK_MOVE, true, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
     }
@@ -186,12 +185,12 @@ public class BlueprintCraftingTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintChangeConsumesTheBlueprint(GameTestHelper helper) {
         changeBlueprint(helper, ContainerInput.PICKUP);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintChangeShiftCraftConsumesTheBlueprint(GameTestHelper helper) {
         changeBlueprint(helper, ContainerInput.QUICK_MOVE);
     }
@@ -223,12 +222,12 @@ public class BlueprintCraftingTests {
 
     private static final Set<Integer> DEFAULT_PREFAB_SLOTS = Set.of(0, 2, 4);
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void prefabCraftGivesItsTemplateIngredientsBack(GameTestHelper helper) {
         craftPrefab(helper, ContainerInput.PICKUP, DEFAULT_PREFAB_SLOTS);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void prefabShiftCraftGivesItsTemplateIngredientsBack(GameTestHelper helper) {
         craftPrefab(helper, ContainerInput.QUICK_MOVE, DEFAULT_PREFAB_SLOTS);
     }
@@ -255,12 +254,12 @@ public class BlueprintCraftingTests {
 
     private static final String MOVED_PATTERN = "\"pattern\": [\"b12\", \"l3l\", \" p \"]";
 
-    @GameTest(template = "empty", batch = "prefabPattern")
+    @CapsuleGameTest(template = "empty", batch = "prefabPattern")
     public static void prefabCraftWithAMovedPatternGivesItsTemplateIngredientsBack(GameTestHelper helper) {
         withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ContainerInput.PICKUP, Set.of(1, 2, 4)));
     }
 
-    @GameTest(template = "empty", batch = "prefabPattern")
+    @CapsuleGameTest(template = "empty", batch = "prefabPattern")
     public static void prefabShiftCraftWithAMovedPatternGivesItsTemplateIngredientsBack(GameTestHelper helper) {
         withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ContainerInput.QUICK_MOVE, Set.of(1, 2, 4)));
     }

@@ -5,7 +5,6 @@ import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -22,7 +21,7 @@ public class ThrowQueryTests {
         return player;
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void instantCaptureWorksAtPreviewRange(GameTestHelper helper) {
         helper.setBlock(2, 1, 2, Blocks.STONE);
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(1);
@@ -36,7 +35,7 @@ public class ThrowQueryTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void instantQueryIsRefusedForNonInstantCapsules(GameTestHelper helper) {
         helper.setBlock(2, 1, 2, Blocks.STONE);
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
@@ -50,7 +49,7 @@ public class ThrowQueryTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void instantQueryIsRefusedOutOfRange(GameTestHelper helper) {
         helper.setBlock(2, 1, 2, Blocks.STONE);
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(1);
@@ -65,7 +64,7 @@ public class ThrowQueryTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void throwOutOfRangeFallsWhereItLands(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
         ServerPlayer player = playerHolding(helper, capsule);

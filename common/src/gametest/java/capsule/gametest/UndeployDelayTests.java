@@ -5,7 +5,6 @@ import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -27,7 +26,7 @@ public class UndeployDelayTests {
         return capsule;
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void instantCapsuleUndeploysAfterRelog(GameTestHelper helper) {
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
         player.tickCount = 10_000;
@@ -44,7 +43,7 @@ public class UndeployDelayTests {
         });
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void legacyUndeployDelayDoesNotBlockUndeploy(GameTestHelper helper) {
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
         ItemStack capsule = deployedInstantCapsule(helper, player);
@@ -58,7 +57,7 @@ public class UndeployDelayTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 200)
     public static void activatedCapsuleTimesOutAfterRelog(GameTestHelper helper) {
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
         player.tickCount = 10_000;
@@ -77,7 +76,7 @@ public class UndeployDelayTests {
         });
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void instantCapsuleCannotUndeployInstantly(GameTestHelper helper) {
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
         ItemStack capsule = deployedInstantCapsule(helper, player);

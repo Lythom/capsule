@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.StructureSaver;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.InfestedBlock;
 
@@ -13,7 +12,7 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
 
 public class BundledTemplateContentTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void noBundledTemplateContainsInfestedBlocks(GameTestHelper helper) {
         List<String> infested = BundledContentTests.bundledTemplates(helper).stream()
                 .filter(path -> {
@@ -29,7 +28,7 @@ public class BundledTemplateContentTests {
     /**
      * Blueprints of the bundled prefabs keep all their blocks, so a default install logs no warning about them.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void bundledPrefabBlueprintsLackNoBlock(GameTestHelper helper) {
         List<String> prefabs = BundledContentTests.bundledTemplates(helper).stream()
                 .filter(path -> path.startsWith("initialconfig/prefabs/"))

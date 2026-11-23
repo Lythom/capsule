@@ -6,7 +6,6 @@ import blusunrize.immersiveengineering.api.wires.GlobalWireNetwork;
 import blusunrize.immersiveengineering.api.wires.WireType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +23,7 @@ import static capsule.gametest.CapsuleTestUtils.block;
  */
 public class ImmersiveEngineeringTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void wiredConnectorsAreNeverCaptured(GameTestHelper helper) {
         BlockPos first = new BlockPos(1, 1, 1), second = new BlockPos(3, 1, 1);
         CapsuleTestUtils.fill(helper, new BlockPos(0, 0, 0), new BlockPos(4, 0, 4), Blocks.STONE.defaultBlockState());

@@ -5,7 +5,6 @@ import capsule.helpers.Capsule;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ItemFrame;
@@ -28,7 +27,7 @@ public class ItemFrameTests {
     /**
      * The deploy is far enough from the capture for the frame's saved block position to be refused when it is not updated.
      */
-    @GameTest(template = "empty17")
+    @CapsuleGameTest(template = "empty17")
     public static void deployedItemFramesHangOnTheirBlocks(GameTestHelper helper) {
         helper.setBlock(0, 2, 1, Blocks.STONE);
         ItemFrame frame = new ItemFrame(helper.getLevel(), helper.absolutePos(new BlockPos(1, 2, 1)), Direction.EAST);
@@ -51,7 +50,7 @@ public class ItemFrameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty17", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty17", timeoutTicks = 200)
     public static void starterCraftingTablesHaveAFreeFace(GameTestHelper helper) {
         List<String> starters = BundledContentTests.bundledTemplates(helper).stream().filter(path -> path.contains("/starters/")).toList();
         BlockPos anchor = new BlockPos(8, 0, 8);

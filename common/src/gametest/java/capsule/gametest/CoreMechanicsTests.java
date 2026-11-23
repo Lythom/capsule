@@ -9,7 +9,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -45,7 +44,7 @@ public class CoreMechanicsTests {
         return capture(helper, CORNER, 3);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void captureIntoEmptyCapsule(GameTestHelper helper) {
         ItemStack capsule = captureStoneAndPlanks(helper);
 
@@ -57,7 +56,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void deployLinkedCapsule(GameTestHelper helper) {
         ItemStack capsule = captureStoneAndPlanks(helper);
 
@@ -70,7 +69,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void undeployDeployedCapsule(GameTestHelper helper) {
         ItemStack capsule = captureStoneAndPlanks(helper);
         deploy(helper, capsule, ANCHOR, null);
@@ -84,7 +83,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void excludedBlocksStayInPlace(GameTestHelper helper) {
         helper.setBlock(2, 1, 2, Blocks.SPAWNER);
         helper.setBlock(2, 2, 2, Blocks.STONE);
@@ -97,7 +96,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void overridableBlocksAreReplaced(GameTestHelper helper) {
         ItemStack capsule = captureStoneAndPlanks(helper);
         helper.setBlock(5, 0, 5, Blocks.GRASS_BLOCK);
@@ -109,7 +108,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void solidBlocksPreventDeploy(GameTestHelper helper) {
         ItemStack capsule = captureStoneAndPlanks(helper);
         helper.setBlock(5, 2, 5, Blocks.DIRT);
@@ -122,7 +121,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintConsumesMaterials(GameTestHelper helper) {
         ItemStack source = captureStoneAndPlanks(helper);
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 1));
@@ -151,7 +150,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void recoveryCapsuleEmptiesSourceTemplate(GameTestHelper helper) {
         ItemStack linked = captureStoneAndPlanks(helper);
         ItemStack recovery = linked.copy();
@@ -165,7 +164,7 @@ public class CoreMechanicsTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void rewardCapsuleDeploysTwice(GameTestHelper helper) {
         ItemStack reward = Capsule.newRewardCapsuleItemStack("config/capsule/starters/_stater_oak_hut", 0, 0, 3, null, null);
 
@@ -182,7 +181,7 @@ public class CoreMechanicsTests {
         return BlockPos.betweenClosedStream(from, to).filter(p -> !helper.getBlockState(p).isAir()).count();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void thrownCapsuleCapturesAboveCaptureBase(GameTestHelper helper) {
         BlockPos markerPos = new BlockPos(4, 1, 4);
         helper.setBlock(markerPos, CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP));
@@ -204,7 +203,7 @@ public class CoreMechanicsTests {
      * Chest boats are captured and removed without dropping their content, also when a failed deploy removes the boats
      * it placed (#113).
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void containerEntitiesDropNothingWhenRemoved(GameTestHelper helper) {
         for (int x : new int[]{1, 3}) {
             ChestBoat boat = EntityTypes.OAK_CHEST_BOAT.create(helper.getLevel(), EntitySpawnReason.TRIGGERED);

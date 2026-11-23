@@ -1,6 +1,5 @@
 package capsule.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 
 /**
@@ -9,7 +8,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 public class FailureProofTests {
     static final String PROPERTY = "capsule.gametest.failOnPurpose";
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void failsOnPurpose(GameTestHelper helper) {
         helper.fail("failed on purpose (-D" + PROPERTY + "=true)");
     }

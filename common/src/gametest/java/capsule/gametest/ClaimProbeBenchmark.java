@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.platform.Services;
 import capsule.plugins.claims.Claims;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,7 +25,7 @@ public class ClaimProbeBenchmark {
     private static final Logger LOGGER = LogManager.getLogger(ClaimProbeBenchmark.class);
     private static final int[] SIZES = {3, 11, 31, 255};
 
-    @GameTest(template = "empty", batch = "claimbenchmark")
+    @CapsuleGameTest(template = "empty", batch = "claimbenchmark")
     public static void claimProbeCost(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 0));
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 4));

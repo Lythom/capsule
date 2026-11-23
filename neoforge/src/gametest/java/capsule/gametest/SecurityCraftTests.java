@@ -3,9 +3,9 @@ package capsule.gametest;
 import capsule.helpers.Capsule;
 import capsule.plugins.securitycraft.SecurityCraftOwnerCheck;
 import net.geforcemods.securitycraft.api.IOwnable;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +22,7 @@ public class SecurityCraftTests {
         Block reinforcedStone = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("securitycraft", "reinforced_stone"));
         helper.setBlock(BLOCK, reinforcedStone);
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
-        IOwnable ownable = helper.getBlockEntity(BLOCK);
+        IOwnable ownable = (IOwnable) helper.getBlockEntity(BLOCK, BlockEntity.class);
         ownable.setOwner(owner.getStringUUID(), owner.getName().getString());
         return owner;
     }
@@ -36,7 +36,7 @@ public class SecurityCraftTests {
     /**
      * SecurityCraft tags its blocks c:relocation_not_supported, part of capsule:excluded.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void othersCannotCaptureSecurityCraftBlocks(GameTestHelper helper) {
         Block reinforced = placeOwnedBlock(helper).level().getBlockState(helper.absolutePos(BLOCK)).getBlock();
         ServerPlayer other = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 5));
@@ -47,7 +47,7 @@ public class SecurityCraftTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void onlyOwnersPassTheSecurityCraftOwnerCheck(GameTestHelper helper) {
         ServerPlayer owner = placeOwnedBlock(helper);
         ServerPlayer other = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 5));

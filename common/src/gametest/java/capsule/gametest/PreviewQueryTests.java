@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.items.CapsuleItem;
 import capsule.network.handler.ServerPayloadHandler;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -18,7 +17,7 @@ public class PreviewQueryTests {
      * A client taking another capsule in hand asks its preview before the server knows the new held item: the answer
      * must be the template of the asked capsule, not of the one still held on the server.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void previewAnswersTheAskedCapsule(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         helper.setBlock(5, 1, 5, Blocks.GOLD_BLOCK);

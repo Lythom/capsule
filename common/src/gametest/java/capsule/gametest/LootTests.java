@@ -4,7 +4,6 @@ import capsule.loot.CapsuleLootEntry;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -16,7 +15,7 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
 
 public class LootTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void capsuleLootEntryRoundTrips(GameTestHelper helper) {
         RegistryOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
         LootPoolEntryContainer entry = CapsuleLootEntry.builder("config/capsule/loot/common").build();
@@ -28,7 +27,7 @@ public class LootTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void lootTablesHoldingCapsulesEncode(GameTestHelper helper) {
         RegistryOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
         LootTable table = helper.getLevel().getServer().reloadableRegistries().getLootTable(BuiltInLootTables.SIMPLE_DUNGEON);
@@ -37,7 +36,7 @@ public class LootTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void defaultLootTablesHoldTheCapsulePool(GameTestHelper helper) {
         RegistryOps<JsonElement> ops = helper.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
         LootTable table = helper.getLevel().getServer().reloadableRegistries().getLootTable(BuiltInLootTables.SIMPLE_DUNGEON);

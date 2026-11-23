@@ -5,7 +5,6 @@ import capsule.StructureSaver;
 import capsule.helpers.Capsule;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 
@@ -29,7 +28,7 @@ public class BundledContentTests {
         return paths;
     }
 
-    @GameTest(template = "empty17", timeoutTicks = 400)
+    @CapsuleGameTest(template = "empty17", timeoutTicks = 400)
     public static void everyBundledTemplateDeploys(GameTestHelper helper) {
         List<String> templates = bundledTemplates(helper);
         assertTrue(helper, templates.size() >= 40, "bundled templates should be found, got " + templates.size());

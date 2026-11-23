@@ -10,7 +10,6 @@ import com.refinedmods.refinedstorage.common.storage.diskdrive.AbstractDiskDrive
 import com.refinedmods.refinedstorage.common.support.resource.ItemResource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -49,7 +48,7 @@ public class RefinedStorageTests {
     }
 
     private static AbstractDiskDriveBlockEntity drive(GameTestHelper helper, BlockPos pos) {
-        return (AbstractDiskDriveBlockEntity) helper.getBlockEntity(pos);
+        return helper.getBlockEntity(pos, AbstractDiskDriveBlockEntity.class);
     }
 
     private static SerializableStorage storage(GameTestHelper helper, ItemStack disk) {
@@ -57,14 +56,14 @@ public class RefinedStorageTests {
                 .orElseThrow(() -> new AssertionError("no storage for " + disk));
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void refinedStorageIsExcludedByDefault(GameTestHelper helper) {
         diskDrive(helper);
         assertNeverCaptured(helper, new BlockPos(1, 1, 1), 3, DRIVE, DRIVE.east());
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "incompatconfig")
+    @CapsuleGameTest(template = "empty", batch = "incompatconfig")
     public static void diskDriveKeepsItsDiskWhenNotExcluded(GameTestHelper helper) {
         diskDrive(helper);
         List<Block> excluded = Config.excludedBlocks;

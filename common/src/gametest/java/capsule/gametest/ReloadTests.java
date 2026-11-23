@@ -4,7 +4,6 @@ import capsule.Config;
 import capsule.StructureSaver;
 import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -20,7 +19,7 @@ import static capsule.gametest.CapsuleTestUtils.template;
 
 public class ReloadTests {
 
-    @GameTest(template = "empty", batch = "reload", timeoutTicks = 400)
+    @CapsuleGameTest(template = "empty", batch = "reload", timeoutTicks = 400)
     public static void reloadRefreshesRewardTemplates(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         String path = Config.rewardTemplatesPath + "/reload_test";

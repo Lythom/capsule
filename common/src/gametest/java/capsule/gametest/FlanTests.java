@@ -7,7 +7,6 @@ import io.github.flemmli97.flan.claim.ClaimStorage;
 import io.github.flemmli97.flan.config.ConfigHandler;
 import io.github.flemmli97.flan.player.ClaimMode;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
@@ -22,7 +21,7 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
  */
 public class FlanTests {
 
-    @GameTest(template = "empty17", batch = "flan", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty17", batch = "flan", timeoutTicks = 200)
     public static void flanVetoesStrangers(GameTestHelper helper) {
         vetoesStrangers(helper, () -> {});
     }
@@ -30,7 +29,7 @@ public class FlanTests {
     /**
      * With defaultClaimDepth -1, Flan's claims reach 10 blocks below the world. Its own batch: the config is global.
      */
-    @GameTest(template = "empty17", batch = "flandepth", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty17", batch = "flandepth", timeoutTicks = 200)
     public static void flanVetoesStrangersInClaimsReachingBelowTheWorld(GameTestHelper helper) {
         int depth = ConfigHandler.CONFIG.defaultClaimDepth;
         ConfigHandler.CONFIG.defaultClaimDepth = -1;
@@ -61,7 +60,7 @@ public class FlanTests {
      * Flan's API answers per position: it is asked for each position up to the largest survival capsule, above for the
      * center of each chunk column. Its own batch: the boxes reach the areas of other tests.
      */
-    @GameTest(template = "empty17", batch = "flangranularity")
+    @CapsuleGameTest(template = "empty17", batch = "flangranularity")
     public static void flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule(GameTestHelper helper) {
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         // boxes from a chunk corner: the center of their first chunk column is 8 blocks away

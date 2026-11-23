@@ -7,7 +7,6 @@ import capsule.items.CapsuleItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -50,7 +49,7 @@ public class RecipeTests {
     /**
      * The GameTest resources fill the ingot tags of other mods (data/c/tags/item/ingots), so every recipe must load.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void everyCapsuleRecipeLoadsWithResolvedIngredients(GameTestHelper helper) {
         RecipeManager recipes = helper.getLevel().recipeAccess();
         Set<String> problems = new LinkedHashSet<>();
@@ -77,7 +76,7 @@ public class RecipeTests {
      * The recipe advancements unlock their recipes when the player gets the right item, not any item: an item predicate
      * in a format the codec does not read is dropped without error, and then matches everything.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void recipeAdvancementsWaitForTheirItem(GameTestHelper helper) {
         var server = helper.getLevel().getServer();
         Set<String> problems = new LinkedHashSet<>();
@@ -111,7 +110,7 @@ public class RecipeTests {
     /**
      * Blueprints are blue: no capsule tier is made of lapis.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void noCapsuleTierIsMadeOfLapis(GameTestHelper helper) {
         List<Identifier> lapisTiers = helper.getLevel().recipeAccess().getRecipes().stream()
                 .filter(recipe -> recipe.value() instanceof ShapedRecipe shaped && shaped.assemble(CraftingInput.EMPTY).getItem() instanceof CapsuleItem)
@@ -122,7 +121,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void dyeRecipeColorsCapsule(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
 
@@ -133,7 +132,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void capsuleColorsHaveNoDyedTooltip(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
         ItemStack dyed = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.DYE.red()));
@@ -146,7 +145,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void upgradeRecipeGrowsCapsule(GameTestHelper helper) {
         ItemStack result = craft(helper, "capsule:upgrade", 2, 1, CapsuleTestUtils.emptyCapsule(3), new ItemStack(Items.POPPED_CHORUS_FRUIT));
 
@@ -155,7 +154,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void clearRecipeEmptiesCapsule(GameTestHelper helper) {
         ItemStack result = craft(helper, "capsule:clear", 1, 1, linkedCapsule(helper));
 
@@ -164,7 +163,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void recoveryRecipeMakesOneUseCopy(GameTestHelper helper) {
         ItemStack linked = linkedCapsule(helper);
 
@@ -175,7 +174,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintRecipeCopiesCapsule(GameTestHelper helper) {
         ItemStack linked = linkedCapsule(helper);
         ItemStack e = ItemStack.EMPTY;
@@ -191,7 +190,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void ironCapsuleRecipe(GameTestHelper helper) {
         ItemStack e = ItemStack.EMPTY;
         ItemStack iron = new ItemStack(Items.IRON_INGOT);
@@ -205,7 +204,7 @@ public class RecipeTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void netheriteCapsuleRecipeGivesAVanilla13Capsule(GameTestHelper helper) {
         ItemStack e = ItemStack.EMPTY;
         ItemStack netherite = new ItemStack(Items.NETHERITE_INGOT);

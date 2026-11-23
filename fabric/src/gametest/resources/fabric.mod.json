@@ -9,9 +9,6 @@
     "main": [
       "capsule.gametest.FabricGameTestSetup"
     ],
-    "fabric-gametest": [
-      "capsule.gametest.FabricGameTests"
-    ],
     "client": [
       "capsule.clientsmoke.FabricClientSmoke"
     ],
@@ -21,5 +18,8 @@
   },
   "depends": {
     "capsule": "*"
-  }
+  },
+  "mixins": [
+    "capsule-gametest.mixins.json"
+  ]
 }

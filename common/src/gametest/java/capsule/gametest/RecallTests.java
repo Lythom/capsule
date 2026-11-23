@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +17,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -42,7 +40,7 @@ public class RecallTests {
         return helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key);
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void enchantingTablesOfferLoyaltyForCapsules(GameTestHelper helper) {
         Registry<Enchantment> enchantments = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
@@ -50,7 +48,7 @@ public class RecallTests {
         Set<Holder<Enchantment>> offered = new HashSet<>();
         IntStream.range(0, 200).forEach(i -> EnchantmentHelper
                 .selectEnchantment(random, capsule, 1 + i % 30, enchantments.getOrThrow(EnchantmentTags.IN_ENCHANTING_TABLE).stream())
-                .forEach(e -> offered.add(e.enchantment)));
+                .forEach(e -> offered.add(e.enchantment())));
 
         assertTrue(helper, offered.stream().anyMatch(e -> e.is(Enchantments.LOYALTY)), "an enchanting table should offer loyalty on a capsule");
         // enchantments of other mods may apply to every item (Corail Tombstone's soulbound)
@@ -59,7 +57,7 @@ public class RecallTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void recallIsNoLongerObtainable(GameTestHelper helper) {
         Holder<Enchantment> recall = enchantment(helper, CapsuleEnchantments.RECALL);
         for (TagKey<Enchantment> tag : List.of(EnchantmentTags.IN_ENCHANTING_TABLE, EnchantmentTags.NON_TREASURE, EnchantmentTags.TRADEABLE,
@@ -73,13 +71,13 @@ public class RecallTests {
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(1, 1, 1));
         AnvilMenu menu = new AnvilMenu(0, player.getInventory(), ContainerLevelAccess.create(helper.getLevel(), helper.absolutePos(new BlockPos(1, 1, 1))));
         menu.getSlot(0).set(left);
-        menu.getSlot(1).set(EnchantedBookItem.createForEnchantment(new EnchantmentInstance(enchantment, level)));
+        menu.getSlot(1).set(EnchantmentHelper.createBook(new EnchantmentInstance(enchantment, level)));
         ItemStack result = menu.getSlot(2).getItem().copy();
         CapsuleTestUtils.removePlayer(player);
         return result;
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void anvilAppliesALoyaltyBookToACapsule(GameTestHelper helper) {
         Holder<Enchantment> loyalty = enchantment(helper, Enchantments.LOYALTY);
 
@@ -89,7 +87,7 @@ public class RecallTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void otherTridentEnchantmentsAreRefused(GameTestHelper helper) {
         for (ResourceKey<Enchantment> key : List.of(Enchantments.IMPALING, Enchantments.RIPTIDE, Enchantments.CHANNELING)) {
             Holder<Enchantment> enchantment = enchantment(helper, key);
@@ -124,12 +122,12 @@ public class RecallTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void loyaltyCapsuleComesBack(GameTestHelper helper) {
         throwComesBack(helper, Enchantments.LOYALTY);
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void legacyRecallCapsuleComesBack(GameTestHelper helper) {
         throwComesBack(helper, CapsuleEnchantments.RECALL);
     }
@@ -140,7 +138,7 @@ public class RecallTests {
         CapsuleTestUtils.fill(helper, new BlockPos(3, 1, 3), new BlockPos(5, 1, 5), Blocks.LAVA.defaultBlockState());
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void capsuleThrownIntoLavaDeploysAndComesBack(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
@@ -158,7 +156,7 @@ public class RecallTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void capsuleSurvivesLava(GameTestHelper helper) {
         lavaPool(helper);
 
@@ -171,7 +169,7 @@ public class RecallTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void droppedLoyaltyTridentIsNotRecalled(GameTestHelper helper) {
         CapsuleTestUtils.fill(helper, new BlockPos(0, 0, 0), new BlockPos(8, 0, 8), Blocks.STONE.defaultBlockState());
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
@@ -188,7 +186,7 @@ public class RecallTests {
         });
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void onlyCapsuleEntitiesAreTracked(GameTestHelper helper) {
         ItemStack trident = new ItemStack(Items.TRIDENT);
         trident.enchant(enchantment(helper, Enchantments.LOYALTY), 1);
@@ -210,7 +208,7 @@ public class RecallTests {
     /**
      * Alone in its batch: it forgets the capsules of the test level.
      */
-    @GameTest(template = "empty", batch = "levelUnload")
+    @CapsuleGameTest(template = "empty", batch = "levelUnload")
     public static void unloadedLevelsAreForgotten(GameTestHelper helper) {
         ItemEntity capsule = drop(helper, CapsuleTestUtils.emptyCapsule(3), new Vec3(2.5, 2, 2.5), null);
         assertTrue(helper, ThrownCapsules.in(helper.getLevel()).contains(capsule), "the capsule entity should be tracked");
@@ -220,7 +218,7 @@ public class RecallTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 100)
     public static void recallLetsAnEarlyCollidingCapsuleDeploy(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);

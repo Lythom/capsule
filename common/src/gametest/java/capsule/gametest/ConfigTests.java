@@ -2,7 +2,6 @@ package capsule.gametest;
 
 import capsule.Config;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -15,7 +14,7 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 
 public class ConfigTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void configuredTagsExcludeBlocksFromCapture(GameTestHelper helper) {
         List<TagKey<Block>> configured = Config.excludedBlockTags;
         Config.excludedBlockTags = List.of(BlockTags.LOGS);

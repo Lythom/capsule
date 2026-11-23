@@ -7,7 +7,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -16,14 +15,14 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
 
 public class CaptureBaseTests {
 
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 200)
     public static void freshCaptureBaseDispensesOnFirstSignal(GameTestHelper helper) {
         helper.setBlock(2, 1, 2, Blocks.STONE);
         helper.setBlock(2, 2, 2, Blocks.OAK_PLANKS);
         ItemStack capsule = CapsuleTestUtils.capture(helper, new BlockPos(1, 1, 1), 3);
         BlockPos markerPos = new BlockPos(5, 1, 5);
         helper.setBlock(markerPos, CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP));
-        BlockEntityCapture marker = helper.getBlockEntity(markerPos);
+        BlockEntityCapture marker = helper.getBlockEntity(markerPos, BlockEntityCapture.class);
         marker.setItem(0, capsule);
         BlockPos powerPos = markerPos.east();
 

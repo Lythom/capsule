@@ -8,7 +8,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -48,10 +47,12 @@ public class BlueprintWhitelistTests {
             "minecraft:end_gateway", "no item",
             "minecraft:piston", "moving piston blocks only exist during a piston move",
             "minecraft:brushable_block", "suspicious sand and gravel hold loot",
-            "minecraft:jigsaw", "world generation block without use in a build"
+            "minecraft:jigsaw", "world generation block without use in a build",
+            "minecraft:test_block", "GameTest block, no survival item",
+            "minecraft:test_instance_block", "GameTest block, no survival item"
     );
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void everyVanillaBlockEntityIsWhitelistedOrExcluded(GameTestHelper helper) {
         List<String> unlisted = new ArrayList<>();
         for (BlockEntityType<?> type : BuiltInRegistries.BLOCK_ENTITY_TYPE) {
@@ -76,7 +77,7 @@ public class BlueprintWhitelistTests {
     /**
      * The NBT kept in blueprints never tells vanilla items apart: a blueprint asks for the plain item of each block.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void vanillaBlocksHaveNoIdentityNBT(GameTestHelper helper) {
         List<String> identities = Config.blueprintWhitelist.entrySet().stream()
                 .filter(block -> block.getKey().startsWith("minecraft:") && block.getValue() != null)
@@ -88,16 +89,16 @@ public class BlueprintWhitelistTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintsNeverKeepInventories(GameTestHelper helper) {
         fill(helper, new BlockPos(0, 1, 0), Blocks.SHULKER_BOX, Items.DIAMOND);
         fill(helper, new BlockPos(1, 1, 0), Blocks.CHISELED_BOOKSHELF, Items.BOOK);
         fill(helper, new BlockPos(2, 1, 0), Blocks.DECORATED_POT, Items.DIAMOND);
         fill(helper, new BlockPos(0, 1, 2), Blocks.CRAFTER, Items.DIAMOND);
         helper.setBlock(1, 1, 2, Blocks.CAMPFIRE);
-        ((CampfireBlockEntity) helper.getBlockEntity(new BlockPos(1, 1, 2))).placeFood(null, new ItemStack(Items.BEEF), 0);
+        helper.assertTrue(helper.getBlockEntity(new BlockPos(1, 1, 2), CampfireBlockEntity.class).placeFood(helper.getLevel(), null, new ItemStack(Items.BEEF)), "the campfire takes the beef");
         helper.setBlock(2, 1, 2, Blocks.LECTERN.defaultBlockState().setValue(LecternBlock.HAS_BOOK, true));
-        ((LecternBlockEntity) helper.getBlockEntity(new BlockPos(2, 1, 2))).setBook(new ItemStack(Items.WRITABLE_BOOK));
+        helper.getBlockEntity(new BlockPos(2, 1, 2), LecternBlockEntity.class).setBook(new ItemStack(Items.WRITABLE_BOOK));
         List<Block> blocks = List.of(Blocks.SHULKER_BOX, Blocks.CHISELED_BOOKSHELF, Blocks.DECORATED_POT, Blocks.CRAFTER, Blocks.CAMPFIRE, Blocks.LECTERN);
         ItemStack source = capture(helper, new BlockPos(0, 1, 0), 3);
 
@@ -132,7 +133,7 @@ public class BlueprintWhitelistTests {
      * items, whatever its NBT key. Lectern books are not in a Container, jukebox records and decorated pot items are not
      * in an "Items" list, like the inventories of many mods.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void blueprintUndeployKeepsTheItemsOfItsBlocks(GameTestHelper helper) {
         helper.setBlock(0, 1, 0, Blocks.CHEST);
         helper.setBlock(1, 1, 0, Blocks.LECTERN);
@@ -151,11 +152,11 @@ public class BlueprintWhitelistTests {
             contents.put(new BlockPos(4, 1, 6), new ItemStack(Items.DIAMOND));
             contents.forEach((pos, item) -> {
                 String block = BuiltInRegistries.BLOCK.getKey(helper.getBlockState(pos).getBlock()).getPath();
-                setContent(helper.getBlockEntity(pos), item.copy());
+                setContent(helper.getBlockEntity(pos, BlockEntity.class), item.copy());
                 messages.clear();
                 Capsule.resentToCapsule(blueprint, helper.getLevel(), player);
                 assertTrue(helper, CapsuleItem.hasState(blueprint, CapsuleState.DEPLOYED), "the undeploy destroyed the " + item + " of the " + block);
-                BlockEntity be = helper.getBlockEntity(pos);
+                BlockEntity be = helper.getBlockEntity(pos, BlockEntity.class);
                 assertTrue(helper, be != null && content(be).is(item.getItem()), "the " + block + " lost its " + item);
                 List<String> keys = ClaimTests.keys(messages);
                 assertTrue(helper, keys.equals(List.of("capsule.error.blueprintDontMatch")), "the refused undeploy of the " + block + " tells blueprintDontMatch, got " + keys);
@@ -197,7 +198,7 @@ public class BlueprintWhitelistTests {
 
     private static void fill(GameTestHelper helper, BlockPos pos, Block block, Item item) {
         helper.setBlock(pos, block);
-        Container container = (Container) helper.getBlockEntity(pos);
+        Container container = (Container) helper.getBlockEntity(pos, BlockEntity.class);
         for (int slot = 0; slot < container.getContainerSize(); slot++) {
             container.setItem(slot, new ItemStack(item));
         }

@@ -5,7 +5,6 @@ import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -20,10 +19,10 @@ import static capsule.gametest.CapsuleTestUtils.template;
 
 public class TemplateCopyTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void templateCopiesDoNotShareBlockEntityData(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.CHEST);
-        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(1, 1, 1));
+        ChestBlockEntity chest = helper.getBlockEntity(new BlockPos(1, 1, 1), ChestBlockEntity.class);
         chest.setItem(0, new ItemStack(Items.DIAMOND));
         ItemStack source = capture(helper, new BlockPos(1, 1, 1), 1);
         CapsuleTemplate sourceTemplate = template(helper, source);

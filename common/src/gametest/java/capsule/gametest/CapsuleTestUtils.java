@@ -27,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeMap;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,7 +59,7 @@ public class CapsuleTestUtils {
     public static ItemStack capture(GameTestHelper helper, BlockPos relativeCorner, int size) {
         ItemStack capsule = emptyCapsule(size);
         if (!Capsule.captureAtPosition(capsule, null, size, helper.getLevel(), helper.absolutePos(relativeCorner))) {
-            helper.fail("capture failed", relativeCorner);
+            helper.fail(Component.literal("capture failed"), relativeCorner);
         }
         return capsule;
     }
@@ -82,7 +83,7 @@ public class CapsuleTestUtils {
             String capsule = overpowered ? "an overpowered capsule" : "a capsule";
             helper.setBlock(stone, Blocks.STONE);
             if (!Capsule.captureAtPosition(Capsule.newEmptyCapsuleItemStack(0, 0, size, overpowered, null, 0), null, size, helper.getLevel(), helper.absolutePos(relativeCorner))) {
-                helper.fail(capsule + " failed to capture", relativeCorner);
+                helper.fail(Component.literal(capsule + " failed to capture"), relativeCorner);
             }
             helper.assertBlockNotPresent(Blocks.STONE, stone);
             states.forEach((pos, state) -> {
@@ -150,6 +151,8 @@ public class CapsuleTestUtils {
             }
         }, connection);
         new ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
+        // since 26.1 a new player starts in the default game mode of the server, creative on the GameTest server
+        player.setGameMode(GameType.SURVIVAL);
         Vec3 pos = helper.absoluteVec(Vec3.atBottomCenterOf(relativePos));
         player.snapTo(pos.x, pos.y, pos.z, 0, 0);
         helper.getLevel().addNewPlayer(player);

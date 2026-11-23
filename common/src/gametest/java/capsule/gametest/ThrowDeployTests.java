@@ -3,7 +3,6 @@ package capsule.gametest;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +13,7 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 
 public class ThrowDeployTests {
 
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @CapsuleGameTest(template = "empty", timeoutTicks = 60)
     public static void blindThrowDeploysOnTheGround(GameTestHelper helper) {
         helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);

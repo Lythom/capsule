@@ -14,7 +14,6 @@ import capsule.plugins.claims.ClaimAdapter;
 import capsule.plugins.claims.Claims;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -106,7 +105,7 @@ public class ClaimTests {
         return count;
     }
 
-    @GameTest(template = "empty", batch = "claimscale")
+    @CapsuleGameTest(template = "empty", batch = "claimscale")
     public static void claimQueriesScaleWithChunksAndRegionsNotBlocks(GameTestHelper helper) {
         int size = CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE;
         BlockPos min = helper.absolutePos(new BlockPos(0, 1, 0));
@@ -192,7 +191,7 @@ public class ClaimTests {
     /**
      * A claim mod without adapter protecting one block, away from where its chunk column would be probed.
      */
-    @GameTest(template = "empty", batch = "claimprobe")
+    @CapsuleGameTest(template = "empty", batch = "claimprobe")
     public static void aSingleProtectedBlockStaysUpToTheLargestSurvivalCapsule(GameTestHelper helper) {
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         BlockPos corner = new BlockPos(1, 1, 1);
@@ -219,7 +218,7 @@ public class ClaimTests {
      * A modpack recipe crafting a capsule of even size: reading the largest survival capsule must not resize the
      * recipe result. After a reload, so that the new recipes are read. Its own batch: the reload replaces the recipes.
      */
-    @GameTest(template = "empty", batch = "claimtiers", timeoutTicks = 400)
+    @CapsuleGameTest(template = "empty", batch = "claimtiers", timeoutTicks = 400)
     public static void theLargestSurvivalCapsuleLeavesTheRecipesUnchanged(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         ItemStack even = CapsuleTestUtils.emptyCapsule(3);
@@ -237,7 +236,7 @@ public class ClaimTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "claims")
+    @CapsuleGameTest(template = "empty", batch = "claims")
     public static void claimsVetoCapturesAndDeploysOfOthers(GameTestHelper helper) {
         List<Component> messages = new ArrayList<>();
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
@@ -271,7 +270,7 @@ public class ClaimTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "claims")
+    @CapsuleGameTest(template = "empty", batch = "claims")
     public static void capsulesThrownByOfflinePlayersAreChecked(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer thrower = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
@@ -295,7 +294,7 @@ public class ClaimTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", batch = "claims")
+    @CapsuleGameTest(template = "empty", batch = "claims")
     public static void failedDeploysAreRolledBackInClaims(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         helper.setBlock(1, 1, 1, Blocks.GOLD_BLOCK);
@@ -328,7 +327,7 @@ public class ClaimTests {
     /**
      * Blueprint undeploys and deploys refused by the claims, or because they cannot be checked, only say so.
      */
-    @GameTest(template = "empty", batch = "claims")
+    @CapsuleGameTest(template = "empty", batch = "claims")
     public static void refusedBlueprintsOnlyGiveTheClaimMessage(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         List<Component> messages = new ArrayList<>();
@@ -393,7 +392,7 @@ public class ClaimTests {
     /**
      * A protection mod whose API changed: its adapter throws. It refuses everything, so it has a batch of its own.
      */
-    @GameTest(template = "empty", batch = "claimfailures")
+    @CapsuleGameTest(template = "empty", batch = "claimfailures")
     public static void failingClaimChecksRefuseCapturesAndDeploys(GameTestHelper helper) {
         List<Component> messages = new ArrayList<>();
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
@@ -432,7 +431,7 @@ public class ClaimTests {
     /**
      * A protection mod loaded without the API its adapter needs.
      */
-    @GameTest(template = "empty", batch = "claimfailures")
+    @CapsuleGameTest(template = "empty", batch = "claimfailures")
     public static void protectionModsWithoutTheirApiRefuseCapturesAndDeploys(GameTestHelper helper) {
         List<Component> messages = new ArrayList<>();
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8), messages);
@@ -459,10 +458,10 @@ public class ClaimTests {
         if (placer != null) {
             helper.getBlockState(pos).getBlock().setPlacedBy(helper.getLevel(), helper.absolutePos(pos), helper.getBlockState(pos), placer, ItemStack.EMPTY);
         }
-        return helper.getBlockEntity(pos);
+        return helper.getBlockEntity(pos, BlockEntityCapture.class);
     }
 
-    @GameTest(template = "empty", batch = "claims", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty", batch = "claims", timeoutTicks = 200)
     public static void captureBasesActAsThePlayerWhoPlacedThem(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer other = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
@@ -475,7 +474,7 @@ public class ClaimTests {
         }
         TestClaim claim = new TestClaim(helper, new BlockPos(0, 2, 2), new BlockPos(8, 2, 2), owner.getUUID());
         Claims.register(claim);
-        BlockEntityCapture placed = helper.getBlockEntity(ownerBase);
+        BlockEntityCapture placed = helper.getBlockEntity(ownerBase, BlockEntityCapture.class);
         assertTrue(helper, owner.getUUID().equals(placed.getPlacer()), "the base remembers who placed it");
         BlockEntityCapture reloaded = (BlockEntityCapture) BlockEntityCapture.loadStatic(placed.getBlockPos(), placed.getBlockState(),
                 placed.saveWithFullMetadata(helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
@@ -490,7 +489,7 @@ public class ClaimTests {
                 .thenIdle(10)
                 .thenExecute(() -> {
                     helper.assertBlockNotPresent(Blocks.STONE, otherBase.above());
-                    BlockEntityCapture refused = helper.getBlockEntity(otherBase);
+                    BlockEntityCapture refused = helper.getBlockEntity(otherBase, BlockEntityCapture.class);
                     assertTrue(helper, CapsuleItem.hasState(refused.getItem(0), CapsuleState.LINKED), "the refused capsule stays linked");
                     assertTrue(helper, claim.askedFor.contains(owner.getUUID()) && claim.askedFor.contains(other.getUUID()), "bases are checked as their placer, even offline");
                     assertTrue(helper, claim.queries.get() == 2, "each base asks the claims once, got " + claim.queries.get());
@@ -501,10 +500,10 @@ public class ClaimTests {
 
     static DispenserBlockEntity dispenser(GameTestHelper helper, BlockPos pos) {
         helper.setBlock(pos, Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.UP));
-        return helper.getBlockEntity(pos);
+        return helper.getBlockEntity(pos, DispenserBlockEntity.class);
     }
 
-    @GameTest(template = "empty", batch = "claims", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty", batch = "claims", timeoutTicks = 200)
     public static void capsulesUsedByNobodyAreRefusedInClaims(GameTestHelper helper) {
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         BlockPos legacyBaseInside = new BlockPos(1, 1, 2);
@@ -539,21 +538,21 @@ public class ClaimTests {
                     Claims.unregister(claim);
                     for (BlockPos pos : List.of(legacyBaseInside, dispenserInside)) {
                         helper.assertBlockNotPresent(Blocks.STONE, pos.above());
-                        DispenserBlockEntity machine = helper.getBlockEntity(pos);
+                        DispenserBlockEntity machine = helper.getBlockEntity(pos, DispenserBlockEntity.class);
                         assertTrue(helper, CapsuleItem.hasState(machine.getItem(0), CapsuleState.LINKED), "the refused capsule stays linked");
                     }
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = "empty", batch = "claims")
+    @CapsuleGameTest(template = "empty", batch = "claims")
     public static void deployedCaptureBasesActAsTheirDeployer(GameTestHelper helper) {
         ServerPlayer placer = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         ServerPlayer deployer = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 0));
         captureBase(helper, new BlockPos(1, 1, 1), placer);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
         assertTrue(helper, CapsuleTestUtils.deploy(helper, capsule, new BlockPos(5, 0, 5), deployer), "deploy should succeed");
-        BlockEntityCapture deployed = helper.getBlockEntity(new BlockPos(5, 1, 5));
+        BlockEntityCapture deployed = helper.getBlockEntity(new BlockPos(5, 1, 5), BlockEntityCapture.class);
         assertTrue(helper, deployer.getUUID().equals(deployed.getPlacer()), "a deployed base acts for its deployer, not " + deployed.getPlacer());
         CapsuleTestUtils.removePlayer(placer);
         CapsuleTestUtils.removePlayer(deployer);

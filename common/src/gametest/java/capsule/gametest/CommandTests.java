@@ -8,10 +8,10 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -29,7 +29,7 @@ public class CommandTests {
     /**
      * The give command printed by /capsule exportHeldItem gives the held capsule back.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void exportedItemsCanBeGivenBack(GameTestHelper helper) throws CommandSyntaxException {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
@@ -43,7 +43,7 @@ public class CommandTests {
             ParseResults<CommandSourceStack> give = helper.getLevel().getServer().getCommands().getDispatcher().parse(command, source(player));
             CommandSyntaxException error = Commands.getParseException(give);
             assertTrue(helper, error == null, "/" + command + " is refused: " + (error == null ? "" : error.getMessage()));
-            ItemStack given = give.getContext().build(command).getArgument("item", ItemInput.class).createItemStack(1, false);
+            ItemStack given = give.getContext().build(command).getArgument("item", ItemInput.class).createItemStack(1);
             assertTrue(helper, ItemStack.isSameItemSameComponents(given, capsule), command + " gives " + given.getComponentsPatch() + " instead of " + capsule.getComponentsPatch());
         } finally {
             CapsuleTestUtils.removePlayer(player);
@@ -54,7 +54,7 @@ public class CommandTests {
     /**
      * /capsule fromHeldCapsule without a name names the reward after the label of the held capsule.
      */
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void heldCapsulesMakeRewardsNamedAfterTheirLabel(GameTestHelper helper) throws CommandSyntaxException {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 1);
@@ -76,7 +76,7 @@ public class CommandTests {
     }
 
     private static CommandSourceStack source(ServerPlayer player) {
-        return player.createCommandSourceStack().withPermission(2);
+        return player.createCommandSourceStack().withPermission(LevelBasedPermissionSet.GAMEMASTER);
     }
 
     private static void run(GameTestHelper helper, ServerPlayer player, String command) throws CommandSyntaxException {

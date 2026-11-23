@@ -5,7 +5,6 @@ import draylar.goml.GetOffMyLawn;
 import draylar.goml.api.ClaimUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +23,7 @@ import static capsule.gametest.CapsuleTestUtils.assertTrue;
  */
 public class GetOffMyLawnTests {
 
-    @GameTest(template = "empty17", batch = "getoffmylawn", timeoutTicks = 200)
+    @CapsuleGameTest(template = "empty17", batch = "getoffmylawn", timeoutTicks = 200)
     public static void getOffMyLawnVetoesStrangers(GameTestHelper helper) {
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(0, 1, 16));
         ServerPlayer member = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 16));

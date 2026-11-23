@@ -2,23 +2,33 @@ package capsule.gametest;
 
 import capsule.CapsuleMod;
 import capsule.platform.Services;
-import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.FunctionGameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.StructureUtils;
-import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.gametest.framework.TestData;
+import net.minecraft.gametest.framework.TestEnvironmentDefinition;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Turns the @GameTest methods of the capsule test classes into test functions the same way on every loader: tests are
- * named after their method and use the templates of the capsule namespace.
+ * Turns the @CapsuleGameTest methods of the capsule test classes into tests the same way on every loader: tests are
+ * named after their method, use the templates of the capsule namespace, and each batch is a test environment.
  */
 public class CapsuleGameTests {
 
@@ -26,6 +36,7 @@ public class CapsuleGameTests {
             BlueprintCostTests.class,
             BlueprintCraftingTests.class,
             BlueprintWhitelistTests.class,
+            BundledConfigTests.class,
             BundledContentTests.class,
             BundledTemplateContentTests.class,
             CaptureBaseTests.class,
@@ -64,32 +75,74 @@ public class CapsuleGameTests {
                 .map(Map.Entry::getValue);
     }
 
-    public static List<TestFunction> testFunctions(Stream<Class<?>> testClasses) {
+    /**
+     * The environment of the tests without a batch.
+     */
+    public static final String DEFAULT_BATCH = "default";
+
+    /**
+     * A test of a capsule test class, ready to be registered: its function goes to the test function registry, its
+     * instance to the test instance registry, in the environment named after its batch.
+     */
+    public record CapsuleTest(Identifier id, Consumer<GameTestHelper> function, String batch, CapsuleGameTest meta) {
+        public Identifier environment() {
+            return environmentId(batch);
+        }
+
+        public FunctionGameTestInstance instance(Holder<TestEnvironmentDefinition<?>> environment) {
+            return new FunctionGameTestInstance(
+                    ResourceKey.create(Registries.TEST_FUNCTION, id),
+                    new TestData<>(
+                            environment,
+                            Identifier.fromNamespaceAndPath(CapsuleMod.MODID, meta.template()),
+                            meta.timeoutTicks(),
+                            meta.setupTicks(),
+                            meta.required(),
+                            StructureUtils.getRotationForRotationSteps(meta.rotationSteps()),
+                            meta.manualOnly(),
+                            meta.attempts(),
+                            meta.requiredSuccesses(),
+                            meta.skyAccess(),
+                            1
+                    ));
+        }
+    }
+
+    /**
+     * Identifiers are lower case: batch "prefabPattern" is environment capsule:prefab_pattern.
+     */
+    public static Identifier environmentId(String batch) {
+        return Identifier.fromNamespaceAndPath(CapsuleMod.MODID, batch.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * The tests of the given classes, plus the on-demand ones whose system property is set.
+     */
+    public static List<CapsuleTest> tests(Stream<Class<?>> testClasses) {
         Stream<Class<?>> onDemand = Map.<String, Class<?>>of(FailureProofTests.PROPERTY, FailureProofTests.class, ClaimProbeBenchmark.PROPERTY, ClaimProbeBenchmark.class)
                 .entrySet().stream().filter(e -> Boolean.getBoolean(e.getKey())).map(Map.Entry::getValue);
         return Stream.concat(testClasses, onDemand)
                 .flatMap(type -> Arrays.stream(type.getDeclaredMethods()))
-                .filter(method -> method.isAnnotationPresent(GameTest.class) && Modifier.isStatic(method.getModifiers()))
+                .filter(method -> method.isAnnotationPresent(CapsuleGameTest.class) && Modifier.isStatic(method.getModifiers()))
                 .sorted(Comparator.comparing(Method::getName))
-                .map(CapsuleGameTests::testFunction)
+                .map(CapsuleGameTests::test)
                 .toList();
     }
 
-    private static TestFunction testFunction(Method method) {
-        GameTest test = method.getAnnotation(GameTest.class);
-        return new TestFunction(
-                test.batch(),
-                method.getName().toLowerCase(),
-                CapsuleMod.MODID + ":" + test.template(),
-                StructureUtils.getRotationForRotationSteps(test.rotationSteps()),
-                test.timeoutTicks(),
-                test.setupTicks(),
-                test.required(),
-                test.manualOnly(),
-                test.requiredSuccesses(),
-                test.attempts(),
-                test.skyAccess(),
-                helper -> invoke(method, helper)
+    /**
+     * The environments of the given tests, once each.
+     */
+    public static Set<Identifier> environments(List<CapsuleTest> tests) {
+        return tests.stream().map(CapsuleTest::environment).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private static CapsuleTest test(Method method) {
+        CapsuleGameTest test = method.getAnnotation(CapsuleGameTest.class);
+        return new CapsuleTest(
+                Identifier.fromNamespaceAndPath(CapsuleMod.MODID, method.getName().toLowerCase(Locale.ROOT)),
+                helper -> invoke(method, helper),
+                test.batch().isEmpty() ? DEFAULT_BATCH : test.batch(),
+                test
         );
     }
 

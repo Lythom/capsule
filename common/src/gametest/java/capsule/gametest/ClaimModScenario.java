@@ -4,7 +4,8 @@ import capsule.helpers.Capsule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.server.players.UserNameToIdResolver;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
@@ -26,8 +27,8 @@ record ClaimModScenario(ServerPlayer owner, ServerPlayer member, ServerPlayer st
 
     void run(GameTestHelper helper, Runnable cleanup) {
         // they played before: the fake players acting for their capture bases are known to the claim mods
-        GameProfileCache profiles = helper.getLevel().getServer().getProfileCache();
-        if (profiles != null) List.of(owner, member, stranger).forEach(player -> profiles.add(player.getGameProfile()));
+        UserNameToIdResolver profiles = helper.getLevel().getServer().services().nameToIdCache();
+        List.of(owner, member, stranger).forEach(player -> profiles.add(new NameAndId(player.getGameProfile())));
         try {
             captureOne(helper, stranger, strangerInside);
             captureOne(helper, member, memberInside);
@@ -63,7 +64,7 @@ record ClaimModScenario(ServerPlayer owner, ServerPlayer member, ServerPlayer st
                     cleanup.run();
                     for (BlockPos refused : List.of(strangerBase, legacyBase, dispenserInside)) {
                         helper.assertBlockNotPresent(Blocks.STONE, refused.above());
-                        CapsuleTestUtils.assertTrue(helper, ((DispenserBlockEntity) helper.getBlockEntity(refused)).getItem(0).getCount() == 1, "the refused capsule stays in the machine");
+                        CapsuleTestUtils.assertTrue(helper, helper.getBlockEntity(refused, DispenserBlockEntity.class).getItem(0).getCount() == 1, "the refused capsule stays in the machine");
                     }
                 })
                 .thenSucceed();

@@ -14,3 +14,7 @@ type="required"
 versionRange="*"
 ordering="AFTER"
 side="BOTH"
+
+# turns the GameTests on in production, see capsule.gametest.mixin.GameTestHooksMixin
+[[mixins]]
+config="capsule_gametest.mixins.json"

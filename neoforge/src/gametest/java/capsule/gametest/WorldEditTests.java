@@ -18,7 +18,6 @@ import com.sk89q.worldedit.neoforge.NeoForgeAdapter;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.world.World;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -44,11 +43,11 @@ public class WorldEditTests {
 
     private static final String FOLDER = "worldedit-schematics";
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void worldEditSchematicsDeploy(GameTestHelper helper) throws IOException, WorldEditException {
         BlockPos corner = new BlockPos(0, 1, 0);
         SchematicTests.buildScene(helper, corner);
-        World world = NeoForgeAdapter.adapt(helper.getLevel());
+        World world = NeoForgeAdapter.get().fromNativeWorld(helper.getLevel());
         BlockPos min = helper.absolutePos(corner);
         CuboidRegion region = new CuboidRegion(world, BlockVector3.at(min.getX(), min.getY(), min.getZ()), BlockVector3.at(min.getX() + 2, min.getY() + 2, min.getZ() + 2));
         BlockArrayClipboard clipboard = new BlockArrayClipboard(region);
@@ -61,7 +60,7 @@ public class WorldEditTests {
         write(clipboard, BuiltInClipboardFormat.SPONGE_V2_SCHEMATIC, folder.resolve("sponge_v2.schem"));
         write(clipboard, BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC, folder.resolve("sponge_v3.schem"));
         StructureTemplate vanilla = new StructureTemplate();
-        vanilla.fillFromWorld(helper.getLevel(), min, new net.minecraft.core.Vec3i(3, 3, 3), true, Blocks.STRUCTURE_VOID);
+        vanilla.fillFromWorld(helper.getLevel(), min, new net.minecraft.core.Vec3i(3, 3, 3), true, List.of(Blocks.STRUCTURE_VOID));
         try (OutputStream out = Files.newOutputStream(folder.resolve("vanilla.nbt"))) {
             NbtIo.writeCompressed(vanilla.save(new CompoundTag()), out);
         }

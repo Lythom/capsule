@@ -2,7 +2,6 @@ package capsule.gametest;
 
 import capsule.helpers.Capsule;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.ItemStack;
@@ -16,11 +15,11 @@ import static capsule.gametest.CapsuleTestUtils.deploy;
 
 public class FurnaceExperienceTests {
 
-    @GameTest(template = "empty")
+    @CapsuleGameTest(template = "empty")
     public static void capturingAFurnaceDropsNoExperience(GameTestHelper helper) {
         BlockPos furnacePos = new BlockPos(2, 1, 2);
         helper.setBlock(furnacePos, Blocks.FURNACE);
-        FurnaceBlockEntity furnace = helper.getBlockEntity(furnacePos);
+        FurnaceBlockEntity furnace = helper.getBlockEntity(furnacePos, FurnaceBlockEntity.class);
         var recipe = helper.getLevel().recipeAccess().getRecipes().stream().filter(r -> r.value().getType() == RecipeType.SMELTING).findFirst().orElseThrow();
         for (int i = 0; i < 10; i++) furnace.setRecipeUsed(recipe);
 

@@ -61,9 +61,6 @@ sourceSets.gametest {
     runtimeClasspath += sourceSets.main.runtimeClasspath
 }
 
-// false until the GameTests are ported to 26.2, see gradle.properties
-def gametestsReady = port_gametests_ready.toBoolean()
-
 loom {
     accessWidenerPath = file('src/main/resources/capsule.accesswidener')
     mods {
@@ -71,15 +68,13 @@ loom {
             sourceSet sourceSets.main
         }
         // dev only mod holding the GameTests, see src/gametest/resources/fabric.mod.json
-        if (gametestsReady) {
-            'capsule-gametest' {
-                sourceSet sourceSets.gametest
-            }
+        'capsule-gametest' {
+            sourceSet sourceSets.gametest
         }
     }
     runs {
         configureEach {
-            source gametestsReady ? sourceSets.gametest : sourceSets.main
+            source sourceSets.gametest
             vmArg '-Xmx4G'
         }
         client {
@@ -138,14 +133,12 @@ tasks.register('testModJar', Jar) {
     destinationDirectory = layout.buildDirectory.dir('test-mod')
 }
 
-if (gametestsReady) {
-    tasks.named('assemble') {
-        dependsOn 'testModJar'
-    }
+tasks.named('assemble') {
+    dependsOn 'testModJar'
+}
 
-    tasks.named('check') {
-        dependsOn 'runGameTestServer'
-    }
+tasks.named('check') {
+    dependsOn 'runGameTestServer'
 }
 
 test {
