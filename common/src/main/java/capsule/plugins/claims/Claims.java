@@ -17,7 +17,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.server.players.UserNameToIdResolver;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -144,9 +145,9 @@ public final class Claims {
     @Nullable
     public static ServerPlayer fakePlayer(ServerLevel level, @Nullable UUID id) {
         if (id == null) return null;
-        GameProfileCache profiles = level.getServer().getProfileCache();
-        GameProfile profile = profiles == null ? null : profiles.get(id).orElse(null);
-        return Services.PLATFORM.fakePlayer(level, profile != null ? profile : new GameProfile(id, "[Capsule]"));
+        UserNameToIdResolver profiles = level.getServer().services().nameToIdCache();
+        NameAndId known = profiles == null ? null : profiles.get(id).orElse(null);
+        return Services.PLATFORM.fakePlayer(level, new GameProfile(id, known != null ? known.name() : "[Capsule]"));
     }
 
     /**

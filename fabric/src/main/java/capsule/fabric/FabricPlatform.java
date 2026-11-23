@@ -7,8 +7,8 @@ import com.mojang.authlib.GameProfile;
 import eu.pb4.common.protection.api.CommonProtection;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
@@ -73,7 +73,7 @@ public class FabricPlatform implements Platform {
 
     @Override
     public CreativeModeTab.Builder creativeTabBuilder() {
-        return FabricItemGroup.builder();
+        return FabricCreativeModeTab.builder();
     }
 
     @Override
@@ -90,7 +90,7 @@ public class FabricPlatform implements Platform {
 
     @Override
     public boolean canPlaceBlock(ServerLevel level, BlockPos pos, Player player) {
-        return CommonProtection.canPlaceBlock(level, pos, player.getGameProfile(), player);
+        return CommonProtection.canPlaceBlock(level, pos, player.nameAndId(), player);
     }
 
     @Override
