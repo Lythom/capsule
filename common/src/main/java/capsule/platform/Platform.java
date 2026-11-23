@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Rotation;
@@ -38,6 +39,12 @@ public interface Platform {
     CreativeModeTab.Builder creativeTabBuilder();
 
     ItemStack getCraftingRemainingItem(ItemStack stack);
+
+    /**
+     * An ingredient matching any of the stacks, components included (the capsule stacks of the recipe viewers): a
+     * vanilla ingredient only knows items. Each stack must be non empty; there must be at least one.
+     */
+    Ingredient componentsIngredient(ItemStack... stacks);
 
     /**
      * Asks protection mods (claims, spawn protection) whether the player may place a block at pos.

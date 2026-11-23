@@ -7,12 +7,9 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
-import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
-import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
 
@@ -21,17 +18,7 @@ public class CapsulePlugin implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration subtypeRegistry) {
-        subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.CAPSULE.get(), new ISubtypeInterpreter<>() {
-            @Override
-            public Object getSubtypeData(ItemStack stack, UidContext context) {
-                return RecipeViewerContent.subtype(stack);
-            }
-
-            @Override
-            public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) {
-                return RecipeViewerContent.subtype(stack);
-            }
-        });
+        subtypeRegistry.registerSubtypeInterpreter(CapsuleItems.CAPSULE.get(), (stack, context) -> RecipeViewerContent.subtype(stack));
     }
 
     @Override

@@ -25,6 +25,9 @@
     "jei_mod_plugin": [
       "capsule.plugins.jei.CapsulePlugin"
     ],
+    "rei_common": [
+      "capsule.plugins.rei.CapsuleReiCommonPlugin"
+    ],
     "rei_client": [
       "capsule.plugins.rei.CapsuleReiPlugin"
     ]

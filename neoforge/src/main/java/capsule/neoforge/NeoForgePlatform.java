@@ -14,6 +14,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
@@ -23,8 +25,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.crafting.CompoundIngredient;
+import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -33,6 +36,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -79,7 +83,13 @@ public class NeoForgePlatform implements Platform {
 
     @Override
     public ItemStack getCraftingRemainingItem(ItemStack stack) {
-        return CommonHooks.getCraftingRemainingItem(stack);
+        ItemStackTemplate remainder = stack.getCraftingRemainder();
+        return remainder == null ? ItemStack.EMPTY : remainder.create();
+    }
+
+    @Override
+    public Ingredient componentsIngredient(ItemStack... stacks) {
+        return CompoundIngredient.of(Arrays.stream(stacks).map(stack -> DataComponentIngredient.of(false, stack)).toArray(Ingredient[]::new));
     }
 
     @Override

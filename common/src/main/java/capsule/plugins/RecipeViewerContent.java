@@ -6,14 +6,18 @@ import capsule.blocks.CapsuleBlocks;
 import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.NonNullList;
+import capsule.platform.Services;
+import capsule.recipes.RecoveryCapsuleRecipe;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
@@ -23,7 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -68,23 +72,24 @@ public class RecipeViewerContent {
         Ingredient upgradeIngredient = CapsuleItems.upgradedCapsule.getValue().upgradeIngredient;
         for (ItemStack capsule : CapsuleItems.capsuleList.keySet()) {
             for (int upLevel = 1; upLevel < Math.min(8, Config.upgradeLimit); upLevel++) {
-                NonNullList<Ingredient> ingredients = NonNullList.withSize(upLevel + 1, upgradeIngredient);
-                ingredients.set(0, Ingredient.of(capsule));
+                List<Ingredient> ingredients = new ArrayList<>(Collections.nCopies(upLevel + 1, upgradeIngredient));
+                ingredients.set(0, Services.PLATFORM.componentsIngredient(capsule));
                 add(recipes, "upgrade", CapsuleItems.getUpgradedCapsule(capsule, upLevel), ingredients);
             }
-            add(recipes, "clear", capsule, NonNullList.of(Ingredient.EMPTY, Ingredient.of(CapsuleItems.getUnlabelledCapsule(capsule))));
+            add(recipes, "clear", capsule, List.of(Services.PLATFORM.componentsIngredient(CapsuleItems.getUnlabelledCapsule(capsule))));
         }
-        recipes.add(new RecipeHolder<>(id("recovery", recipes), plain(CapsuleItems.recoveryCapsule.getValue())));
+        recipes.add(new RecipeHolder<>(id("recovery", recipes), plain(CapsuleItems.recoveryCapsule.getValue(), CapsuleItems.recoveryCapsule.getKey())));
         for (Pair<ItemStack, CraftingRecipe> blueprint : CapsuleItems.blueprintCapsules) {
-            recipes.add(new RecipeHolder<>(id("blueprint", recipes), plain(blueprint.getValue())));
+            recipes.add(new RecipeHolder<>(id("blueprint", recipes), plain(blueprint.getValue(), blueprint.getKey())));
         }
         for (Pair<ItemStack, CraftingRecipe> prefab : CapsuleItems.blueprintPrefabs) {
-            recipes.add(new RecipeHolder<>(id("prefab", recipes), plain(prefab.getValue())));
+            recipes.add(new RecipeHolder<>(id("prefab", recipes), plain(prefab.getValue(), prefab.getKey())));
         }
-        Ingredient anyBlueprint = Ingredient.of(CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toArray(ItemStack[]::new));
-        Ingredient anyCapsule = Ingredient.of(Stream.of(Stream.of(CapsuleItems.unlabelledCapsule.getKey()),
-                Arrays.stream(anyBlueprint.getItems()), Stream.of(CapsuleItems.recoveryCapsule.getKey())).flatMap(s -> s).toArray(ItemStack[]::new));
-        add(recipes, "blueprint_change", blueprintWithNewTemplate(), NonNullList.of(Ingredient.EMPTY, anyBlueprint, anyCapsule));
+        List<ItemStack> blueprints = CapsuleItems.blueprintCapsules.stream().map(Pair::getKey).toList();
+        Ingredient anyBlueprint = Services.PLATFORM.componentsIngredient(blueprints.toArray(ItemStack[]::new));
+        Ingredient anyCapsule = Services.PLATFORM.componentsIngredient(Stream.of(Stream.of(CapsuleItems.unlabelledCapsule.getKey()),
+                blueprints.stream(), Stream.of(CapsuleItems.recoveryCapsule.getKey())).flatMap(s -> s).toArray(ItemStack[]::new));
+        add(recipes, "blueprint_change", blueprintWithNewTemplate(), List.of(anyBlueprint, anyCapsule));
         return recipes;
     }
 
@@ -112,26 +117,29 @@ public class RecipeViewerContent {
     }
 
     /**
-     * The recipe as a plain shaped or shapeless one: viewers skip special recipes.
+     * The recipe as a plain shaped or shapeless one, showing result: viewers skip special recipes.
      */
-    private static CraftingRecipe plain(CraftingRecipe recipe) {
-        ItemStack result = recipe.getResultItem(Minecraft.getInstance().level.registryAccess());
+    private static CraftingRecipe plain(CraftingRecipe recipe, ItemStack result) {
+        CraftingRecipe.CraftingBookInfo book = new CraftingRecipe.CraftingBookInfo(recipe.category(), recipe.group());
         if (recipe instanceof ShapedRecipe shaped) {
-            return new ShapedRecipe(shaped.getGroup(), shaped.category(),
-                    new ShapedRecipePattern(shaped.getWidth(), shaped.getHeight(), shaped.getIngredients(), Optional.empty()), result);
+            return new ShapedRecipe(new Recipe.CommonInfo(recipe.showNotification()), book,
+                    new ShapedRecipePattern(shaped.getWidth(), shaped.getHeight(), shaped.getIngredients(), Optional.empty()),
+                    ItemStackTemplate.fromNonEmptyStack(result));
         }
-        return new ShapelessRecipe(recipe.getGroup(), recipe.category(), result, recipe.getIngredients());
+        return new ShapelessRecipe(new Recipe.CommonInfo(recipe.showNotification()), book, ItemStackTemplate.fromNonEmptyStack(result),
+                recipe instanceof RecoveryCapsuleRecipe recovery ? recovery.ingredients : recipe.placementInfo().ingredients());
     }
 
-    private static void add(List<RecipeHolder<CraftingRecipe>> recipes, String kind, ItemStack result, NonNullList<Ingredient> ingredients) {
-        recipes.add(new RecipeHolder<>(id(kind, recipes), new ShapelessRecipe(CapsuleMod.MODID, CraftingBookCategory.MISC, result, ingredients)));
+    private static void add(List<RecipeHolder<CraftingRecipe>> recipes, String kind, ItemStack result, List<Ingredient> ingredients) {
+        recipes.add(new RecipeHolder<>(id(kind, recipes), new ShapelessRecipe(new Recipe.CommonInfo(true),
+                new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, CapsuleMod.MODID), ItemStackTemplate.fromNonEmptyStack(result), ingredients)));
     }
 
     /**
      * Unique ids, marked synthetic with a leading slash as EMI expects.
      */
-    private static Identifier id(String kind, List<?> recipes) {
-        return Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "/" + kind + "/" + recipes.size());
+    private static ResourceKey<Recipe<?>> id(String kind, List<?> recipes) {
+        return ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "/" + kind + "/" + recipes.size()));
     }
 
     private static Information info(List<ItemStack> stacks, String key) {
