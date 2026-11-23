@@ -73,6 +73,41 @@ public class RecipeTests {
     }
 
     /**
+     * The recipe advancements unlock their recipes when the player gets the right item, not any item: an item predicate
+     * in a format the codec does not read is dropped without error, and then matches everything.
+     */
+    @GameTest(template = "empty")
+    public static void recipeAdvancementsWaitForTheirItem(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        Set<String> problems = new LinkedHashSet<>();
+        checkInventoryCriterion(server, problems, "recipes/tools/captureblock", "has_compass", new ItemStack(Items.COMPASS));
+        checkInventoryCriterion(server, problems, "recipes/tools/capsule", "has_ender_pearl", new ItemStack(Items.ENDER_PEARL));
+        checkInventoryCriterion(server, problems, "recipes/tools/capsule_wood", "has_plankWood", new ItemStack(Items.OAK_PLANKS));
+
+        assertTrue(helper, problems.isEmpty(), "recipe advancement problems: " + problems);
+        helper.succeed();
+    }
+
+    private static void checkInventoryCriterion(net.minecraft.server.MinecraftServer server, Set<String> problems, String path, String criterion, ItemStack expected) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, path);
+        var advancement = server.getAdvancements().get(id);
+        if (advancement == null) {
+            problems.add(id + " is not loaded");
+            return;
+        }
+        var found = advancement.value().criteria().get(criterion);
+        if (found == null || !(found.triggerInstance() instanceof net.minecraft.advancements.critereon.InventoryChangeTrigger.TriggerInstance instance)) {
+            problems.add(id + " has no inventory_changed criterion " + criterion);
+            return;
+        }
+        if (instance.items().isEmpty()) {
+            problems.add(id + " " + criterion + " has no item predicate");
+        } else if (instance.items().stream().anyMatch(p -> !p.test(expected) || p.test(new ItemStack(Items.DIRT)))) {
+            problems.add(id + " " + criterion + " does not match exactly " + expected.getItem());
+        }
+    }
+
+    /**
      * Blueprints are blue: no capsule tier is made of lapis.
      */
     @GameTest(template = "empty")

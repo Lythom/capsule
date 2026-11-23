@@ -19,7 +19,7 @@
       "conditions": {
         "items": [
           {
-            "tag": "c:ender_pearls"
+            "items": "#c:ender_pearls"
           }
         ]
       }
