@@ -53,8 +53,9 @@ public class NeoForgeGameTests {
     private static List<CapsuleTest> tests() {
         Stream<Class<?>> optional = Map.of(
                         "waystones", WaystonesTests.class, "sophisticatedstorage", SophisticatedStorageTests.class, "worldedit", WorldEditTests.class,
-                        // the known incompatibilities (-Pincompat). Refined Storage, Mekanism, Immersive Engineering and
-                        // Super Factory Manager have no 26.2 build: their tests are left out of the build (build.gradle)
+                        // the known incompatibilities (-Pincompat; Tombstone has no 26.3 build, so this one is never loaded
+                        // for now). Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no
+                        // 26.2 or 26.3 build: their tests are left out of the build (build.gradle)
                         "tombstone", TombstoneTests.class).entrySet().stream()
                 .filter(e -> ModList.get().isLoaded(e.getKey()))
                 .map(Map.Entry::getValue);

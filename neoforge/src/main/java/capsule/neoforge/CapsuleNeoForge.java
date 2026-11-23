@@ -44,7 +44,8 @@ public class CapsuleNeoForge {
 
     public CapsuleNeoForge(IEventBus modEventBus, ModContainer modContainer, Dist dist) {
         ModConfigSpec config = ModConfigSpecBuilder.build(Config::define);
-        modContainer.registerConfig(ModConfig.Type.COMMON, config);
+        // LOCAL is 26.3's name of COMMON (both sides, not synced): the file keeps its pre-26.3 name
+        modContainer.registerConfig(ModConfig.Type.LOCAL, config, "capsule-common.toml");
         modEventBus.addListener((ModConfigEvent event) -> {
             if (event.getConfig().getSpec() == config) Config.bakeConfig();
         });

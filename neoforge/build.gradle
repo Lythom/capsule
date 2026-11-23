@@ -106,14 +106,20 @@ dependencies {
         gametestRuntimeOnly modrinth('flan', flan_neoforge_version)
     }
 
-    // mods of the known incompatibilities (wiki), opt-in: -Pincompat
+    // mods of the known incompatibilities (wiki), opt-in: -Pincompat. Slug and Modrinth version id; Corail Tombstone
+    // (TombstoneTests, registered when the mod is loaded) had a 26.2 build but has none for 26.3, so the list is empty
+    // and -Pincompat runs the usual tests: add a mod back here when it has a 26.3 build
     if (project.hasProperty('incompat')) {
-        gametestRuntimeOnly modrinth('corail-tombstone', tombstone_version)
+        def incompatMods = [:]
+        if (incompatMods.isEmpty()) {
+            logger.lifecycle("-Pincompat: no mod of the known incompatibilities has a build for Minecraft ${minecraft_version}, none is loaded")
+        }
+        incompatMods.each { slug, version -> gametestRuntimeOnly modrinth(slug, version) }
     }
 }
 
 // Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager, known incompatibilities too, have no
-// build for Minecraft 26.2: their tests stay in the sources, out of the build, until they have one
+// build for Minecraft 26.2 or 26.3: their tests stay in the sources, out of the build, until they have one
 sourceSets.gametest.java {
     exclude 'capsule/gametest/RefinedStorageTests.java'
     exclude 'capsule/gametest/MekanismTests.java'
