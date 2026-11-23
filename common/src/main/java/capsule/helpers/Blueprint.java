@@ -21,7 +21,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.AbstractBedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
@@ -80,8 +80,9 @@ public class Blueprint {
                 }
                 return ItemStack.EMPTY; // door upper is free, only lower counts.
 
-            } else if (block instanceof BedBlock) {
-                if (state.getValue(BedBlock.PART) == BedPart.HEAD) {
+            } else if (block instanceof AbstractBedBlock) {
+                // beds and straw beds: only the head counts
+                if (state.getValue(AbstractBedBlock.PART) == BedPart.HEAD) {
                     return new ItemStack(block.asItem(), 1);
                 }
                 return ItemStack.EMPTY; // Bed foot is free, only head counts.

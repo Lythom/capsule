@@ -6,7 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.AbstractBedBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
@@ -38,6 +41,18 @@ public class BlueprintCostTests {
         assertCost(helper, Blocks.LAVA.defaultBlockState(), List.of(new ItemStack(Items.LAVA_BUCKET)));
         assertCost(helper, Blocks.WATER.defaultBlockState(), List.of(new ItemStack(Items.WATER_BUCKET)));
         assertCost(helper, Blocks.PISTON_HEAD.defaultBlockState(), List.of(ItemStack.EMPTY));
+        helper.succeed();
+    }
+
+    /**
+     * Two-part beds cost one item, paid by the head. 26.3's straw bed is not a BedBlock but an AbstractBedBlock.
+     */
+    @CapsuleGameTest(template = "empty")
+    public static void bedsCostOneItemForTheirTwoParts(GameTestHelper helper) {
+        for (Block bed : List.of(Blocks.BED.red(), Blocks.STRAW_BED)) {
+            assertCost(helper, bed.defaultBlockState().setValue(AbstractBedBlock.PART, BedPart.HEAD), List.of(new ItemStack(bed.asItem())));
+            assertCost(helper, bed.defaultBlockState().setValue(AbstractBedBlock.PART, BedPart.FOOT), List.of(ItemStack.EMPTY));
+        }
         helper.succeed();
     }
 

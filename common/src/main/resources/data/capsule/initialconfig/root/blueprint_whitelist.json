@@ -65,6 +65,7 @@
   "minecraft:mangrove_shelf",
   "minecraft:oak_shelf",
   "minecraft:pale_oak_shelf",
+  "minecraft:poplar_shelf",
   "minecraft:spruce_shelf",
   "minecraft:warped_shelf",
   "minecraft:comparator",
@@ -461,6 +462,14 @@
     }
   },
   {
+    "block": "minecraft:poplar_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
     "block": "minecraft:mangrove_sign",
     "keepNBT": {
       "front_text": null,
@@ -550,6 +559,14 @@
   },
   {
     "block": "minecraft:pale_oak_wall_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
+    "block": "minecraft:poplar_wall_sign",
     "keepNBT": {
       "front_text": null,
       "back_text": null,
@@ -653,6 +670,14 @@
     }
   },
   {
+    "block": "minecraft:poplar_hanging_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
     "block": "minecraft:mangrove_hanging_sign",
     "keepNBT": {
       "front_text": null,
@@ -742,6 +767,14 @@
   },
   {
     "block": "minecraft:pale_oak_wall_hanging_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
+    "block": "minecraft:poplar_wall_hanging_sign",
     "keepNBT": {
       "front_text": null,
       "back_text": null,
