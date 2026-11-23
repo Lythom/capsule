@@ -12,7 +12,7 @@ set -uo pipefail
 # each loader, the mod-compat GameTests (-PmodCompat) of each loader, the GameTests on the
 # release jars (scripts/prod-gametest.sh, on Fabric also with the claim mods) and its failure
 # proof, the release jars on real servers (scripts/prod-smoke.sh), and the client smoke test
-# of each loader with JEI, REI and EMI (scripts/client-smoke.sh). Slower variants, off by default:
+# of each loader with JEI and REI (scripts/client-smoke.sh). Slower variants, off by default:
 #   --iris     client smoke with Iris, Sodium and the MakeUp Ultra Fast shader pack
 #   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76)
 #   --modpack  client smoke in a production NeoForge client with a Sinytra Connector
@@ -143,7 +143,7 @@ step prod-gametest-proof-neoforge "NeoForge release jar: failure reported" expec
 step prod-gametest-proof-fabric "Fabric release jar: failure reported" expect_failure scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-smoke "release jars on dedicated servers" scripts/prod-smoke.sh "$NEO_JAR" "$FABRIC_JAR"
 for loader in neoforge fabric; do
-    for viewer in jei rei emi; do
+    for viewer in jei rei; do
         smoke "$loader-$viewer" "$loader" "$viewer"
     done
 done

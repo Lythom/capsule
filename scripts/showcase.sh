@@ -37,6 +37,21 @@ OUT="${OUT:-$ROOT/build/showcase/$LOADER}"
 RUN_DIR="$ROOT/$LOADER/runs/clientSmoke"
 rm -rf "$OUT" "$RUN_DIR/screenshots/capsule-showcase" "$RUN_DIR/mods"
 mkdir -p "$OUT" "$RUN_DIR/mods"
+# no accessibility onboarding screen before the first world load (see scripts/client-smoke.sh)
+if [ -f "$RUN_DIR/options.txt" ] && grep -q '^onboardAccessibility:' "$RUN_DIR/options.txt"; then
+    sed -i 's/^onboardAccessibility:.*/onboardAccessibility:false/' "$RUN_DIR/options.txt"
+else
+    echo 'onboardAccessibility:false' >> "$RUN_DIR/options.txt"
+fi
+# no screen of mod loading warnings on NeoForge (see scripts/client-smoke.sh), which the scenario would wait behind
+if [ "$LOADER" = neoforge ]; then
+    mkdir -p "$RUN_DIR/config"
+    if [ -f "$RUN_DIR/config/neoforge-client.toml" ] && grep -q '^\s*showLoadWarnings' "$RUN_DIR/config/neoforge-client.toml"; then
+        sed -i 's/^\(\s*\)showLoadWarnings.*/\1showLoadWarnings = false/' "$RUN_DIR/config/neoforge-client.toml"
+    else
+        echo 'showLoadWarnings = false' >> "$RUN_DIR/config/neoforge-client.toml"
+    fi
+fi
 for jar in ${EXTRA_MODS:-}; do
     cp "$jar" "$RUN_DIR/mods/"
 done

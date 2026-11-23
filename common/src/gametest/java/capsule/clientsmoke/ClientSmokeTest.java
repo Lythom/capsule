@@ -9,6 +9,7 @@ import capsule.client.CaptureAnimation;
 import capsule.client.CapsulePreviewHandler;
 import capsule.client.ClientConfig;
 import capsule.enchantments.CapsuleEnchantments;
+import capsule.gui.LabelGui;
 import capsule.helpers.Capsule;
 import capsule.helpers.MinecraftNBT;
 import capsule.helpers.NBTHelper;
@@ -160,12 +161,12 @@ public class ClientSmokeTest {
             moddedBlocksScenario();
         }
 
-        scenario.finallyRun("check the log", () -> {
+        scenario.finallyAwait("screenshots saved", 20 * 30, () -> pendingScreenshots.get() == 0)
+                .finallyRun("check the log", () -> {
                     synchronized (log.problems) {
                         scenario.check("no capsule warning, missing model/texture or exception in the log", log.problems.isEmpty(), String.join("\n  ", log.problems));
                     }
                 })
-                .finallyAwait("screenshots saved", 20 * 30, () -> pendingScreenshots.get() == 0)
                 .finallyRun("write the report", this::writeReport)
                 .finallyRun("stop the recording", () -> {
                     if (showcase != null) showcase.stopRecording();
@@ -240,6 +241,10 @@ public class ClientSmokeTest {
                 })
                 .sleep(20)
                 .run("screenshot", () -> screenshot("08-creative-search"))
+                .run("close", () -> mc().gui.setScreen(null))
+                .run("open the label screen of the linked capsule", () -> LabelGui.open(mc().player))
+                .sleep(10)
+                .run("screenshot", () -> screenshot("08b-label-gui"))
                 .run("close", () -> mc().gui.setScreen(null));
         List<RecipeViewerProbe> viewers = RecipeViewerProbe.installed();
         if (viewers.isEmpty()) scenario.run("recipe viewers", () -> scenario.results.add("SKIP recipe viewers: none installed"));

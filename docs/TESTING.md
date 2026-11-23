@@ -235,8 +235,8 @@ scripts/client-smoke.sh fabric
 - The script runs the task under `xvfb-run` (unless `DISPLAY` is set) with a `TIMEOUT` (seconds, default 1500), then
   copies the screenshots, `report.txt`, `console.log` and `client.log` to `build/client-smoke/<loader>/` (or `OUT`). In
   this container the client renders with Mesa llvmpipe; a run takes about two minutes once Gradle is warm.
-- `RECIPE_VIEWER=jei|rei|emi` (default `jei`) picks the recipe viewer of the dev client (`-PrecipeViewer`), on both
-  loaders. `GRADLE_ARGS` adds arguments to the Gradle call, for example `-I mirror.gradle` with an init script putting a
+- `RECIPE_VIEWER=jei|rei` (default `jei`) picks the recipe viewer of the dev client (`-PrecipeViewer`), on both
+  loaders. EMI has no build for Minecraft 26.x: its plugin and probe stay in the sources, out of the build. `GRADLE_ARGS` adds arguments to the Gradle call, for example `-I mirror.gradle` with an init script putting a
   Maven Central mirror first when Maven Central answers 429. `MODPACK` runs the production client instead, see
   [Mod interaction tests](#mod-interaction-tests).
 - `SHADER_PACK=<zip>` turns that shader pack on with Iris (`config/iris.properties`); `EXTRA_MODS` must bring Iris
@@ -246,10 +246,12 @@ scripts/client-smoke.sh fabric
   Config, Farmer's Delight, and Refined Storage 2.0.9, which Integrated Dynamics needs in the NeoForge dev client; on
   Fabric Ad Astra and its libraries and Farmer's Delight Refabricated 3.2.8 (3.3.x crashes the Fabric dev remapper).
   The scenario places the blocks of each mod that is loaded (vanilla farmland and crops always).
+- The script writes `onboardAccessibility:false` to the run directory's `options.txt`: since 26.1 the client shows
+  the accessibility onboarding screen before the first world load otherwise.
 - Scenario, on ticks of the client: create a flat creative world (`saves/capsule-smoke`, recreated on each run), build a
   house on a capture base, throw an empty capsule to capture it (with the capture animation, then the fallback box of a
   capture the client did not see), give capsules of every state and color, open the survival inventory with tooltips,
-  the creative search and the recipe viewer, then fly to an empty area, preview, rotate, throw, deploy the captured
+  the creative search, the label screen of the linked capsule and the recipe viewer, then fly to an empty area, preview, rotate, throw, deploy the captured
   house, preview it over the deployed one, undeploy it with `captureAnimation` off, preview and deploy a blueprint of
   the castle wall prefab, preview the house in water, between glass panes and against terrain, and capture, preview
   and deploy the modded blocks.
@@ -259,7 +261,7 @@ scripts/client-smoke.sh fabric
   - every capsule slot of the inventory screenshots differs from the empty slot background;
   - the log has no warning of a `capsule.*` logger, no missing model, texture or blockstate of the `capsule` namespace
     and no exception thrown through capsule code (a log4j appender installed before the models load);
-  - the recipe viewer (JEI, REI or EMI, through `RecipeViewerProbe`, once it has loaded its plugins) lists crafting
+  - the recipe viewer (JEI or REI, through `RecipeViewerProbe`, once it has loaded its plugins) lists crafting
     recipes and information pages of capsules, a recipe for every capsule tier, and every recipe Capsule adds for the
     viewers (`RecipeViewerContent`: upgrades, clear, recovery, blueprints, prefab blueprints from the templates of
     `config/capsule/prefabs`, blueprint change); `SKIP recipe viewers` when none is installed;
@@ -276,7 +278,7 @@ scripts/client-smoke.sh fabric
   ...
   PASS JEI shows the capsule recipes: 9 crafting recipes for Empty Capsule, 14 capsule information pages
   PASS JEI shows a recipe for every capsule tier: 29 tiers, without recipe: []
-  PASS JEI shows the upgrade, clear, recovery, blueprint and prefab recipes: 249 recipes including 6 prefabs, without recipe: []
+  PASS JEI shows the upgrade, clear, recovery, blueprint and prefab recipes: 241 recipes including 6 prefabs, without recipe: []
   ...
   PASS no capsule warning, missing model/texture or exception in the log
   RESULT PASS

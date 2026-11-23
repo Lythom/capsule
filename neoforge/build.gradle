@@ -77,7 +77,7 @@ dependencies {
     compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
     localRuntime([
             jei : "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}",
-            rei : "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}",
+            rei : ["me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}", "dev.architectury:architectury-neoforge:${architectury_version}"],
     ][findProperty('recipeViewer') ?: 'jei'])
 
     // the protection mods whose API Capsule calls when they are loaded (#91, #119)

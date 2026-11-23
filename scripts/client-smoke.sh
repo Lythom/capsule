@@ -16,7 +16,8 @@ set -euo pipefail
 #
 # Output: build/client-smoke/<loader>/ (or OUT) with the screenshots, report.txt and the
 # client log. Exit code 0 when every check passed, including the recipe viewer's.
-# RECIPE_VIEWER (jei, rei or emi, default jei) picks the recipe viewer of the run.
+# RECIPE_VIEWER (jei or rei, default jei) picks the recipe viewer of the run. EMI has no build for
+# Minecraft 26.x.
 # TIMEOUT (seconds, default 1500) bounds the whole run, build included. GRADLE_ARGS adds
 # arguments to the Gradle call (e.g. "-I mirror.gradle" when Maven Central rate limits).
 # EXTRA_MODS (space separated jar files) adds mods to the run, e.g. the jars of a modpack:
@@ -38,8 +39,8 @@ case "$LOADER" in
     *) echo "Usage: scripts/client-smoke.sh neoforge|fabric"; exit 1 ;;
 esac
 case "$RECIPE_VIEWER" in
-    jei|rei|emi) VIEWER_NAME="${RECIPE_VIEWER^^}" ;;
-    *) echo "RECIPE_VIEWER must be jei, rei or emi"; exit 1 ;;
+    jei|rei) VIEWER_NAME="${RECIPE_VIEWER^^}" ;;
+    *) echo "RECIPE_VIEWER must be jei or rei"; exit 1 ;;
 esac
 
 OUT="${OUT:-$ROOT/build/client-smoke/$LOADER}"
@@ -62,6 +63,22 @@ else
     echo "== production NeoForge $neo_version client smoke test with the modpack $MODPACK (log: $OUT/console.log)"
 fi
 mkdir -p "$RUN_DIR/mods"
+# no accessibility onboarding screen: since 26.1 the client shows it before the first world load, which the scenario
+# would wait behind
+if [ -f "$RUN_DIR/options.txt" ] && grep -q '^onboardAccessibility:' "$RUN_DIR/options.txt"; then
+    sed -i 's/^onboardAccessibility:.*/onboardAccessibility:false/' "$RUN_DIR/options.txt"
+else
+    echo 'onboardAccessibility:false' >> "$RUN_DIR/options.txt"
+fi
+# no screen of mod loading warnings on NeoForge (REI 26.2 raises three), which the scenario would wait behind
+if [ "$LOADER" = neoforge ]; then
+    mkdir -p "$RUN_DIR/config"
+    if [ -f "$RUN_DIR/config/neoforge-client.toml" ] && grep -q '^\s*showLoadWarnings' "$RUN_DIR/config/neoforge-client.toml"; then
+        sed -i 's/^\(\s*\)showLoadWarnings.*/\1showLoadWarnings = false/' "$RUN_DIR/config/neoforge-client.toml"
+    else
+        echo 'showLoadWarnings = false' >> "$RUN_DIR/config/neoforge-client.toml"
+    fi
+fi
 for jar in ${EXTRA_MODS:-}; do
     cp "$jar" "$RUN_DIR/mods/"
 done
