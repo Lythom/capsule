@@ -8,21 +8,19 @@ import capsule.helpers.Spacial;
 import capsule.items.CapsuleItem;
 import capsule.structure.CapsuleTemplate;
 import capsule.tags.CapsuleTags;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import joptsimple.internal.Strings;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -30,6 +28,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -67,21 +66,51 @@ public class CapsulePreviewHandler {
     private static ItemStack lastMainHandItem = ItemStack.EMPTY;
 
     static double time = 0;
+    /**
+     * The red of the blocks in the way of a deploy (1.21.1: 0.8, 0, 0, 1).
+     */
+    private static final int ERROR_COLOR = ARGB.colorFromFloat(1, 0.8f, 0, 0);
 
     public CapsulePreviewHandler() {
     }
 
     /**
-     * Render recall preview when deployed capsule in hand. Called after the translucent blocks are rendered.
+     * Something to draw this frame, in coordinates relative to the camera (the pose stack of the submit hooks has its
+     * origin at the camera). The pose stack is pushed and popped around each submit.
      */
-    public static void onLevelRenderLast(PoseStack poseStack, float partialTick) {
+    @FunctionalInterface
+    public interface PreviewSubmit {
+        void submit(SubmitNodeCollector collector, PoseStack poseStack);
+    }
+
+    /**
+     * What the previews draw this frame. Gathered during the level extraction, then submitted in the same frame: the
+     * loaders call extractFrame from their end of level extraction hook and submitFrame from their custom geometry
+     * submit hook, both on the render thread.
+     */
+    private static final List<PreviewSubmit> frame = new ArrayList<>();
+
+    /**
+     * Gathers the recall, deploy and linked inventory previews of the capsule in hand, and the capture animations.
+     */
+    public static void extractFrame(Vec3 camera, float partialTick) {
+        frame.clear();
         Minecraft mc = Minecraft.getInstance();
         time = (time + 1) % 100000;
         if (mc.player != null) {
-            tryPreviewRecall(mc.player.getMainHandItem(), poseStack);
-            tryPreviewDeploy(mc.player, partialTick, mc.player.getMainHandItem(), poseStack);
-            tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), poseStack);
-            CaptureAnimation.render(poseStack, mc.gameRenderer.mainCamera().position(), partialTick);
+            float lineWidth = mc.getWindow().getAppropriateLineWidth();
+            tryPreviewRecall(mc.player.getMainHandItem(), camera, lineWidth);
+            tryPreviewDeploy(mc.player, partialTick, mc.player.getMainHandItem(), camera, lineWidth);
+            tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), camera);
+            CaptureAnimation.extract(frame, camera, partialTick, lineWidth);
+        }
+    }
+
+    public static void submitFrame(SubmitNodeCollector collector, PoseStack poseStack) {
+        for (PreviewSubmit submit : frame) {
+            poseStack.pushPose();
+            submit.submit(collector, poseStack);
+            poseStack.popPose();
         }
     }
 
@@ -160,7 +189,7 @@ public class CapsulePreviewHandler {
 
 
     @SuppressWarnings("ConstantConditions")
-    private static void tryPreviewDeploy(LocalPlayer thePlayer, float partialTicks, ItemStack heldItemMainhand, PoseStack poseStack) {
+    private static void tryPreviewDeploy(LocalPlayer thePlayer, float partialTicks, ItemStack heldItemMainhand, Vec3 camera, float lineWidth) {
         if (heldItemMainhand.getItem() instanceof CapsuleItem
                 && NBTHelper.hasTag(heldItemMainhand)
                 && isDeployable(heldItemMainhand)
@@ -188,12 +217,12 @@ public class CapsulePreviewHandler {
                         boolean haveFullPreview = CapsulePreviewHandler.currentFullPreview.containsKey(structureName);
                         if (haveFullPreview) {
                             if (CapsulePreviewHandler.cachedFullPreview.containsKey(structureName)) {
-                                DisplayFullPreview(thePlayer, heldItemMainhand, poseStack, extendSize, destOriginPos, structureName);
+                                DisplayFullPreview(thePlayer, heldItemMainhand, camera, extendSize, destOriginPos, structureName);
 
                             }
                         }
                         if (CapsulePreviewHandler.currentPreview.containsKey(structureName) || size == 1) {
-                            DisplayWireframePreview(thePlayer, heldItemMainhand, size, rtc, extendSize, destOriginPos, structureName, errorBoundingBox, haveFullPreview, poseStack);
+                            DisplayWireframePreview(thePlayer, heldItemMainhand, size, rtc, extendSize, destOriginPos, structureName, errorBoundingBox, haveFullPreview, camera, lineWidth);
                         }
                     }
                 }
@@ -202,7 +231,7 @@ public class CapsulePreviewHandler {
 
     }
 
-    private static void DisplayFullPreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, PoseStack poseStack, int extendSize, BlockPos destOriginPos, String structureName) {
+    private static void DisplayFullPreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, Vec3 camera, int extendSize, BlockPos destOriginPos, String structureName) {
         CapsuleTemplate template = CapsulePreviewHandler.currentFullPreview.get(structureName);
         CapsuleTemplateRenderer renderer = CapsulePreviewHandler.cachedFullPreview.get(structureName);
         StructurePlaceSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
@@ -230,19 +259,26 @@ public class CapsulePreviewHandler {
         float glitchValuey = (float) Math.min(0.32, Math.max(0, Math.tan(time * 0.2)));
         float glitchValuez = (float) Math.min(0.12, Math.max(0, Math.tan(time * 0.8)));
 
-        poseStack.pushPose();
-        poseStack.translate(
-                glitchIntensity2 * glitchValue,
-                glitchIntensity * glitchValuey,
-                glitchIntensity2 * glitchValuez);
-        poseStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensity * glitchValuey, 1);
-
-        renderer.renderTemplate(poseStack, thePlayer, destOriginPos);
-
-        poseStack.popPose();
+        // the glitch moves and stretches the preview around the camera, then the template is placed at its destination
+        final float glitchIntensityFinal = glitchIntensity;
+        frame.add((collector, poseStack) -> {
+            poseStack.translate(
+                    glitchIntensity2 * glitchValue,
+                    glitchIntensityFinal * glitchValuey,
+                    glitchIntensity2 * glitchValuez);
+            poseStack.scale(1 + glitchIntensity2 * glitchValuez, 1 + glitchIntensityFinal * glitchValuey, 1);
+            poseStack.translate(destOriginPos.getX() - camera.x, destOriginPos.getY() - camera.y, destOriginPos.getZ() - camera.z);
+            renderer.submitTemplate(collector, poseStack, CapsuleTemplateRenderer.PREVIEW_ALPHA);
+        });
     }
 
-    private static void DisplayWireframePreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, int size, BlockHitResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AABB errorBoundingBox, boolean haveFullPreview, PoseStack poseStack) {
+    /**
+     * Outlines the blocks of the template (or the capsule cube) at the deploy position, and outlines in red every block
+     * that is in the way. In 1.21.1 these lines were drawn with RenderType.lines(), whose state set the depth test
+     * (less or equal), the translucent blending and the window-scaled line width itself, overriding the RenderSystem
+     * depth test and line width calls around them: RenderTypes.lines() and the window's line width give the same.
+     */
+    private static void DisplayWireframePreview(LocalPlayer thePlayer, ItemStack heldItemMainhand, int size, BlockHitResult rtc, int extendSize, BlockPos destOriginPos, String structureName, AABB errorBoundingBox, boolean haveFullPreview, Vec3 camera, float lineWidth) {
         List<AABB> blockspos = new ArrayList<>();
         if (size > 1) {
             blockspos = CapsulePreviewHandler.currentPreview.get(structureName);
@@ -256,9 +292,10 @@ public class CapsulePreviewHandler {
             blockspos.add(new AABB(pos));
         }
 
-        doPositionPrologue(Minecraft.getInstance().getEntityRenderDispatcher().camera, poseStack);
-
         StructurePlaceSettings placement = CapsuleItem.getPlacement(heldItemMainhand);
+        List<AABB> errorBoxes = new ArrayList<>();
+        List<AABB> destBoxes = new ArrayList<>();
+        int color = 0xDDDDDD;
 
         for (AABB bb : blockspos) {
             BlockPos recenter = recenterRotation(extendSize, placement);
@@ -267,48 +304,35 @@ public class CapsulePreviewHandler {
                     .move(recenter.getX(), recenter.getY(), recenter.getZ())
                     .expandTowards(1, 1, 1);
 
-            int color = 0xDDDDDD;
             if (CapsuleItem.hasState(heldItemMainhand, EMPTY)) {
                 // (2/2) hack this renderer for specific case : capture of a 1-sized empty capsule
-                RenderSystem.lineWidth(haveFullPreview ? 2.0F : 5.0F);
                 color = CapsuleItem.getBaseColor(heldItemMainhand);
             } else {
-                RenderSystem.disableDepthTest();
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
                 for (double j = dest.minZ; j < dest.maxZ; ++j) {
                     for (double k = dest.minY; k < dest.maxY; ++k) {
                         for (double l = dest.minX; l < dest.maxX; ++l) {
                             BlockPos pos = BlockPos.containing(l, k, j);
                             if (!thePlayer.level().getBlockState(pos).is(CapsuleTags.overridable)) {
-                                MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-                                VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
-                                LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.move(pos), 0.8f, 0, 0, 1);
-                                LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.inflate(0.005).move(pos), 0.8f, 0, 0, 1);
-                                LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.deflate(0.005).move(pos), 0.8f, 0, 0, 1);
-                                bufferSource.endBatch(RenderType.lines());
+                                AABB error = errorBoundingBox.move(pos).move(camera.reverse());
+                                errorBoxes.add(error);
+                                errorBoxes.add(error.inflate(0.005));
+                                errorBoxes.add(error.deflate(0.005));
                             }
                         }
                     }
                 }
-                RenderSystem.enableDepthTest();
             }
 
             if (!haveFullPreview) {
-                RenderSystem.lineWidth(1);
-                RenderSystem.enableBlend();
-                final int r = (color >> 16) & 0xFF;
-                final int g = (color >> 8) & 0xFF;
-                final int b = color & 0xFF;
-                MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-                VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
-                LevelRenderer.renderLineBox(poseStack, buffer, dest, r / 255f, g / 255f, b / 255f, 1);
-                bufferSource.endBatch(RenderType.lines());
+                destBoxes.add(dest.move(camera.reverse()));
             }
         }
 
-//        doWireEpilogue();
-        doPositionEpilogue(poseStack);
+        final int destColor = ARGB.opaque(color);
+        frame.add((collector, poseStack) -> {
+            for (AABB box : errorBoxes) submitLineBox(collector, poseStack, box, ERROR_COLOR, lineWidth);
+            for (AABB box : destBoxes) submitLineBox(collector, poseStack, box, destColor, lineWidth);
+        });
     }
 
     private static boolean isDeployable(ItemStack heldItemMainhand) {
@@ -318,7 +342,7 @@ public class CapsulePreviewHandler {
                 || CapsuleItem.getSize(heldItemMainhand) == 1 && !CapsuleItem.hasState(heldItemMainhand, DEPLOYED);
     }
 
-    private static void tryPreviewRecall(ItemStack heldItem, PoseStack poseStack) {
+    private static void tryPreviewRecall(ItemStack heldItem, Vec3 camera, float lineWidth) {
         // an item is in hand
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
@@ -328,13 +352,13 @@ public class CapsulePreviewHandler {
                     && NBTHelper.hasTag(heldItem)) {
                 CompoundTag tag = NBTHelper.getTag(heldItem);
                 if (tag != null && tag.contains("spawnPosition")) {
-                    previewRecall(heldItem, poseStack);
+                    previewRecall(heldItem, camera, lineWidth);
                 }
             }
         }
     }
 
-    private static void tryPreviewLinkedInventory(LocalPlayer player, ItemStack heldItem, PoseStack poseStack) {
+    private static void tryPreviewLinkedInventory(LocalPlayer player, ItemStack heldItem, Vec3 camera) {
         if (heldItem != null) {
             Item heldItemItem = heldItem.getItem();
             if (heldItemItem instanceof CapsuleItem
@@ -346,25 +370,23 @@ public class CapsulePreviewHandler {
                         && dimension != null
                         && dimension.equals(player.level().dimension())
                         && location.distToCenterSqr(player.getX(), player.getY(), player.getZ()) < 60 * 60) {
-                    previewLinkedInventory(location, poseStack);
+                    previewLinkedInventory(location, camera);
                 }
             }
         }
     }
 
-    private static void previewLinkedInventory(BlockPos location, PoseStack poseStack) {
-        Camera cam = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer buffer = bufferSource.getBuffer(RenderType.debugQuads());
-        poseStack.pushPose();
-        poseStack.translate(-cam.position().x, -cam.position().y, -cam.position().z);
-        drawCube(poseStack, location, 0.01f, buffer, 91, 156, 255, 80);
-        bufferSource.endBatch();
-
-        poseStack.popPose();
+    private static void previewLinkedInventory(BlockPos location, Vec3 camera) {
+        float x = (float) (location.getX() - camera.x);
+        float y = (float) (location.getY() - camera.y);
+        float z = (float) (location.getZ() - camera.z);
+        float offset = 0.01f;
+        frame.add((collector, poseStack) -> collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(),
+                (pose, buffer) -> drawCube(pose, x - offset, y - offset, z - offset, x + 1 + offset, y + 1 + offset, z + 1 + offset,
+                        buffer, 91, 156, 255, 80)));
     }
 
-    private static void previewRecall(ItemStack capsule, PoseStack poseStack) {
+    private static void previewRecall(ItemStack capsule, Vec3 camera, float lineWidth) {
         CompoundTag tag = NBTHelper.getTag(capsule);
         if (tag == null) return;
         CompoundTag linkPos = tag.getCompoundOrEmpty("spawnPosition");
@@ -373,17 +395,10 @@ public class CapsulePreviewHandler {
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
-        Camera cam = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        AABB boundingBox = Spacial.getBB(linkPos.getIntOr("x", 0) + extendSize, linkPos.getIntOr("y", 0) - 1, linkPos.getIntOr("z", 0) + extendSize, size, extendSize);
-        MultiBufferSource.BufferSource impl = Minecraft.getInstance().renderBuffers().bufferSource();
-        VertexConsumer ivertexbuilder = impl.getBuffer(RenderType.lines());
-        poseStack.pushPose();
-        poseStack.translate(-cam.position().x, -cam.position().y, -cam.position().z);
-
-        renderRecallBox(poseStack, color, boundingBox, ivertexbuilder, time);
-        impl.endBatch();
-
-        poseStack.popPose();
+        AABB boundingBox = Spacial.getBB(linkPos.getIntOr("x", 0) + extendSize, linkPos.getIntOr("y", 0) - 1, linkPos.getIntOr("z", 0) + extendSize, size, extendSize)
+                .move(camera.reverse());
+        double boxTime = time;
+        frame.add((collector, poseStack) -> renderRecallBox(collector, poseStack, color, boundingBox, boxTime, lineWidth));
     }
 
     private static void setCaptureTESizeColor(int size, int color, Level worldIn) {
@@ -405,21 +420,23 @@ public class CapsulePreviewHandler {
         lastColor = color;
     }
 
-    public static void renderRecallBox(PoseStack poseStackIn, int color, AABB boundingBox, VertexConsumer ivertexbuilder, double time) {
-        final float af = 200 / 255f;
+    /**
+     * The box of a deployed capsule or of a capture base, and five horizontal slices moving up and down inside it.
+     *
+     * @param boundingBox in the space of poseStack
+     */
+    public static void renderRecallBox(OrderedSubmitNodeCollector collector, PoseStack poseStack, int color, AABB boundingBox, double time, float lineWidth) {
         final float rf = ((color >> 16) & 0xFF) / 255f;
         final float gf = ((color >> 8) & 0xFF) / 255f;
         final float bf = (color & 0xFF) / 255f;
-        LevelRenderer.renderLineBox(poseStackIn, ivertexbuilder, boundingBox.minX, boundingBox.minY, boundingBox.minZ, boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ, rf, gf, bf, af, rf, gf, bf);
+        submitLineBox(collector, poseStack, boundingBox, ARGB.colorFromFloat(200 / 255f, rf, gf, bf), lineWidth);
         for (int i = 0; i < 5; i++) {
             double i1 = getMovingEffectPos(boundingBox, i, time, 0.0015f);
             double i2 = getMovingEffectPos(boundingBox, i, time, 0.0017f);
             double lowI = Math.min(i1, i2);
             double highI = Math.max(i1, i2);
-            LevelRenderer.renderLineBox(poseStackIn, ivertexbuilder,
-                    boundingBox.minX, lowI, boundingBox.minZ,
-                    boundingBox.maxX, highI, boundingBox.maxZ,
-                    rf, gf, bf, 0.01f + i * 0.05f, rf, gf, bf);
+            AABB slice = new AABB(boundingBox.minX, lowI, boundingBox.minZ, boundingBox.maxX, highI, boundingBox.maxZ);
+            submitLineBox(collector, poseStack, slice, ARGB.colorFromFloat(0.01f + i * 0.05f, rf, gf, bf), lineWidth);
         }
     }
 

@@ -1,6 +1,7 @@
 package capsule.client.render;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.util.ARGB;
 
 /**
  * Multiplies the alpha of every vertex written to the delegate.
@@ -16,6 +17,15 @@ public record TranslucentVertexConsumer(VertexConsumer delegate, float alpha) im
     @Override
     public VertexConsumer setColor(int red, int green, int blue, int alpha) {
         delegate.setColor(red, green, blue, (int) (alpha * this.alpha));
+        return this;
+    }
+
+    /**
+     * Block quads (putBakedQuad and the packed addVertex) write their color through this one.
+     */
+    @Override
+    public VertexConsumer setColor(int argb) {
+        delegate.setColor(ARGB.color((int) (ARGB.alpha(argb) * this.alpha), argb));
         return this;
     }
 
@@ -40,6 +50,12 @@ public record TranslucentVertexConsumer(VertexConsumer delegate, float alpha) im
     @Override
     public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
         delegate.setNormal(normalX, normalY, normalZ);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setLineWidth(float width) {
+        delegate.setLineWidth(width);
         return this;
     }
 }

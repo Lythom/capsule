@@ -10,10 +10,14 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.attribute.EnvironmentAttributeReader;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.world.level.CardinalLighting;
+import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
@@ -40,7 +44,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.LevelTickAccess;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,11 +55,20 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class FakeWorld implements LevelAccessor {
-    private final LevelAccessor delegate;
+/**
+ * The blocks of a capsule preview or of a capture animation, over a real level for everything else. It is the client
+ * BlockAndTintGetter the block models are tessellated against: full light, no directional shading and the biome
+ * tints of the delegate, as the 1.21.1 preview had.
+ */
+public class FakeWorld implements LevelAccessor, BlockAndTintGetter {
+    /**
+     * No face darker than another, as 1.21.1's getShade returned 1 for every face.
+     */
+    private static final CardinalLighting NO_SHADING = new CardinalLighting(1, 1, 1, 1, 1, 1);
+    private final Level delegate;
     private Map<BlockPos, BlockState> posToBlock;
 
-    public FakeWorld(LevelAccessor delegate) {
+    public FakeWorld(Level delegate) {
         this.delegate = Objects.requireNonNull(delegate);
         posToBlock = new HashMap<>();
     }
@@ -64,12 +77,12 @@ public class FakeWorld implements LevelAccessor {
         return Collections.unmodifiableSet(posToBlock.entrySet());
     }
 
-    public LevelAccessor getDelegate() {
+    public Level getDelegate() {
         return delegate;
     }
 
     @Override
-    public void playSound(@Nullable Player player, BlockPos pos, SoundEvent soundIn, SoundSource category, float volume, float pitch) {
+    public void playSound(@Nullable Entity player, BlockPos pos, SoundEvent soundIn, SoundSource category, float volume, float pitch) {
 
     }
 
@@ -79,7 +92,7 @@ public class FakeWorld implements LevelAccessor {
     }
 
     @Override
-    public void levelEvent(@Nullable Player p_217378_1_, int p_217378_2_, BlockPos p_217378_3_, int p_217378_4_) {
+    public void levelEvent(@Nullable Entity p_217378_1_, int p_217378_2_, BlockPos p_217378_3_, int p_217378_4_) {
 
     }
 
@@ -144,11 +157,6 @@ public class FakeWorld implements LevelAccessor {
     }
 
     @Override
-    public int getMoonPhase() {
-        return delegate.getMoonPhase();
-    }
-
-    @Override
     public long nextSubTickCount() {
         return delegate.nextSubTickCount();
     }
@@ -176,12 +184,7 @@ public class FakeWorld implements LevelAccessor {
         return delegate.getLevelData();
     }
 
-    @Override
-    public DifficultyInstance getCurrentDifficultyAt(BlockPos pos) {
-        return delegate.getCurrentDifficultyAt(pos);
-    }
-
-    @org.jetbrains.annotations.Nullable
+    @Nullable
     @Override
     public MinecraftServer getServer() {
         return this.delegate.getServer();
@@ -241,6 +244,11 @@ public class FakeWorld implements LevelAccessor {
     }
 
     @Override
+    public EnvironmentAttributeReader environmentAttributes() {
+        return delegate.environmentAttributes();
+    }
+
+    @Override
     public WorldBorder getWorldBorder() {
         return delegate.getWorldBorder();
     }
@@ -287,11 +295,6 @@ public class FakeWorld implements LevelAccessor {
     @Override
     public FluidState getFluidState(BlockPos pos) {
         return getBlockState(pos).getFluidState(); // In the end that's what mc does
-    }
-
-    @Override
-    public int getMaxLightLevel() {
-        return delegate.getMaxLightLevel();
     }
 
     @Override
@@ -368,8 +371,16 @@ public class FakeWorld implements LevelAccessor {
     }
 
     @Override
-    public float getShade(Direction p_230487_1_, boolean p_230487_2_) {
-        return 1;
+    public CardinalLighting cardinalLighting() {
+        return NO_SHADING;
+    }
+
+    /**
+     * The biome color at the position in the delegate, without blending (1.21.1's LevelReader#getBlockTint).
+     */
+    @Override
+    public int getBlockTint(BlockPos pos, ColorResolver resolver) {
+        return resolver.getColor(getBiome(pos).value(), pos.getX(), pos.getZ());
     }
 
     @Override

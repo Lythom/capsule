@@ -19,11 +19,12 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -51,11 +52,12 @@ public class CapsuleNeoForgeClient {
 
         IEventBus bus = NeoForge.EVENT_BUS;
         bus.addListener((RecipesReceivedEvent event) -> CapsuleItems.registerRecipesClient(event.getRecipeMap().byType(RecipeType.CRAFTING)));
-        bus.addListener((RenderLevelStageEvent event) -> {
-            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
-                CapsulePreviewHandler.onLevelRenderLast(event.getPoseStack(), event.getPartialTick().getGameTimeDeltaPartialTick(true));
-            }
-        });
+        // gathered during the level extraction, submitted to the frame's collector (not drawn after the translucent
+        // blocks: 26.3 skips that stage when Improved Transparency is on)
+        bus.addListener((ExtractLevelRenderStateEvent event) -> CapsulePreviewHandler.extractFrame(
+                event.getCamera().position(), event.getDeltaTracker().getGameTimeDeltaPartialTick(true)));
+        bus.addListener((SubmitCustomGeometryEvent event) -> CapsulePreviewHandler.submitFrame(
+                event.getSubmitNodeCollector(), event.getPoseStack()));
         bus.addListener((ClientChatReceivedEvent event) -> CapsulePreviewHandler.onChatMessage(event.getMessage()));
         bus.addListener((PlayerTickEvent.Pre event) -> {
             if (event.getEntity() instanceof LocalPlayer player) CapsulePreviewHandler.onLocalPlayerTick(player);

@@ -12,20 +12,9 @@ public final class Services {
     private Services() {
     }
 
-    /**
-     * Client implementations are loaded on first use, so that dedicated servers never load them.
-     */
-    public static ClientPlatform client() {
-        return Client.PLATFORM;
-    }
-
     public static <T> T load(Class<T> type) {
         return ServiceLoader.load(type, Services.class.getClassLoader())
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No implementation of " + type.getName()));
-    }
-
-    private static final class Client {
-        static final ClientPlatform PLATFORM = load(ClientPlatform.class);
     }
 }

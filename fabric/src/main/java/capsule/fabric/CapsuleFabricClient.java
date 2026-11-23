@@ -17,7 +17,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.recipe.v1.sync.ClientRecipeSynchronizedEvent;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.color.item.ItemTintSources;
@@ -49,8 +50,12 @@ public class CapsuleFabricClient implements ClientModInitializer {
         CustomRenderType.PIPELINES.forEach(RenderPipelines::register);
         BlockEntityRenderers.register(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new);
 
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> CapsulePreviewHandler.onLevelRenderLast(
-                context.matrixStack(), context.tickCounter().getGameTimeDeltaPartialTick(true)));
+        // gathered during the level extraction, submitted to the frame's collector (not drawn after the translucent
+        // terrain: 26.3 skips that stage when Improved Transparency is on)
+        LevelExtractionEvents.END_EXTRACTION.register(context -> CapsulePreviewHandler.extractFrame(
+                context.camera().position(), context.deltaTracker().getGameTimeDeltaPartialTick(true)));
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> CapsulePreviewHandler.submitFrame(
+                context.submitNodeCollector(), context.poseStack()));
         ClientRecipeSynchronizedEvent.EVENT.register((client, recipes) -> CapsuleItems.registerRecipesClient(recipes.getAllOfType(RecipeType.CRAFTING)));
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> CapsulePreviewHandler.onChatMessage(message));
         ClientTickEvents.START_CLIENT_TICK.register(client -> {

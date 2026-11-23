@@ -3,28 +3,24 @@ package capsule.client.render;
 import capsule.platform.Services;
 import capsule.structure.CapsuleTemplate;
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import com.mojang.datafixers.util.Pair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockQuadOutput;
+import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.Clearable;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -36,7 +32,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
 import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 import org.apache.logging.log4j.LogManager;
@@ -49,85 +44,80 @@ import java.util.Map;
 
 public class CapsuleTemplateRenderer {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final float PREVIEW_ALPHA = 0.5f;
-    // the depth pass is drawn first: the buffers end in their insertion order
-    private static final MultiBufferSource.BufferSource GHOST_BUFFERS = MultiBufferSource.immediateWithBuffers(
-            Util.make(new Object2ObjectLinkedOpenHashMap<>(), buffers -> {
-                buffers.put(CustomRenderType.GHOST_DEPTH, new ByteBufferBuilder(CustomRenderType.GHOST_DEPTH.bufferSize()));
-                buffers.put(CustomRenderType.GHOST, new ByteBufferBuilder(CustomRenderType.GHOST.bufferSize()));
-            }),
-            new ByteBufferBuilder(256));
+    public static final float PREVIEW_ALPHA = 0.5f;
     public FakeWorld templateWorld = null;
     private boolean isWorldDirty = true;
     private StructurePlaceSettings lastPlacementSettings;
-    private ModelBlockRenderer blockRenderer = Minecraft.getInstance().getBlockRenderer().getModelRenderer();
-    private final RandomSource random = RandomSource.create();
-
-    public void renderTemplate(PoseStack poseStack, Player player, BlockPos destPos) {
-        if (player == null)
-            return;
-
-        final Vec3 cameraView = Minecraft.getInstance().gameRenderer.mainCamera().position();
-        poseStack.pushPose();
-        poseStack.translate(destPos.getX() - cameraView.x, destPos.getY() - cameraView.y, destPos.getZ() - cameraView.z);
-
-        renderTemplate(poseStack, PREVIEW_ALPHA);
-
-        poseStack.popPose();
-    }
+    // ambient occlusion and face culling, as 1.21.1's tesselateWithAO with checkSides
+    private final ModelBlockRenderer blockRenderer = new ModelBlockRenderer(true, true, Minecraft.getInstance().getBlockColors());
+    private final PoseStack.Pose quadPose = new PoseStack().last();
 
     /**
-     * Draws the blocks of the template world as translucent ghost blocks, in the space of poseStack.
+     * Submits the blocks of the template world as translucent ghost blocks, in the space of poseStack, in two passes
+     * (see CustomRenderType): the depth pass with the vertex colors as they are, then the color pass with their alpha
+     * scaled by alpha. Both passes tessellate the template when the frame draws them.
      */
-    public void renderTemplate(PoseStack poseStack, float alpha) {
-        Minecraft minecraft = Minecraft.getInstance();
-        VertexConsumer consumer = VertexMultiConsumer.create(
-                GHOST_BUFFERS.getBuffer(CustomRenderType.GHOST_DEPTH),
-                new TranslucentVertexConsumer(GHOST_BUFFERS.getBuffer(CustomRenderType.GHOST), alpha));
+    public void submitTemplate(SubmitNodeCollector collector, PoseStack poseStack, float alpha) {
+        FakeWorld world = templateWorld;
+        if (world == null) return;
+        collector.submitCustomGeometry(poseStack, CustomRenderType.GHOST_DEPTH, (pose, consumer) -> tesselate(world, pose, consumer));
+        collector.submitCustomGeometry(poseStack, CustomRenderType.GHOST,
+                (pose, consumer) -> tesselate(world, pose, new TranslucentVertexConsumer(consumer, alpha)));
+    }
 
-        for (Map.Entry<BlockPos, BlockState> entry : templateWorld.entrySet()) {
+    private void tesselate(FakeWorld world, PoseStack.Pose pose, VertexConsumer consumer) {
+        ModelManager models = Minecraft.getInstance().getModelManager();
+        // block quads come with their offset in the template; the pose keeps the camera translation and the glitch
+        BlockQuadOutput output = (x, y, z, quad, instance) -> {
+            quadPose.set(pose);
+            quadPose.translate(x, y, z);
+            consumer.putBakedQuad(quadPose, quad, instance);
+        };
+        for (Map.Entry<BlockPos, BlockState> entry : world.entrySet()) {
             BlockPos targetPos = entry.getKey();
             BlockState state = entry.getValue();
-
-            poseStack.pushPose(); //Save position again
-            poseStack.translate(targetPos.getX(), targetPos.getY(), targetPos.getZ()); // handled by renderBatched
             try {
-                BakedModel ibakedmodel = minecraft.getBlockRenderer().getBlockModel(state);
-                if (state.getRenderShape() == RenderShape.MODEL || state.getRenderShape() == RenderShape.ENTITYBLOCK_ANIMATED) {
-                    random.setSeed(Mth.getSeed(targetPos));
-                    Services.client().tesselateWithAO(blockRenderer, templateWorld, ibakedmodel, state, targetPos, poseStack, consumer, random, Mth.getSeed(targetPos), OverlayTexture.NO_OVERLAY);
+                if (state.getRenderShape() == RenderShape.MODEL) {
+                    BlockStateModel model = models.getBlockStateModelSet().get(state);
+                    blockRenderer.tesselateBlock(output, targetPos.getX(), targetPos.getY(), targetPos.getZ(),
+                            world, targetPos, state, model, Mth.getSeed(targetPos));
                 } else {
-                    FluidState ifluidstate = state.getFluidState();
-                    if (!ifluidstate.isEmpty()) {
-                        renderFluid(poseStack, targetPos, templateWorld, consumer, ifluidstate);
+                    FluidState fluidState = state.getFluidState();
+                    if (!fluidState.isEmpty()) {
+                        renderFluid(pose, targetPos, world, consumer, fluidState, models.getFluidStateModelSet().get(fluidState));
                     }
                 }
             } catch (Exception e) {
                 LOGGER.trace("Caught exception whilst rendering {}.", state, e);
             }
-            poseStack.popPose(); // Load the position we saved earlier
-
         }
-        GHOST_BUFFERS.endBatch();
     }
 
-    private static void renderFluid(PoseStack matrixStack, BlockPos destOriginPos, BlockAndTintGetter world, VertexConsumer buffer, FluidState ifluidstate) {
-        TextureAtlasSprite sprite = Services.client().getFluidStillSprite(ifluidstate, world, destOriginPos);
+    /**
+     * The top face of the block, with the still texture and the tint of the fluid model (the same on both loaders since
+     * 26.1: NeoForge and Fabric register their fluids' models in the vanilla FluidStateModelSet).
+     */
+    @SuppressWarnings("deprecation") // NeoForge deprecates tintSource() for its FluidTintSource, which is a BlockTintSource
+    private static void renderFluid(PoseStack.Pose pose, BlockPos pos, BlockAndTintGetter world, VertexConsumer buffer, FluidState fluidState, FluidModel fluidModel) {
+        TextureAtlasSprite sprite = fluidModel.stillMaterial().sprite();
         float minU = sprite.getU0();
         float maxU = Math.min(minU + (sprite.getU1() - minU) * 1, sprite.getU1());
         float minV = sprite.getV0();
         float maxV = Math.min(minV + (sprite.getV1() - minV) * 1, sprite.getV1());
-        int waterColor = Services.client().getFluidTint(ifluidstate, world, destOriginPos);
+        BlockTintSource tintSource = fluidModel.tintSource();
+        int waterColor = tintSource == null ? -1 : tintSource.colorInWorld(fluidState.createLegacyBlock(), world, pos);
         float red = (float) (waterColor >> 16 & 255) / 255.0F;
         float green = (float) (waterColor >> 8 & 255) / 255.0F;
         float blue = (float) (waterColor & 255) / 255.0F;
 
-        Matrix4f matrix = matrixStack.last().pose();
-
-        vertex(buffer, maxU, minV, red, green, blue, matrix, 0, 1, 0);
-        vertex(buffer, minU, minV, red, green, blue, matrix, 0, 1, 1);
-        vertex(buffer, minU, maxV, red, green, blue, matrix, 1, 1, 1);
-        vertex(buffer, maxU, maxV, red, green, blue, matrix, 1, 1, 0);
+        Matrix4f matrix = pose.pose();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        vertex(buffer, maxU, minV, red, green, blue, matrix, x, y + 1, z);
+        vertex(buffer, minU, minV, red, green, blue, matrix, x, y + 1, z + 1);
+        vertex(buffer, minU, maxV, red, green, blue, matrix, x + 1, y + 1, z + 1);
+        vertex(buffer, maxU, maxV, red, green, blue, matrix, x + 1, y + 1, z);
     }
 
     private static void vertex(VertexConsumer buffer, float maxU, float minV, float red, float green,
