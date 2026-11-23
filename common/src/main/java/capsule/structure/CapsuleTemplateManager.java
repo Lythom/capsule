@@ -3,12 +3,12 @@ package capsule.structure;
 import capsule.CapsuleMod;
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.DataFixer;
-import net.minecraft.FileUtil;
-import net.minecraft.ResourceLocationException;
+import net.minecraft.util.FileUtil;
+import net.minecraft.IdentifierException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixTypes;
@@ -41,7 +41,7 @@ public class CapsuleTemplateManager {
      * Template file extensions, in lookup order.
      */
     public static final List<String> EXTENSIONS = List.of(".schematic", ".schem", ".nbt");
-    private final Map<ResourceLocation, CapsuleTemplate> templates = Maps.newHashMap();
+    private final Map<Identifier, CapsuleTemplate> templates = Maps.newHashMap();
     private final DataFixer fixer;
     private ResourceManager resourceManager;
     private final Path pathGenerated;
@@ -52,8 +52,8 @@ public class CapsuleTemplateManager {
         this.pathGenerated = templateFolder.toPath().normalize();
     }
 
-    public CapsuleTemplate getOrCreateTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
+    public CapsuleTemplate getOrCreateTemplate(Identifier templateLocation) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         CapsuleTemplate template = this.getTemplate(capsuleTemplateLocation);
         if (template == null) {
             template = new CapsuleTemplate();
@@ -64,8 +64,8 @@ public class CapsuleTemplateManager {
     }
 
     @Nullable
-    public CapsuleTemplate getTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
+    public CapsuleTemplate getTemplate(Identifier templateLocation) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         return this.templates.computeIfAbsent(capsuleTemplateLocation, location -> {
             for (String extension : EXTENSIONS) {
                 CapsuleTemplate template = this.loadTemplateFile(location, extension);
@@ -82,12 +82,12 @@ public class CapsuleTemplateManager {
     /**
      * The files then resources getTemplate reads, for error messages.
      */
-    public List<String> searchedLocations(ResourceLocation templateLocation) {
+    public List<String> searchedLocations(Identifier templateLocation) {
         List<String> locations = new ArrayList<>();
         for (String extension : EXTENSIONS) {
             try {
                 locations.add(this.resolvePath(templateLocation, extension).toString());
-            } catch (ResourceLocationException ignored) {
+            } catch (IdentifierException ignored) {
             }
         }
         for (String extension : EXTENSIONS) {
@@ -102,8 +102,8 @@ public class CapsuleTemplateManager {
     }
 
     @Nullable
-    private CapsuleTemplate loadTemplateResource(ResourceLocation p_209201_1_, String extension) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath("capsule", p_209201_1_.getPath() + extension);
+    private CapsuleTemplate loadTemplateResource(Identifier p_209201_1_, String extension) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath("capsule", p_209201_1_.getPath() + extension);
 
         Optional<Resource> optionalTemplate = this.resourceManager.getResource(capsuleTemplateLocation);
         if (optionalTemplate.isPresent()) {
@@ -121,7 +121,7 @@ public class CapsuleTemplateManager {
     }
 
     @Nullable
-    private CapsuleTemplate loadTemplateFile(ResourceLocation locationIn, String extension) {
+    private CapsuleTemplate loadTemplateFile(Identifier locationIn, String extension) {
         if (!this.pathGenerated.toAbsolutePath().toFile().isDirectory()) {
             return null;
         } else {
@@ -140,7 +140,7 @@ public class CapsuleTemplateManager {
                     LOGGER.error("Error while loading {}", path, exception);
                     return null;
                 }
-            } catch (ResourceLocationException e) {
+            } catch (IdentifierException e) {
                 LOGGER.error("Couldn't resolve proper location: {}", locationIn.getPath(), e);
                 return null;
             }
@@ -165,8 +165,8 @@ public class CapsuleTemplateManager {
         return template;
     }
 
-    public boolean writeToFile(ResourceLocation templateName) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateName.getPath());
+    public boolean writeToFile(Identifier templateName) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, templateName.getPath());
         CapsuleTemplate template = this.templates.get(capsuleTemplateLocation);
         if (template == null) {
             return false;
@@ -174,7 +174,7 @@ public class CapsuleTemplateManager {
             Path path;
             try {
                 path = this.resolvePath(capsuleTemplateLocation, ".nbt");
-            } catch (ResourceLocationException e) {
+            } catch (IdentifierException e) {
                 LOGGER.error("Couldn't resolve proper location: {}", templateName.getPath(), e);
                 return false;
             }
@@ -204,7 +204,7 @@ public class CapsuleTemplateManager {
     /**
      * Only the part coming from the template name is checked for portability: the install path is out of our hands.
      */
-    private Path resolvePath(ResourceLocation locationIn, String extIn) {
+    private Path resolvePath(Identifier locationIn, String extIn) {
         String name = locationIn.getPath();
         String ext = name.endsWith(extIn) ? "" : extIn;
         Path base = this.pathGenerated.toAbsolutePath().normalize();
@@ -215,13 +215,13 @@ public class CapsuleTemplateManager {
                 return p;
             }
         } catch (InvalidPathException e) {
-            throw new ResourceLocationException("Invalid resource path: " + locationIn, e);
+            throw new IdentifierException("Invalid resource path: " + locationIn, e);
         }
-        throw new ResourceLocationException("Invalid resource path: " + locationIn);
+        throw new IdentifierException("Invalid resource path: " + locationIn);
     }
 
-    public void remove(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
+    public void remove(Identifier templateLocation) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         this.templates.remove(capsuleTemplateLocation);
     }
 
@@ -235,13 +235,13 @@ public class CapsuleTemplateManager {
             return readFromNBT(compoundnbt, location);
     }
 
-    public boolean deleteTemplate(ResourceLocation templateLocation) {
-        ResourceLocation capsuleTemplateLocation = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
+    public boolean deleteTemplate(Identifier templateLocation) {
+        Identifier capsuleTemplateLocation = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, templateLocation.getPath());
         if (this.templates.containsKey(capsuleTemplateLocation)) {
             File file;
             try {
                 file = this.resolvePath(capsuleTemplateLocation, ".nbt").toFile();
-            } catch (ResourceLocationException e) {
+            } catch (IdentifierException e) {
                 LOGGER.error("Couldn't resolve proper location: {}", templateLocation.getPath(), e);
                 return false;
             }

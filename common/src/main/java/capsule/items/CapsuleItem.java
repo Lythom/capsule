@@ -15,8 +15,7 @@ import capsule.network.CapsuleThrowQueryToServer;
 import capsule.platform.ItemSource;
 import capsule.platform.Services;
 import net.minecraft.ChatFormatting;
-import net.minecraft.MethodsReturnNonnullByDefault;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -28,7 +27,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
@@ -316,7 +315,7 @@ public class CapsuleItem extends Item {
     public static ResourceKey<Level> getDimension(ItemStack capsule) {
         ResourceKey<Level> dim = null;
         if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("spawnPosition")) {
-            dim = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(
+            dim = ResourceKey.create(Registries.DIMENSION, Identifier.parse(
                     NBTHelper.getOrCreateTag(capsule).getCompound("spawnPosition").getString("dim")
             ));
         }
@@ -371,7 +370,6 @@ public class CapsuleItem extends Item {
     }
 
     @Override
-    @MethodsReturnNonnullByDefault
     public Component getName(ItemStack stack) {
         MutableComponent name = Component.translatable("items.capsule.name");
 
@@ -517,7 +515,7 @@ public class CapsuleItem extends Item {
      */
     public static void onLeftClickEmpty(Player player) {
         ItemStack stack = player.getMainHandItem();
-        if (player.level().isClientSide && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
+        if (player.level().isClientSide() && stack.getItem() instanceof CapsuleItem && (CapsuleItem.isBlueprint(stack) || CapsuleItem.canRotate(stack) && !CapsuleItem.hasState(stack, EMPTY))) {
             Services.NETWORK.sendToServer(new CapsuleLeftClickQueryToServer());
             askPreviewIfNeeded(stack);
         }
@@ -531,7 +529,7 @@ public class CapsuleItem extends Item {
     public static boolean onLeftClickBlock(Player player, Level level) {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof CapsuleItem)) return false;
-        if (level.isClientSide) {
+        if (level.isClientSide()) {
             if (CapsuleItem.canRotate(stack)) {
                 if (lastRotationTime + 60 < Util.getMillis()) {
                     lastRotationTime = Util.getMillis();
@@ -609,12 +607,12 @@ public class CapsuleItem extends Item {
         if (playerIn.isShiftKeyDown() && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE) || CapsuleItem.hasState(capsule, BLUEPRINT))) {
             CapsuleMod.openGuiScreenCommon.accept(playerIn);
 
-        } else if (!worldIn.isClientSide) {
+        } else if (!worldIn.isClientSide()) {
             // a capsule is activated on right click, except instant that are deployed immediatly
             if (!isInstantAndUndeployed(capsule) && canUndeploy(capsule, worldIn)) {
                 activateCapsule(capsule, (ServerLevel) worldIn, playerIn);
             }
-        } else if (worldIn.isClientSide) {
+        } else if (worldIn.isClientSide()) {
             // client side, if is going to get activated, ask for server preview
             if (!isInstantAndUndeployed(capsule)
                     && (CapsuleItem.hasState(capsule, CapsuleState.LINKED) || CapsuleItem.hasState(capsule, CapsuleState.ONE_USE))) {
@@ -711,7 +709,7 @@ public class CapsuleItem extends Item {
     public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
         super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
 
-        if (!worldIn.isClientSide) {
+        if (!worldIn.isClientSide()) {
 
             // disable capsule after some time
             CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
@@ -737,7 +735,7 @@ public class CapsuleItem extends Item {
         if (capsule == null) return false;
 
         // Deploying capsule content on collision with a block
-        if (!entity.getCommandSenderWorld().isClientSide
+        if (!entity.level().isClientSide()
                 && entity.tickCount > 2 // avoid immediate collision
                 && isActivated(capsule)
                 && (entity.verticalCollision || entity.horizontalCollision || Spacial.ItemEntityShouldAndCollideLiquid(entity))
@@ -746,7 +744,7 @@ public class CapsuleItem extends Item {
         }
 
         // throwing the capsule toward the right place
-        if (!entity.getCommandSenderWorld().isClientSide
+        if (!entity.level().isClientSide()
                 && isActivated(capsule)
                 && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("deployAt")
                 && (!entity.verticalCollision || entity.horizontalCollision) && !Spacial.ItemEntityShouldAndCollideLiquid(entity)) {
@@ -762,7 +760,7 @@ public class CapsuleItem extends Item {
      * it was reported already, and is retried when the capsule is used.
      */
     public static void onPlayerTick(Player player) {
-        if (!player.level().isClientSide) {
+        if (!player.level().isClientSide()) {
             for (int i = 0; i < player.getInventory().getContainerSize(); ++i) {
                 ItemStack itemstack = player.getInventory().getItem(i);
                 if (NBTHelper.hasTag(itemstack)) {
@@ -818,13 +816,13 @@ public class CapsuleItem extends Item {
     public static void copyTemplateIfNeeded(ItemStack capsule, Level level, @Nullable Player player) {
         if (isBlueprint(capsule)) {
             duplicateBlueprintTemplate(capsule, level, player);
-        } else if (!level.isClientSide && needsTemplateCopy(capsule)) {
+        } else if (!level.isClientSide() && needsTemplateCopy(capsule)) {
             Capsule.copyLinkedTemplate(capsule, (ServerLevel) level, player);
         }
     }
 
     public static void duplicateBlueprintTemplate(ItemStack capsule, Level worldIn, Player playerIn) {
-        if (!worldIn.isClientSide && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
+        if (!worldIn.isClientSide() && capsule.getItem() instanceof CapsuleItem && isBlueprint(capsule)) {
             String srcStructurePath = CapsuleItem.getStructureName(capsule);
             if (srcStructurePath != null) {
                 String templateName = StructureSaver.createBlueprintTemplate(srcStructurePath, capsule, (ServerLevel) worldIn, playerIn);
@@ -922,7 +920,7 @@ public class CapsuleItem extends Item {
             pos.putInt("x", dest.getX());
             pos.putInt("y", dest.getY());
             pos.putInt("z", dest.getZ());
-            pos.putString("dim", dimID.location().toString());
+            pos.putString("dim", dimID.identifier().toString());
         }
         NBTHelper.addTagElement(capsule, "sourceInventory", pos);
     }
@@ -943,7 +941,7 @@ public class CapsuleItem extends Item {
     @Nullable
     public static ResourceKey<Level> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            return ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(
+            return ResourceKey.create(Registries.DIMENSION, Identifier.parse(
                     NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory").getString("dim")
             ));
         }

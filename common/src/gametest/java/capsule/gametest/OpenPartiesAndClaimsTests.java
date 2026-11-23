@@ -3,7 +3,7 @@ package capsule.gametest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -31,20 +31,20 @@ public class OpenPartiesAndClaimsTests {
 
         // the claimed chunk holds the center and the 7 blocks next to it in one direction of each axis (dx, dz)
         BlockPos center = new BlockPos(8, 1, 8);
-        ChunkPos claimed = new ChunkPos(helper.absolutePos(center));
-        int dx = new ChunkPos(helper.absolutePos(center.west(7))).equals(claimed) ? -1 : 1;
-        int dz = new ChunkPos(helper.absolutePos(center.north(7))).equals(claimed) ? -1 : 1;
+        ChunkPos claimed = ChunkPos.containing(helper.absolutePos(center));
+        int dx = ChunkPos.containing(helper.absolutePos(center.west(7))).equals(claimed) ? -1 : 1;
+        int dz = ChunkPos.containing(helper.absolutePos(center.north(7))).equals(claimed) ? -1 : 1;
         BlockPos outside = Stream.of(new BlockPos(0, 1, 8), new BlockPos(16, 1, 8))
-                .filter(pos -> !new ChunkPos(helper.absolutePos(pos)).equals(claimed))
+                .filter(pos -> !ChunkPos.containing(helper.absolutePos(pos)).equals(claimed))
                 .findFirst().orElseThrow();
-        ResourceLocation dimension = helper.getLevel().dimension().location();
-        api.getServerClaimsManager().claim(dimension, owner.getUUID(), -1, claimed.x, claimed.z, false);
+        Identifier dimension = helper.getLevel().dimension().identifier();
+        api.getServerClaimsManager().claim(dimension, owner.getUUID(), -1, claimed.x(), claimed.z(), false);
 
         new ClaimModScenario(owner, member, stranger, center, center.offset(2 * dx, 0, 0), center.offset(4 * dx, 0, 0), outside,
                 center.offset(0, 0, 3 * dz), center.offset(4 * dx, 0, 3 * dz), center.offset(0, 0, 6 * dz), center.offset(4 * dx, 0, 6 * dz),
                 outside.south(3))
                 .run(helper, () -> {
-                    api.getServerClaimsManager().unclaim(dimension, claimed.x, claimed.z);
+                    api.getServerClaimsManager().unclaim(dimension, claimed.x(), claimed.z());
                     api.getPartyManager().removeParty(party);
                     Stream.of(owner, member, stranger).forEach(CapsuleTestUtils::removePlayer);
                 });
@@ -55,10 +55,10 @@ public class OpenPartiesAndClaimsTests {
      */
     static Runnable claim(GameTestHelper helper, BoundingBox box, ServerPlayer owner) {
         IServerClaimsManagerAPI claims = OpenPACServerAPI.get(helper.getLevel().getServer()).getServerClaimsManager();
-        ResourceLocation dimension = helper.getLevel().dimension().location();
+        Identifier dimension = helper.getLevel().dimension().identifier();
         List<ChunkPos> chunks = ChunkPos.rangeClosed(new ChunkPos(box.minX() >> 4, box.minZ() >> 4), new ChunkPos(box.maxX() >> 4, box.maxZ() >> 4)).toList();
-        chunks.forEach(chunk -> claims.claim(dimension, owner.getUUID(), -1, chunk.x, chunk.z, false));
-        CapsuleTestUtils.assertTrue(helper, chunks.stream().allMatch(chunk -> claims.get(dimension, chunk.x, chunk.z) != null), "every chunk should be claimed");
-        return () -> chunks.forEach(chunk -> claims.unclaim(dimension, chunk.x, chunk.z));
+        chunks.forEach(chunk -> claims.claim(dimension, owner.getUUID(), -1, chunk.x(), chunk.z(), false));
+        CapsuleTestUtils.assertTrue(helper, chunks.stream().allMatch(chunk -> claims.get(dimension, chunk.x(), chunk.z()) != null), "every chunk should be claimed");
+        return () -> chunks.forEach(chunk -> claims.unclaim(dimension, chunk.x(), chunk.z()));
     }
 }

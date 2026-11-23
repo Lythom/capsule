@@ -19,7 +19,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -41,7 +41,7 @@ public class FabricPlatform implements Platform {
             .persistent(CompoundTag.CODEC)
             .copyOnDeath()
             .initializer(CompoundTag::new)
-            .buildAndRegister(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "persistent_data"));
+            .buildAndRegister(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "persistent_data"));
 
     @Override
     public boolean isModLoaded(String modId) {
@@ -63,7 +63,7 @@ public class FabricPlatform implements Platform {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Supplier<T> register(Registry<? super T> registry, String name, Supplier<T> factory) {
-        T value = Registry.register((Registry<T>) registry, ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, name), factory.get());
+        T value = Registry.register((Registry<T>) registry, Identifier.fromNamespaceAndPath(CapsuleMod.MODID, name), factory.get());
         return () -> value;
     }
 

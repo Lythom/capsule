@@ -12,7 +12,7 @@ import org.joml.Matrix4f;
 public class RendererUtils {
     public static void doPositionPrologue(Camera camera, PoseStack poseStack) {
         poseStack.pushPose();
-        poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
+        poseStack.translate(-camera.position().x, -camera.position().y, -camera.position().z);
     }
 
     public static void doPositionEpilogue(PoseStack poseStack) {

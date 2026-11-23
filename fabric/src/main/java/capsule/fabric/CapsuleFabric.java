@@ -25,7 +25,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -61,7 +61,7 @@ public class CapsuleFabric implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> CapsuleMod.registerCommands(dispatcher));
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new TemplatesReloadListener(CapsuleMod.reloadListener()));
         LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -> {
-            LootPool.Builder pool = CapsuleLootTableHook.capsulePool(key.location());
+            LootPool.Builder pool = CapsuleLootTableHook.capsulePool(key.identifier());
             if (pool != null) tableBuilder.withPool(pool);
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> StarterLoot.playerLogin(handler.player));
@@ -78,8 +78,8 @@ public class CapsuleFabric implements ModInitializer {
 
     private record TemplatesReloadListener(PreparableReloadListener listener) implements IdentifiableResourceReloadListener {
         @Override
-        public ResourceLocation getFabricId() {
-            return ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "templates");
+        public Identifier getFabricId() {
+            return Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "templates");
         }
 
         @Override

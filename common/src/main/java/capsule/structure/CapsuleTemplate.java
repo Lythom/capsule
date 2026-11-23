@@ -23,7 +23,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.Clearable;
@@ -31,10 +31,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.decoration.Painting;
+import net.minecraft.world.entity.decoration.painting.Painting;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.Level;
@@ -198,9 +198,9 @@ public class CapsuleTemplate {
                 createEntityIgnoreException(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
                     float f = p_242927_6_.mirror(placementIn.getMirror());
                     f = f + (p_242927_6_.getYRot() - p_242927_6_.rotate(placementIn.getRotation()));
-                    p_242927_6_.moveTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.getXRot());
+                    p_242927_6_.snapTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.getXRot());
                     if (placementIn.shouldFinalizeEntities() && p_242927_6_ instanceof Mob) {
-                        ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(BlockPos.containing(vector3d1)), MobSpawnType.STRUCTURE, (SpawnGroupData) null);
+                        ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(BlockPos.containing(vector3d1)), EntitySpawnReason.STRUCTURE, (SpawnGroupData) null);
                     }
                     worldIn.addFreshEntityWithPassengers(p_242927_6_);
                     if (spawnedEntities != null) spawnedEntities.add(p_242927_6_);
@@ -418,7 +418,7 @@ public class CapsuleTemplate {
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
 
         for (int i = 0; i < palettesNBT.size(); ++i) {
-            template$basicpalette.addMapping(NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), palettesNBT.getCompound(i)), i);
+            template$basicpalette.addMapping(NbtUtils.readBlockState(BuiltInRegistries.BLOCK, palettesNBT.getCompound(i)), i);
         }
 
         List<StructureTemplate.StructureBlockInfo> list2 = Lists.newArrayList();
@@ -471,7 +471,7 @@ public class CapsuleTemplate {
      */
     public static boolean isKeptInBlueprint(StructureTemplate.StructureBlockInfo block) {
         if (block.nbt() == null) return true;
-        ResourceLocation registryName = BuiltInRegistries.BLOCK.getKey(block.state().getBlock());
+        Identifier registryName = BuiltInRegistries.BLOCK.getKey(block.state().getBlock());
         return registryName != null && Config.blueprintWhitelist.containsKey(registryName.toString());
     }
 
@@ -779,7 +779,7 @@ public class CapsuleTemplate {
                                 worldIn.setBlock(blockpos4, blockstate3, flags & -2 | 16);
                             }
 
-                            worldIn.blockUpdated(blockpos4, blockstate3.getBlock());
+                            worldIn.updateNeighborsAt(blockpos4, blockstate3.getBlock());
                         }
                     }
                 }
@@ -1094,7 +1094,7 @@ public class CapsuleTemplate {
 
     private BlockState parseBlockState(String key) {
         try {
-            BlockState state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), key, true).blockState();
+            BlockState state = BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK, key, true).blockState();
             return state;
         } catch (CommandSyntaxException exception) {
             LOGGER.error("Could not parse {}. {}", key, exception);

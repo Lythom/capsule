@@ -5,11 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record CapsuleUndeployNotifToClient(BlockPos posFrom, BlockPos posTo, int size, String templateName) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CapsuleUndeployNotifToClient> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "undeploy_notif"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "undeploy_notif"));
 
     public static final StreamCodec<FriendlyByteBuf, CapsuleUndeployNotifToClient> STREAM_CODEC =
             StreamCodec.of(CapsuleUndeployNotifToClient::encode, CapsuleUndeployNotifToClient::decode);

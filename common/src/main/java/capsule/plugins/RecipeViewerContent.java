@@ -9,7 +9,7 @@ import capsule.items.CapsuleItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -130,8 +130,8 @@ public class RecipeViewerContent {
     /**
      * Unique ids, marked synthetic with a leading slash as EMI expects.
      */
-    private static ResourceLocation id(String kind, List<?> recipes) {
-        return ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "/" + kind + "/" + recipes.size());
+    private static Identifier id(String kind, List<?> recipes) {
+        return Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "/" + kind + "/" + recipes.size());
     }
 
     private static Information info(List<ItemStack> stacks, String key) {

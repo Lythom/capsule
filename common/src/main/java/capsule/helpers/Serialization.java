@@ -2,7 +2,7 @@ package capsule.helpers;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.level.block.Block;
@@ -26,18 +26,18 @@ public class Serialization {
 
         for (String blockId : blockIds) {
             if (blockId.startsWith("#")) continue;
-            ResourceLocation location = ResourceLocation.tryParse(blockId);
+            Identifier location = Identifier.tryParse(blockId);
             if (location == null) {
                 notfound.add(blockId);
             } else if (StringUtil.isNullOrEmpty(location.getPath())) {
                 List<Block> namespaceBlocks = BuiltInRegistries.BLOCK.entrySet().stream()
-                        .filter(blockEntry -> blockEntry.getKey().location().getNamespace().equals(location.getNamespace()))
+                        .filter(blockEntry -> blockEntry.getKey().identifier().getNamespace().equals(location.getNamespace()))
                         .map(Map.Entry::getValue)
                         .toList();
                 if (namespaceBlocks.isEmpty()) notfound.add(blockId);
                 blocks.addAll(namespaceBlocks);
             } else if (BuiltInRegistries.BLOCK.containsKey(location)) {
-                blocks.add(BuiltInRegistries.BLOCK.get(location));
+                blocks.add(BuiltInRegistries.BLOCK.getValue(location));
             }
         }
         if (!notfound.isEmpty()) {
@@ -56,7 +56,7 @@ public class Serialization {
     public static List<TagKey<Block>> deserializeBlockTags(List<? extends String> blockIds) {
         ArrayList<TagKey<Block>> tags = new ArrayList<>();
         for (String blockId : blockIds) {
-            ResourceLocation location = ResourceLocation.tryParse(blockId.startsWith("#") ? blockId.substring(1) : blockId);
+            Identifier location = Identifier.tryParse(blockId.startsWith("#") ? blockId.substring(1) : blockId);
             if (location != null && !StringUtil.isNullOrEmpty(location.getPath()) && (blockId.startsWith("#") || !BuiltInRegistries.BLOCK.containsKey(location))) {
                 tags.add(TagKey.create(Registries.BLOCK, location));
             }
@@ -67,7 +67,7 @@ public class Serialization {
     public static String[] serializeBlockArray(Block[] states) {
         String[] blocksNames = new String[states.length];
         for (int i = 0; i < states.length; i++) {
-            ResourceLocation registryName = BuiltInRegistries.BLOCK.getKey(states[i]);
+            Identifier registryName = BuiltInRegistries.BLOCK.getKey(states[i]);
             blocksNames[i] = registryName == null ? null : registryName.toString();
         }
         return blocksNames;

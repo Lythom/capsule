@@ -8,7 +8,7 @@ import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.recipe.IFocus;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -21,8 +21,8 @@ public class JeiSmokePlugin implements IModPlugin, RecipeViewerProbe {
     private static IJeiRuntime runtime;
 
     @Override
-    public ResourceLocation getPluginUid() {
-        return ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "clientsmoke");
+    public Identifier getPluginUid() {
+        return Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "clientsmoke");
     }
 
     @Override

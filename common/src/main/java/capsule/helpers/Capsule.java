@@ -24,7 +24,7 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -115,7 +115,7 @@ public class Capsule {
     private static void notifyUndeploy(Player playerIn, BlockPos startPos, int size, String templateName) {
         BlockPos center = startPos.offset(size / 2, size / 2, size / 2);
         Services.NETWORK.sendToPlayersNear(
-                (ServerLevel) playerIn.getCommandSenderWorld(),
+                (ServerLevel) playerIn.level(),
                 null,
                 center.getX(), center.getY(), center.getZ(), 200 + size,
                 new CapsuleUndeployNotifToClient(center, playerIn.blockPosition(), size, templateName)
@@ -159,7 +159,7 @@ public class Capsule {
         if (result) {
             // register the link in the capsule
             if (!CapsuleItem.isReward(capsule)) {
-                CapsuleItem.saveSpawnPosition(capsule, dest, world.dimension().location().toString());
+                CapsuleItem.saveSpawnPosition(capsule, dest, world.dimension().identifier().toString());
                 CapsuleItem.setState(capsule, CapsuleState.DEPLOYED);
                 if (!CapsuleItem.isBlueprint(capsule)) {
                     // remove the content from the structure block to prevent dupe using recovery capsule
@@ -367,7 +367,7 @@ public class Capsule {
     public static ItemEntity throwCapsule(ItemStack capsule, Player playerIn, BlockPos destination) {
         // startPosition from EntityThrowable
         double startPosition = playerIn.getY() - 0.3D + (double) playerIn.getEyeHeight();
-        ItemEntity ItemEntity = new ItemEntity(playerIn.getCommandSenderWorld(), playerIn.getX(), startPosition, playerIn.getZ(), capsule);
+        ItemEntity ItemEntity = new ItemEntity(playerIn.level(), playerIn.getX(), startPosition, playerIn.getZ(), capsule);
         ItemEntity.setPickUpDelay(20);// cannot be picked up before deployment
         ItemEntity.setThrower(playerIn);
         ItemEntity.setExtendedLifetime();
@@ -398,9 +398,9 @@ public class Capsule {
                     (double) (Mth.cos(playerIn.getYRot() * CapsuleItem.TO_RAD) * Mth.cos(playerIn.getXRot() * CapsuleItem.TO_RAD) * f) + playerInMotion.z
             );
         }
-        playerIn.getInventory().setItem(playerIn.getInventory().selected, ItemStack.EMPTY);
-        playerIn.getCommandSenderWorld().playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.2F, 0.1f);
-        playerIn.getCommandSenderWorld().addFreshEntity(ItemEntity);
+        playerIn.getInventory().setItem(playerIn.getInventory().getSelectedSlot(), ItemStack.EMPTY);
+        playerIn.level().playSound(null, ItemEntity.blockPosition(), SoundEvents.ARROW_SHOOT, SoundSource.BLOCKS, 0.2F, 0.1f);
+        playerIn.level().addFreshEntity(ItemEntity);
         return ItemEntity;
     }
 
@@ -446,7 +446,7 @@ public class Capsule {
         final int extendLength = (size - 1) / 2;
 
         // get destination world available position
-        final ServerLevel itemWorld = (ServerLevel) itemEntity.getCommandSenderWorld();
+        final ServerLevel itemWorld = (ServerLevel) itemEntity.level();
 
         if (CapsuleItem.hasStructureLink(capsule)) {
 
@@ -511,14 +511,14 @@ public class Capsule {
     public static ItemStack createLinkedCapsuleFromReward(String srcStructurePath, ServerPlayer player) {
         if (player == null) return ItemStack.EMPTY;
 
-        CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.getServer());
+        CapsuleTemplate srcTemplate = getRewardTemplateIfExists(srcStructurePath, player.level().getServer());
         if (srcTemplate == null) return ItemStack.EMPTY;
 
         int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
         if (size % 2 == 0)
             size++;
 
-        String destStructureName = StructureSaver.getUniqueName(player.serverLevel(), player.getGameProfile().getName() + "-" + srcStructurePath.replace("/", "_"));
+        String destStructureName = StructureSaver.getUniqueName(player.level(), player.getGameProfile().getName() + "-" + srcStructurePath.replace("/", "_"));
         ItemStack capsule = Capsule.newLinkedCapsuleItemStack(
                 destStructureName,
                 CapsuleLootEntry.getRandomColor(),
@@ -534,8 +534,8 @@ public class Capsule {
         StructureSaver.duplicateTemplate(
                 srcData,
                 destStructureName,
-                StructureSaver.getTemplateManager(player.serverLevel().getServer()),
-                player.getServer()
+                StructureSaver.getTemplateManager(player.level().getServer()),
+                player.level().getServer()
         );
         CapsuleItem.setCanRotate(capsule, srcTemplate.canRotate());
         return capsule;
@@ -612,7 +612,7 @@ public class Capsule {
 
     public static CapsuleTemplate getRewardTemplateIfExists(String structurePath, MinecraftServer server) {
         CapsuleTemplateManager srcTemplatemanager = StructureSaver.getRewardManager(server.getResourceManager());
-        return srcTemplatemanager.getOrCreateTemplate(ResourceLocation.parse(structurePath));
+        return srcTemplatemanager.getOrCreateTemplate(Identifier.parse(structurePath));
     }
 
     public static boolean clearTemplate(String capsuleStructureId, MinecraftServer server) {
@@ -621,7 +621,7 @@ public class Capsule {
             LOGGER.error("getTemplateManager returned null");
             return false;
         }
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(Identifier.parse(capsuleStructureId));
         if (template == null) return false;
 
         List<StructureTemplate.StructureBlockInfo> blocks = template.getPalette();
@@ -630,7 +630,7 @@ public class Capsule {
         blocks.clear();
         entities.clear();
 
-        return templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
+        return templatemanager.writeToFile(Identifier.parse(capsuleStructureId));
 
     }
 }

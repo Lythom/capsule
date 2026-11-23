@@ -46,8 +46,8 @@ public interface ClaimAdapter {
             for (int chunkZ = box.minZ() >> 4; chunkZ <= box.maxZ() >> 4; chunkZ++) {
                 Boolean allowed = query.allowed(chunkX, chunkZ);
                 if (allowed != null) {
-                    BoundingBox column = new BoundingBox(chunkX << 4, level.getMinBuildHeight(), chunkZ << 4,
-                            (chunkX << 4) + 15, level.getMaxBuildHeight() - 1, (chunkZ << 4) + 15);
+                    BoundingBox column = new BoundingBox(chunkX << 4, level.getMinY(), chunkZ << 4,
+                            (chunkX << 4) + 15, level.getMaxY(), (chunkZ << 4) + 15);
                     claims.add(new Claim(column, allowed));
                 }
             }

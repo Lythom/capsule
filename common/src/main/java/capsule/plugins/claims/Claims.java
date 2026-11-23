@@ -186,7 +186,7 @@ public final class Claims {
                 if (inBox == null) continue;
                 for (int chunkX = inBox.minX() >> 4; chunkX <= inBox.maxX() >> 4; chunkX++) {
                     for (int chunkZ = inBox.minZ() >> 4; chunkZ <= inBox.maxZ() >> 4; chunkZ++) {
-                        adapterClaims.computeIfAbsent(ChunkPos.asLong(chunkX, chunkZ), k -> new ArrayList<>()).add(claim);
+                        adapterClaims.computeIfAbsent(ChunkPos.pack(chunkX, chunkZ), k -> new ArrayList<>()).add(claim);
                     }
                 }
             }
@@ -197,7 +197,7 @@ public final class Claims {
         LongSet deniedColumns = perBlock ? LongSets.EMPTY_SET : deniedColumns(level, box, claimsByChunk, actor);
 
         return pos -> {
-            long chunk = ChunkPos.asLong(pos.getX() >> 4, pos.getZ() >> 4);
+            long chunk = ChunkPos.pack(pos.getX() >> 4, pos.getZ() >> 4);
             List<List<Claim>> chunkClaims = claimsByChunk.get(chunk);
             boolean claimed = false;
             if (chunkClaims != null) {
@@ -220,7 +220,7 @@ public final class Claims {
         LongSet denied = new LongOpenHashSet();
         for (int chunkX = box.minX() >> 4; chunkX <= box.maxX() >> 4; chunkX++) {
             for (int chunkZ = box.minZ() >> 4; chunkZ <= box.maxZ() >> 4; chunkZ++) {
-                long chunk = ChunkPos.asLong(chunkX, chunkZ);
+                long chunk = ChunkPos.pack(chunkX, chunkZ);
                 BoundingBox column = intersection(box, new BoundingBox(chunkX << 4, box.minY(), chunkZ << 4, (chunkX << 4) + 15, box.maxY(), (chunkZ << 4) + 15));
                 BlockPos probe = unclaimedPosition(column, claimsByChunk.getOrDefault(chunk, List.of()));
                 if (probe != null && !Services.PLATFORM.canPlaceBlock(level, probe, actor)) denied.add(chunk);

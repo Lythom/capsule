@@ -16,7 +16,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -87,11 +87,11 @@ public class CapsuleTestUtils {
     }
 
     public static Block block(String id) {
-        return BuiltInRegistries.BLOCK.get(ResourceLocation.parse(id));
+        return BuiltInRegistries.BLOCK.getValue(Identifier.parse(id));
     }
 
     public static Item item(String id) {
-        return BuiltInRegistries.ITEM.get(ResourceLocation.parse(id));
+        return BuiltInRegistries.ITEM.getValue(Identifier.parse(id));
     }
 
     public static CapsuleTemplate template(GameTestHelper helper, ItemStack capsule) {
@@ -145,13 +145,13 @@ public class CapsuleTestUtils {
         }, connection);
         new ServerGamePacketListenerImpl(helper.getLevel().getServer(), connection, player, cookie);
         Vec3 pos = helper.absoluteVec(Vec3.atBottomCenterOf(relativePos));
-        player.moveTo(pos.x, pos.y, pos.z, 0, 0);
+        player.snapTo(pos.x, pos.y, pos.z, 0, 0);
         helper.getLevel().addNewPlayer(player);
         return player;
     }
 
     public static void removePlayer(ServerPlayer player) {
-        player.serverLevel().removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+        player.level().removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
     }
 
     public static void assertTrue(GameTestHelper helper, boolean condition, String message) {

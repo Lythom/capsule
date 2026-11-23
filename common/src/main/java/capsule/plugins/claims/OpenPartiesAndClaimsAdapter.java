@@ -1,6 +1,6 @@
 package capsule.plugins.claims;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -26,7 +26,7 @@ class OpenPartiesAndClaimsAdapter implements ClaimAdapter {
         OpenPACServerAPI api = OpenPACServerAPI.get(level.getServer());
         IServerClaimsManagerAPI claims = api.getServerClaimsManager();
         IChunkProtectionAPI protection = api.getChunkProtection();
-        ResourceLocation dimension = level.dimension().location();
+        Identifier dimension = level.dimension().identifier();
         return ClaimAdapter.perChunk(level, box, (chunkX, chunkZ) -> claims.get(dimension, chunkX, chunkZ) == null ? null
                 : protection.hasChunkAccess(player.getUUID(), dimension, chunkX, chunkZ));
     }

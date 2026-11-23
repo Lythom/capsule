@@ -65,7 +65,7 @@ public class FlanTests {
     public static void flanIsAskedPerChunkColumnAboveTheLargestSurvivalCapsule(GameTestHelper helper) {
         ServerPlayer stranger = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(8, 1, 8));
         // boxes from a chunk corner: the center of their first chunk column is 8 blocks away
-        BlockPos min = new ChunkPos(helper.absolutePos(new BlockPos(8, 1, 8))).getWorldPosition().atY(helper.absolutePos(BlockPos.ZERO).getY() + 1);
+        BlockPos min = ChunkPos.containing(helper.absolutePos(new BlockPos(8, 1, 8))).getWorldPosition().atY(helper.absolutePos(BlockPos.ZERO).getY() + 1);
         int largest = Claims.perBlockMaxSize(helper.getLevel().getServer());
         BlockPos center = min.offset(8, largest / 2 + 1, 8);
         BlockPos outside = center.west(8).north(8);

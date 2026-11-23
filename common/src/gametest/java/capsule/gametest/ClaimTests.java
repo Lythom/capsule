@@ -18,7 +18,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -107,7 +107,7 @@ public class ClaimTests {
         int size = CapsuleItem.CAPSULE_MAX_CAPTURE_SIZE;
         BlockPos min = helper.absolutePos(new BlockPos(0, 1, 0));
         BoundingBox box = BoundingBox.fromCorners(min, min.offset(size - 1, size - 1, size - 1));
-        ChunkPos deniedChunk = new ChunkPos(min);
+        ChunkPos deniedChunk = ChunkPos.containing(min);
         ChunkPos unclaimedChunk = new ChunkPos(box.maxX() >> 4, box.maxZ() >> 4);
         AtomicInteger chunkQueries = new AtomicInteger();
         AtomicInteger regionQueries = new AtomicInteger();
@@ -123,7 +123,7 @@ public class ClaimTests {
                 if (!queried.equals(box)) return List.of();
                 return ClaimAdapter.perChunk(level, queried, (x, z) -> {
                     chunkQueries.incrementAndGet();
-                    return x == unclaimedChunk.x && z == unclaimedChunk.z ? null : x != deniedChunk.x || z != deniedChunk.z;
+                    return x == unclaimedChunk.x() && z == unclaimedChunk.z() ? null : x != deniedChunk.x() || z != deniedChunk.z();
                 });
             }
         };
@@ -220,7 +220,7 @@ public class ClaimTests {
         MinecraftServer server = helper.getLevel().getServer();
         ItemStack even = CapsuleTestUtils.emptyCapsule(3);
         NBTHelper.updateTag(even, tag -> tag.putInt("size", 4));
-        RecipeHolder<ShapedRecipe> evenRecipe = new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "test_even_size"),
+        RecipeHolder<ShapedRecipe> evenRecipe = new RecipeHolder<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_even_size"),
                 new ShapedRecipe("", CraftingBookCategory.MISC, ShapedRecipePattern.of(Map.of('#', Ingredient.of(Items.BEDROCK)), "#"), even));
         CompletableFuture<Integer> largest = server.reloadResources(server.getPackRepository().getSelectedIds()).thenApply(reloaded -> {
             RecipeManager recipes = server.getRecipeManager();

@@ -58,7 +58,7 @@ class CaptureAnimationTest {
         }
 
         @Override
-        public int getMinBuildHeight() {
+        public int getMinY() {
             return -64;
         }
     }

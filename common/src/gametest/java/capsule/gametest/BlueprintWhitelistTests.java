@@ -11,7 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
@@ -55,7 +55,7 @@ public class BlueprintWhitelistTests {
     public static void everyVanillaBlockEntityIsWhitelistedOrExcluded(GameTestHelper helper) {
         List<String> unlisted = new ArrayList<>();
         for (BlockEntityType<?> type : BuiltInRegistries.BLOCK_ENTITY_TYPE) {
-            ResourceLocation typeId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type);
+            Identifier typeId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(type);
             if (!typeId.getNamespace().equals("minecraft") || EXCLUDED.containsKey(typeId.toString())) continue;
             BuiltInRegistries.BLOCK.stream()
                     .filter(block -> type.isValid(block.defaultBlockState()))
@@ -67,7 +67,7 @@ public class BlueprintWhitelistTests {
 
         List<String> dead = Config.blueprintWhitelist.keySet().stream()
                 .filter(id -> id.startsWith("minecraft:"))
-                .filter(id -> BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(id)).map(block -> !block.defaultBlockState().hasBlockEntity()).orElse(true))
+                .filter(id -> BuiltInRegistries.BLOCK.getOptional(Identifier.parse(id)).map(block -> !block.defaultBlockState().hasBlockEntity()).orElse(true))
                 .toList();
         assertTrue(helper, dead.isEmpty(), "whitelisted ids without a block entity: " + dead);
         helper.succeed();

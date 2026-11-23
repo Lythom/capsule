@@ -33,7 +33,7 @@ import net.minecraft.network.chat.ClickEvent.Action;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -308,7 +308,7 @@ public class CapsuleCommand {
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
             ItemStack capsule = Capsule.createLinkedCapsuleFromReward(Config.getRewardPathFromName(templateName), player);
             if (withLoyalty) {
-                capsule.enchant(player.serverLevel().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(Enchantments.LOYALTY), 1);
+                capsule.enchant(player.level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(Enchantments.LOYALTY), 1);
             }
             if (!capsule.isEmpty()) {
                 giveCapsule(capsule, player);
@@ -324,7 +324,7 @@ public class CapsuleCommand {
         String templateName = rewardTemplateName.replace(".nbt", "").replace(".schematic", "").replace(".schem", "");
         if (player != null && !StringUtil.isNullOrEmpty(templateName)) {
 
-            CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.getServer());
+            CapsuleTemplate srcTemplate = Capsule.getRewardTemplateIfExists(Config.getRewardPathFromName(templateName), player.level().getServer());
             if (srcTemplate != null) {
                 int size = Math.max(srcTemplate.getSize().getX(), Math.max(srcTemplate.getSize().getY(), srcTemplate.getSize().getZ()));
                 if (size % 2 == 0)
@@ -343,7 +343,7 @@ public class CapsuleCommand {
 
                 String destTemplate = StructureSaver.createBlueprintTemplate(
                         Config.getRewardPathFromName(templateName), capsule,
-                        player.serverLevel(),
+                        player.level(),
                         player
                 );
                 CapsuleItem.setStructureName(capsule, destTemplate);
@@ -358,7 +358,7 @@ public class CapsuleCommand {
 
     private static int executeGiveRandomLoot(ServerPlayer player) throws CommandSyntaxException {
         if (player != null) {
-            LootParams builder = (new LootParams.Builder(player.serverLevel()))
+            LootParams builder = (new LootParams.Builder(player.level()))
                     .withParameter(LootContextParams.THIS_ENTITY, player).withParameter(LootContextParams.ORIGIN, player.position()).create(LootContextParamSets.COMMAND);
             List<ItemStack> loots = new ArrayList<>();
             CapsuleLootTableHook.capsulePool().build().addRandomItems(loots::add, (new LootContext.Builder(builder)).create(Optional.empty()));
@@ -377,8 +377,8 @@ public class CapsuleCommand {
     private static int executeFromExistingReward(ServerPlayer player, String templateName) throws CommandSyntaxException {
         if (player != null && !StringUtil.isNullOrEmpty(templateName) && player.level() instanceof ServerLevel) {
             String structurePath = Config.getRewardPathFromName(templateName);
-            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
-            CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(structurePath));
+            CapsuleTemplateManager templatemanager = StructureSaver.getRewardManager(player.level().getServer().getResourceManager());
+            CapsuleTemplate template = templatemanager.getOrCreateTemplate(Identifier.parse(structurePath));
             if (template != null) {
                 int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 if (size % 2 == 0)
@@ -409,17 +409,17 @@ public class CapsuleCommand {
             String author = null;
 
             // template
-            StructureTemplateManager templatemanager = player.serverLevel().getStructureManager();
+            StructureTemplateManager templatemanager = player.level().getStructureManager();
             String path = templateName.endsWith(".nbt") ? templateName.replace(".nbt", "") : templateName;
-            Optional<StructureTemplate> templateO = templatemanager.get(ResourceLocation.parse(path));
+            Optional<StructureTemplate> templateO = templatemanager.get(Identifier.parse(path));
             if (templateO.isPresent()) {
                 StructureTemplate template = templateO.get();
                 size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                 author = template.getAuthor();
                 template.save(data);
             } else {
-                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.serverLevel().getServer());
-                CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
+                CapsuleTemplateManager capsuletemplatemanager = StructureSaver.getTemplateManager(player.level().getServer());
+                CapsuleTemplate ctemplate = capsuletemplatemanager.getOrCreateTemplate(Identifier.parse(path));
                 size = Math.max(ctemplate.getSize().getX(), Math.max(ctemplate.getSize().getY(), ctemplate.getSize().getZ()));
                 author = ctemplate.getAuthor();
                 ctemplate.save(data);
@@ -429,8 +429,8 @@ public class CapsuleCommand {
                 if (size % 2 == 0)
                     size++;
                 // create a destination template
-                ResourceLocation destinationLocation = ResourceLocation.parse(Config.rewardTemplatesPath + "/" + path);
-                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.getServer().getResourceManager());
+                Identifier destinationLocation = Identifier.parse(Config.rewardTemplatesPath + "/" + path);
+                CapsuleTemplateManager destManager = StructureSaver.getRewardManager(player.level().getServer().getResourceManager());
                 CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
                 // write template from source data
                 destTemplate.load(data, destinationLocation.toString());
@@ -475,8 +475,8 @@ public class CapsuleCommand {
                 boolean created = StructureSaver.copyFromCapsuleTemplate(
                         heldItem,
                         destinationTemplateLocation,
-                        StructureSaver.getRewardManager(player.getServer().getResourceManager()),
-                        player.serverLevel(),
+                        StructureSaver.getRewardManager(player.level().getServer().getResourceManager()),
+                        player.level(),
                         false,
                         null
                 );
@@ -556,23 +556,23 @@ public class CapsuleCommand {
                 if (!StringUtil.isNullOrEmpty(authorName)) {
                     // set a new author
                     NBTHelper.updateTag(heldItem, tag -> tag.putString("author", authorName));
-                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.serverLevel());
+                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.level());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor(authorName);
-                        templatemanager.writeToFile(ResourceLocation.parse(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(Identifier.parse(CapsuleItem.getStructureName(heldItem)));
                     }
 
                 } else {
                     // called with one parameter = remove author information
                     NBTHelper.updateTag(heldItem, tag -> tag.remove("author"));
-                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.serverLevel());
+                    Pair<CapsuleTemplateManager, CapsuleTemplate> templatepair = StructureSaver.getTemplate(heldItem, player.level());
                     CapsuleTemplate template = templatepair.getRight();
                     CapsuleTemplateManager templatemanager = templatepair.getLeft();
                     if (template != null && templatemanager != null) {
                         template.setAuthor("?");
-                        templatemanager.writeToFile(ResourceLocation.parse(CapsuleItem.getStructureName(heldItem)));
+                        templatemanager.writeToFile(Identifier.parse(CapsuleItem.getStructureName(heldItem)));
                     }
                 }
                 return 1;
@@ -583,14 +583,14 @@ public class CapsuleCommand {
 
     private static int executeExportSeenBlock(ServerPlayer player) {
         if (player != null) {
-            if (player.getServer() != null && !player.getServer().isDedicatedServer()) {
+            if (!player.level().getServer().isDedicatedServer()) {
                 BlockHitResult rtc = Spacial.clientRayTracePreview(player, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), 50);
 
                 if (rtc.getType() == HitResult.Type.BLOCK) {
 
                     BlockPos position = rtc.getBlockPos();
-                    BlockState state = player.serverLevel().getBlockState(position);
-                    BlockEntity blockEntity = player.serverLevel().getBlockEntity(position);
+                    BlockState state = player.level().getBlockState(position);
+                    BlockEntity blockEntity = player.level().getBlockEntity(position);
 
                     ItemStack stack = new ItemStack(state.getBlock());
                     if (blockEntity != null) blockEntity.saveToItem(stack, player.registryAccess());
@@ -613,7 +613,7 @@ public class CapsuleCommand {
      * The /give command of an item, its components in the 1.20.5 syntax.
      */
     private static String giveCommand(ItemStack stack, HolderLookup.Provider registries) {
-        return "/give @p " + new ItemInput(stack.getItemHolder(), stack.getComponentsPatch()).serialize(registries);
+        return "/give @p " + new ItemInput(stack.typeHolder(), stack.getComponentsPatch()).serialize(registries);
     }
 
     private static int executeExportHeldItem(ServerPlayer player) {

@@ -2,7 +2,7 @@ package capsule.structure;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixers;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,7 +35,7 @@ class CapsuleTemplateManagerTest {
     void templatesAreWrittenUnderAnInstallPathWithReservedWindowsNames(@TempDir Path tmp) throws Exception {
         // Flatpak ATLauncher instances live under .../com.atlauncher.ATLauncher/..., "com" being a reserved name on Windows
         Path folder = Files.createDirectories(tmp.resolve("com.atlauncher.ATLauncher").resolve("aux").resolve("capsules"));
-        ResourceLocation name = ResourceLocation.parse("c-player-1");
+        Identifier name = Identifier.parse("c-player-1");
 
         CapsuleTemplateManager m = manager(folder);
         m.getOrCreateTemplate(name);
@@ -48,7 +48,7 @@ class CapsuleTemplateManagerTest {
     @Test
     void pathsEscapingTheTemplateFolderAreRefusedWithoutException(@TempDir Path tmp) throws Exception {
         CapsuleTemplateManager m = manager(Files.createDirectories(tmp.resolve("capsules")));
-        ResourceLocation escaping = ResourceLocation.parse("../escaped");
+        Identifier escaping = Identifier.parse("../escaped");
         m.getOrCreateTemplate(escaping);
 
         assertFalse(m.writeToFile(escaping));
@@ -59,7 +59,7 @@ class CapsuleTemplateManagerTest {
     @Test
     void reservedNamesInTheTemplatePathAreRefusedWithoutException(@TempDir Path tmp) {
         CapsuleTemplateManager m = manager(tmp);
-        ResourceLocation reserved = ResourceLocation.parse("con/template");
+        Identifier reserved = Identifier.parse("con/template");
         m.getOrCreateTemplate(reserved);
 
         assertFalse(m.writeToFile(reserved));

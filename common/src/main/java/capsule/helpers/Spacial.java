@@ -66,7 +66,7 @@ public class Spacial {
         Vec3 vec3d1 = thePlayer.getViewVector(partialTicks);
         Vec3 vec3d2 = vec3d.add(vec3d1.x * blockReachDistance, vec3d1.y * blockReachDistance, vec3d1.z * blockReachDistance);
         boolean stopOnLiquid = !isImmergedInLiquid(thePlayer);
-        return thePlayer.getCommandSenderWorld().clip(
+        return thePlayer.level().clip(
                 new ClipContext(vec3d, vec3d2, ClipContext.Block.OUTLINE, stopOnLiquid ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, thePlayer)
         );
     }
@@ -84,7 +84,7 @@ public class Spacial {
             Iterable<BlockPos> blockPoss = BlockPos.betweenClosed(BlockPos.containing(i - range, j - range, k - range),
                     BlockPos.containing(i + range, j + range, k + range));
             for (BlockPos pos : blockPoss) {
-                Block block = ItemEntity.getCommandSenderWorld().hasChunkAt(pos) ? ItemEntity.getCommandSenderWorld().getBlockState(pos).getBlock() : null;
+                Block block = ItemEntity.level().hasChunkAt(pos) ? ItemEntity.level().getBlockState(pos).getBlock() : null;
                 if (block != null && block.getClass().equals(searchedBlock)) {
                     return new BlockPos(pos.getX(), pos.getY(), pos.getZ()); // return a copy
                 }

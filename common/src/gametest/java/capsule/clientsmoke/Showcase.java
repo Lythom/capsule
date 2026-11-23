@@ -154,7 +154,7 @@ class Showcase {
     }
 
     private void prepareWorld(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0);
         level.setDayTime(6000);
         level.setWeatherParameters(6000, 0, false, false);
@@ -170,7 +170,7 @@ class Showcase {
         BlockPos[] marker = {null};
         scenario.async("set the capture scene", 200, () -> test.onServer(p -> {
                     marker[0] = new BlockPos(0, ground, 4);
-                    buildHouseOnCaptureBase(p.serverLevel(), marker[0]);
+                    buildHouseOnCaptureBase(p.level(), marker[0]);
                     p.getInventory().setItem(0, Capsule.newEmptyCapsuleItemStack(DyeColor.LIGHT_BLUE.getTextureDiffuseColor(), 0xFFD700, SIZE, false, null, 0));
                     ClientSmokeTest.flyTo(p, 0.5, ground + 3, -4.5, 25);
                 }))
@@ -205,7 +205,7 @@ class Showcase {
         scenario.async("set the preview scene", 200, () -> test.onServer(p -> {
                     Config.previewDisplayDuration = 20 * 60;
                     p.getInventory().setItem(0, house.copy());
-                    decoratePreviewSpot(p.serverLevel(), new BlockPos(96, ground, 0));
+                    decoratePreviewSpot(p.level(), new BlockPos(96, ground, 0));
                     ClientSmokeTest.flyTo(p, 96.5, ground + 3, -8.5, 30);
                 }))
                 .run("select it", () -> ClientSmokeTest.select(0))
@@ -269,7 +269,7 @@ class Showcase {
                     p.getInventory().clearContent();
                     ItemStack loyal = house.copy();
                     CapsuleItem.setLabel(loyal, "Loyal House");
-                    loyal.enchant(p.serverLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOYALTY), 1);
+                    loyal.enchant(p.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.LOYALTY), 1);
                     p.getInventory().setItem(0, loyal);
                     ClientSmokeTest.flyTo(p, 192.5, ground + 3, -8.5, 30);
                 }))
@@ -294,7 +294,7 @@ class Showcase {
      */
     private void enchantingScene() {
         scenario.async("open an enchanting table with a capsule", 200, () -> test.onServer(p -> {
-                    ServerLevel level = p.serverLevel();
+                    ServerLevel level = p.level();
                     BlockPos table = new BlockPos(186, ground, -8);
                     level.setBlockAndUpdate(table, Blocks.ENCHANTING_TABLE.defaultBlockState());
                     for (BlockPos pos : BlockPos.betweenClosed(table.offset(-2, 0, -2), table.offset(2, 1, 2))) {
@@ -324,7 +324,7 @@ class Showcase {
      */
     private void lavaScene() {
         scenario.async("set the lava scene", 200, () -> test.onServer(p -> {
-                    ServerLevel level = p.serverLevel();
+                    ServerLevel level = p.level();
                     BlockPos center = new BlockPos(288, ground, 6);
                     for (BlockPos pos : BlockPos.betweenClosed(center.offset(-6, -1, -6), center.offset(6, -1, 6))) {
                         int dx = Math.abs(pos.getX() - center.getX()), dz = Math.abs(pos.getZ() - center.getZ());
@@ -360,7 +360,7 @@ class Showcase {
     private void claimScene() {
         Object[] claim = {null};
         scenario.async("set the claim scene", 200, () -> test.onServer(p -> {
-                    ServerLevel level = p.serverLevel();
+                    ServerLevel level = p.level();
                     BlockPos center = new BlockPos(384, ground, 6);
                     BlockState fence = Blocks.SPRUCE_FENCE.defaultBlockState();
                     for (int dx = -2; dx <= 2; dx++) {
@@ -398,7 +398,7 @@ class Showcase {
      */
     private void blueprintScene() {
         scenario.async("set the blueprint scene", 200, () -> test.onServer(p -> {
-                    ServerLevel level = p.serverLevel();
+                    ServerLevel level = p.level();
                     p.getInventory().clearContent();
                     ItemStack blueprint = this.blueprint.copy();
                     chest = new BlockPos(477, ground, -5);
@@ -473,7 +473,7 @@ class Showcase {
                     p.getAbilities().mayfly = true;
                     p.onUpdateAbilities();
                 }))
-                .await("survival mode on the client", 40, () -> !mc().gameMode.hasInfiniteItems())
+                .await("survival mode on the client", 40, () -> !mc().player.hasInfiniteMaterials())
                 .run("search capsule", () -> viewer.search("capsule"))
                 .run("open the inventory on the netherite capsule", () -> mc().setScreen(new ClientSmokeTest.HoverInventoryScreen(0)))
                 .sleep(30)
@@ -494,8 +494,8 @@ class Showcase {
         ItemStack blueprint = Capsule.newEmptyCapsuleItemStack(0x3C44AA, 0xFFFFFF, SIZE, false, "House blueprint", 0);
         CapsuleItem.setState(blueprint, CapsuleState.DEPLOYED);
         CapsuleItem.setBlueprint(blueprint);
-        CapsuleItem.setStructureName(blueprint, StructureSaver.createBlueprintTemplate(CapsuleItem.getStructureName(house), blueprint, player.serverLevel(), player));
-        Capsule.reloadBlueprint(blueprint, player.serverLevel(), player);
+        CapsuleItem.setStructureName(blueprint, StructureSaver.createBlueprintTemplate(CapsuleItem.getStructureName(house), blueprint, player.level(), player));
+        Capsule.reloadBlueprint(blueprint, player.level(), player);
         return blueprint;
     }
 

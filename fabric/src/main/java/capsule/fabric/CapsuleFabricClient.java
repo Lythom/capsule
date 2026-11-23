@@ -17,7 +17,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -41,14 +41,14 @@ public class CapsuleFabricClient implements ClientModInitializer {
 
         // unclamped, as on NeoForge: capsule states go above 1
         ItemProperties.PROPERTIES.computeIfAbsent(CapsuleItems.CAPSULE.get(), item -> new HashMap<>()).put(
-                ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
+                Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
                 (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
         );
         ColorProviderRegistry.ITEM.register(CapsuleItem::getColorFromItemstack, CapsuleItems.CAPSULE.get());
         BlockEntityRenderers.register(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new);
 
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> CapsulePreviewHandler.onLevelRenderLast(
-                context.worldRenderer(), context.matrixStack(), context.tickCounter().getGameTimeDeltaPartialTick(true)));
+                context.matrixStack(), context.tickCounter().getGameTimeDeltaPartialTick(true)));
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> CapsulePreviewHandler.onChatMessage(message));
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
             if (client.player != null) CapsulePreviewHandler.onLocalPlayerTick(client.player);

@@ -4,7 +4,7 @@ import capsule.CapsuleMod;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,12 +17,12 @@ public class CapsuleEnchantments {
      */
     public static final ResourceKey<Enchantment> RECALL = ResourceKey.create(
             Registries.ENCHANTMENT,
-            ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "recall")
+            Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "recall")
     );
 
     public static final TagKey<Item> RECALLABLE = TagKey.create(
             Registries.ITEM,
-            ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "enchantable/recall")
+            Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "enchantable/recall")
     );
 
     /**

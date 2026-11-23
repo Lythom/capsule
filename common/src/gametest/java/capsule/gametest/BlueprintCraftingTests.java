@@ -13,11 +13,11 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixers;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.ItemStack;
@@ -74,7 +74,7 @@ public class BlueprintCraftingTests {
         CapsuleTemplateManager prefabFiles = new CapsuleTemplateManager(server.getResourceManager(), new File("."), DataFixers.getDataFixer());
         StructureSaver.duplicateTemplate(StructureSaver.getTemplateNBTData(CapsuleTestUtils.template(helper, CapsuleTestUtils.capture(helper, new BlockPos(0, 1, 0), 3))), prefab, prefabFiles, server);
 
-        List<ResourceLocation> recipes = new ArrayList<>();
+        List<Identifier> recipes = new ArrayList<>();
         try (LogCapture logs = LogCapture.open()) {
             Blueprint.createDynamicPrefabRecipes(server.getResourceManager(), List.of(prefab), (id, recipe, ingredients) -> recipes.add(id));
             assertTrue(helper, recipes.size() == 1, "the prefab should get a recipe, got " + recipes);
@@ -113,7 +113,7 @@ public class BlueprintCraftingTests {
      * The capsules crafted into the player's inventory or hand, which must all be blueprints.
      */
     private static List<ItemStack> blueprints(GameTestHelper helper, ServerPlayer player, CraftingMenu menu) {
-        List<ItemStack> found = new ArrayList<>(player.getInventory().items.stream().filter(s -> s.getItem() instanceof CapsuleItem).toList());
+        List<ItemStack> found = new ArrayList<>(player.getInventory().getNonEquipmentItems().stream().filter(s -> s.getItem() instanceof CapsuleItem).toList());
         if (!menu.getCarried().isEmpty()) found.add(menu.getCarried());
         assertTrue(helper, found.stream().allMatch(CapsuleItem::isBlueprint), "only blueprints should be crafted, got " + found.stream().map(s -> CapsuleItem.getState(s) + " " + CapsuleItem.getStructureName(s)).toList());
         return found;
@@ -128,14 +128,14 @@ public class BlueprintCraftingTests {
         return new ItemStack(item, count);
     }
 
-    private static void craftBlueprint(GameTestHelper helper, ClickType click, boolean oneUse, int expectedBlueprints, int[] expectedGrid) {
+    private static void craftBlueprint(GameTestHelper helper, ContainerInput click, boolean oneUse, int expectedBlueprints, int[] expectedGrid) {
         ItemStack linked = linkedCapsule(helper, new BlockPos(1, 1, 1));
         if (oneUse) CapsuleItem.setOneUse(linked);
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 4));
         ItemStack e = ItemStack.EMPTY;
         CraftingMenu menu = craftingMenu(helper, player,
                 e, of(Items.STONE_BUTTON, 3), e,
-                of(Items.BLUE_DYE, 3), linked, of(Items.BLUE_DYE, 3),
+                of(Items.DYE.blue(), 3), linked, of(Items.DYE.blue(), 3),
                 e, of(Items.PAPER, 3), e);
 
         menu.clicked(RESULT, 0, click, player);
@@ -150,25 +150,25 @@ public class BlueprintCraftingTests {
 
     @GameTest(template = "empty")
     public static void blueprintCraftConsumesItsIngredients(GameTestHelper helper) {
-        craftBlueprint(helper, ClickType.PICKUP, false, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
+        craftBlueprint(helper, ContainerInput.PICKUP, false, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
     }
 
     @GameTest(template = "empty")
     public static void blueprintShiftCraftConsumesItsIngredients(GameTestHelper helper) {
-        craftBlueprint(helper, ClickType.QUICK_MOVE, false, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
+        craftBlueprint(helper, ContainerInput.QUICK_MOVE, false, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
     }
 
     @GameTest(template = "empty")
     public static void blueprintCraftFromAOneUseCapsuleConsumesItsIngredients(GameTestHelper helper) {
-        craftBlueprint(helper, ClickType.PICKUP, true, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
+        craftBlueprint(helper, ContainerInput.PICKUP, true, 1, new int[]{0, 2, 0, 2, 1, 2, 0, 2, 0});
     }
 
     @GameTest(template = "empty")
     public static void blueprintShiftCraftFromAOneUseCapsuleConsumesItsIngredients(GameTestHelper helper) {
-        craftBlueprint(helper, ClickType.QUICK_MOVE, true, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
+        craftBlueprint(helper, ContainerInput.QUICK_MOVE, true, 3, new int[]{0, 0, 0, 0, 1, 0, 0, 0, 0});
     }
 
-    private static void changeBlueprint(GameTestHelper helper, ClickType click) {
+    private static void changeBlueprint(GameTestHelper helper, ContainerInput click) {
         ItemStack source = linkedCapsule(helper, new BlockPos(1, 1, 1));
         ItemStack blueprint = linkedCapsule(helper, new BlockPos(3, 1, 1));
         CapsuleItem.setBlueprint(blueprint);
@@ -187,19 +187,19 @@ public class BlueprintCraftingTests {
 
     @GameTest(template = "empty")
     public static void blueprintChangeConsumesTheBlueprint(GameTestHelper helper) {
-        changeBlueprint(helper, ClickType.PICKUP);
+        changeBlueprint(helper, ContainerInput.PICKUP);
     }
 
     @GameTest(template = "empty")
     public static void blueprintChangeShiftCraftConsumesTheBlueprint(GameTestHelper helper) {
-        changeBlueprint(helper, ClickType.QUICK_MOVE);
+        changeBlueprint(helper, ContainerInput.QUICK_MOVE);
     }
 
     /**
      * Crafts a prefab whose 3x3 recipe has its three template ingredients at prefabSlots (grid indexes): those are given
      * back, the other ingredients are consumed.
      */
-    private static void craftPrefab(GameTestHelper helper, ClickType click, Set<Integer> prefabSlots) {
+    private static void craftPrefab(GameTestHelper helper, ContainerInput click, Set<Integer> prefabSlots) {
         PrefabsBlueprintCapsuleRecipe recipe = PrefabsBlueprintAggregatorRecipe.instance.recipes.stream()
                 .filter(r -> r.recipe.getWidth() == 3 && r.recipe.getHeight() == 3 && prefabSlots.stream().noneMatch(i -> r.recipe.getIngredients().get(i).isEmpty()))
                 .findFirst().orElse(null);
@@ -211,7 +211,7 @@ public class BlueprintCraftingTests {
 
         menu.clicked(RESULT, 0, click, player);
 
-        int crafts = click == ClickType.QUICK_MOVE ? 2 : 1;
+        int crafts = click == ContainerInput.QUICK_MOVE ? 2 : 1;
         int[] expected = IntStream.range(0, 9).map(i -> grid[i].isEmpty() ? 0 : prefabSlots.contains(i) ? 2 : 2 - crafts).toArray();
         List<ItemStack> crafted = blueprints(helper, player, menu);
         CapsuleTestUtils.removePlayer(player);
@@ -224,12 +224,12 @@ public class BlueprintCraftingTests {
 
     @GameTest(template = "empty")
     public static void prefabCraftGivesItsTemplateIngredientsBack(GameTestHelper helper) {
-        craftPrefab(helper, ClickType.PICKUP, DEFAULT_PREFAB_SLOTS);
+        craftPrefab(helper, ContainerInput.PICKUP, DEFAULT_PREFAB_SLOTS);
     }
 
     @GameTest(template = "empty")
     public static void prefabShiftCraftGivesItsTemplateIngredientsBack(GameTestHelper helper) {
-        craftPrefab(helper, ClickType.QUICK_MOVE, DEFAULT_PREFAB_SLOTS);
+        craftPrefab(helper, ContainerInput.QUICK_MOVE, DEFAULT_PREFAB_SLOTS);
     }
 
     /**
@@ -256,11 +256,11 @@ public class BlueprintCraftingTests {
 
     @GameTest(template = "empty", batch = "prefabPattern")
     public static void prefabCraftWithAMovedPatternGivesItsTemplateIngredientsBack(GameTestHelper helper) {
-        withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ClickType.PICKUP, Set.of(1, 2, 4)));
+        withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ContainerInput.PICKUP, Set.of(1, 2, 4)));
     }
 
     @GameTest(template = "empty", batch = "prefabPattern")
     public static void prefabShiftCraftWithAMovedPatternGivesItsTemplateIngredientsBack(GameTestHelper helper) {
-        withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ClickType.QUICK_MOVE, Set.of(1, 2, 4)));
+        withPrefabPattern(helper, MOVED_PATTERN, () -> craftPrefab(helper, ContainerInput.QUICK_MOVE, Set.of(1, 2, 4)));
     }
 }

@@ -7,7 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
@@ -146,7 +146,7 @@ public class Files {
 
     public static void populateFolder(File templateFolder, String assetPath, ResourceManager ressourceManager) {
         try {
-            for (Map.Entry<ResourceLocation, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".json") || CapsuleTemplateManager.EXTENSIONS.stream().anyMatch(s.getPath()::endsWith)).entrySet()) {
+            for (Map.Entry<Identifier, Resource> ressourceLoc : ressourceManager.listResources(assetPath, s -> s.getPath().endsWith(".json") || CapsuleTemplateManager.EXTENSIONS.stream().anyMatch(s.getPath()::endsWith)).entrySet()) {
                 Resource resource = ressourceLoc.getValue();
                 // source path
                 String sourcePath = ressourceLoc.getKey().getPath();
@@ -189,7 +189,7 @@ public class Files {
                     String relative = templateFolder.toPath().relativize(path).toString().replace('\\', '/');
                     String name = withoutTemplateExtension(relative);
                     if (name == null || !path.toFile().isFile()) continue;
-                    if (ResourceLocation.isValidPath(name)) {
+                    if (Identifier.isValidPath(name)) {
                         onTemplateFound.accept(name);
                     } else {
                         LOGGER.warn("Ignoring template " + path + ": template file names can only contain a-z 0-9 / . _ -");

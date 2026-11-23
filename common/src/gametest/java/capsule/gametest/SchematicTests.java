@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.Container;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -54,7 +54,7 @@ public class SchematicTests {
             problems.add("the chest holds " + container.countItem(Items.DIAMOND) + " diamonds instead of 5");
         }
         AABB box = new AABB(Vec3.atLowerCornerOf(helper.absolutePos(corner)), Vec3.atLowerCornerOf(helper.absolutePos(corner.offset(3, 3, 3))));
-        List<ArmorStand> stands = helper.getLevel().getEntities(EntityType.ARMOR_STAND, box, e -> true);
+        List<ArmorStand> stands = helper.getLevel().getEntities(EntityTypes.ARMOR_STAND, box, e -> true);
         if (withEntity && stands.size() != 1) problems.add(stands.size() + " armor stands instead of 1");
         return problems;
     }

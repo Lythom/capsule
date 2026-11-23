@@ -69,7 +69,7 @@ public class WorldEditTests {
 
         for (String name : List.of("sponge_v2", "sponge_v3", "vanilla")) {
             String path = FOLDER + "/" + name;
-            StructureSaver.getRewardManager(helper.getLevel().getServer().getResourceManager()).remove(net.minecraft.resources.ResourceLocation.parse(path));
+            StructureSaver.getRewardManager(helper.getLevel().getServer().getResourceManager()).remove(net.minecraft.resources.Identifier.parse(path));
             assertTrue(helper, CapsuleTestUtils.deploy(helper, Capsule.newRewardCapsuleItemStack(path, 0, 0, 3, null, null), new BlockPos(4, 0, 4), null), path + " should deploy");
             List<String> problems = SchematicTests.sceneProblems(helper, new BlockPos(3, 1, 3), true);
             assertTrue(helper, problems.isEmpty(), path + ": " + problems);

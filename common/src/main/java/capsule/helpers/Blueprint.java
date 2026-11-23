@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.datafix.DataFixers;
@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
-import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SlabBlock;
@@ -88,7 +88,7 @@ public class Blueprint {
             } else if (block instanceof SlabBlock && state.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) {
                 return new ItemStack(block.asItem(), 2);
 
-            } else if (block instanceof FarmBlock) {
+            } else if (block instanceof FarmlandBlock) {
                 return new ItemStack(Blocks.DIRT);
 
             } else if (block instanceof LiquidBlock fblock) {
@@ -164,7 +164,7 @@ public class Blueprint {
         TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = new TreeMap<>(Triple::compareTo);
         for (String templateName : prefabsTemplatesList) {
             try {
-                CapsuleTemplate template = tempManager.getTemplate(ResourceLocation.parse(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(Identifier.parse(templateName));
                 if (template != null) {
                     Map<ItemStackKey, Integer> fullList = getMaterialList(template, null, null);
                     if (fullList != null) {
@@ -226,7 +226,7 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(ResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<ResourceLocation, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+    public static void createDynamicPrefabRecipes(ResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<Identifier, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
         JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefab_blueprint_recipe.json"));
         if (referenceRecipe != null) {
             // declarations extract to improve readability
@@ -240,7 +240,7 @@ public class Blueprint {
             reduced = reduceIngredientCount(templatesByIngrendients);
 
             reduced.forEach((ingredients, templateName) -> {
-                CapsuleTemplate template = tempManager.getTemplate(ResourceLocation.parse(templateName));
+                CapsuleTemplate template = tempManager.getTemplate(Identifier.parse(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (ingredients.getLeft() == null && ingredients.getMiddle() == null && ingredients.getRight() == null) {
                     LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");
@@ -279,7 +279,7 @@ public class Blueprint {
                     customData.addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
                     customData.addProperty("size", size);
-                    parseTemplate.accept(ResourceLocation.parse(templateName), jsonRecipe, ingredients);
+                    parseTemplate.accept(Identifier.parse(templateName), jsonRecipe, ingredients);
                     warnBlocksMissingFromBlueprints(templateName, template);
                 }
             });

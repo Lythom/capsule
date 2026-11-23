@@ -95,9 +95,9 @@ public class CaptureAnimation {
         AABB current = shrunk(age / (float) DURATION).move(origin);
         Vec3 to = target.add(Vec3.atLowerCornerOf(origin));
         for (int i = 0; i < 3; i++) {
-            double x = current.minX + level.random.nextDouble() * current.getXsize();
-            double y = current.minY + level.random.nextDouble() * current.getYsize();
-            double z = current.minZ + level.random.nextDouble() * current.getZsize();
+            double x = current.minX + level.getRandom().nextDouble() * current.getXsize();
+            double y = current.minY + level.getRandom().nextDouble() * current.getYsize();
+            double z = current.minZ + level.getRandom().nextDouble() * current.getZsize();
             level.addParticle(ParticleTypes.END_ROD, x, y, z, (to.x - x) * 0.15, (to.y - y) * 0.15, (to.z - z) * 0.15);
         }
         return ++age < DURATION && level == Minecraft.getInstance().level;

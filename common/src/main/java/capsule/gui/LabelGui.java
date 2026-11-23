@@ -37,7 +37,7 @@ public class LabelGui extends Screen {
     }
 
     public static void open(Player player) {
-        if (player.level().isClientSide) {
+        if (player.level().isClientSide()) {
             Minecraft.getInstance().setScreen(new LabelGui(player));
         }
     }

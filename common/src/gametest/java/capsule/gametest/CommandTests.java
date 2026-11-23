@@ -13,7 +13,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -63,7 +63,7 @@ public class CommandTests {
         try {
             player.setItemInHand(InteractionHand.MAIN_HAND, capsule);
             run(helper, player, "capsule fromHeldCapsule");
-            List<String> rewards = helper.getEntities(EntityType.ITEM).stream()
+            List<String> rewards = helper.getEntities(EntityTypes.ITEM).stream()
                     .map(ItemEntity::getItem)
                     .filter(stack -> stack.getItem() instanceof CapsuleItem)
                     .map(CapsuleItem::getStructureName)

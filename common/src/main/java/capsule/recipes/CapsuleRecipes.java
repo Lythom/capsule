@@ -17,6 +17,6 @@ public class CapsuleRecipes {
     public static final Supplier<PrefabsBlueprintAggregatorRecipe.Serializer> PREFABS_AGGREGATOR_SERIALIZER = Services.PLATFORM.register(BuiltInRegistries.RECIPE_SERIALIZER, "aggregate_all_prefabs", PrefabsBlueprintAggregatorRecipe.Serializer::new);
 
     public static void init() {
-//        CraftingHelper.register(ResourceLocation.fromNamespaceAndPath("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE); //TODO: Re-implement capsule ingredient
+//        CraftingHelper.register(Identifier.fromNamespaceAndPath("capsule", "ingredient"), CapsuleIngredient.Serializer.INSTANCE); //TODO: Re-implement capsule ingredient
     }
 }

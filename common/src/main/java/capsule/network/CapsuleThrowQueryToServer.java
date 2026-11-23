@@ -5,11 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record CapsuleThrowQueryToServer(boolean instant, BlockPos pos) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CapsuleThrowQueryToServer> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "throw_query"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "throw_query"));
 
     public static final StreamCodec<FriendlyByteBuf, CapsuleThrowQueryToServer> STREAM_CODEC =
             StreamCodec.of(CapsuleThrowQueryToServer::encode, CapsuleThrowQueryToServer::decode);

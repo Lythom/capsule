@@ -45,7 +45,7 @@ public class BlockCapsuleMarker extends DispenserBlock {
 
     /**
      * Override dispenseFrom to use our custom block entity type (MARKER_TE)
-     * instead of vanilla's BlockEntityType.DISPENSER which doesn't match.
+     * instead of vanilla's BlockEntityTypes.DISPENSER which doesn't match.
      */
     @Override
     protected void dispenseFrom(ServerLevel level, BlockState state, BlockPos pos) {
@@ -54,7 +54,7 @@ public class BlockCapsuleMarker extends DispenserBlock {
             LOGGER.warn("Ignoring dispensing attempt for CapsuleMarker without matching block entity at {}", pos);
         } else {
             BlockSource blocksource = new BlockSource(level, pos, state, dispenserBlockEntity);
-            int i = dispenserBlockEntity.getRandomSlot(level.random);
+            int i = dispenserBlockEntity.getRandomSlot(level.getRandom());
             if (i < 0) {
                 level.levelEvent(1001, pos, 0);
                 level.gameEvent(GameEvent.BLOCK_ACTIVATE, pos, GameEvent.Context.of(dispenserBlockEntity.getBlockState()));

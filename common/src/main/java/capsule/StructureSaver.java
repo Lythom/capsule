@@ -16,7 +16,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -104,7 +104,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return null;
         }
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(capsuleStructureId));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(Identifier.parse(capsuleStructureId));
         Map<BlockPos, Block> occupiedPositions = template.occupiedPositions;
         if (legacyItemOccupied != null) occupiedPositions = legacyItemOccupied;
         List<BlockPos> transferedPositions = template.snapshotBlocksFromWorld(worldserver, startPos, new BlockPos(size, size, size), occupiedPositions,
@@ -113,7 +113,7 @@ public class StructureSaver {
         if (denied == null) return null;
         template.removeOccupiedPositions();
         if (player != null) template.setAuthor(player.getGameProfile().getName());
-        boolean writingOK = templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
+        boolean writingOK = templatemanager.writeToFile(Identifier.parse(capsuleStructureId));
         if (writingOK) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, denied);
             for (Entity e : outCapturedEntities) {
@@ -124,7 +124,7 @@ public class StructureSaver {
             if (couldNotBeRemoved != null) {
                 template.removeBlocks(couldNotBeRemoved, startPos);
             }
-            templatemanager.writeToFile(ResourceLocation.parse(capsuleStructureId));
+            templatemanager.writeToFile(Identifier.parse(capsuleStructureId));
 
         } else {
             printWriteTemplateError(player, capsuleStructureId);
@@ -163,7 +163,7 @@ public class StructureSaver {
         }
         blueprintTemplate.removeOccupiedPositions();
         String capsuleStructureId = CapsuleItem.getStructureName(blueprintItemStack);
-        boolean written = blueprint.getLeft().writeToFile(ResourceLocation.parse(capsuleStructureId));
+        boolean written = blueprint.getLeft().writeToFile(Identifier.parse(capsuleStructureId));
         if (written) {
             List<BlockPos> couldNotBeRemoved = removeTransferedBlockFromWorld(transferedPositions, worldserver, player, pos -> false);
             // check if some remove failed, it should never happen but keep it in case to prevent exploits
@@ -230,7 +230,7 @@ public class StructureSaver {
      */
     private static boolean isItemStack(CompoundTag tag) {
         if (!tag.contains("id", Tag.TAG_STRING) || Math.max(tag.getInt("count"), tag.getInt("Count")) <= 0) return false;
-        ResourceLocation id = ResourceLocation.tryParse(tag.getString("id"));
+        Identifier id = Identifier.tryParse(tag.getString("id"));
         return id != null && BuiltInRegistries.ITEM.getOptional(id).filter(item -> item != Items.AIR).isPresent();
     }
 
@@ -365,7 +365,7 @@ public class StructureSaver {
         CapsuleTemplateManager templateManager = templatepair.getLeft();
         String capsuleStructureId = CapsuleItem.getStructureName(capsule);
         template.saveOccupiedPositions(occupiedPositions);
-        if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
+        if (!templateManager.writeToFile(Identifier.parse(capsuleStructureId))) {
             printWriteTemplateError(player, capsuleStructureId);
             return false;
         }
@@ -387,7 +387,7 @@ public class StructureSaver {
             // rollback
             removeTransferedBlockFromWorld(spawnedBlocks, playerWorld, null, pos -> false);
             template.removeOccupiedPositions();
-            if (!templateManager.writeToFile(ResourceLocation.parse(capsuleStructureId))) {
+            if (!templateManager.writeToFile(Identifier.parse(capsuleStructureId))) {
                 printWriteTemplateError(player, capsuleStructureId);
             }
             for (Entity e : spawnedEntities) {
@@ -418,7 +418,7 @@ public class StructureSaver {
         for (LivingEntity p : players) {
             for (int y = 0; y < size; y++) {
                 if (!checkBlockCollision(p)) {
-                    p.moveTo(p.getX(), p.getY() + 1, p.getZ());
+                    p.snapTo(p.getX(), p.getY() + 1, p.getZ());
                 }
             }
         }
@@ -450,7 +450,7 @@ public class StructureSaver {
      */
     private static boolean canPlace(ServerLevel worldserver, List<BlockPos> expectedOut, Predicate<BlockPos> claimed) {
         for (BlockPos blockPos : expectedOut) {
-            if (blockPos.getY() >= worldserver.getMaxBuildHeight() || blockPos.getY() <= worldserver.getMinBuildHeight() || claimed.test(blockPos))
+            if (blockPos.getY() > worldserver.getMaxY() || blockPos.getY() <= worldserver.getMinY() || claimed.test(blockPos))
                 return false;
         }
         return true;
@@ -477,7 +477,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(Identifier.parse(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -488,7 +488,7 @@ public class StructureSaver {
             return Pair.of(null, null);
 
         String path = structurePath.toLowerCase();
-        CapsuleTemplate template = templatemanager.getOrCreateTemplate(ResourceLocation.parse(path));
+        CapsuleTemplate template = templatemanager.getOrCreateTemplate(Identifier.parse(path));
         return Pair.of(templatemanager, template);
     }
 
@@ -578,7 +578,7 @@ public class StructureSaver {
     public static String getUniqueName(ServerLevel playerWorld, String player) {
         CapsuleSavedData csd = getCapsuleSavedData(playerWorld.getServer().overworld());
         String p = player.toLowerCase().codePoints()
-                .filter(c -> ResourceLocation.isAllowedInResourceLocation((char) c))
+                .filter(c -> Identifier.isAllowedInIdentifier((char) c))
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
         String capsuleID = "c-" + p + "-" + csd.getNextCount();
@@ -587,7 +587,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "cexception-" + p + "-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplate(ResourceLocation.parse(capsuleID)) != null) {
+        while (templatemanager.getTemplate(Identifier.parse(capsuleID)) != null) {
             capsuleID = "c-" + p + "-" + csd.getNextCount();
         }
 
@@ -605,7 +605,7 @@ public class StructureSaver {
             LOGGER.error("getTemplateManager returned null");
             return "bexception-" + csd.getNextCount();
         }
-        while (templatemanager.getTemplate(ResourceLocation.parse(capsuleID)) != null) {
+        while (templatemanager.getTemplate(Identifier.parse(capsuleID)) != null) {
             capsuleID = BLUEPRINT_PREFIX + csd.getNextCount();
         }
 
@@ -627,7 +627,7 @@ public class StructureSaver {
     public static boolean duplicateTemplate(CompoundTag templateData, String destinationStructureName, CapsuleTemplateManager destManager, boolean onlyWhitelisted, List<String> outExcluded) {
         // create a destination template
         String sanitized = destinationStructureName.toLowerCase();
-        ResourceLocation destinationLocation = ResourceLocation.parse(sanitized);
+        Identifier destinationLocation = Identifier.parse(sanitized);
         CapsuleTemplate destTemplate = destManager.getOrCreateTemplate(destinationLocation);
         // populate template from source data
         destTemplate.load(templateData, destinationLocation.toString());
@@ -674,7 +674,7 @@ public class StructureSaver {
      */
     @Nullable
     public static CapsuleTemplate getConfigTemplate(String path, MinecraftServer server) {
-        ResourceLocation location = ResourceLocation.tryParse(path.toLowerCase());
+        Identifier location = Identifier.tryParse(path.toLowerCase());
         if (location == null) return null;
         CapsuleTemplate template = getRewardManager(server.getResourceManager()).getTemplate(location);
         if (template == null || template.getPalette().isEmpty() && template.entities.isEmpty()) return null;
@@ -685,7 +685,7 @@ public class StructureSaver {
      * The files and resources searched for the config template at path, for error messages.
      */
     public static List<String> searchedConfigLocations(String path, MinecraftServer server) {
-        ResourceLocation location = ResourceLocation.tryParse(path.toLowerCase());
+        Identifier location = Identifier.tryParse(path.toLowerCase());
         return location == null ? List.of() : getRewardManager(server.getResourceManager()).searchedLocations(location);
     }
 
@@ -714,7 +714,7 @@ public class StructureSaver {
         Pair<CapsuleTemplateManager, CapsuleTemplate> source = getSourceTemplate(srcStructurePath, worldServer);
         if (source.getRight() == null || source.getRight().getPalette().isEmpty()) {
             LOGGER.error("Couldn't create a blueprint of {}: template not found or empty, searched {}", srcStructurePath,
-                    source.getLeft() == null ? "nothing" : source.getLeft().searchedLocations(ResourceLocation.parse(srcStructurePath.toLowerCase())));
+                    source.getLeft() == null ? "nothing" : source.getLeft().searchedLocations(Identifier.parse(srcStructurePath.toLowerCase())));
             if (playerIn != null) {
                 playerIn.sendSystemMessage(Component.translatable("capsule.error.blueprintSourceNotFound", srcStructurePath));
             }
@@ -737,7 +737,7 @@ public class StructureSaver {
         if (NBTHelper.hasTag(destCapsule) && NBTHelper.getOrCreateTag(destCapsule).contains("prevStructureName")) {
             if (templateManager != null) {
                 try {
-                    templateManager.deleteTemplate(ResourceLocation.parse(NBTHelper.getOrCreateTag(destCapsule).getString("prevStructureName")));
+                    templateManager.deleteTemplate(Identifier.parse(NBTHelper.getOrCreateTag(destCapsule).getString("prevStructureName")));
                 } catch (Exception e) {
                     LOGGER.error(e);
                 }

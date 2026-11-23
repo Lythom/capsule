@@ -12,9 +12,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.vehicle.ChestBoat;
+import net.minecraft.world.entity.vehicle.boat.ChestBoat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -206,28 +207,28 @@ public class CoreMechanicsTests {
     @GameTest(template = "empty")
     public static void containerEntitiesDropNothingWhenRemoved(GameTestHelper helper) {
         for (int x : new int[]{1, 3}) {
-            ChestBoat boat = EntityType.CHEST_BOAT.create(helper.getLevel());
+            ChestBoat boat = EntityTypes.OAK_CHEST_BOAT.create(helper.getLevel(), EntitySpawnReason.TRIGGERED);
             Vec3 pos = helper.absoluteVec(new Vec3(x + 0.5, 1, 2.5));
-            boat.moveTo(pos.x, pos.y, pos.z);
+            boat.snapTo(pos.x, pos.y, pos.z);
             boat.setItem(0, new ItemStack(Items.DIAMOND));
             helper.getLevel().addFreshEntity(boat);
         }
         ItemStack capsule = capture(helper, CORNER, 3);
-        assertTrue(helper, helper.getEntities(EntityType.CHEST_BOAT).isEmpty(), "the boats are captured");
-        assertTrue(helper, helper.getEntities(EntityType.ITEM).isEmpty(), "the capture dropped " + helper.getEntities(EntityType.ITEM));
+        assertTrue(helper, helper.getEntities(EntityTypes.OAK_CHEST_BOAT).isEmpty(), "the boats are captured");
+        assertTrue(helper, helper.getEntities(EntityTypes.ITEM).isEmpty(), "the capture dropped " + helper.getEntities(EntityTypes.ITEM));
         // throws once a boat is placed, as a modded entity crashing during the deploy
         StructurePlaceSettings crashing = new StructurePlaceSettings() {
             @Override
             public Mirror getMirror() {
-                if (!helper.getEntities(EntityType.CHEST_BOAT).isEmpty()) throw new IllegalStateException("test crash");
+                if (!helper.getEntities(EntityTypes.OAK_CHEST_BOAT).isEmpty()) throw new IllegalStateException("test crash");
                 return super.getMirror();
             }
         };
         assertTrue(helper, !StructureSaver.deploy(capsule, helper.getLevel(), null, helper.absolutePos(new BlockPos(5, 1, 5)), crashing), "the deploy fails");
-        assertTrue(helper, helper.getEntities(EntityType.CHEST_BOAT).isEmpty(), "the failed deploy removes its boats");
-        assertTrue(helper, helper.getEntities(EntityType.ITEM).isEmpty(), "the failed deploy dropped " + helper.getEntities(EntityType.ITEM));
+        assertTrue(helper, helper.getEntities(EntityTypes.OAK_CHEST_BOAT).isEmpty(), "the failed deploy removes its boats");
+        assertTrue(helper, helper.getEntities(EntityTypes.ITEM).isEmpty(), "the failed deploy dropped " + helper.getEntities(EntityTypes.ITEM));
         assertTrue(helper, deploy(helper, capsule, ANCHOR, null), "the capsule keeps its boats");
-        List<ChestBoat> boats = helper.getEntities(EntityType.CHEST_BOAT);
+        List<ChestBoat> boats = helper.getEntities(EntityTypes.OAK_CHEST_BOAT);
         assertTrue(helper, boats.size() == 2 && boats.stream().allMatch(b -> b.getItem(0).is(Items.DIAMOND)), "the boats keep their diamonds: " + boats);
         helper.succeed();
     }

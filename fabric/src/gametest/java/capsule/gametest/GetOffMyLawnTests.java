@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -32,7 +32,7 @@ public class GetOffMyLawnTests {
 
         // placed by the owner like a player does, its claim covers 4 blocks around it (5 towards positive coordinates)
         BlockPos anchor = new BlockPos(4, 1, 4);
-        Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("goml", "makeshift_claim_anchor"));
+        Block block = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("goml", "makeshift_claim_anchor"));
         int radius = GetOffMyLawn.CONFIG.makeshiftRadius;
         GetOffMyLawn.CONFIG.makeshiftRadius = 4;
         helper.setBlock(anchor, block);

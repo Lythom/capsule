@@ -10,7 +10,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -39,7 +39,7 @@ public class CapsuleNeoForgeClient {
 
         modEventBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> ItemProperties.register(
                 CapsuleItems.CAPSULE.get(),
-                ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
+                Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
                 (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
         )));
         modEventBus.addListener((RegisterColorHandlersEvent.Item event) ->
@@ -51,7 +51,7 @@ public class CapsuleNeoForgeClient {
         bus.addListener((RecipesUpdatedEvent event) -> CapsuleItems.registerRecipesClient(event.getRecipeManager()));
         bus.addListener((RenderLevelStageEvent event) -> {
             if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
-                CapsulePreviewHandler.onLevelRenderLast(event.getLevelRenderer(), event.getPoseStack(), event.getPartialTick().getGameTimeDeltaPartialTick(true));
+                CapsulePreviewHandler.onLevelRenderLast(event.getPoseStack(), event.getPartialTick().getGameTimeDeltaPartialTick(true));
             }
         });
         bus.addListener((ClientChatReceivedEvent event) -> CapsulePreviewHandler.onChatMessage(event.getMessage()));

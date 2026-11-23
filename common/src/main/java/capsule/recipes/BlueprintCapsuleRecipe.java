@@ -11,7 +11,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -139,7 +139,7 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     }
 
 //    @Override
-//    public ResourceLocation getId() {
+//    public Identifier getId() {
 //        return recipe.getId();
 //    }
 

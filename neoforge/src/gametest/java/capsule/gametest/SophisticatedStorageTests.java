@@ -8,7 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -43,7 +43,7 @@ public class SophisticatedStorageTests {
 
     @GameTest(template = "empty")
     public static void rewardBarrelsDoNotShareTheirContent(GameTestHelper helper) throws IOException {
-        Block barrel = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("sophisticatedstorage", "barrel"));
+        Block barrel = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("sophisticatedstorage", "barrel"));
         BlockPos source = new BlockPos(1, 1, 1);
         helper.setBlock(source, barrel);
         items(helper, source).insertItem(0, new ItemStack(Items.DIAMOND, 16), false);

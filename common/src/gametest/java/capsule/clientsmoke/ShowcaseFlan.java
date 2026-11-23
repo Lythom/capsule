@@ -19,7 +19,7 @@ class ShowcaseFlan {
      * A claim of owner from one corner to the other, columns from the lowest corner up.
      */
     static Object claim(ServerPlayer player, BlockPos from, BlockPos to, UUID owner) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         ClaimStorage storage = ClaimStorage.get(level);
         Claim claim = storage.createAdminClaim(from, to, level, false);
         storage.transferOwner(claim, owner);

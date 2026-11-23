@@ -6,7 +6,7 @@ import eu.pb4.common.protection.api.ProtectionProvider;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -18,7 +18,7 @@ public class FabricGameTestSetup implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTING.register(GameTestProfiles::provideProfileCache);
-        CommonProtection.register(ResourceLocation.fromNamespaceAndPath("capsule-gametest", "test_probe"), new ProtectionProvider() {
+        CommonProtection.register(Identifier.fromNamespaceAndPath("capsule-gametest", "test_probe"), new ProtectionProvider() {
             @Override
             public boolean isProtected(Level level, BlockPos pos) {
                 return false;

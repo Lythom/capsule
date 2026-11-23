@@ -19,7 +19,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -110,7 +110,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
     }
 
     public static class PrefabsBlueprintCapsuleRecipe implements CraftingRecipe {
-        private final ResourceLocation id;
+        private final Identifier id;
 
         public final ShapedRecipe recipe;
         /**
@@ -118,7 +118,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
          */
         private final List<Integer> templateIngredientIndexes;
 
-        public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
+        public PrefabsBlueprintCapsuleRecipe(Identifier id, JsonObject template, Triple<StructureSaver.ItemStackKey, StructureSaver.ItemStackKey, StructureSaver.ItemStackKey> ingredients) {
             this.id = id;
             FixIngredient(template, ingredients.getLeft(), "1");
             FixIngredient(template, ingredients.getMiddle(), "2");
@@ -162,7 +162,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
             }
         }
 
-        public PrefabsBlueprintCapsuleRecipe(ResourceLocation id, ShapedRecipe serializedRecipe, List<Integer> templateIngredientIndexes) {
+        public PrefabsBlueprintCapsuleRecipe(Identifier id, ShapedRecipe serializedRecipe, List<Integer> templateIngredientIndexes) {
             this.id = id;
             this.recipe = serializedRecipe;
             this.templateIngredientIndexes = templateIngredientIndexes;
@@ -289,7 +289,7 @@ public class PrefabsBlueprintAggregatorRecipe extends CustomRecipe {
 
             int size = buffer.readInt();
             for (int i = 0; i < size; i++) {
-                ResourceLocation id = ResourceLocation.parse(buffer.readUtf());
+                Identifier id = Identifier.parse(buffer.readUtf());
                 ShapedRecipe recipe = ShapedRecipe.Serializer.SHAPED_RECIPE.streamCodec().decode(buffer);
                 List<Integer> templateIngredientIndexes = buffer.readList(FriendlyByteBuf::readVarInt);
                 instance.recipes.add(new PrefabsBlueprintCapsuleRecipe(id, recipe, templateIngredientIndexes));

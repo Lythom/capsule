@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -19,7 +19,7 @@ public class SecurityCraftTests {
     private static final BlockPos BLOCK = new BlockPos(1, 1, 1);
 
     private static ServerPlayer placeOwnedBlock(GameTestHelper helper) {
-        Block reinforcedStone = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("securitycraft", "reinforced_stone"));
+        Block reinforcedStone = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("securitycraft", "reinforced_stone"));
         helper.setBlock(BLOCK, reinforcedStone);
         ServerPlayer owner = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(7, 1, 7));
         IOwnable ownable = helper.getBlockEntity(BLOCK);

@@ -39,22 +39,22 @@ import static capsule.gametest.CapsuleTestUtils.capture;
 public class RecallTests {
 
     private static Holder<Enchantment> enchantment(GameTestHelper helper, ResourceKey<Enchantment> key) {
-        return helper.getLevel().registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(key);
+        return helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(key);
     }
 
     @GameTest(template = "empty")
     public static void enchantingTablesOfferLoyaltyForCapsules(GameTestHelper helper) {
-        Registry<Enchantment> enchantments = helper.getLevel().registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+        Registry<Enchantment> enchantments = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
         RandomSource random = RandomSource.create(0);
         Set<Holder<Enchantment>> offered = new HashSet<>();
         IntStream.range(0, 200).forEach(i -> EnchantmentHelper
-                .selectEnchantment(random, capsule, 1 + i % 30, enchantments.getOrCreateTag(EnchantmentTags.IN_ENCHANTING_TABLE).stream())
+                .selectEnchantment(random, capsule, 1 + i % 30, enchantments.getOrThrow(EnchantmentTags.IN_ENCHANTING_TABLE).stream())
                 .forEach(e -> offered.add(e.enchantment)));
 
         assertTrue(helper, offered.stream().anyMatch(e -> e.is(Enchantments.LOYALTY)), "an enchanting table should offer loyalty on a capsule");
         // enchantments of other mods may apply to every item (Corail Tombstone's soulbound)
-        assertTrue(helper, offered.stream().filter(e -> e.is(key -> key.location().getNamespace().equals("minecraft"))).allMatch(e -> e.is(Enchantments.LOYALTY)),
+        assertTrue(helper, offered.stream().filter(e -> e.is(key -> key.identifier().getNamespace().equals("minecraft"))).allMatch(e -> e.is(Enchantments.LOYALTY)),
                 "only loyalty should be offered on a capsule, got " + offered);
         helper.succeed();
     }
@@ -94,7 +94,7 @@ public class RecallTests {
         for (ResourceKey<Enchantment> key : List.of(Enchantments.IMPALING, Enchantments.RIPTIDE, Enchantments.CHANNELING)) {
             Holder<Enchantment> enchantment = enchantment(helper, key);
             ItemStack result = anvil(helper, CapsuleTestUtils.emptyCapsule(3), enchantment, 1);
-            assertTrue(helper, result.isEmpty(), "the anvil should refuse " + key.location() + " on a capsule, got " + result.getEnchantments());
+            assertTrue(helper, result.isEmpty(), "the anvil should refuse " + key.identifier() + " on a capsule, got " + result.getEnchantments());
         }
         helper.succeed();
     }

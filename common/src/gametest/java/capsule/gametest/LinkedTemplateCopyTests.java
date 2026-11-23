@@ -21,10 +21,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.ItemStack;
@@ -77,7 +77,7 @@ public class LinkedTemplateCopyTests {
     }
 
     private static void deleteConfigTemplate(GameTestHelper helper, String path) {
-        StructureSaver.getRewardManager(helper.getLevel().getServer().getResourceManager()).deleteTemplate(ResourceLocation.parse(path));
+        StructureSaver.getRewardManager(helper.getLevel().getServer().getResourceManager()).deleteTemplate(Identifier.parse(path));
     }
 
     /**
@@ -108,7 +108,7 @@ public class LinkedTemplateCopyTests {
     private static void withRecipe(GameTestHelper helper, ItemStack result, Runnable craft) {
         RecipeManager recipes = helper.getLevel().getRecipeManager();
         List<RecipeHolder<?>> original = List.copyOf(recipes.getRecipes());
-        RecipeHolder<ShapelessRecipe> recipe = new RecipeHolder<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "test_linked_template_copy"),
+        RecipeHolder<ShapelessRecipe> recipe = new RecipeHolder<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_linked_template_copy"),
                 new ShapelessRecipe("", CraftingBookCategory.MISC, result, NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.FURNACE))));
         recipes.replaceRecipes(Stream.concat(original.stream(), Stream.of(recipe)).toList());
         try {
@@ -136,7 +136,7 @@ public class LinkedTemplateCopyTests {
         withRecipe(helper, result, () -> {
             CraftingMenu menu = craftingMenu(helper, player, times);
             for (int i = 0; i < times; i++) {
-                menu.clicked(RESULT, 0, ClickType.PICKUP, player);
+                menu.clicked(RESULT, 0, ContainerInput.PICKUP, player);
                 crafted.add(menu.getCarried());
                 menu.setCarried(ItemStack.EMPTY);
             }
@@ -246,7 +246,7 @@ public class LinkedTemplateCopyTests {
      * Every crafted capsule in the inventory owns a copy of source, and no other copy was written.
      */
     private static void assertOneCopyPerCapsule(GameTestHelper helper, ServerPlayer player, String source, int crafts) {
-        List<ItemStack> crafted = player.getInventory().items.stream().filter(s -> s.getItem() instanceof CapsuleItem).toList();
+        List<ItemStack> crafted = player.getInventory().getNonEquipmentItems().stream().filter(s -> s.getItem() instanceof CapsuleItem).toList();
         assertTrue(helper, crafted.size() == crafts, "expected " + crafts + " capsules, got " + crafted.size());
         crafted.forEach(capsule -> assertOwnsACopy(helper, capsule, source));
         long names = crafted.stream().map(CapsuleItem::getStructureName).distinct().count();
@@ -261,7 +261,7 @@ public class LinkedTemplateCopyTests {
         try {
             withRecipe(helper, taggedCapsule(helper, source, 3), () -> {
                 CraftingMenu menu = craftingMenu(helper, player, 3);
-                menu.clicked(RESULT, 0, ClickType.QUICK_MOVE, player);
+                menu.clicked(RESULT, 0, ContainerInput.QUICK_MOVE, player);
                 player.containerMenu = player.inventoryMenu;
             });
             assertOneCopyPerCapsule(helper, player, source, 3);
@@ -283,7 +283,7 @@ public class LinkedTemplateCopyTests {
         try {
             withRecipe(helper, taggedCapsule(helper, source, 3), () -> {
                 player.inventoryMenu.getSlot(1).set(new ItemStack(Items.FURNACE, 2));
-                player.inventoryMenu.clicked(RESULT, 0, ClickType.QUICK_MOVE, player);
+                player.inventoryMenu.clicked(RESULT, 0, ContainerInput.QUICK_MOVE, player);
             });
             CapsuleItem.onPlayerTick(player);
             assertOneCopyPerCapsule(helper, player, source, 2);

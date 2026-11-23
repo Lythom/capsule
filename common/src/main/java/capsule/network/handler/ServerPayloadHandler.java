@@ -82,7 +82,7 @@ public class ServerPayloadHandler {
 	 */
 	@Nullable
 	public static ItemStack previewedCapsule(Player player, String structureName) {
-		return player.getInventory().items.stream()
+		return player.getInventory().getNonEquipmentItems().stream()
 				.filter(stack -> stack.getItem() instanceof CapsuleItem && structureName.equals(CapsuleItem.getStructureName(stack)))
 				.findFirst()
 				.orElse(null);

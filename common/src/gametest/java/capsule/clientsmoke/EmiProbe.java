@@ -4,7 +4,7 @@ import capsule.CapsuleMod;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiStack;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 class EmiProbe implements RecipeViewerProbe {
@@ -17,7 +17,7 @@ class EmiProbe implements RecipeViewerProbe {
     @Override
     public boolean ready() {
         // EMI loads its plugins in the background
-        return EmiApi.getRecipeManager().getRecipe(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "/info/0")) != null;
+        return EmiApi.getRecipeManager().getRecipe(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "/info/0")) != null;
     }
 
     @Override

@@ -18,7 +18,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -68,7 +67,6 @@ public class CapsulePreviewHandler {
     private static ItemStack lastMainHandItem = ItemStack.EMPTY;
 
     static double time = 0;
-    public static SectionRenderDispatcher dispatcher;
 
     public CapsulePreviewHandler() {
     }
@@ -76,15 +74,14 @@ public class CapsulePreviewHandler {
     /**
      * Render recall preview when deployed capsule in hand. Called after the translucent blocks are rendered.
      */
-    public static void onLevelRenderLast(LevelRenderer levelRenderer, PoseStack poseStack, float partialTick) {
+    public static void onLevelRenderLast(PoseStack poseStack, float partialTick) {
         Minecraft mc = Minecraft.getInstance();
         time = (time + 1) % 100000;
         if (mc.player != null) {
-            dispatcher = levelRenderer.getSectionRenderDispatcher();
             tryPreviewRecall(mc.player.getMainHandItem(), poseStack);
             tryPreviewDeploy(mc.player, partialTick, mc.player.getMainHandItem(), poseStack);
             tryPreviewLinkedInventory(mc.player, mc.player.getMainHandItem(), poseStack);
-            CaptureAnimation.render(poseStack, mc.gameRenderer.getMainCamera().getPosition(), partialTick);
+            CaptureAnimation.render(poseStack, mc.gameRenderer.mainCamera().position(), partialTick);
         }
     }
 
@@ -147,15 +144,15 @@ public class CapsulePreviewHandler {
             if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
                 CompoundTag tag = NBTHelper.getTag(heldItem);
                 if (tag != null && tag.contains("size")) {
-                    setCaptureTESizeColor(tag.getInt("size"), CapsuleItem.getBaseColor(heldItem), player.getCommandSenderWorld());
+                    setCaptureTESizeColor(tag.getInt("size"), CapsuleItem.getBaseColor(heldItem), player.level());
                     return true;
                 }
 
             } else {
-                setCaptureTESizeColor(0, 0, player.getCommandSenderWorld());
+                setCaptureTESizeColor(0, 0, player.level());
             }
         } else {
-            setCaptureTESizeColor(0, 0, player.getCommandSenderWorld());
+            setCaptureTESizeColor(0, 0, player.level());
         }
 
         return false;
@@ -212,7 +209,7 @@ public class CapsulePreviewHandler {
         try {
             renderer.changeTemplateIfDirty(
                     template,
-                    thePlayer.getCommandSenderWorld(),
+                    thePlayer.level(),
                     destOriginPos,
                     recenterRotation(extendSize, placement),
                     placement,
@@ -283,7 +280,7 @@ public class CapsulePreviewHandler {
                     for (double k = dest.minY; k < dest.maxY; ++k) {
                         for (double l = dest.minX; l < dest.maxX; ++l) {
                             BlockPos pos = BlockPos.containing(l, k, j);
-                            if (!thePlayer.getCommandSenderWorld().getBlockState(pos).is(CapsuleTags.overridable)) {
+                            if (!thePlayer.level().getBlockState(pos).is(CapsuleTags.overridable)) {
                                 MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
                                 VertexConsumer buffer = bufferSource.getBuffer(RenderType.lines());
                                 LevelRenderer.renderLineBox(poseStack, buffer, errorBoundingBox.move(pos), 0.8f, 0, 0, 1);
@@ -347,7 +344,7 @@ public class CapsulePreviewHandler {
                 ResourceKey<Level> dimension = CapsuleItem.getSourceInventoryDimension(heldItem);
                 if (location != null
                         && dimension != null
-                        && dimension.equals(player.getCommandSenderWorld().dimension())
+                        && dimension.equals(player.level().dimension())
                         && location.distToCenterSqr(player.getX(), player.getY(), player.getZ()) < 60 * 60) {
                     previewLinkedInventory(location, poseStack);
                 }
@@ -360,7 +357,7 @@ public class CapsulePreviewHandler {
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.debugQuads());
         poseStack.pushPose();
-        poseStack.translate(-cam.getPosition().x, -cam.getPosition().y, -cam.getPosition().z);
+        poseStack.translate(-cam.position().x, -cam.position().y, -cam.position().z);
         drawCube(poseStack, location, 0.01f, buffer, 91, 156, 255, 80);
         bufferSource.endBatch();
 
@@ -381,7 +378,7 @@ public class CapsulePreviewHandler {
         MultiBufferSource.BufferSource impl = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer ivertexbuilder = impl.getBuffer(RenderType.lines());
         poseStack.pushPose();
-        poseStack.translate(-cam.getPosition().x, -cam.getPosition().y, -cam.getPosition().z);
+        poseStack.translate(-cam.position().x, -cam.position().y, -cam.position().z);
 
         renderRecallBox(poseStack, color, boundingBox, ivertexbuilder, time);
         impl.endBatch();

@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -43,7 +43,7 @@ public class WaystonesTests {
     }
 
     private static void waystoneStaysAndDoorMoves(GameTestHelper helper, boolean overpowered) {
-        Block waystone = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("waystones", "waystone"));
+        Block waystone = BuiltInRegistries.BLOCK.getValue(Identifier.fromNamespaceAndPath("waystones", "waystone"));
         // doors need a floor
         CapsuleTestUtils.fill(helper, new BlockPos(1, 0, 1), new BlockPos(8, 0, 8), Blocks.STONE.defaultBlockState());
         placeDoubleBlock(helper, WAYSTONE, waystone.defaultBlockState());

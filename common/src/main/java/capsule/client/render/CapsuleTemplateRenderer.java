@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
@@ -67,7 +67,7 @@ public class CapsuleTemplateRenderer {
         if (player == null)
             return;
 
-        final Vec3 cameraView = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        final Vec3 cameraView = Minecraft.getInstance().gameRenderer.mainCamera().position();
         poseStack.pushPose();
         poseStack.translate(destPos.getX() - cameraView.x, destPos.getY() - cameraView.y, destPos.getZ() - cameraView.z);
 
@@ -259,7 +259,7 @@ public class CapsuleTemplateRenderer {
                                     templateWorld.setBlock(blockpos4, blockstate3, placeFlag & -2 | 16);
                                 }
 
-                                templateWorld.blockUpdated(blockpos4, blockstate3.getBlock());
+                                templateWorld.updateNeighborsAt(blockpos4, blockstate3.getBlock());
                             } catch (RuntimeException e) {
                                 logSkippedBlock(blockstate1, e);
                             }

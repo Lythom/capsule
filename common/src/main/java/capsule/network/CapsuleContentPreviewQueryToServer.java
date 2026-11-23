@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record CapsuleContentPreviewQueryToServer(String structureName) implements CustomPacketPayload {
 	public CapsuleContentPreviewQueryToServer {
@@ -13,7 +13,7 @@ public record CapsuleContentPreviewQueryToServer(String structureName) implement
 	}
 
 	public static final CustomPacketPayload.Type<CapsuleContentPreviewQueryToServer> TYPE =
-			new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "content_preview_query"));
+			new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "content_preview_query"));
 
 	public static final StreamCodec<ByteBuf, CapsuleContentPreviewQueryToServer> STREAM_CODEC =
 			ByteBufCodecs.STRING_UTF8.map(CapsuleContentPreviewQueryToServer::new, CapsuleContentPreviewQueryToServer::structureName);

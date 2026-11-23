@@ -12,7 +12,7 @@ import dev.emi.emi.api.stack.Comparison;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -36,7 +36,7 @@ public class CapsuleEmiPlugin implements EmiPlugin {
         for (int i = 0; i < pages.size(); i++) {
             RecipeViewerContent.Information page = pages.get(i);
             registry.addRecipe(new EmiInfoRecipe(page.stacks().stream().<EmiIngredient>map(EmiStack::of).toList(), List.of(page.text()),
-                    ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "/info/" + i)));
+                    Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "/info/" + i)));
         }
     }
 

@@ -38,7 +38,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -211,7 +211,7 @@ public class ClientSmokeTest {
                 .run("screenshot", () -> screenshot("05-hotbar"))
                 .run("check the item models", this::checkItemModelStates)
                 .async("survival mode", 100, () -> onServer(p -> p.setGameMode(GameType.SURVIVAL)))
-                .await("survival mode on the client", 40, () -> !mc().gameMode.hasInfiniteItems())
+                .await("survival mode on the client", 40, () -> !mc().player.hasInfiniteMaterials())
                 .run("open the inventory on the linked capsule", () -> mc().setScreen(new HoverInventoryScreen(0)))
                 .sleep(20)
                 .run("screenshot", () -> screenshot("06-inventory-linked-tooltip", ((HoverInventoryScreen) mc().screen).capsuleSlots()))
@@ -220,7 +220,7 @@ public class ClientSmokeTest {
                 .run("screenshot", () -> screenshot("07-inventory-blueprint-tooltip", ((HoverInventoryScreen) mc().screen).capsuleSlots()))
                 .run("close", () -> mc().setScreen(null))
                 .async("creative mode", 100, () -> onServer(p -> p.setGameMode(GameType.CREATIVE)))
-                .await("creative mode on the client", 40, () -> mc().gameMode.hasInfiniteItems())
+                .await("creative mode on the client", 40, () -> mc().player.hasInfiniteMaterials())
                 .run("open the creative inventory", () -> mc().setScreen(new CreativeModeInventoryScreen(mc().player, mc().player.connection.enabledFeatures(), false)))
                 .sleep(10)
                 .run("select the search tab", () -> pressKey(mc().options.keyChat))
@@ -339,7 +339,7 @@ public class ClientSmokeTest {
                 .run("select the blueprint", () -> select(7))
                 .sleep(60)
                 .await("blueprint preview received", 100, () -> CapsulePreviewHandler.currentFullPreview.containsKey(blueprintStructure))
-                .async("count the blueprint blocks", 100, () -> onServer(p -> blueprintBlocks = StructureSaver.getTemplate(p.getInventory().getItem(7), p.serverLevel()).getRight().getPalette().size()))
+                .async("count the blueprint blocks", 100, () -> onServer(p -> blueprintBlocks = StructureSaver.getTemplate(p.getInventory().getItem(7), p.level()).getRight().getPalette().size()))
                 .run("check", () -> {
                     int previewed = CapsulePreviewHandler.currentFullPreview.get(blueprintStructure).getPalette().size();
                     scenario.check("the preview shows the blueprint", previewed == blueprintBlocks, previewed + " blocks previewed, " + blueprintBlocks + " in the blueprint");
@@ -425,7 +425,7 @@ public class ClientSmokeTest {
         rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
         LevelSettings settings = new LevelSettings(LEVEL_NAME, GameType.CREATIVE, false, Difficulty.PEACEFUL, true, rules, WorldDataConfiguration.DEFAULT);
         mc.createWorldOpenFlows().createFreshLevel(LEVEL_NAME, settings, new WorldOptions(0, false, false),
-                registries -> registries.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
+                registries -> registries.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
                 new TitleScreen());
     }
 
@@ -433,7 +433,7 @@ public class ClientSmokeTest {
      * A capture base under a 5×5×5 house in front of the player, and an empty one.
      */
     private void prepareCaptureArea(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, 0, 0);
         level.setDayTime(6000);
         level.setWeatherParameters(6000, 0, false, false);
@@ -467,7 +467,7 @@ public class ClientSmokeTest {
     }
 
     private void prepareModdedBlocks(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         BlockPos marker = moddedBlocksMarkerPos();
         level.setBlockAndUpdate(marker, CapsuleBlocks.CAPSULE_MARKER.get().defaultBlockState().setValue(BlockCapsuleMarker.FACING, Direction.UP));
         BlockPos floor = marker.above();
@@ -505,7 +505,7 @@ public class ClientSmokeTest {
      * Places the block if its mod is installed.
      */
     private static boolean place(ServerLevel level, BlockPos pos, String id) {
-        Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(id));
+        Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(Identifier.parse(id));
         block.ifPresent(b -> level.setBlockAndUpdate(pos, b.defaultBlockState()));
         return block.isPresent();
     }
@@ -514,7 +514,7 @@ public class ClientSmokeTest {
      * Uses a part item on the top of a cable, as a player attaching it.
      */
     private static void attachPart(ServerPlayer player, BlockPos cable, String id) {
-        BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(id)).ifPresent(item -> {
+        BuiltInRegistries.ITEM.getOptional(Identifier.parse(id)).ifPresent(item -> {
             ItemStack held = player.getMainHandItem();
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(item));
             player.getMainHandItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND,
@@ -525,7 +525,7 @@ public class ClientSmokeTest {
 
     private void captureModdedBlocks(ServerPlayer player) {
         ItemStack capsule = Capsule.newEmptyCapsuleItemStack(0x8B4513, 0xFFD700, CAPTURE_SIZE, false, "Modded blocks", 0);
-        Capsule.captureAtPosition(capsule, player, CAPTURE_SIZE, player.serverLevel(), moddedBlocksMarkerPos().offset(-2, 1, -2));
+        Capsule.captureAtPosition(capsule, player, CAPTURE_SIZE, player.level(), moddedBlocksMarkerPos().offset(-2, 1, -2));
         player.getInventory().setItem(2, capsule);
         flyTo(player, -23.5, ground + 3, -7.5, 30);
     }
@@ -537,7 +537,7 @@ public class ClientSmokeTest {
         CompoundTag spawn = NBTHelper.getOrCreateTag(capsuleEntity(player, s -> true).getItem()).getCompound("spawnPosition");
         BlockPos start = new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z"));
         return (int) BlockPos.betweenClosedStream(start, start.offset(CAPTURE_SIZE - 1, CAPTURE_SIZE - 1, CAPTURE_SIZE - 1))
-                .filter(pos -> !player.serverLevel().getBlockState(pos).isAir())
+                .filter(pos -> !player.level().getBlockState(pos).isAir())
                 .count();
     }
 
@@ -545,19 +545,19 @@ public class ClientSmokeTest {
      * A deploy spot on a pool, glass in front and behind, a grass bump overlapping its side, and the player looking at it.
      */
     private void prepareSurroundings(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         BlockPos spot = new BlockPos(48, ground, -24);
         for (BlockPos pos : BlockPos.betweenClosed(spot.offset(-4, -1, -4), spot.offset(1, -1, 3))) {
             level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2 | 16);
         }
         for (int dx = -3; dx <= 3; dx++) {
             for (int dy = 0; dy <= 3; dy++) {
-                level.setBlock(spot.offset(dx, dy, 4), (dx & 1) == 0 ? Blocks.GLASS.defaultBlockState() : Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState(), 2 | 16);
+                level.setBlock(spot.offset(dx, dy, 4), (dx & 1) == 0 ? Blocks.GLASS.defaultBlockState() : Blocks.STAINED_GLASS.lightBlue().defaultBlockState(), 2 | 16);
             }
         }
         for (int dy = 0; dy <= 1; dy++) {
             level.setBlock(spot.offset(-2, dy, -3), Blocks.GLASS.defaultBlockState(), 2 | 16);
-            level.setBlock(spot.offset(-1, dy, -3), Blocks.ORANGE_STAINED_GLASS.defaultBlockState(), 2 | 16);
+            level.setBlock(spot.offset(-1, dy, -3), Blocks.STAINED_GLASS.orange().defaultBlockState(), 2 | 16);
         }
         for (BlockPos pos : BlockPos.betweenClosed(spot.offset(2, 0, -1), spot.offset(5, 0, 1))) {
             level.setBlock(pos, Blocks.GRASS_BLOCK.defaultBlockState(), 2 | 16);
@@ -588,7 +588,7 @@ public class ClientSmokeTest {
      * Inventory: the other materials, the 16 dye colors, an uncharged blueprint, an upgraded and an enchanted capsule.
      */
     private void checkItemModelStates() {
-        ResourceLocation stateProperty = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "state");
+        Identifier stateProperty = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state");
         for (int slot = 0; slot < Inventory.getSelectionSize(); slot++) {
             ItemStack stack = mc().player.getInventory().getItem(slot);
             if (!(stack.getItem() instanceof CapsuleItem)) continue;
@@ -624,7 +624,7 @@ public class ClientSmokeTest {
         main.add(uncharged);
         main.add(CapsuleItems.getUpgradedCapsule(iron, 3));
         ItemStack recall = iron.copy();
-        recall.enchant(player.serverLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(CapsuleEnchantments.RECALL), 1);
+        recall.enchant(player.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(CapsuleEnchantments.RECALL), 1);
         main.add(recall);
 
         for (int i = 0; i < hotbar.size(); i++) inventory.setItem(i, hotbar.get(i));
@@ -641,13 +641,13 @@ public class ClientSmokeTest {
      * A charged blueprint of a prefab, as given by /capsule giveBlueprint.
      */
     static ItemStack blueprint(ServerPlayer player, String prefabPath) {
-        CapsuleTemplate source = Capsule.getRewardTemplateIfExists(prefabPath, player.getServer());
+        CapsuleTemplate source = Capsule.getRewardTemplateIfExists(prefabPath, player.level().getServer());
         int size = Math.max(source.getSize().getX(), Math.max(source.getSize().getY(), source.getSize().getZ())) | 1;
         ItemStack blueprint = Capsule.newEmptyCapsuleItemStack(0x3C44AA, 0xFFFFFF, size, false, "Castle wall", 0);
         CapsuleItem.setState(blueprint, CapsuleState.DEPLOYED);
         CapsuleItem.setBlueprint(blueprint);
-        CapsuleItem.setStructureName(blueprint, StructureSaver.createBlueprintTemplate(prefabPath, blueprint, player.serverLevel(), player));
-        Capsule.reloadBlueprint(blueprint, player.serverLevel(), player);
+        CapsuleItem.setStructureName(blueprint, StructureSaver.createBlueprintTemplate(prefabPath, blueprint, player.level(), player));
+        Capsule.reloadBlueprint(blueprint, player.level(), player);
         return blueprint;
     }
 
@@ -666,7 +666,7 @@ public class ClientSmokeTest {
                 .map(spawn -> BlockPos.betweenClosedStream(
                                 new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z")),
                                 new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z")).offset(CAPTURE_SIZE, CAPTURE_SIZE, CAPTURE_SIZE))
-                        .map(pos -> player.serverLevel().getBlockEntity(pos))
+                        .map(pos -> player.level().getBlockEntity(pos))
                         .filter(be -> be instanceof ChestBlockEntity)
                         .mapToInt(be -> ((ChestBlockEntity) be).countItem(Items.DIAMOND))
                         .sum())
@@ -700,7 +700,7 @@ public class ClientSmokeTest {
      * synchronized.
      */
     static ItemEntity capsuleEntity(ServerPlayer player, Predicate<ItemStack> predicate) {
-        return player.serverLevel().getEntitiesOfClass(ItemEntity.class, new AABB(player.blockPosition()).inflate(32),
+        return player.level().getEntitiesOfClass(ItemEntity.class, new AABB(player.blockPosition()).inflate(32),
                 e -> e.getItem().getItem() instanceof CapsuleItem && predicate.test(e.getItem())).stream().findFirst().orElse(null);
     }
 
@@ -709,7 +709,7 @@ public class ClientSmokeTest {
     }
 
     static void select(int slot) {
-        mc().player.getInventory().selected = slot;
+        mc().player.getInventory().setSelectedSlot(slot);
     }
 
     void rightClick() {

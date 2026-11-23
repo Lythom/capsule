@@ -6,7 +6,7 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.level.block.Blocks;
@@ -32,12 +32,12 @@ public class ReloadTests {
         helper.setBlock(1, 1, 1, Blocks.STONE);
         helper.setBlock(1, 2, 1, Blocks.STONE);
         StructureSaver.duplicateTemplate(StructureSaver.getTemplateNBTData(template(helper, capture(helper, new BlockPos(0, 1, 0), 3))), path, otherManager, server);
-        assertTrue(helper, rewards.getTemplate(ResourceLocation.parse(path)).getPalette().size() == 1, "reward templates are cached");
+        assertTrue(helper, rewards.getTemplate(Identifier.parse(path)).getPalette().size() == 1, "reward templates are cached");
 
         CompletableFuture<Void> reload = server.reloadResources(server.getPackRepository().getSelectedIds());
         helper.succeedWhen(() -> {
             assertTrue(helper, reload.isDone(), "reloading");
-            assertTrue(helper, rewards.getTemplate(ResourceLocation.parse(path)).getPalette().size() == 2, "/reload should refresh reward templates");
+            assertTrue(helper, rewards.getTemplate(Identifier.parse(path)).getPalette().size() == 2, "/reload should refresh reward templates");
         });
     }
 }

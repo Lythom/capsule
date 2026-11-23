@@ -8,7 +8,7 @@ import capsule.platform.Services;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagKey;
@@ -183,30 +183,30 @@ public class Config {
 
         // Loot tables that can reward a capsule
         List<String> defaultLootTablesList = Arrays.asList(
-                BuiltInLootTables.ABANDONED_MINESHAFT.location().toString(),
-                BuiltInLootTables.BASTION_BRIDGE.location().toString(),
-                BuiltInLootTables.BASTION_HOGLIN_STABLE.location().toString(),
-                BuiltInLootTables.BASTION_OTHER.location().toString(),
-                BuiltInLootTables.BASTION_TREASURE.location().toString(),
-                BuiltInLootTables.SHIPWRECK_TREASURE.location().toString(),
-                BuiltInLootTables.DESERT_PYRAMID.location().toString(),
-                BuiltInLootTables.END_CITY_TREASURE.location().toString(),
-                BuiltInLootTables.IGLOO_CHEST.location().toString(),
-                BuiltInLootTables.JUNGLE_TEMPLE.location().toString(),
-                BuiltInLootTables.SIMPLE_DUNGEON.location().toString(),
-                BuiltInLootTables.STRONGHOLD_CORRIDOR.location().toString(),
-                BuiltInLootTables.STRONGHOLD_CROSSING.location().toString(),
-                BuiltInLootTables.STRONGHOLD_LIBRARY.location().toString(),
-                BuiltInLootTables.VILLAGE_TOOLSMITH.location().toString(),
-                BuiltInLootTables.VILLAGE_ARMORER.location().toString(),
-                BuiltInLootTables.VILLAGE_TEMPLE.location().toString(),
-                BuiltInLootTables.VILLAGE_WEAPONSMITH.location().toString(),
-                BuiltInLootTables.BURIED_TREASURE.location().toString(),
-                BuiltInLootTables.JUNGLE_TEMPLE_DISPENSER.location().toString(),
-                BuiltInLootTables.PILLAGER_OUTPOST.location().toString(),
-                BuiltInLootTables.UNDERWATER_RUIN_BIG.location().toString(),
-                BuiltInLootTables.UNDERWATER_RUIN_SMALL.location().toString(),
-                BuiltInLootTables.WOODLAND_MANSION.location().toString());
+                BuiltInLootTables.ABANDONED_MINESHAFT.identifier().toString(),
+                BuiltInLootTables.BASTION_BRIDGE.identifier().toString(),
+                BuiltInLootTables.BASTION_HOGLIN_STABLE.identifier().toString(),
+                BuiltInLootTables.BASTION_OTHER.identifier().toString(),
+                BuiltInLootTables.BASTION_TREASURE.identifier().toString(),
+                BuiltInLootTables.SHIPWRECK_TREASURE.identifier().toString(),
+                BuiltInLootTables.DESERT_PYRAMID.identifier().toString(),
+                BuiltInLootTables.END_CITY_TREASURE.identifier().toString(),
+                BuiltInLootTables.IGLOO_CHEST.identifier().toString(),
+                BuiltInLootTables.JUNGLE_TEMPLE.identifier().toString(),
+                BuiltInLootTables.SIMPLE_DUNGEON.identifier().toString(),
+                BuiltInLootTables.STRONGHOLD_CORRIDOR.identifier().toString(),
+                BuiltInLootTables.STRONGHOLD_CROSSING.identifier().toString(),
+                BuiltInLootTables.STRONGHOLD_LIBRARY.identifier().toString(),
+                BuiltInLootTables.VILLAGE_TOOLSMITH.identifier().toString(),
+                BuiltInLootTables.VILLAGE_ARMORER.identifier().toString(),
+                BuiltInLootTables.VILLAGE_TEMPLE.identifier().toString(),
+                BuiltInLootTables.VILLAGE_WEAPONSMITH.identifier().toString(),
+                BuiltInLootTables.BURIED_TREASURE.identifier().toString(),
+                BuiltInLootTables.JUNGLE_TEMPLE_DISPENSER.identifier().toString(),
+                BuiltInLootTables.PILLAGER_OUTPOST.identifier().toString(),
+                BuiltInLootTables.UNDERWATER_RUIN_BIG.identifier().toString(),
+                BuiltInLootTables.UNDERWATER_RUIN_SMALL.identifier().toString(),
+                BuiltInLootTables.WOODLAND_MANSION.identifier().toString());
 
         Config.lootTablesListCfg = configBuild.comment("List of loot tables that will eventually reward a capsule.\n Example of valid loot tables : gameplay/fishing/treasure, chests/spawn_bonus_chest, entities/villager (killing a villager).\nAlso see https://minecraft.gamepedia.com/Loot_table#List_of_loot_tables.")
                 .worldRestart()
@@ -273,7 +273,7 @@ public class Config {
         String id = configured.startsWith("ResourceKey[") && separator >= 0 && configured.endsWith("]")
                 ? configured.substring(separator + 3, configured.length() - 1)
                 : configured;
-        ResourceLocation location = ResourceLocation.tryParse(id);
+        Identifier location = Identifier.tryParse(id);
         return location == null ? id : location.toString();
     }
 

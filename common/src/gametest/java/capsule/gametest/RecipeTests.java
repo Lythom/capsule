@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
@@ -55,7 +55,7 @@ public class RecipeTests {
                 .listResources("recipe", rl -> rl.getNamespace().equals(CapsuleMod.MODID) && rl.getPath().endsWith(".json"))
                 .keySet().forEach(file -> {
                     String path = file.getPath();
-                    ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, path.substring("recipe/".length(), path.length() - ".json".length()));
+                    Identifier id = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, path.substring("recipe/".length(), path.length() - ".json".length()));
                     Optional<RecipeHolder<?>> recipe = recipes.byKey(id);
                     if (recipe.isEmpty()) {
                         problems.add(id + " is not loaded");
@@ -77,7 +77,7 @@ public class RecipeTests {
      */
     @GameTest(template = "empty")
     public static void noCapsuleTierIsMadeOfLapis(GameTestHelper helper) {
-        List<ResourceLocation> lapisTiers = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
+        List<Identifier> lapisTiers = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
                 .filter(recipe -> recipe.value().getResultItem(helper.getLevel().registryAccess()).getItem() instanceof CapsuleItem)
                 .filter(recipe -> recipe.value().getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.LAPIS_LAZULI))))
                 .map(RecipeHolder::id)
@@ -90,7 +90,7 @@ public class RecipeTests {
     public static void dyeRecipeColorsCapsule(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
 
-        ItemStack result = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.RED_DYE));
+        ItemStack result = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.DYE.red()));
 
         assertTrue(helper, CapsuleItem.getBaseColor(result) != CapsuleItem.getBaseColor(capsule), "base color should change");
         assertTrue(helper, CapsuleItem.getSize(result) == 3, "size is kept");
@@ -100,7 +100,7 @@ public class RecipeTests {
     @GameTest(template = "empty")
     public static void capsuleColorsHaveNoDyedTooltip(GameTestHelper helper) {
         ItemStack capsule = CapsuleTestUtils.emptyCapsule(3);
-        ItemStack dyed = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.RED_DYE));
+        ItemStack dyed = craft(helper, "capsule:dye", 2, 1, capsule, new ItemStack(Items.DYE.red()));
 
         for (ItemStack stack : List.of(capsule, dyed)) {
             DyedItemColor color = stack.get(DataComponents.DYED_COLOR);
@@ -145,7 +145,7 @@ public class RecipeTests {
 
         ItemStack result = craft(helper, "capsule:blueprint", 3, 3,
                 e, new ItemStack(Items.STONE_BUTTON), e,
-                new ItemStack(Items.BLUE_DYE), linked, new ItemStack(Items.BLUE_DYE),
+                new ItemStack(Items.DYE.blue()), linked, new ItemStack(Items.DYE.blue()),
                 e, new ItemStack(Items.PAPER), e);
 
         assertTrue(helper, CapsuleItem.isBlueprint(result), "result should be a blueprint");

@@ -9,7 +9,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +22,7 @@ import java.io.IOException;
  */
 public record CapsuleFullContentAnswerToClient(String structureName, CapsuleTemplate template) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CapsuleFullContentAnswerToClient> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, "full_content_answer"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "full_content_answer"));
 
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleFullContentAnswerToClient.class);
     public static final long BUFFER_MAX_SIZE = 1000000L;

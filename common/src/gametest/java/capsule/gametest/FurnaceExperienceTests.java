@@ -4,7 +4,7 @@ import capsule.helpers.Capsule;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
@@ -25,10 +25,10 @@ public class FurnaceExperienceTests {
         for (int i = 0; i < 10; i++) furnace.setRecipeUsed(recipe);
 
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 3);
-        helper.assertEntityNotPresent(EntityType.EXPERIENCE_ORB);
+        helper.assertEntityNotPresent(EntityTypes.EXPERIENCE_ORB);
         deploy(helper, capsule, new BlockPos(5, 0, 5), null);
         Capsule.resentToCapsule(capsule, helper.getLevel(), null);
-        helper.assertEntityNotPresent(EntityType.EXPERIENCE_ORB);
+        helper.assertEntityNotPresent(EntityTypes.EXPERIENCE_ORB);
         assertTrue(helper, !CapsuleTestUtils.template(helper, capsule).getPalette().getFirst().nbt().getCompound("RecipesUsed").isEmpty(), "the stored experience stays in the furnace");
         helper.succeed();
     }

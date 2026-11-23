@@ -7,7 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -42,7 +42,7 @@ public class ItemFrameTests {
         }
 
         helper.assertBlockPresent(Blocks.STONE, 13, 2, 14);
-        List<ItemFrame> frames = helper.getLevel().getEntities(EntityType.ITEM_FRAME, new AABB(helper.absolutePos(new BlockPos(12, 1, 12))).inflate(4), f -> true);
+        List<ItemFrame> frames = helper.getLevel().getEntities(EntityTypes.ITEM_FRAME, new AABB(helper.absolutePos(new BlockPos(12, 1, 12))).inflate(4), f -> true);
         assertTrue(helper, frames.size() == 1, "one item frame should be deployed, got " + frames.size());
         ItemFrame deployed = frames.get(0);
         assertTrue(helper, deployed.getPos().equals(helper.absolutePos(new BlockPos(14, 2, 14))) && deployed.getDirection() == Direction.EAST,
