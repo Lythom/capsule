@@ -27,18 +27,16 @@ dependencies {
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     implementation "maven.modrinth:forge-config-api-port:${forge_config_api_port_version}"
     implementation include("eu.pb4:common-protection-api:${common_protection_api_version}")
-    // bundled in Forge Config API Port (jar-in-jar), pinned to the same version
-    implementation "com.electronwill.night-config:core:${night_config_version}"
-    runtimeOnly "com.electronwill.night-config:toml:${night_config_version}"
+    // the common config code compiles against night-config; at runtime the copy nested in Forge Config API Port is used
+    compileOnly "com.electronwill.night-config:core:${night_config_version}"
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
     // recipe viewers: the plugins compile against their APIs, the dev runs load the one picked with -PrecipeViewer
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") { transitive = false }
     compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") { transitive = false }
-    // JEI's config library (the version JEI's pom asks for), in case the dev runs do not load nested jars
     localRuntime([
-            jei : ["mezz.jei:jei-${minecraft_version}-fabric:${jei_version}", "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:0.6.6"],
+            jei : ["mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"],
             rei : ["me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"],
     ][findProperty('recipeViewer') ?: 'jei'])
 
@@ -63,6 +61,9 @@ sourceSets.gametest {
     runtimeClasspath += sourceSets.main.runtimeClasspath
 }
 
+// false until the GameTests are ported to 26.2, see gradle.properties
+def gametestsReady = port_gametests_ready.toBoolean()
+
 loom {
     accessWidenerPath = file('src/main/resources/capsule.accesswidener')
     mods {
@@ -70,13 +71,15 @@ loom {
             sourceSet sourceSets.main
         }
         // dev only mod holding the GameTests, see src/gametest/resources/fabric.mod.json
-        'capsule-gametest' {
-            sourceSet sourceSets.gametest
+        if (gametestsReady) {
+            'capsule-gametest' {
+                sourceSet sourceSets.gametest
+            }
         }
     }
     runs {
         configureEach {
-            source sourceSets.gametest
+            source gametestsReady ? sourceSets.gametest : sourceSets.main
             vmArg '-Xmx4G'
         }
         client {
@@ -135,12 +138,14 @@ tasks.register('testModJar', Jar) {
     destinationDirectory = layout.buildDirectory.dir('test-mod')
 }
 
-tasks.named('assemble') {
-    dependsOn 'testModJar'
-}
+if (gametestsReady) {
+    tasks.named('assemble') {
+        dependsOn 'testModJar'
+    }
 
-tasks.named('check') {
-    dependsOn 'runGameTestServer'
+    tasks.named('check') {
+        dependsOn 'runGameTestServer'
+    }
 }
 
 test {

@@ -8,7 +8,7 @@ modId="capsule"
 version="${file.jarVersion}"
 displayName="Capsule"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/capsule"
-logoFile="capsule_base.png"
+iconFile="capsule_base.png"
 authors="Lythom"
 description='''
 Bring your base!

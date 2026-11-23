@@ -3,6 +3,9 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+// false until the GameTests are ported to 26.2, see gradle.properties
+def gametestsReady = port_gametests_ready.toBoolean()
+
 neoForge {
     version = neo_version
 
@@ -14,7 +17,7 @@ neoForge {
             // Limit ram usage for the dev environment to 4GB
             jvmArgument '-Xmx4G'
             gameDirectory = project.file("runs/${name}")
-            sourceSet = sourceSets.gametest
+            sourceSet = gametestsReady ? sourceSets.gametest : sourceSets.main
         }
 
         client {
@@ -51,8 +54,10 @@ neoForge {
             sourceSet sourceSets.main
         }
         // GameTests and client smoke test, see src/gametest/resources/META-INF/neoforge.mods.toml
-        capsule_gametest {
-            sourceSet sourceSets.gametest
+        if (gametestsReady) {
+            capsule_gametest {
+                sourceSet sourceSets.gametest
+            }
         }
     }
 
@@ -137,10 +142,12 @@ tasks.register('testModJar', Jar) {
     destinationDirectory = layout.buildDirectory.dir('test-mod')
 }
 
-tasks.named('assemble') {
-    dependsOn 'testModJar'
-}
+if (gametestsReady) {
+    tasks.named('assemble') {
+        dependsOn 'testModJar'
+    }
 
-tasks.named('check') {
-    dependsOn 'runGameTestServer'
+    tasks.named('check') {
+        dependsOn 'runGameTestServer'
+    }
 }
