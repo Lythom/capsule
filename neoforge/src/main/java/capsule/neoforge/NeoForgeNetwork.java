@@ -4,6 +4,7 @@ import capsule.platform.Network;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -12,7 +13,8 @@ public class NeoForgeNetwork implements Network {
 
     @Override
     public void sendToServer(CustomPacketPayload payload) {
-        PacketDistributor.sendToServer(payload);
+        // a client class: only loaded when the client sends, never on a dedicated server
+        ClientPacketDistributor.sendToServer(payload);
     }
 
     @Override

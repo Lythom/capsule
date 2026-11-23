@@ -31,8 +31,11 @@ import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -106,7 +109,7 @@ public class NeoForgePlatform implements Platform {
     @Override
     @Nullable
     public ItemSource getItemSource(Level level, BlockPos pos) {
-        IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+        ResourceHandler<ItemResource> handler = level.getCapability(Capabilities.Item.BLOCK, pos, null);
         return handler == null ? null : new ItemHandlerSource(handler);
     }
 
@@ -120,25 +123,39 @@ public class NeoForgePlatform implements Platform {
         return player.getPersistentData();
     }
 
-    private record ItemHandlerSource(IItemHandler handler) implements ItemSource {
+    /**
+     * The slots of a block's item resource handler (NeoForge's transfer API, which replaced IItemHandler), each change
+     * in a transaction of its own.
+     */
+    private record ItemHandlerSource(ResourceHandler<ItemResource> handler) implements ItemSource {
         @Override
         public int size() {
-            return handler.getSlots();
+            return handler.size();
         }
 
         @Override
         public ItemStack getItem(int slot) {
-            return handler.getStackInSlot(slot);
+            return ItemUtil.getStack(handler, slot);
         }
 
         @Override
         public ItemStack extract(int slot, int count) {
-            return handler.extractItem(slot, count, false);
+            ItemResource resource = handler.getResource(slot);
+            if (resource.isEmpty() || count <= 0) return ItemStack.EMPTY;
+            try (Transaction transaction = Transaction.openRoot()) {
+                int extracted = handler.extract(slot, resource, count, transaction);
+                transaction.commit();
+                return extracted <= 0 ? ItemStack.EMPTY : resource.toStack(extracted);
+            }
         }
 
         @Override
         public void insert(int slot, ItemStack stack) {
-            handler.insertItem(slot, stack, false);
+            if (stack.isEmpty()) return;
+            try (Transaction transaction = Transaction.openRoot()) {
+                handler.insert(slot, ItemResource.of(stack), stack.getCount(), transaction);
+                transaction.commit();
+            }
         }
     }
 }
