@@ -10,17 +10,18 @@ import capsule.structure.CapsuleTemplate;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
-import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.entries.SingleEntryContainerBase;
+import net.minecraft.world.level.storage.loot.entries.UniformContainerBase;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
-import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -30,11 +31,11 @@ import static capsule.items.CapsuleItem.CapsuleState.BLUEPRINT;
 /**
  * @author Lythom
  */
-public class CapsuleLootEntry extends LootPoolSingletonContainer {
+public class CapsuleLootEntry extends SingleEntryContainerBase {
 
     public static final MapCodec<CapsuleLootEntry> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance
             .group(Codec.STRING.fieldOf("templates_path").forGetter(entry -> entry.templatesPath))
-            .and(singletonFields(instance))
+            .and(uniformFields(instance))
             .apply(instance, CapsuleLootEntry::new));
 
     // Since 26.1 the loot pool entry registry holds the map codecs themselves: codec() must return the registered one.
@@ -50,8 +51,8 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
     private static final Random random = new Random();
     private final String templatesPath;
 
-    public static LootPoolEntryContainer.Builder<?> builder(String templatePath) {
-        return simpleBuilder((p_216169_1_, p_216169_2_, p_216169_3_, p_216169_4_) -> {
+    public static UniformContainerBase.Builder<?> builder(String templatePath) {
+        return simpleBuilder((weightIn, quality, condition, modifier) -> {
             int weight = findConfiguredWeight(templatePath);
             return new CapsuleLootEntry(templatePath, weight);
         });
@@ -70,11 +71,11 @@ public class CapsuleLootEntry extends LootPoolSingletonContainer {
      * @param weightIn
      */
     protected CapsuleLootEntry(String templatesPath, int weightIn) {
-        this(templatesPath, weightIn, 0, List.of(), List.of());
+        this(templatesPath, weightIn, 0, Optional.empty(), Optional.empty());
     }
 
-    private CapsuleLootEntry(String templatesPath, int weight, int quality, List<LootItemCondition> conditions, List<LootItemFunction> functions) {
-        super(weight, quality, conditions, functions);
+    private CapsuleLootEntry(String templatesPath, int weight, int quality, Optional<Holder<LootItemCondition>> condition, Optional<Holder<LootItemFunction>> modifier) {
+        super(weight, quality, condition, modifier);
         this.templatesPath = templatesPath;
     }
 

@@ -27,7 +27,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "capsule:capsule_iron"
+        "recipes": "capsule:capsule_iron"
       }
     }
   },
