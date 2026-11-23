@@ -40,6 +40,7 @@ Proposed in this plan. Change them only after asking the maintainer.
 | D7 | **No migration** of config files written by an older Capsule (`config/capsule/prefab_blueprint_recipe.json` with the old ingredient format and `show_in_tooltip`, `blueprint_whitelist.json`, starters, loot templates). A config file that does not parse is reported: one server log error naming the file, what failed and that deleting it restores the default, and the feature that depends on it is skipped. No crash, no silent loss. What must be right is the JSON **bundled** with Capsule (`data/capsule/initialconfig/**`, recipes, advancements): a GameTest parses every bundled file (phase 8). | Capsule 10.x for 26.x is a new major version: there is no "previous" config to carry over (`BACKLOG.md`, "Decided, not doing": "Updated default templates never reach existing installs: fine, users delete the config folder"). The legacy-format branch of `Blueprint.java` (the "uses legacy format" warning, line 255) becomes this error. |
 | D8 | **Done on branch `1.21.1`** (commit `5002f14`): the item predicates of the three recipe advancements (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`) were `{"item": …}` / `{"tag": …}`. They are now `{"items": "minecraft:compass"}` / `{"items": "#c:ender_pearls"}` / `{"items": "#minecraft:planks"}` inside the `inventory_changed` `items` list. The GameTest `RecipeTests#recipeAdvancementsWaitForTheirItem` checks that each criterion matches its item and not dirt. The port takes both from there; 26.3 also renames `recipe_unlocked`'s `"recipe"` to `"recipes"` (phase 10). | An item predicate reads `items` and ignores unknown keys, so the old predicates had no condition: the recipes were unlocked by the first item picked up. The test failed before the fix and passes after (109 NeoForge, 107 Fabric GameTests). |
 | D9 | One Capsule major version per Minecraft version: `capsule_version=10.0` for 26.2 (jars `Capsule-<loader>-26.2-10.0.<build>.jar`, CHANGELOG entry `26.2-10.0.x`), `capsule_version=11.0` for 26.3 (`26.3-11.0.x`, phase 10). | A version number then tells which Minecraft line a commit or a jar belongs to. The new major also says that configs of the previous major are not carried over (D7). |
+| D10 | Capsules **deployed** in an older Minecraft version are not supported after the upgrade: undeploying them on 26.x may capture blocks that were there before the deploy. Leave the storage of occupied positions as it is (numeric block state ids, `CapsuleTemplate:372`, `CapsuleItem:843`). Undeploy capsules before upgrading a world; say so in the CHANGELOG. | Those ids change between Minecraft versions. Supporting them would change the data format; the maintainer decided it is not needed, as for configs (D7). |
 
 ## 2. The inventories
 
@@ -386,8 +387,8 @@ newest build again when the phase starts.
 - `./gradlew build` green; `scripts/validate-all.sh --iris --incompat` with every step PASS except the ones §6 marks
   "not tested". Paste its summary table into `docs/TESTING.md` like the 1.21.1 one.
 - `docs/MANUAL_VALIDATION.md` played once on each loader.
-- A 1.21.1 world with capsules (empty, linked, deployed, blueprint, one-use, reward) and capture bases opens on 26.2.
-  Its capsules keep their content and deploy it.
+- A 1.21.1 world with capsules (empty, linked, blueprint, one-use, reward; not deployed, D10) and capture bases opens
+  on 26.2. Its capsules keep their content and deploy it.
 - The docs of §5 phase 9 updated. `BACKLOG.md` lists what was left out (EMI, the D5 mods, the production GameTests if
   they could not be kept).
 - 26.3 (phase 10): the same list on `dev-1.26.3`, plus the client smoke test with Improved Transparency on, and a
