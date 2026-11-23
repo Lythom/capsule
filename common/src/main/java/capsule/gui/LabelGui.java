@@ -60,7 +60,7 @@ public class LabelGui extends Screen {
         if (!itemStack.isEmpty() && NBTHelper.hasTag(itemStack)) {
             CompoundTag tag = NBTHelper.getTag(itemStack);
             if (tag != null) {
-                label = tag.getString("label");
+                label = tag.getStringOr("label", "");
             }
         }
         textInput.setValue(label);

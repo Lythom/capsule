@@ -31,7 +31,7 @@ class BlueprintItemsTest {
     }
 
     private static boolean holdsItems(Block block, String snbt) throws CommandSyntaxException {
-        return StructureSaver.holdsItems(new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, block.defaultBlockState(), TagParser.parseTag(snbt)));
+        return StructureSaver.holdsItems(new StructureTemplate.StructureBlockInfo(BlockPos.ZERO, block.defaultBlockState(), TagParser.parseCompoundFully(snbt)));
     }
 
     @Test

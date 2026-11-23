@@ -18,7 +18,7 @@ public class CapsuleSavedData extends SavedData {
     public static CapsuleSavedData load(CompoundTag nbt, HolderLookup.Provider registries) {
         // retrieve lastReservedPosition
         CapsuleSavedData data = new CapsuleSavedData();
-        data.capsuleCounter = nbt.getInt("counter");
+        data.capsuleCounter = nbt.getIntOr("counter", 0);
         return data;
     }
 

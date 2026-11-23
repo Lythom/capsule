@@ -57,7 +57,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static net.minecraft.nbt.Tag.TAG_COMPOUND;
 
 public class StructureSaver {
     protected static final Logger LOGGER = LogManager.getLogger(StructureSaver.class);
@@ -209,15 +208,15 @@ public class StructureSaver {
     public static boolean holdsItems(StructureTemplate.StructureBlockInfo b) {
         CompoundTag nbt = b.nbt();
         if (nbt == null) return false;
-        if (!nbt.getList("Items", TAG_COMPOUND).isEmpty()) return true;
+        if (nbt.getListOrEmpty("Items").compoundStream().findAny().isPresent()) return true;
         JsonObject keptNBT = Config.getBlueprintAllowedNBT(b.state().getBlock());
         // the root is the block entity itself, its keys are not an item stack
-        return nbt.getAllKeys().stream().anyMatch(key -> (keptNBT == null || !keptNBT.has(key)) && containsItemStack(nbt.get(key)));
+        return nbt.keySet().stream().anyMatch(key -> (keptNBT == null || !keptNBT.has(key)) && containsItemStack(nbt.get(key)));
     }
 
     private static boolean containsItemStack(Tag tag) {
         if (tag instanceof CompoundTag compound) {
-            return isItemStack(compound) || compound.getAllKeys().stream().anyMatch(key -> containsItemStack(compound.get(key)));
+            return isItemStack(compound) || compound.keySet().stream().anyMatch(key -> containsItemStack(compound.get(key)));
         }
         if (tag instanceof ListTag list) {
             return list.stream().anyMatch(StructureSaver::containsItemStack);
@@ -229,8 +228,8 @@ public class StructureSaver {
      * An item stack as ItemStack.save writes it (count), or in the format before 1.20.5 (Count).
      */
     private static boolean isItemStack(CompoundTag tag) {
-        if (!tag.contains("id", Tag.TAG_STRING) || Math.max(tag.getInt("count"), tag.getInt("Count")) <= 0) return false;
-        Identifier id = Identifier.tryParse(tag.getString("id"));
+        if (tag.getString("id").isEmpty() || Math.max(tag.getIntOr("count", 0), tag.getIntOr("Count", 0)) <= 0) return false;
+        Identifier id = Identifier.tryParse(tag.getStringOr("id", ""));
         return id != null && BuiltInRegistries.ITEM.getOptional(id).filter(item -> item != Items.AIR).isPresent();
     }
 
@@ -244,7 +243,7 @@ public class StructureSaver {
     public static CompoundTag filterIdentityNBT(StructureTemplate.StructureBlockInfo b) {
         CompoundTag nbt = b.nbt() != null ? b.nbt().copy() : new CompoundTag();
         List<String> converted = Config.getBlueprintIdentityNBT(b.state().getBlock());
-        nbt.getAllKeys().removeIf(key -> converted == null || !converted.contains(key));
+        nbt.keySet().removeIf(key -> converted == null || !converted.contains(key));
         return nbt;
     }
 
@@ -737,7 +736,7 @@ public class StructureSaver {
         if (NBTHelper.hasTag(destCapsule) && NBTHelper.getOrCreateTag(destCapsule).contains("prevStructureName")) {
             if (templateManager != null) {
                 try {
-                    templateManager.deleteTemplate(Identifier.parse(NBTHelper.getOrCreateTag(destCapsule).getString("prevStructureName")));
+                    templateManager.deleteTemplate(Identifier.parse(NBTHelper.getOrCreateTag(destCapsule).getStringOr("prevStructureName", "")));
                 } catch (Exception e) {
                     LOGGER.error(e);
                 }

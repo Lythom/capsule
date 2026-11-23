@@ -29,7 +29,7 @@ public class FurnaceExperienceTests {
         deploy(helper, capsule, new BlockPos(5, 0, 5), null);
         Capsule.resentToCapsule(capsule, helper.getLevel(), null);
         helper.assertEntityNotPresent(EntityTypes.EXPERIENCE_ORB);
-        assertTrue(helper, !CapsuleTestUtils.template(helper, capsule).getPalette().getFirst().nbt().getCompound("RecipesUsed").isEmpty(), "the stored experience stays in the furnace");
+        assertTrue(helper, !CapsuleTestUtils.template(helper, capsule).getPalette().getFirst().nbt().getCompoundOrEmpty("RecipesUsed").isEmpty(), "the stored experience stays in the furnace");
         helper.succeed();
     }
 }

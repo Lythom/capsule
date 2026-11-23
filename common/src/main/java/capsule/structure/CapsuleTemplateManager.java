@@ -8,6 +8,7 @@ import net.minecraft.IdentifierException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -156,12 +157,9 @@ public class CapsuleTemplateManager {
     }
 
     public CapsuleTemplate readFromNBT(CompoundTag p_227458_1_, String location) {
-        if (!p_227458_1_.contains("DataVersion", 99)) {
-            p_227458_1_.putInt("DataVersion", 500);
-        }
-
+        int dataVersion = NbtUtils.getDataVersion(p_227458_1_, 500);
         CapsuleTemplate template = new CapsuleTemplate();
-        template.load(DataFixTypes.STRUCTURE.updateToCurrentVersion(this.fixer, p_227458_1_, p_227458_1_.getInt("DataVersion")), location);
+        template.load(DataFixTypes.STRUCTURE.updateToCurrentVersion(this.fixer, p_227458_1_, dataVersion), location);
         return template;
     }
 

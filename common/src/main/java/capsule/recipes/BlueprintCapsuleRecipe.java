@@ -117,7 +117,7 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
                     0xFFFFFF,
                     CapsuleItem.getSize(referenceCapsule),
                     CapsuleItem.isOverpowered(referenceCapsule),
-                    NBTHelper.hasTag(referenceCapsule) ? NBTHelper.getOrCreateTag(referenceCapsule).getString("label") : null,
+                    NBTHelper.hasTag(referenceCapsule) ? NBTHelper.getOrCreateTag(referenceCapsule).getStringOr("label", "") : null,
                     0
             );
             CapsuleItem.setBlueprint(blueprintItem);

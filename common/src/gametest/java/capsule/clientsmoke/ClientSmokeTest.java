@@ -534,8 +534,8 @@ public class ClientSmokeTest {
      * Non air blocks in the area of the capsule lying around.
      */
     private static int deployedBlocks(ServerPlayer player) {
-        CompoundTag spawn = NBTHelper.getOrCreateTag(capsuleEntity(player, s -> true).getItem()).getCompound("spawnPosition");
-        BlockPos start = new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z"));
+        CompoundTag spawn = NBTHelper.getOrCreateTag(capsuleEntity(player, s -> true).getItem()).getCompoundOrEmpty("spawnPosition");
+        BlockPos start = new BlockPos(spawn.getIntOr("x", 0), spawn.getIntOr("y", 0), spawn.getIntOr("z", 0));
         return (int) BlockPos.betweenClosedStream(start, start.offset(CAPTURE_SIZE - 1, CAPTURE_SIZE - 1, CAPTURE_SIZE - 1))
                 .filter(pos -> !player.level().getBlockState(pos).isAir())
                 .count();
@@ -662,10 +662,10 @@ public class ClientSmokeTest {
 
     private void countDeployedChestDiamonds(ServerPlayer player) {
         deployedChestDiamonds = Optional.ofNullable(capsuleEntity(player, s -> true))
-                .map(e -> NBTHelper.getOrCreateTag(e.getItem()).getCompound("spawnPosition"))
+                .map(e -> NBTHelper.getOrCreateTag(e.getItem()).getCompoundOrEmpty("spawnPosition"))
                 .map(spawn -> BlockPos.betweenClosedStream(
-                                new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z")),
-                                new BlockPos(spawn.getInt("x"), spawn.getInt("y"), spawn.getInt("z")).offset(CAPTURE_SIZE, CAPTURE_SIZE, CAPTURE_SIZE))
+                                new BlockPos(spawn.getIntOr("x", 0), spawn.getIntOr("y", 0), spawn.getIntOr("z", 0)),
+                                new BlockPos(spawn.getIntOr("x", 0), spawn.getIntOr("y", 0), spawn.getIntOr("z", 0)).offset(CAPTURE_SIZE, CAPTURE_SIZE, CAPTURE_SIZE))
                         .map(pos -> player.level().getBlockEntity(pos))
                         .filter(be -> be instanceof ChestBlockEntity)
                         .mapToInt(be -> ((ChestBlockEntity) be).countItem(Items.DIAMOND))

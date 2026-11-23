@@ -24,7 +24,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
@@ -158,7 +157,7 @@ public class CapsuleItem extends Item {
 
 
     public static boolean isOneUse(ItemStack stack) {
-        return !stack.isEmpty() && NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("oneUse") && NBTHelper.getOrCreateTag(stack).getBoolean("oneUse");
+        return !stack.isEmpty() && NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("oneUse") && NBTHelper.getOrCreateTag(stack).getBooleanOr("oneUse", false);
     }
 
     public static void setOneUse(ItemStack capsule) {
@@ -175,7 +174,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isReward(ItemStack stack) {
-        return !stack.isEmpty() && (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("isReward") && NBTHelper.getOrCreateTag(stack).getBoolean("isReward") && isOneUse(stack));
+        return !stack.isEmpty() && (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("isReward") && NBTHelper.getOrCreateTag(stack).getBooleanOr("isReward", false) && isOneUse(stack));
     }
 
     public static void setIsReward(ItemStack capsule) {
@@ -201,9 +200,9 @@ public class CapsuleItem extends Item {
 
         if (!hasStructureLink(stack) && !CapsuleItem.hasState(stack, CapsuleState.LINKED)) {
             return Component.translatable("items.capsule.content_empty");
-        } else if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("label") && !NBTHelper.getOrCreateTag(stack).getString("label").isEmpty()) {
+        } else if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("label") && !NBTHelper.getOrCreateTag(stack).getStringOr("label", "").isEmpty()) {
             return Component.literal("«")
-                    .append(Component.literal(NBTHelper.getOrCreateTag(stack).getString("label")).withStyle(ChatFormatting.ITALIC))
+                    .append(Component.literal(NBTHelper.getOrCreateTag(stack).getStringOr("label", "")).withStyle(ChatFormatting.ITALIC))
                     .append("»");
         }
         return Component.translatable("items.capsule.content_unlabeled");
@@ -219,7 +218,7 @@ public class CapsuleItem extends Item {
     public static int getSize(ItemStack capsule) {
         int size = 1;
         if (!capsule.isEmpty() && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("size")) {
-            size = NBTHelper.getOrCreateTag(capsule).getInt("size");
+            size = NBTHelper.getOrCreateTag(capsule).getIntOr("size", 0);
         }
         if (size > CAPSULE_MAX_CAPTURE_SIZE) {
             size = CAPSULE_MAX_CAPTURE_SIZE;
@@ -252,7 +251,7 @@ public class CapsuleItem extends Item {
     public static int getYOffset(ItemStack capsule) {
         int yOffset = 0;
         if (!capsule.isEmpty() && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("yOffset")) {
-            yOffset = NBTHelper.getOrCreateTag(capsule).getInt("yOffset");
+            yOffset = NBTHelper.getOrCreateTag(capsule).getIntOr("yOffset", 0);
         }
         return yOffset;
     }
@@ -264,7 +263,7 @@ public class CapsuleItem extends Item {
     public static String getStructureName(ItemStack capsule) {
         String name = null;
         if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("structureName")) {
-            name = NBTHelper.getOrCreateTag(capsule).getString("structureName");
+            name = NBTHelper.getOrCreateTag(capsule).getStringOr("structureName", "");
         }
         return name;
     }
@@ -276,7 +275,7 @@ public class CapsuleItem extends Item {
     public static String getAuthor(ItemStack capsule) {
         String name = null;
         if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("author")) {
-            name = NBTHelper.getOrCreateTag(capsule).getString("author");
+            name = NBTHelper.getOrCreateTag(capsule).getStringOr("author", "");
         }
         return name;
     }
@@ -297,7 +296,7 @@ public class CapsuleItem extends Item {
     public static int getMaterialColor(ItemStack capsule) {
         int color = 0;
         if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("color")) {
-            color = NBTHelper.getOrCreateTag(capsule).getInt("color");
+            color = NBTHelper.getOrCreateTag(capsule).getIntOr("color", 0);
         }
         return color;
     }
@@ -309,7 +308,7 @@ public class CapsuleItem extends Item {
     public static int getUpgradeLevel(ItemStack stack) {
         int upgradeLevel = 0;
         if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("upgraded")) {
-            upgradeLevel = NBTHelper.getOrCreateTag(stack).getInt("upgraded");
+            upgradeLevel = NBTHelper.getOrCreateTag(stack).getIntOr("upgraded", 0);
         }
         return upgradeLevel;
     }
@@ -322,7 +321,7 @@ public class CapsuleItem extends Item {
         ResourceKey<Level> dim = null;
         if (capsule != null && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("spawnPosition")) {
             dim = ResourceKey.create(Registries.DIMENSION, Identifier.parse(
-                    NBTHelper.getOrCreateTag(capsule).getCompound("spawnPosition").getString("dim")
+                    NBTHelper.getOrCreateTag(capsule).getCompoundOrEmpty("spawnPosition").getStringOr("dim", "")
             ));
         }
         return dim;
@@ -333,7 +332,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean isOverpowered(ItemStack stack) {
-        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("overpowered") && NBTHelper.getOrCreateTag(stack).getByte("overpowered") == (byte) 1;
+        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("overpowered") && NBTHelper.getOrCreateTag(stack).getByteOr("overpowered", (byte) 0) == (byte) 1;
     }
 
     private static boolean isActivated(ItemStack capsule) {
@@ -346,7 +345,7 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean canRotate(ItemStack capsule) {
-        return isBlueprint(capsule) || !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("canRotate") && NBTHelper.getOrCreateTag(capsule).getBoolean("canRotate");
+        return isBlueprint(capsule) || !CapsuleItem.hasState(capsule, CapsuleState.DEPLOYED) && NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("canRotate") && NBTHelper.getOrCreateTag(capsule).getBooleanOr("canRotate", false);
     }
 
     public static void revertStateFromActivated(ItemStack capsule) {
@@ -366,13 +365,13 @@ public class CapsuleItem extends Item {
 
     public static CapsuleState getState(ItemStack stack) {
         if (!NBTHelper.hasTag(stack)) return CapsuleState.valueOf(0);
-        if (NBTHelper.getOrCreateTag(stack).contains("state")) return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getInt("state"));
+        if (NBTHelper.getOrCreateTag(stack).contains("state")) return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getIntOr("state", 0));
         // compatibility fallback
-        return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getInt("Damage"));
+        return CapsuleState.valueOf(NBTHelper.getOrCreateTag(stack).getIntOr("Damage", 0));
     }
 
     public static boolean hasState(ItemStack stack, CapsuleState state) {
-        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).getInt("state") == state.getValue();
+        return NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).getIntOr("state", 0) == state.getValue();
     }
 
     @Override
@@ -624,7 +623,7 @@ public class CapsuleItem extends Item {
                 BlockHitResult rtr = hasStructureLink(capsule) ? Spacial.clientRayTracePreview(playerIn, 0, getSize(capsule)) : null;
                 BlockPos dest = rtr != null && rtr.getType() == HitResult.Type.BLOCK ? Spacial.getDeployPosition(worldIn, rtr).offset(0, CapsuleItem.getYOffset(capsule), 0) : null;
                 if (dest != null) {
-                    String structureName = NBTHelper.getOrCreateTag(capsule).getString("structureName");
+                    String structureName = NBTHelper.getOrCreateTag(capsule).getStringOr("structureName", "");
                     if (structureName != null && !structureName.isEmpty()) {
                         Services.NETWORK.sendToServer(new CapsuleContentPreviewQueryToServer(structureName));
                     }
@@ -681,7 +680,7 @@ public class CapsuleItem extends Item {
 
     private void startTimer(Level worldIn, Player playerIn, ItemStack capsule) {
         NBTHelper.updateTag(capsule, tag -> {
-            CompoundTag timer = tag.getCompound("activetimer");
+            CompoundTag timer = tag.getCompoundOrEmpty("activetimer");
             timer.putLong("starttime", worldIn.getGameTime());
             tag.put("activetimer", timer);
         });
@@ -702,7 +701,7 @@ public class CapsuleItem extends Item {
      * A date further than the delay comes from another world or from a game time that went back: it is ignored.
      */
     public static boolean canUndeploy(ItemStack capsule, Level level) {
-        long undeployAt = NBTHelper.getOrCreateTag(capsule).getLong("undeployAt");
+        long undeployAt = NBTHelper.getOrCreateTag(capsule).getLongOr("undeployAt", 0L);
         long now = level.getGameTime();
         return now >= undeployAt || undeployAt - now > UNDEPLOY_DELAY;
     }
@@ -716,10 +715,10 @@ public class CapsuleItem extends Item {
         super.inventoryTick(stack, worldIn, entityIn, slot);
 
         // disable capsule after some time
-        CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompound("activetimer");
+        CompoundTag timer = NBTHelper.getOrCreateTag(stack).getCompoundOrEmpty("activetimer");
 
         long now = worldIn.getGameTime();
-        long start = timer.getLong("starttime");
+        long start = timer.getLongOr("starttime", 0L);
         if (isActivated(stack) && timer.contains("starttime") && (now >= start + Config.previewDisplayDuration || start > now)) {
             revertStateFromActivated(stack);
             worldIn.playSound(null, entityIn.blockPosition(), SoundEvents.STONE_BUTTON_CLICK_OFF, SoundSource.BLOCKS, 0.2F, 0.4F);
@@ -839,12 +838,10 @@ public class CapsuleItem extends Item {
     public static Map<BlockPos, Block> getOccupiedSourcePos(ItemStack capsule) {
         Map<BlockPos, Block> occupiedSources = null;
         if (NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("occupiedSpawnPositions")) {
-            occupiedSources = new HashMap<>();
-            ListTag list = NBTHelper.getOrCreateTag(capsule).getList("occupiedSpawnPositions", 10);
-            for (int i = 0; i < list.size(); i++) {
-                CompoundTag entry = list.getCompound(i);
-                occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
-            }
+            Map<BlockPos, Block> sources = new HashMap<>();
+            NBTHelper.getOrCreateTag(capsule).getListOrEmpty("occupiedSpawnPositions").compoundStream().forEach(entry ->
+                    sources.put(BlockPos.of(entry.getLongOr("pos", 0L)), Block.stateById(entry.getIntOr("blockId", 0)).getBlock()));
+            occupiedSources = sources;
         }
         return occupiedSources;
     }
@@ -880,7 +877,7 @@ public class CapsuleItem extends Item {
                 color = 0x7CC4EA; // trick for blueprint to reuse the "deployed" item model and get okish label color
             } else {
                 if (NBTHelper.hasTag(stack) && NBTHelper.getOrCreateTag(stack).contains("color")) {
-                    color = NBTHelper.getOrCreateTag(stack).getInt("color");
+                    color = NBTHelper.getOrCreateTag(stack).getIntOr("color", 0);
                 }
             }
         } else if (renderPass == 2) {
@@ -929,14 +926,14 @@ public class CapsuleItem extends Item {
     }
 
     public static boolean hasSourceInventory(ItemStack capsule) {
-        return NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("sourceInventory") && NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory").contains("x");
+        return NBTHelper.hasTag(capsule) && NBTHelper.getOrCreateTag(capsule).contains("sourceInventory") && NBTHelper.getOrCreateTag(capsule).getCompoundOrEmpty("sourceInventory").contains("x");
     }
 
     @Nullable
     public static BlockPos getSourceInventoryLocation(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
-            CompoundTag sourceInventory = NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory");
-            return new BlockPos(sourceInventory.getInt("x"), sourceInventory.getInt("y"), sourceInventory.getInt("z"));
+            CompoundTag sourceInventory = NBTHelper.getOrCreateTag(capsule).getCompoundOrEmpty("sourceInventory");
+            return new BlockPos(sourceInventory.getIntOr("x", 0), sourceInventory.getIntOr("y", 0), sourceInventory.getIntOr("z", 0));
         }
         return null;
     }
@@ -945,7 +942,7 @@ public class CapsuleItem extends Item {
     public static ResourceKey<Level> getSourceInventoryDimension(ItemStack capsule) {
         if (hasSourceInventory(capsule)) {
             return ResourceKey.create(Registries.DIMENSION, Identifier.parse(
-                    NBTHelper.getOrCreateTag(capsule).getCompound("sourceInventory").getString("dim")
+                    NBTHelper.getOrCreateTag(capsule).getCompoundOrEmpty("sourceInventory").getStringOr("dim", "")
             ));
         }
         return null;
@@ -974,8 +971,8 @@ public class CapsuleItem extends Item {
     public static StructurePlaceSettings getPlacement(ItemStack capsule) {
         if (hasPlacement(capsule)) {
             return new StructurePlaceSettings()
-                    .setMirror(Mirror.valueOf(NBTHelper.getOrCreateTag(capsule).getString("mirror")))
-                    .setRotation(Rotation.valueOf(NBTHelper.getOrCreateTag(capsule).getString("rotation")))
+                    .setMirror(Mirror.valueOf(NBTHelper.getOrCreateTag(capsule).getStringOr("mirror", "")))
+                    .setRotation(Rotation.valueOf(NBTHelper.getOrCreateTag(capsule).getStringOr("rotation", "")))
                     .setIgnoreEntities(false);
         }
         return new StructurePlaceSettings();

@@ -144,7 +144,7 @@ public class CapsulePreviewHandler {
             if (heldItemItem instanceof CapsuleItem && (CapsuleItem.hasState(heldItem, EMPTY) || CapsuleItem.hasState(heldItem, EMPTY_ACTIVATED))) {
                 CompoundTag tag = NBTHelper.getTag(heldItem);
                 if (tag != null && tag.contains("size")) {
-                    setCaptureTESizeColor(tag.getInt("size"), CapsuleItem.getBaseColor(heldItem), player.level());
+                    setCaptureTESizeColor(tag.getIntOr("size", 0), CapsuleItem.getBaseColor(heldItem), player.level());
                     return true;
                 }
 
@@ -166,14 +166,14 @@ public class CapsulePreviewHandler {
                 && isDeployable(heldItemMainhand)
         ) {
             CompoundTag tag = NBTHelper.getTag(heldItemMainhand);
-            if (tag == null || Strings.isNullOrEmpty(tag.getString("structureName"))) return;
+            if (tag == null || Strings.isNullOrEmpty(tag.getStringOr("structureName", ""))) return;
 
             int size = CapsuleItem.getSize(heldItemMainhand);
             BlockHitResult rtc = Spacial.clientRayTracePreview(thePlayer, partialTicks, size);
             if (rtc != null && rtc.getType() == HitResult.Type.BLOCK) {
                 int extendSize = (size - 1) / 2;
                 BlockPos destOriginPos = Spacial.getDeployPosition(thePlayer.level(), rtc).offset(-extendSize, (int) (0.01 + CapsuleItem.getYOffset(heldItemMainhand)), -extendSize);
-                String structureName = tag.getString("structureName");
+                String structureName = tag.getStringOr("structureName", "");
 
                 AABB errorBoundingBox = new AABB(
                         0,
@@ -367,14 +367,14 @@ public class CapsulePreviewHandler {
     private static void previewRecall(ItemStack capsule, PoseStack poseStack) {
         CompoundTag tag = NBTHelper.getTag(capsule);
         if (tag == null) return;
-        CompoundTag linkPos = tag.getCompound("spawnPosition");
+        CompoundTag linkPos = tag.getCompoundOrEmpty("spawnPosition");
 
         int size = CapsuleItem.getSize(capsule);
         int extendSize = (size - 1) / 2;
         int color = CapsuleItem.getBaseColor(capsule);
 
         Camera cam = Minecraft.getInstance().getEntityRenderDispatcher().camera;
-        AABB boundingBox = Spacial.getBB(linkPos.getInt("x") + extendSize, linkPos.getInt("y") - 1, linkPos.getInt("z") + extendSize, size, extendSize);
+        AABB boundingBox = Spacial.getBB(linkPos.getIntOr("x", 0) + extendSize, linkPos.getIntOr("y", 0) - 1, linkPos.getIntOr("z", 0) + extendSize, size, extendSize);
         MultiBufferSource.BufferSource impl = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer ivertexbuilder = impl.getBuffer(RenderType.lines());
         poseStack.pushPose();

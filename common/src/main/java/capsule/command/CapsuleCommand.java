@@ -465,7 +465,7 @@ public class CapsuleCommand {
                 String outputName;
                 if (StringUtil.isNullOrEmpty(templateName)) {
                     CompoundTag tag = NBTHelper.getTag(heldItem);
-                    outputName = tag != null ? tag.getString("label") : "";
+                    outputName = tag != null ? tag.getStringOr("label", "") : "";
                 } else {
                     outputName = templateName;
                 }

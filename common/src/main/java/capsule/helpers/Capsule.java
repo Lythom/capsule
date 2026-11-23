@@ -17,6 +17,7 @@ import capsule.structure.CapsuleTemplateManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -31,6 +32,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -38,6 +40,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.LogManager;
@@ -85,8 +88,8 @@ public class Capsule {
 
         CompoundTag tag = NBTHelper.getTag(capsule);
         if (tag == null) return;
-        CompoundTag spawnPos = tag.getCompound("spawnPosition");
-        BlockPos startPos = new BlockPos(spawnPos.getInt("x"), spawnPos.getInt("y"), spawnPos.getInt("z"));
+        CompoundTag spawnPos = tag.getCompoundOrEmpty("spawnPosition");
+        BlockPos startPos = new BlockPos(spawnPos.getIntOr("x", 0), spawnPos.getIntOr("y", 0), spawnPos.getIntOr("z", 0));
 
         int size = CapsuleItem.getSize(capsule);
 
@@ -99,7 +102,7 @@ public class Capsule {
             }
         } else {
             CompoundTag tagForName = NBTHelper.getTag(capsule);
-            String structureName = tagForName != null ? tagForName.getString("structureName") : "";
+            String structureName = tagForName != null ? tagForName.getStringOr("structureName", "") : "";
             CapsuleTemplate template = StructureSaver.undeploy(capsuleWorld, actor, structureName, startPos, size, CapsuleItem.getExcludedBlocs(capsule), CapsuleItem.getOccupiedSourcePos(capsule));
             boolean storageOK = template != null;
             if (storageOK) {
@@ -144,14 +147,14 @@ public class Capsule {
         CompoundTag tag = NBTHelper.getTag(capsule);
         BlockPos dest;
         if (tag != null && tag.contains("deployAt")) {
-            BlockPos centerDest = BlockPos.of(tag.getLong("deployAt"));
+            BlockPos centerDest = BlockPos.of(tag.getLongOr("deployAt", 0L));
             dest = centerDest.offset(-extendLength, 0, -extendLength);
             NBTHelper.updateTag(capsule, t -> t.remove("deployAt"));
         } else {
             dest = anchorBlockPos.offset(-extendLength, 1, -extendLength);
         }
         CompoundTag tagForName = NBTHelper.getTag(capsule);
-        String structureName = tagForName != null ? tagForName.getString("structureName") : "";
+        String structureName = tagForName != null ? tagForName.getStringOr("structureName", "") : "";
 
         // do the transportation
         boolean result = StructureSaver.deploy(capsule, world, actor, dest, CapsuleItem.getPlacement(capsule));
@@ -495,9 +498,10 @@ public class Capsule {
      */
     @Nullable
     private static UUID thrower(ItemEntity itemEntity) {
-        CompoundTag data = new CompoundTag();
-        itemEntity.addAdditionalSaveData(data);
-        return data.hasUUID("Thrower") ? data.getUUID("Thrower") : null;
+        // addAdditionalSaveData is protected since 1.21.6, saveWithoutId writes the same keys
+        TagValueOutput data = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, itemEntity.registryAccess());
+        itemEntity.saveWithoutId(data);
+        return data.buildResult().read("Thrower", UUIDUtil.CODEC).orElse(null);
     }
 
     public static String labelFromPath(String path) {

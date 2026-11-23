@@ -234,7 +234,7 @@ public class ClaimTests {
         });
         helper.succeedWhen(() -> {
             assertTrue(helper, largest.isDone(), "reloading");
-            int size = NBTHelper.getOrCreateTag(even).getInt("size");
+            int size = NBTHelper.getOrCreateTag(even).getIntOr("size", 0);
             assertTrue(helper, size == 4, "the recipe result keeps its size 4, not " + size);
             assertTrue(helper, largest.join() == 13 + 2 * Config.upgradeLimit, "the largest survival capsule is still netherite with every upgrade");
         });
@@ -481,7 +481,7 @@ public class ClaimTests {
         BlockEntityCapture placed = helper.getBlockEntity(ownerBase);
         assertTrue(helper, owner.getUUID().equals(placed.getPlacer()), "the base remembers who placed it");
         BlockEntityCapture reloaded = (BlockEntityCapture) BlockEntityCapture.loadStatic(placed.getBlockPos(), placed.getBlockState(),
-                placed.saveWithId(helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
+                placed.saveWithFullMetadata(helper.getLevel().registryAccess()), helper.getLevel().registryAccess());
         assertTrue(helper, reloaded != null && owner.getUUID().equals(reloaded.getPlacer()), "the placer is saved with the base");
         reloaded.setRemoved();
         CapsuleTestUtils.removePlayer(owner);

@@ -29,10 +29,10 @@ public class StarterLoot {
         if (!playerData.contains("PlayerPersisted")) {
             data = new CompoundTag();
         } else {
-            data = playerData.getCompound("PlayerPersisted");
+            data = playerData.getCompoundOrEmpty("PlayerPersisted");
         }
-        LOGGER.info("playerLogin: " + (data.getBoolean("capsule:receivedStarter") ? "already received starters" : "giving starters now"));
-        if (!data.getBoolean("capsule:receivedStarter")) {
+        LOGGER.info("playerLogin: " + (data.getBooleanOr("capsule:receivedStarter", false) ? "already received starters" : "giving starters now"));
+        if (!data.getBooleanOr("capsule:receivedStarter", false)) {
             if ("all".equals(Config.starterMode.toLowerCase())) {
                 giveAllStarters(player, Config.starterTemplatesList);
                 data.putBoolean("capsule:receivedStarter", true);

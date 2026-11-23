@@ -110,7 +110,7 @@ public class Blueprint {
             if (blockNBT != null) {
                 CompoundTag itemNBT = new CompoundTag();
                 JsonObject allowedNBT = Config.getBlueprintAllowedNBT(block);
-                for (String key : blockNBT.getAllKeys()) {
+                for (String key : blockNBT.keySet()) {
                     if (allowedNBT.has(key) && !allowedNBT.get(key).isJsonNull()) {
                         String targetKey = allowedNBT.get(key).getAsString();
                         itemNBT.put(targetKey, blockNBT.get(key));
@@ -298,7 +298,7 @@ public class Blueprint {
             String id = BuiltInRegistries.BLOCK.getKey(block.state().getBlock()).toString();
             counts.merge(id, 1, Integer::sum);
             Set<String> keys = nbtKeys.computeIfAbsent(id, k -> new TreeSet<>());
-            keys.addAll(block.nbt().getAllKeys());
+            keys.addAll(block.nbt().keySet());
             keys.remove("id"); // the block entity type, given by the block
         }
         if (counts.isEmpty()) return;

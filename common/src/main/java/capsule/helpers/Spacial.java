@@ -214,7 +214,7 @@ public class Spacial {
     public static void moveItemEntityToDeployPos(final ItemEntity ItemEntity, final ItemStack capsule, boolean keepMomentum) {
         CompoundTag tag = NBTHelper.getTag(capsule);
         if (tag == null) return;
-        BlockPos dest = BlockPos.of(tag.getLong("deployAt"));
+        BlockPos dest = BlockPos.of(tag.getLongOr("deployAt", 0L));
         // +0.5 to aim the center of the block
         double diffX = (dest.getX() + 0.5 - ItemEntity.getX());
         double diffZ = (dest.getZ() + 0.5 - ItemEntity.getZ());

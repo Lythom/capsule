@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
@@ -22,8 +23,8 @@ import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.util.datafix.fixes.References;
 import net.minecraft.world.Clearable;
@@ -32,6 +33,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntitySpawnRequest;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.painting.Painting;
@@ -54,6 +56,8 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
@@ -82,6 +86,8 @@ import java.util.stream.Stream;
  */
 public class CapsuleTemplate {
     protected static final Logger LOGGER = LogManager.getLogger(CapsuleTemplate.class);
+    // ProblemReporter.ScopedCollector logs through slf4j
+    private static final org.slf4j.Logger PROBLEM_LOGGER = LogUtils.getLogger();
 
     /**
      * Block state properties showing the content of a block entity, false once its content is removed.
@@ -176,7 +182,7 @@ public class CapsuleTemplate {
         return list;
     }
 
-    private void addEntitiesToWorld(ServerLevelAccessor worldIn, BlockPos offsetPos, StructurePlaceSettings placementIn, Mirror mirrorIn, Rotation rotationIn, BlockPos centerOffset, @Nullable BoundingBox boundsIn, List<Entity> spawnedEntities) {
+    private void addEntitiesToWorld(ServerLevelAccessor worldIn, BlockPos offsetPos, StructurePlaceSettings placementIn, Mirror mirrorIn, Rotation rotationIn, BlockPos centerOffset, @Nullable BoundingBox boundsIn, List<Entity> spawnedEntities, ProblemReporter problemReporter) {
         for (StructureTemplate.StructureEntityInfo template$entityinfo : processEntityInfos(this, worldIn, offsetPos, placementIn, this.entities)) {
             BlockPos blockpos = template$entityinfo.blockPos; // FORGE: Position will have already been transformed by processEntityInfos
             if (boundsIn == null || boundsIn.isInside(blockpos)) {
@@ -195,10 +201,12 @@ public class CapsuleTemplate {
                     compoundnbt.putInt("TileY", tile.getY());
                     compoundnbt.putInt("TileZ", tile.getZ());
                 }
-                createEntityIgnoreException(worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
+                createEntityIgnoreException(problemReporter, worldIn, compoundnbt).ifPresent((p_242927_6_) -> {
                     float f = p_242927_6_.mirror(placementIn.getMirror());
                     f = f + (p_242927_6_.getYRot() - p_242927_6_.rotate(placementIn.getRotation()));
                     p_242927_6_.snapTo(vector3d1.x, vector3d1.y, vector3d1.z, f, p_242927_6_.getXRot());
+                    p_242927_6_.setYBodyRot(f);
+                    p_242927_6_.setYHeadRot(f);
                     if (placementIn.shouldFinalizeEntities() && p_242927_6_ instanceof Mob) {
                         ((Mob) p_242927_6_).finalizeSpawn(worldIn, worldIn.getCurrentDifficultyAt(BlockPos.containing(vector3d1)), EntitySpawnReason.STRUCTURE, (SpawnGroupData) null);
                     }
@@ -209,9 +217,10 @@ public class CapsuleTemplate {
         }
     }
 
-    private static Optional<Entity> createEntityIgnoreException(ServerLevelAccessor worldIn, CompoundTag nbt) {
+    private static Optional<Entity> createEntityIgnoreException(ProblemReporter problemReporter, ServerLevelAccessor worldIn, CompoundTag nbt) {
         try {
-            return EntityType.create(nbt, worldIn.getLevel());
+            return EntityType.create(TagValueInput.create(problemReporter, worldIn.registryAccess(), nbt), worldIn.getLevel(),
+                    new EntitySpawnRequest(EntitySpawnReason.STRUCTURE, false));
         } catch (Exception exception) {
             return Optional.empty();
         }
@@ -352,7 +361,7 @@ public class CapsuleTemplate {
 
         nbt.put("entities", listnbt);
         nbt.put("size", this.newIntegerList(this.size.getX(), this.size.getY(), this.size.getZ()));
-        nbt.putInt("DataVersion", SharedConstants.getCurrentVersion().getDataVersion().getVersion());
+        NbtUtils.addCurrentDataVersion(nbt);
 
         // CAPSULE save already occupied positions when deployed
         ListTag occupiedSpawnPositionstaglist = new ListTag();
@@ -372,41 +381,31 @@ public class CapsuleTemplate {
     public void load(CompoundTag compound, String location) {
         this.palettes.clear();
         this.entities.clear();
-        ListTag listnbt = compound.getList("size", 3);
-        this.size = new BlockPos(listnbt.getInt(0), listnbt.getInt(1), listnbt.getInt(2));
-        ListTag listnbt1 = compound.getList("blocks", 10);
-        if (compound.contains("palettes", 9)) {
-            ListTag listnbt2 = compound.getList("palettes", 9);
-
-            for (int i = 0; i < listnbt2.size(); ++i) {
-                this.loadPalette(listnbt2.getList(i), listnbt1);
+        ListTag listnbt = compound.getListOrEmpty("size");
+        this.size = new BlockPos(listnbt.getIntOr(0, 0), listnbt.getIntOr(1, 0), listnbt.getIntOr(2, 0));
+        ListTag listnbt1 = compound.getListOrEmpty("blocks");
+        Optional<ListTag> listnbt2 = compound.getList("palettes");
+        if (listnbt2.isPresent()) {
+            for (int i = 0; i < listnbt2.get().size(); ++i) {
+                this.loadPalette(listnbt2.get().getListOrEmpty(i), listnbt1);
             }
         } else {
-            this.loadPalette(compound.getList("palette", 10), listnbt1);
+            this.loadPalette(compound.getListOrEmpty("palette"), listnbt1);
         }
 
-        ListTag listnbt5 = compound.getList("entities", 10);
-
-        for (int j = 0; j < listnbt5.size(); ++j) {
-            CompoundTag compoundnbt = listnbt5.getCompound(j);
-            ListTag listnbt3 = compoundnbt.getList("pos", 6);
-            Vec3 vector3d = new Vec3(listnbt3.getDouble(0), listnbt3.getDouble(1), listnbt3.getDouble(2));
-            ListTag listnbt4 = compoundnbt.getList("blockPos", 3);
-            BlockPos blockpos = new BlockPos(listnbt4.getInt(0), listnbt4.getInt(1), listnbt4.getInt(2));
-            if (compoundnbt.contains("nbt")) {
-                CompoundTag compoundnbt1 = compoundnbt.getCompound("nbt");
-                this.entities.add(new StructureTemplate.StructureEntityInfo(vector3d, blockpos, compoundnbt1));
-            }
-        }
+        compound.getListOrEmpty("entities").compoundStream().forEach(compoundnbt -> {
+            ListTag listnbt3 = compoundnbt.getListOrEmpty("pos");
+            Vec3 vector3d = new Vec3(listnbt3.getDoubleOr(0, 0), listnbt3.getDoubleOr(1, 0), listnbt3.getDoubleOr(2, 0));
+            ListTag listnbt4 = compoundnbt.getListOrEmpty("blockPos");
+            BlockPos blockpos = new BlockPos(listnbt4.getIntOr(0, 0), listnbt4.getIntOr(1, 0), listnbt4.getIntOr(2, 0));
+            compoundnbt.getCompound("nbt").ifPresent(compoundnbt1 -> this.entities.add(new StructureTemplate.StructureEntityInfo(vector3d, blockpos, compoundnbt1)));
+        });
 
         // CAPSULE read already occupied positions when deployed
         if (compound.contains("capsule_occupiedSources")) {
             Map<BlockPos, Block> occupiedSources = new HashMap<>();
-            ListTag list = compound.getList("capsule_occupiedSources", 10);
-            for (int i = 0; i < list.size(); i++) {
-                CompoundTag entry = list.getCompound(i);
-                occupiedSources.put(BlockPos.of(entry.getLong("pos")), Block.stateById(entry.getInt("blockId")).getBlock());
-            }
+            compound.getListOrEmpty("capsule_occupiedSources").compoundStream().forEach(entry ->
+                    occupiedSources.put(BlockPos.of(entry.getLongOr("pos", 0L)), Block.stateById(entry.getIntOr("blockId", 0)).getBlock()));
             this.occupiedPositions = occupiedSources;
         }
         if (this.palettes.size() == 0) {
@@ -418,28 +417,22 @@ public class CapsuleTemplate {
         CapsuleTemplate.BasicPalette template$basicpalette = new CapsuleTemplate.BasicPalette();
 
         for (int i = 0; i < palettesNBT.size(); ++i) {
-            template$basicpalette.addMapping(NbtUtils.readBlockState(BuiltInRegistries.BLOCK, palettesNBT.getCompound(i)), i);
+            template$basicpalette.addMapping(NbtUtils.readBlockState(BuiltInRegistries.BLOCK, palettesNBT.getCompoundOrEmpty(i)), i);
         }
 
         List<StructureTemplate.StructureBlockInfo> list2 = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> list = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> list1 = Lists.newArrayList();
 
-        for (int j = 0; j < blocksNBT.size(); ++j) {
-            CompoundTag compoundnbt = blocksNBT.getCompound(j);
-            ListTag listnbt = compoundnbt.getList("pos", 3);
-            BlockPos blockpos = new BlockPos(listnbt.getInt(0), listnbt.getInt(1), listnbt.getInt(2));
-            BlockState blockstate = template$basicpalette.stateFor(compoundnbt.getInt("state"));
-            CompoundTag compoundnbt1;
-            if (compoundnbt.contains("nbt")) {
-                compoundnbt1 = compoundnbt.getCompound("nbt");
-            } else {
-                compoundnbt1 = null;
-            }
+        blocksNBT.compoundStream().forEach(compoundnbt -> {
+            ListTag listnbt = compoundnbt.getListOrEmpty("pos");
+            BlockPos blockpos = new BlockPos(listnbt.getIntOr(0, 0), listnbt.getIntOr(1, 0), listnbt.getIntOr(2, 0));
+            BlockState blockstate = template$basicpalette.stateFor(compoundnbt.getIntOr("state", 0));
+            CompoundTag compoundnbt1 = compoundnbt.getCompound("nbt").orElse(null);
 
             StructureTemplate.StructureBlockInfo template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos, blockstate, compoundnbt1);
             addToLists(template$blockinfo, list2, list, list1);
-        }
+        });
 
         List<StructureTemplate.StructureBlockInfo> list3 = buildInfoList(list2, list, list1);
         this.palettes.add(new CapsuleTemplate.Palette(list3));
@@ -489,7 +482,7 @@ public class CapsuleTemplate {
                     JsonObject allowedNBT = Config.getBlueprintAllowedNBT(b.state().getBlock());
                     if (allowedNBT != null) {
                         nbt = b.nbt().copy();
-                        nbt.getAllKeys().removeIf(key -> !allowedNBT.has(key));
+                        nbt.keySet().removeIf(key -> !allowedNBT.has(key));
                     } else {
                         nbt = new CompoundTag();
                     }
@@ -573,30 +566,34 @@ public class CapsuleTemplate {
             BlockPos blockpos2 = new BlockPos(Math.max(startPos.getX(), blockpos.getX()), Math.max(startPos.getY(), blockpos.getY()), Math.max(startPos.getZ(), blockpos.getZ()));
             this.size = endPos;
 
-            for (BlockPos blockpos3 : BlockPos.betweenClosed(blockpos1, blockpos2)) {
-                BlockPos blockpos4 = blockpos3.subtract(blockpos1);
-                BlockState blockstate = worldIn.getBlockState(blockpos3);
-                if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
-                        && !blockstate.is(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
-                        && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
-                        || !(occupiedPositionsToIgnore.containsKey(blockpos3)
-                        && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
+            try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(PROBLEM_LOGGER)) {
+                for (BlockPos blockpos3 : BlockPos.betweenClosed(blockpos1, blockpos2)) {
+                    BlockPos blockpos4 = blockpos3.subtract(blockpos1);
+                    BlockState blockstate = worldIn.getBlockState(blockpos3);
+                    if (!excluded.contains(blockstate.getBlock()) // excluded blocks are not captured at all
+                            && !blockstate.is(CapsuleTags.excludedBlocks) // excluded tags are not captured at all
+                            && (occupiedPositionsToIgnore == null // exclude sourceBlock that were already presents. Capture only if it was changed.
+                            || !(occupiedPositionsToIgnore.containsKey(blockpos3)
+                            && occupiedPositionsToIgnore.get(blockpos3).equals(blockstate.getBlock())))) {
 
-                    BlockEntity blockentity = worldIn.getBlockEntity(blockpos3);
-                    StructureTemplate.StructureBlockInfo template$blockinfo;
-                    if (blockentity != null) {
-                        CompoundTag compoundnbt = blockentity.saveWithId(worldIn.registryAccess());
-                        compoundnbt.remove("x");
-                        compoundnbt.remove("y");
-                        compoundnbt.remove("z");
-                        template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, compoundnbt);
-                    } else {
-                        template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, (CompoundTag) null);
+                        BlockEntity blockentity = worldIn.getBlockEntity(blockpos3);
+                        StructureTemplate.StructureBlockInfo template$blockinfo;
+                        if (blockentity != null) {
+                            TagValueOutput output = TagValueOutput.createWithContext(reporter.forChild(blockentity.problemPath()), worldIn.registryAccess());
+                            blockentity.saveWithId(output);
+                            CompoundTag compoundnbt = output.buildResult();
+                            compoundnbt.remove("x");
+                            compoundnbt.remove("y");
+                            compoundnbt.remove("z");
+                            template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, compoundnbt);
+                        } else {
+                            template$blockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, (CompoundTag) null);
+                        }
+
+                        addToLists(template$blockinfo, list, list1, list2);
+                        // save a copy
+                        transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
                     }
-
-                    addToLists(template$blockinfo, list, list1, list2);
-                    // save a copy
-                    transferedBlocks.add(new BlockPos(blockpos3.getX(), blockpos3.getY(), blockpos3.getZ()));
                 }
             }
 
@@ -625,18 +622,21 @@ public class CapsuleTemplate {
         );
         entities.clear();
 
-        for (Entity entity : list) {
-            Vec3 vec3d = new Vec3(entity.getX() - (double) startPos.getX(), entity.getY() - (double) startPos.getY(), entity.getZ() - (double) startPos.getZ());
-            CompoundTag compoundnbt = new CompoundTag();
-            entity.save(compoundnbt);
-            BlockPos blockpos;
-            if (entity instanceof Painting) {
-                blockpos = ((Painting) entity).getPos().subtract(startPos);
-            } else {
-                blockpos = BlockPos.containing(vec3d);
-            }
+        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(PROBLEM_LOGGER)) {
+            for (Entity entity : list) {
+                Vec3 vec3d = new Vec3(entity.getX() - (double) startPos.getX(), entity.getY() - (double) startPos.getY(), entity.getZ() - (double) startPos.getZ());
+                TagValueOutput output = TagValueOutput.createWithContext(reporter.forChild(entity.problemPath()), entity.registryAccess());
+                entity.save(output);
+                CompoundTag compoundnbt = output.buildResult();
+                BlockPos blockpos;
+                if (entity instanceof Painting) {
+                    blockpos = ((Painting) entity).getPos().subtract(startPos);
+                } else {
+                    blockpos = BlockPos.containing(vec3d);
+                }
 
-            this.entities.add(new StructureTemplate.StructureEntityInfo(vec3d, blockpos, compoundnbt.copy()));
+                this.entities.add(new StructureTemplate.StructureEntityInfo(vec3d, blockpos, compoundnbt.copy()));
+            }
         }
         return list;
     }
@@ -679,113 +679,115 @@ public class CapsuleTemplate {
                 int i1 = Integer.MIN_VALUE;
                 int j1 = Integer.MIN_VALUE;
 
-                for (StructureTemplate.StructureBlockInfo template$blockinfo : processBlockInfos(this, worldIn, pos, placementIn, list)) {
-                    // CAPSULE center the structure
-                    BlockPos blockpos = template$blockinfo.pos().offset(recenterRotation((size.getX() - 1) / 2, placementIn));
-                    if ((mutableboundingbox == null || mutableboundingbox.isInside(blockpos))
-                            // CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
-                            && (!occupiedPositions.containsKey(blockpos) || occupiedPositions.get(blockpos).defaultBlockState().is(CapsuleTags.overridable))) {
-                        // CAPSULE capsule addition to allow a rollback in case of error while deploying
-                        if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
+                try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(PROBLEM_LOGGER)) {
+                    for (StructureTemplate.StructureBlockInfo template$blockinfo : processBlockInfos(this, worldIn, pos, placementIn, list)) {
+                        // CAPSULE center the structure
+                        BlockPos blockpos = template$blockinfo.pos().offset(recenterRotation((size.getX() - 1) / 2, placementIn));
+                        if ((mutableboundingbox == null || mutableboundingbox.isInside(blockpos))
+                                // CAPSULE add a condition to prevent replacement of existing content by the capsule content if the world content is not overridable
+                                && (!occupiedPositions.containsKey(blockpos) || occupiedPositions.get(blockpos).defaultBlockState().is(CapsuleTags.overridable))) {
+                            // CAPSULE capsule addition to allow a rollback in case of error while deploying
+                            if (outSpawnedBlocks != null) outSpawnedBlocks.add(blockpos);
 
-                        FluidState ifluidstate = placementIn.shouldApplyWaterlogging() ? worldIn.getFluidState(blockpos) : null;
-                        BlockState blockstate = Services.PLATFORM.rotate(template$blockinfo.state().mirror(placementIn.getMirror()), worldIn, blockpos, placementIn.getRotation());
-                        BlockEntity blockentity = worldIn.getBlockEntity(blockpos);
-                        if (blockentity instanceof Clearable clearable) clearable.clearContent();
-                        worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
+                            FluidState ifluidstate = placementIn.shouldApplyWaterlogging() ? worldIn.getFluidState(blockpos) : null;
+                            BlockState blockstate = Services.PLATFORM.rotate(template$blockinfo.state().mirror(placementIn.getMirror()), worldIn, blockpos, placementIn.getRotation());
+                            BlockEntity blockentity = worldIn.getBlockEntity(blockpos);
+                            if (blockentity instanceof Clearable clearable) clearable.clearContent();
+                            worldIn.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
 
-                        if (worldIn.setBlock(blockpos, blockstate, flags)) {
-                            i = Math.min(i, blockpos.getX());
-                            j = Math.min(j, blockpos.getY());
-                            k = Math.min(k, blockpos.getZ());
-                            l = Math.max(l, blockpos.getX());
-                            i1 = Math.max(i1, blockpos.getY());
-                            j1 = Math.max(j1, blockpos.getZ());
-                            list2.add(Pair.of(blockpos, template$blockinfo.nbt()));
-                            BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
-                            if (blockentity1 != null) {
-                                CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt().copy();
-                                templateTag.putInt("x", blockpos.getX());
-                                templateTag.putInt("y", blockpos.getY());
-                                templateTag.putInt("z", blockpos.getZ());
-                                blockentity1.loadWithComponents(templateTag, worldIn.getLevel().registryAccess());
-                                blockentity1.getBlockState().mirror(placementIn.getMirror());
-                                Services.PLATFORM.rotate(blockentity1.getBlockState(), worldIn, placementIn.getRotationPivot(), placementIn.getRotation());
-                            }
+                            if (worldIn.setBlock(blockpos, blockstate, flags)) {
+                                i = Math.min(i, blockpos.getX());
+                                j = Math.min(j, blockpos.getY());
+                                k = Math.min(k, blockpos.getZ());
+                                l = Math.max(l, blockpos.getX());
+                                i1 = Math.max(i1, blockpos.getY());
+                                j1 = Math.max(j1, blockpos.getZ());
+                                list2.add(Pair.of(blockpos, template$blockinfo.nbt()));
+                                BlockEntity blockentity1 = worldIn.getBlockEntity(blockpos);
+                                if (blockentity1 != null) {
+                                    CompoundTag templateTag = template$blockinfo.nbt() == null ? new CompoundTag() : template$blockinfo.nbt().copy();
+                                    templateTag.putInt("x", blockpos.getX());
+                                    templateTag.putInt("y", blockpos.getY());
+                                    templateTag.putInt("z", blockpos.getZ());
+                                    blockentity1.loadWithComponents(TagValueInput.create(reporter.forChild(blockentity1.problemPath()), worldIn.getLevel().registryAccess(), templateTag));
+                                    blockentity1.getBlockState().mirror(placementIn.getMirror());
+                                    Services.PLATFORM.rotate(blockentity1.getBlockState(), worldIn, placementIn.getRotationPivot(), placementIn.getRotation());
+                                }
 
-                            if (ifluidstate != null && blockstate.getBlock() instanceof LiquidBlockContainer) {
-                                ((LiquidBlockContainer) blockstate.getBlock()).placeLiquid(worldIn, blockpos, blockstate, ifluidstate);
-                                if (!ifluidstate.isSource()) {
-                                    list1.add(blockpos);
+                                if (ifluidstate != null && blockstate.getBlock() instanceof LiquidBlockContainer) {
+                                    ((LiquidBlockContainer) blockstate.getBlock()).placeLiquid(worldIn, blockpos, blockstate, ifluidstate);
+                                    if (!ifluidstate.isSource()) {
+                                        list1.add(blockpos);
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                boolean flag = true;
-                Direction[] adirection = new Direction[]{Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+                    boolean flag = true;
+                    Direction[] adirection = new Direction[]{Direction.UP, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
-                while (flag && !list1.isEmpty()) {
-                    flag = false;
-                    Iterator<BlockPos> iterator = list1.iterator();
+                    while (flag && !list1.isEmpty()) {
+                        flag = false;
+                        Iterator<BlockPos> iterator = list1.iterator();
 
-                    while (iterator.hasNext()) {
-                        BlockPos blockpos2 = iterator.next();
-                        BlockPos blockpos3 = blockpos2;
-                        FluidState ifluidstate2 = worldIn.getFluidState(blockpos2);
+                        while (iterator.hasNext()) {
+                            BlockPos blockpos2 = iterator.next();
+                            BlockPos blockpos3 = blockpos2;
+                            FluidState ifluidstate2 = worldIn.getFluidState(blockpos2);
 
-                        for (int k1 = 0; k1 < adirection.length && !ifluidstate2.isSource(); ++k1) {
-                            BlockPos blockpos1 = blockpos3.relative(adirection[k1]);
-                            FluidState ifluidstate1 = worldIn.getFluidState(blockpos1);
-                            if (ifluidstate1.getHeight(worldIn, blockpos1) > ifluidstate2.getHeight(worldIn, blockpos3) || ifluidstate1.isSource() && !ifluidstate2.isSource()) {
-                                ifluidstate2 = ifluidstate1;
-                                blockpos3 = blockpos1;
+                            for (int k1 = 0; k1 < adirection.length && !ifluidstate2.isSource(); ++k1) {
+                                BlockPos blockpos1 = blockpos3.relative(adirection[k1]);
+                                FluidState ifluidstate1 = worldIn.getFluidState(blockpos1);
+                                if (ifluidstate1.getHeight(worldIn, blockpos1) > ifluidstate2.getHeight(worldIn, blockpos3) || ifluidstate1.isSource() && !ifluidstate2.isSource()) {
+                                    ifluidstate2 = ifluidstate1;
+                                    blockpos3 = blockpos1;
+                                }
                             }
-                        }
 
-                        if (ifluidstate2.isSource()) {
-                            BlockState blockstate2 = worldIn.getBlockState(blockpos2);
-                            Block block = blockstate2.getBlock();
-                            if (block instanceof LiquidBlockContainer) {
-                                ((LiquidBlockContainer) block).placeLiquid(worldIn, blockpos2, blockstate2, ifluidstate2);
-                                flag = true;
-                                iterator.remove();
+                            if (ifluidstate2.isSource()) {
+                                BlockState blockstate2 = worldIn.getBlockState(blockpos2);
+                                Block block = blockstate2.getBlock();
+                                if (block instanceof LiquidBlockContainer) {
+                                    ((LiquidBlockContainer) block).placeLiquid(worldIn, blockpos2, blockstate2, ifluidstate2);
+                                    flag = true;
+                                    iterator.remove();
+                                }
                             }
                         }
                     }
-                }
 
-                if (i <= l) {
-                    if (!placementIn.getKnownShape()) {
-                        DiscreteVoxelShape voxelshapepart = new BitSetDiscreteVoxelShape(l - i + 1, i1 - j + 1, j1 - k + 1);
-                        int l1 = i;
-                        int i2 = j;
-                        int j2 = k;
-
-                        for (Pair<BlockPos, CompoundTag> pair1 : list2) {
-                            BlockPos blockpos5 = pair1.getFirst();
-                            voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
-                        }
-
-                        StructureTemplate.updateShapeAtEdge(worldIn, flags, voxelshapepart, l1, i2, j2);
-                    }
-                    for (Pair<BlockPos, CompoundTag> pair : list2) {
-                        BlockPos blockpos4 = pair.getFirst();
+                    if (i <= l) {
                         if (!placementIn.getKnownShape()) {
-                            BlockState blockstate1 = worldIn.getBlockState(blockpos4);
-                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, worldIn, blockpos4);
-                            if (blockstate1 != blockstate3) {
-                                worldIn.setBlock(blockpos4, blockstate3, flags & -2 | 16);
+                            DiscreteVoxelShape voxelshapepart = new BitSetDiscreteVoxelShape(l - i + 1, i1 - j + 1, j1 - k + 1);
+                            int l1 = i;
+                            int i2 = j;
+                            int j2 = k;
+
+                            for (Pair<BlockPos, CompoundTag> pair1 : list2) {
+                                BlockPos blockpos5 = pair1.getFirst();
+                                voxelshapepart.fill(blockpos5.getX() - l1, blockpos5.getY() - i2, blockpos5.getZ() - j2);
                             }
 
-                            worldIn.updateNeighborsAt(blockpos4, blockstate3.getBlock());
+                            StructureTemplate.updateShapeAtEdge(worldIn, flags, voxelshapepart, l1, i2, j2);
+                        }
+                        for (Pair<BlockPos, CompoundTag> pair : list2) {
+                            BlockPos blockpos4 = pair.getFirst();
+                            if (!placementIn.getKnownShape()) {
+                                BlockState blockstate1 = worldIn.getBlockState(blockpos4);
+                                BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate1, worldIn, blockpos4);
+                                if (blockstate1 != blockstate3) {
+                                    worldIn.setBlock(blockpos4, blockstate3, flags & -2 | 16);
+                                }
+
+                                worldIn.updateNeighborsAt(blockpos4, blockstate3.getBlock());
+                            }
                         }
                     }
-                }
 
-                if (!placementIn.isIgnoreEntities()) {
-                    this.addEntitiesToWorld(worldIn, pos, placementIn, placementIn.getMirror(), placementIn.getRotation(), placementIn.getRotationPivot(), placementIn.getBoundingBox(), outSpawnedEntities);
+                    if (!placementIn.isIgnoreEntities()) {
+                        this.addEntitiesToWorld(worldIn, pos, placementIn, placementIn.getMirror(), placementIn.getRotation(), placementIn.getRotationPivot(), placementIn.getBoundingBox(), outSpawnedEntities, reporter);
+                    }
                 }
 
                 return true;
@@ -862,33 +864,32 @@ public class CapsuleTemplate {
 
     public void readSchematic(CompoundTag file) throws Exception {
         // Sponge v3 nests everything in a Schematic compound
-        CompoundTag nbt = file.contains("Schematic", Tag.TAG_COMPOUND) ? file.getCompound("Schematic") : file;
-        int version = nbt.getInt("Version"); // 0 for MCEdit
+        CompoundTag nbt = file.getCompound("Schematic").orElse(file);
+        int version = nbt.getIntOr("Version", 0); // 0 for MCEdit
         if (version > 3) {
             throw new Exception("Schematic version >3 not supported");
         }
-        if (version == 0 && !(nbt.contains("Blocks", Tag.TAG_BYTE_ARRAY) && nbt.contains("Data", Tag.TAG_BYTE_ARRAY))) {
+        if (version == 0 && !(nbt.getByteArray("Blocks").isPresent() && nbt.getByteArray("Data").isPresent())) {
             throw new Exception("Schematic: Missing data in the schematic");
         }
-        int dataVersion = nbt.contains("DataVersion", Tag.TAG_ANY_NUMERIC) ? nbt.getInt("DataVersion")
-                : version == 0 ? MCEDIT_DATA_VERSION : SPONGE_V1_DATA_VERSION;
-        CompoundTag blocks = version == 3 ? nbt.getCompound("Blocks") : nbt;
+        int dataVersion = NbtUtils.getDataVersion(nbt, version == 0 ? MCEDIT_DATA_VERSION : SPONGE_V1_DATA_VERSION);
+        CompoundTag blocks = version == 3 ? nbt.getCompoundOrEmpty("Blocks") : nbt;
 
         this.palettes.clear();
         this.palettes.add(new Palette(new ArrayList<>()));
         this.entities.clear();
 
-        int width = nbt.getShort("Width");
-        int height = nbt.getShort("Height");
-        int length = nbt.getShort("Length");
-        String schematicAuthor = nbt.getCompound("Metadata").getString("Author");
+        int width = nbt.getShortOr("Width", (short) 0);
+        int height = nbt.getShortOr("Height", (short) 0);
+        int length = nbt.getShortOr("Length", (short) 0);
+        String schematicAuthor = nbt.getCompoundOrEmpty("Metadata").getStringOr("Author", "");
         this.author = schematicAuthor.isEmpty() ? "?" : schematicAuthor;
 
-        BlockState[] palette = version == 0 ? readMCEditPalette(nbt) : readSpongePalette(blocks.getCompound("Palette"));
+        BlockState[] palette = version == 0 ? readMCEditPalette(nbt) : readSpongePalette(blocks.getCompoundOrEmpty("Palette"));
         if (palette == null || palette.length == 0) {
             throw new Exception("Schematic: Failed to read the block palette, see logs");
         }
-        BlockState[] blocksById = version == 0 ? getMCEditBlocks(nbt, palette) : getSpongeBlocks(blocks.getByteArray(version == 3 ? "Data" : "BlockData"), palette);
+        BlockState[] blocksById = version == 0 ? getMCEditBlocks(nbt, palette) : getSpongeBlocks(blocks.getByteArray(version == 3 ? "Data" : "BlockData").orElse(new byte[0]), palette);
         if (blocksById == null) {
             throw new Exception("Schematic: Failed to read the block stats, see logs");
         }
@@ -918,24 +919,23 @@ public class CapsuleTemplate {
      */
     private static Map<BlockPos, CompoundTag> getSchematicBlockEntities(CompoundTag nbt, CompoundTag blocks, int version, int dataVersion) {
         Map<BlockPos, CompoundTag> blockEntities = new HashMap<>();
-        ListTag tagList = version == 3 ? blocks.getList("BlockEntities", Tag.TAG_COMPOUND)
-                : nbt.getList(version == 2 ? "BlockEntities" : "TileEntities", Tag.TAG_COMPOUND);
-        for (int i = 0; i < tagList.size(); ++i) {
-            CompoundTag entry = tagList.getCompound(i);
-            CompoundTag data = version == 3 ? entry.getCompound("Data").copy() : entry.copy();
+        ListTag tagList = version == 3 ? blocks.getListOrEmpty("BlockEntities")
+                : nbt.getListOrEmpty(version == 2 ? "BlockEntities" : "TileEntities");
+        for (CompoundTag entry : tagList.compoundStream().toList()) {
+            CompoundTag data = version == 3 ? entry.getCompoundOrEmpty("Data").copy() : entry.copy();
             BlockPos pos;
             if (version == 0) {
-                pos = new BlockPos(entry.getInt("x"), entry.getInt("y"), entry.getInt("z"));
+                pos = new BlockPos(entry.getIntOr("x", 0), entry.getIntOr("y", 0), entry.getIntOr("z", 0));
                 data.remove("x");
                 data.remove("y");
                 data.remove("z");
             } else {
-                int[] positions = entry.getIntArray("Pos");
+                int[] positions = entry.getIntArray("Pos").orElse(new int[0]);
                 pos = new BlockPos(positions[0], positions[1], positions[2]);
                 data.remove("Pos");
                 data.remove("Id");
                 data.remove("ContentVersion");
-                data.putString("id", entry.getString("Id"));
+                data.putString("id", entry.getStringOr("Id", ""));
             }
             blockEntities.put(pos, updateToCurrentVersion(References.BLOCK_ENTITY, data, dataVersion));
         }
@@ -944,17 +944,16 @@ public class CapsuleTemplate {
 
     private void readSchematicEntities(CompoundTag nbt, int version, int dataVersion) {
         // WorldEdit writes Sponge v2 entity positions in world coordinates and the schematic's world position as Offset
-        int[] offset = version == 2 && nbt.getIntArray("Offset").length == 3 ? nbt.getIntArray("Offset") : new int[3];
-        ListTag tagList = nbt.getList("Entities", Tag.TAG_COMPOUND);
-        for (int i = 0; i < tagList.size(); ++i) {
-            CompoundTag entry = tagList.getCompound(i);
-            CompoundTag data = version == 3 ? entry.getCompound("Data").copy() : entry.copy();
-            ListTag posList = (version == 3 ? entry : data).getList("Pos", Tag.TAG_DOUBLE);
-            Vec3 pos = new Vec3(posList.getDouble(0) - offset[0], posList.getDouble(1) - offset[1], posList.getDouble(2) - offset[2]);
+        int[] offset = version == 2 ? nbt.getIntArray("Offset").filter(o -> o.length == 3).orElse(new int[3]) : new int[3];
+        ListTag tagList = nbt.getListOrEmpty("Entities");
+        for (CompoundTag entry : tagList.compoundStream().toList()) {
+            CompoundTag data = version == 3 ? entry.getCompoundOrEmpty("Data").copy() : entry.copy();
+            ListTag posList = (version == 3 ? entry : data).getListOrEmpty("Pos");
+            Vec3 pos = new Vec3(posList.getDoubleOr(0, 0) - offset[0], posList.getDoubleOr(1, 0) - offset[1], posList.getDoubleOr(2, 0) - offset[2]);
             data.remove("Pos");
             if (version > 0) {
                 data.remove("Id");
-                data.putString("id", entry.getString("Id"));
+                data.putString("id", entry.getStringOr("Id", ""));
             }
             data = updateToCurrentVersion(References.ENTITY, data, dataVersion);
             this.entities.add(new StructureTemplate.StructureEntityInfo(pos, BlockPos.containing(pos), data));
@@ -962,7 +961,7 @@ public class CapsuleTemplate {
     }
 
     private static CompoundTag updateToCurrentVersion(DSL.TypeReference type, CompoundTag data, int dataVersion) {
-        int currentVersion = SharedConstants.getCurrentVersion().getDataVersion().getVersion();
+        int currentVersion = SharedConstants.getCurrentVersion().dataVersion().version();
         return (CompoundTag) DataFixers.getDataFixer().update(type, new Dynamic<>(NbtOps.INSTANCE, data), dataVersion, currentVersion).getValue();
     }
 
@@ -993,20 +992,21 @@ public class CapsuleTemplate {
     }
 
     private BlockState[] readSpongePalette(CompoundTag paletteTag) {
-        BlockState[] palette = new BlockState[paletteTag.getAllKeys().stream().mapToInt(paletteTag::getInt).max().orElse(-1) + 1];
+        BlockState[] palette = new BlockState[paletteTag.keySet().stream().mapToInt(key -> paletteTag.getIntOr(key, 0)).max().orElse(-1) + 1];
         Arrays.fill(palette, Blocks.AIR.defaultBlockState());
-        for (String key : paletteTag.getAllKeys()) {
-            palette[paletteTag.getInt(key)] = parseBlockState(key);
+        for (String key : paletteTag.keySet()) {
+            palette[paletteTag.getIntOr(key, 0)] = parseBlockState(key);
         }
         return palette;
     }
 
     private static BlockState[] getMCEditBlocks(CompoundTag nbt, BlockState[] palette) {
-        byte[] blockIdsByte = nbt.getByteArray("Blocks");
+        byte[] blockIdsByte = nbt.getByteArray("Blocks").orElse(new byte[0]);
         final int numBlocks = blockIdsByte.length;
         BlockState[] blocksById = new BlockState[numBlocks];
-        if (nbt.contains("AddBlocks", Tag.TAG_BYTE_ARRAY)) {
-            byte[] add = nbt.getByteArray("AddBlocks");
+        Optional<byte[]> addBlocks = nbt.getByteArray("AddBlocks");
+        if (addBlocks.isPresent()) {
+            byte[] add = addBlocks.get();
             final int expectedAddLength = (int) Math.ceil((double) blockIdsByte.length / 2D);
 
             if (add.length != expectedAddLength) {
@@ -1050,7 +1050,7 @@ public class CapsuleTemplate {
             }
         }
         // Old Schematica format
-        else if (nbt.contains("Add", Tag.TAG_BYTE_ARRAY)) {
+        else if (nbt.getByteArray("Add").isPresent()) {
             LOGGER.error("Schematic: Old Schematica format detected, not implemented");
             return null;
         }
@@ -1067,18 +1067,18 @@ public class CapsuleTemplate {
     private BlockState[] readMCEditPalette(CompoundTag nbt) {
         BlockState[] palette = new BlockState[4096];
         Arrays.fill(palette, Blocks.AIR.defaultBlockState());
-        CompoundTag tag = nbt.contains("BlockIDs", Tag.TAG_COMPOUND) ? nbt.getCompound("BlockIDs") : nbt.getCompound("SchematicaMapping");
+        CompoundTag tag = nbt.getCompound("BlockIDs").orElseGet(() -> nbt.getCompoundOrEmpty("SchematicaMapping"));
         if (tag.isEmpty()) {
             LOGGER.error("Schematic: no BlockIDs or SchematicaMapping palette, legacy numeric block ids are not supported.");
             return null;
         }
-        boolean mcedit2 = nbt.contains("BlockIDs", Tag.TAG_COMPOUND);
-        for (String key : tag.getAllKeys()) {
+        boolean mcedit2 = nbt.getCompound("BlockIDs").isPresent();
+        for (String key : tag.keySet()) {
             int id;
             String name;
             try {
-                id = mcedit2 ? Integer.parseInt(key) : tag.getShort(key);
-                name = mcedit2 ? tag.getString(key) : key;
+                id = mcedit2 ? Integer.parseInt(key) : tag.getShortOr(key, (short) 0);
+                name = mcedit2 ? tag.getStringOr(key, "") : key;
             } catch (NumberFormatException e) {
                 LOGGER.error("Schematic: Invalid ID '{}' (not a number) in MCEdit2 palette", key);
                 continue;

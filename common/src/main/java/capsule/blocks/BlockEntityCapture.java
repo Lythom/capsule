@@ -1,11 +1,12 @@
 package capsule.blocks;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
@@ -66,15 +67,16 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        if (placer != null) tag.putUUID("placer", placer);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        // UUIDUtil.CODEC writes the int array that CompoundTag#putUUID wrote up to 1.21.4, so bases of older worlds keep their placer
+        output.storeNullable("placer", UUIDUtil.CODEC, placer);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        placer = tag.hasUUID("placer") ? tag.getUUID("placer") : null;
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        placer = input.read("placer", UUIDUtil.CODEC).orElse(null);
     }
 
     public AABB getBoundingBox() {

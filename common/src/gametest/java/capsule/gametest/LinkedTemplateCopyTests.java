@@ -180,7 +180,7 @@ public class LinkedTemplateCopyTests {
             String name = CapsuleItem.getStructureName(capsule);
             assertTrue(helper, name.startsWith("c-test-player-"), "the template should be named after the player, got " + name);
             assertTrue(helper, CapsuleItem.getSize(capsule) == 3, "the capsule should grow to the template size, got " + CapsuleItem.getSize(capsule));
-            assertTrue(helper, "burner_researcher".equals(NBTHelper.getOrCreateTag(capsule).getString("label")), "the label should be kept");
+            assertTrue(helper, "burner_researcher".equals(NBTHelper.getOrCreateTag(capsule).getStringOr("label", "")), "the label should be kept");
             assertTrue(helper, CapsuleItem.getMaterialColor(capsule) == 6196919 && MinecraftNBT.getColor(capsule) == 8072841, "the colors should be kept");
             assertTrue(helper, NBTHelper.getOrCreateTag(capsule).contains("canRotate"), "canRotate should be read from the template");
 
