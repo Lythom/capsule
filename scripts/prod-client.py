@@ -8,7 +8,7 @@ Usage:
       installs the NeoForge client once (official installer, vanilla libraries and assets without sounds), then
       replaces this process with the client
 
-Downloads are checked against their sha1 and kept in CAPSULE_CACHE (default ~/.cache/capsule-validation).
+Needs Java 25 on PATH (the version the game runs on). Downloads are checked against their sha1 and kept in CAPSULE_CACHE (default ~/.cache/capsule-validation).
 """
 import hashlib
 import io
@@ -25,6 +25,9 @@ from pathlib import Path
 
 USER_AGENT = 'Lythom/capsule (contact@samuel-bouchet.fr)'
 CACHE = Path(os.environ.get('CAPSULE_CACHE') or Path(os.environ.get('XDG_CACHE_HOME') or Path.home() / '.cache') / 'capsule-validation')
+# The Minecraft version of the build (gradle.properties): the modpack versions are searched for it
+MC_VERSION = next(line.split('=', 1)[1].strip() for line in (Path(__file__).resolve().parent.parent / 'gradle.properties')
+                  .read_text().splitlines() if line.startswith('minecraft_version='))
 
 
 def fetch(url):
@@ -58,7 +61,7 @@ def modpack(pack, game_dir):
     else:
         slug, _, version = pack.partition(':')
         versions = json.loads(fetch(f'https://api.modrinth.com/v2/project/{slug}/version'
-                                    '?game_versions=%5B%221.21.1%22%5D&loaders=%5B%22neoforge%22%5D'))
+                                    f'?game_versions=%5B%22{MC_VERSION}%22%5D&loaders=%5B%22neoforge%22%5D'))
         chosen = next(v for v in versions if not version or v['id'] == version)
         file = next(f for f in chosen['files'] if f['primary'])
         data = download(file['url'], CACHE / 'modpacks' / file['filename'], file['hashes']['sha1']).read_bytes()

@@ -21,8 +21,9 @@ set -euo pipefail
 # TIMEOUT (seconds, default 1500) bounds the whole run, build included. GRADLE_ARGS adds
 # arguments to the Gradle call (e.g. "-I mirror.gradle" when Maven Central rate limits).
 # EXTRA_MODS (space separated jar files) adds mods to the run, e.g. the jars of a modpack:
-# NeoForge 1.21.1 dev runs load production mod jars from the mods folder.
-# SHADER_PACK (a shader pack zip) turns it on with Iris, which EXTRA_MODS must bring with Sodium.
+# NeoForge 26.2 dev runs load production mod jars from the mods folder.
+# SHADER_PACK (a shader pack zip) turns it on with Iris, which EXTRA_MODS must bring with Sodium, and turns
+# off the GL draw validation of NeoForge dev runs, which Iris' pipelines fail (neoforge/build.gradle).
 # MODPACK (NeoForge only: a Modrinth modpack slug, optionally :<version id>, or a .mrpack file)
 # plays the scenario in a production client instead (scripts/prod-client.py: official
 # installer, no Gradle) with the pack's mods, the release jar and the test mod jar of
@@ -86,6 +87,8 @@ if [ -n "${SHADER_PACK:-}" ]; then
     mkdir -p "$RUN_DIR/shaderpacks" "$RUN_DIR/config"
     cp "$SHADER_PACK" "$RUN_DIR/shaderpacks/"
     printf 'enableShaders=true\nshaderPack=%s\n' "$(basename "$SHADER_PACK")" > "$RUN_DIR/config/iris.properties"
+    # the GL draw validation of NeoForge dev runs fails on Iris' own pipelines (neoforge/build.gradle)
+    [ -n "${MODPACK:-}" ] || RUN+=(-PdisableGlValidation)
 fi
 
 if [ -z "${DISPLAY:-}" ]; then

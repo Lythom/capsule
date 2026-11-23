@@ -14,11 +14,14 @@ set -uo pipefail
 # proof, the release jars on real servers (scripts/prod-smoke.sh), and the client smoke test
 # of each loader with JEI and REI (scripts/client-smoke.sh). Slower variants, off by default:
 #   --iris     client smoke with Iris, Sodium and the MakeUp Ultra Fast shader pack
-#   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76)
-#   --modpack  client smoke in a production NeoForge client with a Sinytra Connector
-#              modpack (MODPACK, default forgeulously-optimized:mPRwXMh4)
-#   --incompat GameTests with the mods of the known incompatibilities (-Pincompat), also on
-#              the NeoForge release jar
+#   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76):
+#              not available on Minecraft 26.2 yet (Ad Astra and Farmer's Delight have no
+#              26.2 build), the step is reported SKIP
+#   --modpack  client smoke in a production NeoForge client with a modpack (MODPACK, a
+#              Modrinth slug[:version id] or a .mrpack file). No default on 26.2: the 1.21.1
+#              pack (Forgeulously Optimized) has no 26.x version, the step is SKIP without MODPACK
+#   --incompat GameTests with the mod of the known incompatibilities that has a 26.2 build
+#              (Corail Tombstone, -Pincompat), also on the NeoForge release jar
 #   --all      all of them
 # MODCOMPAT_LATEST=1 runs the mod-compat and incompatibility steps with the newest Modrinth
 # versions of their mods instead of the pinned ones (-PmodCompatLatest).
@@ -28,8 +31,8 @@ set -uo pipefail
 # build/client-smoke/<step>/ (screenshots, report.txt, console.log, client.log).
 # Downloads are cached outside the repository (CAPSULE_CACHE, default
 # ~/.cache/capsule-validation). GRADLE_ARGS adds arguments to every Gradle call.
-# Needs Java 21, python3, curl, xvfb-run and network access; Gradle runs on a Java 25 it
-# downloads itself (gradle/gradle-daemon-jvm.properties). Exit code 0 when every step passes.
+# Needs Java 25 on PATH (the release jars run on real servers with it), python3, curl, xvfb-run
+# and network access. Exit code 0 when every step passes (SKIP rows do not fail the run).
 # =============================================================================
 
 source "$(dirname "$0")/lib.sh"
@@ -48,12 +51,14 @@ for arg in "$@"; do
         --modpack) MODPACK_RUN=1 ;;
         --incompat) INCOMPAT=1 ;;
         --all) IRIS=1 MODDED=1 MODPACK_RUN=1 INCOMPAT=1 ;;
-        *) sed -n '7,25p' "$0"; exit 1 ;;
+        *) sed -n '7,29p' "$0"; exit 1 ;;
     esac
 done
 for tool in java python3 curl xvfb-run flock; do
     command -v "$tool" > /dev/null || { echo "Missing $tool"; exit 1; }
 done
+java_major="$(java -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.specification\.version = //p')"
+[ "${java_major:-0}" -ge 25 ] 2> /dev/null || { echo "Java 25 is needed on PATH (found ${java_major:-none})"; exit 1; }
 
 rm -rf "$LOGS"
 mkdir -p "$LOGS"
@@ -85,12 +90,19 @@ step() {
     echo "   $result $detail"
 }
 
+# skip <id> <description> <reason>: records a step that cannot run
+skip() {
+    ROWS+=("SKIP|$2|0m00s|$3|-")
+    echo "== $2"
+    echo "   SKIP $3"
+}
+
 # expect_failure <command...>: runs the command with the failing test on, succeeds when it reports that one failure
 expect_failure() {
     local out status=0
     out="$(FAIL_ON_PURPOSE=1 "$@" 2>&1)" || status=$?
     echo "$out"
-    [ "$status" -ne 0 ] && grep -q '1 required tests failed' <<< "$out" && grep -q -- '- failsonpurpose' <<< "$out" || return 1
+    [ "$status" -ne 0 ] && grep -q '1 required tests failed' <<< "$out" && grep -q -- '- capsule:failsonpurpose' <<< "$out" || return 1
     echo "OK: the failing test was reported (exit status $status)"
 }
 
@@ -134,9 +146,11 @@ step modcompat-neoforge "mod-compat GameTests NeoForge" "${GRADLE[@]}" :neoforge
 step modcompat-fabric "mod-compat GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer -PmodCompat "${COMPAT[@]}"
 step prod-gametest-neoforge "GameTests on the NeoForge release jar" scripts/prod-gametest.sh "$NEO_JAR"
 step prod-gametest-fabric "GameTests on the Fabric release jar" scripts/prod-gametest.sh "$FABRIC_JAR"
-# Get Off My Lawn ReServed 1.13.1+1.21, Open Parties and Claims 0.32.7, Flan 1.12.8: GOML runs on real servers only
-compat_mods "$CACHE/modcompat/fabric" fabric goml-reserved:3c513317d251589d7c13f01f5beb2e4020387999 \
-    open-parties-and-claims:b992b683056fab2c3f462907901fdc4054a26529 flan:debe440eeb5440765115b1d50269df9014ba12ea
+# Get Off My Lawn ReServed 1.21.0+26.2 with Polymer 0.17.5+26.2 (it requires polymer-core), Open Parties and Claims
+# 0.33.0, Flan 26.2-1.12.8: GOML runs on real servers only
+compat_mods "$CACHE/modcompat/fabric" fabric goml-reserved:1fb10a769a0f338b62ff23aeb25c61955a96565b \
+    polymer:115afd5dc50584d1ac294fe71b5aeb4e9138e434 \
+    open-parties-and-claims:138c08aecb5c3a1d57ea18054fda8735bbc2fa1e flan:4919b45aa772eaae4eff13253e9632b9b9deebbb
 step prod-modcompat-fabric "Fabric release jar with the claim mods" \
     env EXTRA_MODS="$(ls "$CACHE/modcompat/fabric"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-gametest-proof-neoforge "NeoForge release jar: failure reported" expect_failure scripts/prod-gametest.sh "$NEO_JAR"
@@ -149,9 +163,9 @@ for loader in neoforge fabric; do
 done
 
 if [ -n "$IRIS" ]; then
-    # Iris 1.8.12 / 1.8.8 and Sodium 0.6.13, MakeUp Ultra Fast 9.5g
-    mods "$CACHE/iris/neoforge" a3e6355915c7d3b2bc392724795113e51d289378 38af70fa4dc4b2aaac636e92fdba3bedd5a025e1
-    mods "$CACHE/iris/fabric" 4e0df4011503b4b36ba69877ea7247c1a47fea00 928a2598178c3a58b0638bab842f467d2e49251a
+    # Iris 1.11.4 and Sodium 0.9.2 for 26.2, MakeUp Ultra Fast 9.5g
+    mods "$CACHE/iris/neoforge" decfbe06505849620da8f1381c88af1e122ecdd3 e0a7838c8f733fecf0f2cb729e3439f70c21809f
+    mods "$CACHE/iris/fabric" bd0b24731a94b8fe164531e6345718d30ab08ed2 62a70961a5b3e06938e06ab5f2dc4c5a51cf3323
     mods "$CACHE/iris/pack" 57938ae6e1c83a2758b2e5dab80061d5002e88e7
     for loader in neoforge fabric; do
         smoke "$loader-iris" "$loader" jei TIMEOUT=3000 SHADER_PACK="$(ls "$CACHE"/iris/pack/*.zip)" \
@@ -160,33 +174,27 @@ if [ -n "$IRIS" ]; then
 fi
 
 if [ -n "$MODDED" ]; then
-    # NeoForge: Integrated Dynamics 1.38.0 (Cyclops Core, Common Capabilities, Integrated Tunnels, Refined Storage),
-    # Ad Astra 1.16.26 (Resourceful Lib, Resourceful Config, Common Storage Lib), Farmer's Delight 1.3.4
-    mods "$CACHE/modded/neoforge" e9616abb2fbca9e86e93c5c5b792e5c66b0c5518 e91a27152acfaed1f6992525c16907ad354b711d \
-        2bc5b853dda5e0fa121017dee218a9f49309c109 6c01dd38de67d1ce1d36ad14ef7eb6dc87907321 59d8e734ccb6eaab4cdf04093c55872af7a3e23a \
-        b6c4560cc625a6847e016af576954ff1f0431d99 24389c8e48ff0e8594e4686b750c494c66a5f8df 6bf2b6ea9c071c00a2abcdc552667fb6f7d21031 \
-        e0ba85038480d50a3816d5920014bfcccdbe7329 27675ddfcb8cc37e6ea1ab6c15051c7949d94657
-    # Fabric: Ad Astra 1.16.26 (same libraries), Farmer's Delight Refabricated 3.2.8
-    mods "$CACHE/modded/fabric" 905627aaeb61b5f0f5b36c376de43302d7099169 cb67e1302b5116953f45556cc61dbcf40d986ecd \
-        f6a0df7cf464d1c94458ef075bead82033add9c9 e04f6271136d36c75f5cb2bb58f6fd9efd52cf68 7adf7fbfbc29b87546b286a5d9a59358dfeca1e8
-    for loader in neoforge fabric; do
-        smoke "$loader-modded" "$loader" jei EXTRA_MODS="$(ls "$CACHE/modded/$loader"/*.jar | tr '\n' ' ')"
-    done
+    # The 1.21.1 run loaded Integrated Dynamics, Ad Astra and Farmer's Delight: Ad Astra and Farmer's Delight (NeoForge)
+    # have no 26.2 build (BACKLOG.md)
+    skip neoforge-modded "client smoke neoforge-modded" "no 26.2 build of the modded block mods"
+    skip fabric-modded "client smoke fabric-modded" "no 26.2 build of the modded block mods"
 fi
 
 if [ -n "$INCOMPAT" ]; then
     step incompat-neoforge "incompatibility GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -Pincompat "${COMPAT[@]}"
-    # Refined Storage 2.0.9, Mekanism 10.7.19.85, Immersive Engineering 12.4.2-194, Super Factory Manager 4.34.0,
-    # Corail Tombstone 9.5.6
-    compat_mods "$CACHE/incompat/neoforge" neoforge refined-storage:59d8e734ccb6eaab4cdf04093c55872af7a3e23a \
-        mekanism:b78945c40cfe7640408f3fd1e44da385a8c8b805 immersiveengineering:a4e90c2df8009040f6d022433c5d76635944dd59 \
-        super-factory-manager:1c170062c486bd25a1161571b6c3cf9e6371611b corail-tombstone:d830d16caa20b0d23a44ed6b1d339bc22afc2460
+    # Corail Tombstone 9.9.4 for 26.2. Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have
+    # no 26.2 build: not tested (their GameTests are out of the build, neoforge/build.gradle)
+    compat_mods "$CACHE/incompat/neoforge" neoforge corail-tombstone:08ebdd2ecf6cba8ff389e3d123432a8e2a6466cd
     step prod-incompat-neoforge "NeoForge release jar, incompatible mods" \
         env EXTRA_MODS="$(ls "$CACHE/incompat/neoforge"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$NEO_JAR"
 fi
 
 if [ -n "$MODPACK_RUN" ]; then
-    smoke neoforge-modpack neoforge jei MODPACK="${MODPACK:-forgeulously-optimized:mPRwXMh4}"
+    if [ -n "${MODPACK:-}" ]; then
+        smoke neoforge-modpack neoforge jei MODPACK="$MODPACK"
+    else
+        skip neoforge-modpack "client smoke neoforge-modpack" "no MODPACK given (no 26.2 version of the 1.21.1 pack)"
+    fi
 fi
 
 {

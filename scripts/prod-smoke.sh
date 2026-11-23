@@ -9,7 +9,7 @@ set -euo pipefail
 #   scripts/prod-smoke.sh <jar-file>...
 #
 # Examples:
-#   scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
+#   scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
 #   scripts/prod-smoke.sh neoforge/build/libs/Capsule-*.jar fabric/build/libs/Capsule-*.jar
 #
 # For each jar (loader read from the file name), in a temporary directory:
@@ -22,7 +22,7 @@ set -euo pipefail
 # Checks: the server reaches "Done", the capsule command is registered, the capsule config
 # files are created, and the log has no error mentioning capsule or a mixin.
 # Versions come from gradle.properties, downloads are cached (scripts/lib.sh).
-# Needs java 21, curl and python3.
+# Needs Java 25 on PATH, curl and python3.
 # Set KEEP_SERVER=1 to keep the server directories (printed at the end).
 # EXTRA_MODS (space separated jar files) adds other mods to the server, to check that they
 # boot together.
