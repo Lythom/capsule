@@ -32,11 +32,11 @@ the release jar in real servers and clients. They are never published: CI publis
 | `./gradlew build` | compile, jars, and `check` of every project: loader import check, unit tests and GameTests of both loaders | non-zero if anything fails |
 | `./gradlew check --continue` | every test layer, reporting all of them even if one fails | |
 | `./gradlew :neoforge:test` / `:fabric:test` | JUnit tests of `common/src/test/java` on one loader | non-zero if a test fails |
-| `./gradlew :neoforge:runGameTestServer` | the 109 NeoForge GameTests (107 common + 2 SecurityCraft) on a headless server | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (117) | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (116) | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer` | the 107 common GameTests on a headless Fabric server | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (111) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer` | the 113 NeoForge GameTests (110 common + 2 SecurityCraft + vanilla's `minecraft:always_pass`) on a headless server | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (121) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (114) | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer` | the 111 Fabric GameTests (110 common + `minecraft:always_pass`) on a headless Fabric server | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (115) | number of failed required tests |
 | `... -PmodCompatLatest` | with `-PmodCompat` or `-Pincompat`: the newest Modrinth versions of their mods instead of the pinned ones | |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
 | `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
@@ -60,12 +60,19 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 ## GameTests
 
 - Bodies: `common/src/gametest/java`, test structures in `common/src/gametest/resources`. They only use vanilla
-  classes (`GameTestHelper`, `@GameTest`), so the same tests run on both loaders.
-- Registration: `CapsuleGameTests.testFunctions` turns the `@GameTest` methods of the classes listed in
-  `CapsuleGameTests.TEST_CLASSES` into test functions named after the method (lowercase), using the templates of the
-  `capsule` namespace. Each loader has a `@GameTestGenerator` calling it: NeoForge `NeoForgeGameTests`, registered with
-  `RegisterGameTestsEvent`, adding `SecurityCraftTests`; Fabric `FabricGameTests`, the `fabric-gametest` entrypoint of
-  `fabric/src/gametest/resources/fabric.mod.json`, adding `GetOffMyLawnTests` when Get Off My Lawn is loaded.
+  classes (`GameTestHelper`) and Capsule's `@CapsuleGameTest`, so the same tests run on both loaders.
+- Registration: since Minecraft 1.21.5 a test is a function of the `test_function` registry and a `GameTestInstance`
+  of the datapack registry `test_instance`, and batches are test environments. `CapsuleGameTests.tests` turns the
+  `@CapsuleGameTest` methods of the classes listed in `CapsuleGameTests.TEST_CLASSES` into `CapsuleTest`s named after
+  the method (lowercase, `capsule:<method>`), using the templates of the `capsule` namespace; each batch is an
+  environment `capsule:<batch>` (`prefabPattern` is `capsule:prefab_pattern`), the tests without one are in
+  `capsule:default`. NeoForge: `NeoForgeGameTests`, a `@Mod` of `capsule_gametest`, registers the functions with
+  `RegisterEvent` and the environments and instances with `RegisterGameTestsEvent`, adding `SecurityCraftTests`.
+  Fabric: `FabricGameTestSetup` registers the functions, and the test mod mixin `RegistryDataLoaderMixin` the
+  environments and instances (Fabric API only registers annotated methods of `fabric-gametest` entrypoints), adding
+  `GetOffMyLawnTests` when Get Off My Lawn is loaded.
+- The totals include vanilla's `minecraft:always_pass`: 26.2 registers it in every world, and the GameTest server
+  runs every registered test.
 - `-Dcapsule.gametest.failOnPurpose=true` adds `FailureProofTests.failsOnPurpose`, which always fails: it shows that a
   runner reports failures. It is never registered otherwise.
 - `-PclaimBenchmark` (`-Dcapsule.gametest.claimBenchmark=true`) adds `ClaimProbeBenchmark.claimProbeCost`, which logs
@@ -77,20 +84,20 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 - The GameTest resources fill every modded `c:ingots/*` tag with a placeholder item (`data/c/tags/item/ingots`), so
   every addon capsule recipe loads and `everyCapsuleRecipeLoadsWithResolvedIngredients` checks it. The schematic
   fixtures are in `data/capsule/schematics`.
-- The GameTest server has no profile cache (real servers do, claim mods need it): `GameTestProfiles` gives it an
-  offline one before the server starts.
+- The GameTest server has a mock name to id cache (real servers have a cached one, and Open Parties and Claims only
+  reads the vanilla one): `GameTestProfiles` gives it an offline vanilla one before the server starts.
 - `TestProbe` stands for a claim mod without adapter: the GameTest mods answer the NeoForge placement event and Common
   Protection API with it, so the claim tests see what the generic probe asks.
 - Expected output, at the end of the console log:
   ```
-  [Server thread/INFO] [minecraft/GameTestServer]: All 109 required tests passed :)      (NeoForge)
-  [Server thread/INFO] (Minecraft) All 107 required tests passed :)                      (Fabric)
+  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 113 required tests passed :)   (NeoForge)
+  [Server thread/INFO] (Minecraft) All 111 required tests passed :)                                          (Fabric)
   ```
   On failure each test is reported with its position and message, then the summary:
   ```
-  [Server thread/ERROR] [minecraft/LogTestReporter]: blindthrowdeploysontheground failed at ...! Expected Block of Gold, got Air at ... (relative: 4,1,4) (t=61)
-  [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
-  [Server thread/INFO] [minecraft/GameTestServer]:    - blindthrowdeploysontheground
+  [Server thread/ERROR] [net.minecraft.gametest.framework.LogTestReporter/]: capsule:blueprintconsumesmaterials failed at 62268, -59, -8274054! both materials should be missing, got {} on tick 0
+  [Server thread/ERROR] [net.minecraft.gametest.framework.GameTestServer/]: 1 required tests failed :(
+  [Server thread/ERROR] [net.minecraft.gametest.framework.GameTestServer/]:    - capsule:blueprintconsumesmaterials: both materials should be missing, got {} on tick 0
   ```
   and the Gradle task fails. It also fails when the server ran no test, for example when a mod crashed at load (the
   NeoForge GameTest server then exits with status 0). The full logs are `<loader>/runs/gameTestServer/logs/latest.log`; on Fabric the failure
@@ -104,7 +111,7 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 - Use the vanilla API only, and add the class to `CapsuleGameTests.TEST_CLASSES`:
   ```java
   public class MyTests {
-      @GameTest(template = "empty")
+      @CapsuleGameTest(template = "empty")
       public static void somethingWorks(GameTestHelper helper) { ... helper.succeed(); }
   }
   ```
@@ -114,11 +121,13 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   `survivalPlayer`. Use `survivalPlayer` rather than `helper.makeMockServerPlayerInLevel()`: the mock player joins the
   player list without the mod network channels, so the first capsule payload broadcast near it throws on NeoForge.
   `survivalPlayer(helper, pos, messages)` collects the player's chat feedback; without a message list it is a plain
-  `ServerPlayer`, which some mods (Flan) tell apart from fake players by its class.
+  `ServerPlayer`, which some mods (Flan) tell apart from fake players by its class. It is set to survival: a new
+  player takes the default game mode of the server, creative on the GameTest server.
 - `LogCapture.open()` (try-with-resources) collects the warnings and errors logged meanwhile, for tests on log output
   (`deployedItemFramesHangOnTheirBlocks`, `missingPrefabTemplateIsReported`,
-  `prefabBlocksMissingFromBlueprintsAreReported`).
-- Tests changing global state go in their own batch (`reload` for `/reload`, `prefabPattern`, `claims` and
+  `prefabBlocksMissingFromBlueprintsAreReported`, `BundledConfigTests`).
+- Tests changing global state go in their own batch (`reload` for `/reload`, `prefabPattern` and `bundledConfig` for
+  `prefab_blueprint_recipe.json`, `claims` and
   `claimscale` for registered claim adapters, one per claim mod, `claimprobe` for a box wider than the test area,
   `claimtiers` for recipes replaced after a reload, `claimfailures` for failing adapters, which refuse every capture
   and deploy, `flandepth` for Flan's claim depth config), and must restore what they change (see `ConfigTests`).
@@ -148,7 +157,7 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ```
   ./gradlew :neoforge:runGameTestServer -PmodCompat
   ...
-  [Server thread/INFO] [minecraft/GameTestServer]: All 117 required tests passed :)
+  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 121 required tests passed :)
   ```
 - **Newest versions**: `-PmodCompatLatest` replaces the pinned version of every mod of `-PmodCompat` and `-Pincompat`
   with its newest Modrinth version for the loader and Minecraft version (`modrinth` of
@@ -206,7 +215,7 @@ with 1.0.41). IndustrialCraft 2 and Blood Magic have no NeoForge 1.21.1 version 
 ```
 ./gradlew :neoforge:runGameTestServer -Pincompat
 ...
-[Server thread/INFO] [minecraft/GameTestServer]: All 116 required tests passed :)
+[Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 114 required tests passed :)
 ```
 
 `validate-all.sh --incompat` runs them in the dev runtime and on the NeoForge release jar (`EXTRA_MODS`).
@@ -333,27 +342,29 @@ release jar and its test mod jar (`<loader>/build/test-mod/<release jar name>-ga
 scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/libs/Capsule-fabric-*.jar
 ```
 
-- Servers are installed like in `prod-smoke.sh`, in a temporary directory. NeoForge runs with
-  `-Dneoforge.gameTestServer=true` and SecurityCraft (Modrinth), for `SecurityCraftTests`. NeoForge registers and ticks
-  GameTests outside production only, so the test mod does it itself on a production GameTest server
-  (`ProductionGameTests`). Fabric runs with `-Dfabric-api.gametest` and Fabric API's GameTest module, which its release
-  jar does not bundle (the version comes from the Fabric API pom); the test mod jar is remapped like the release jar.
+- Servers are installed like in `prod-smoke.sh`, in a temporary directory. NeoForge starts FML's GameTest server
+  entrypoint (`net.neoforged.fml.startup.GameTestServer` instead of `Server` in the installed `unix_args.txt`) with
+  `-Dcapsule.gametest.production=true`, and SecurityCraft (Modrinth), for `SecurityCraftTests`. NeoForge never enables
+  GameTests in production (`GameTestHooks#isGametestEnabled`, which gates `RegisterGameTestsEvent` and the GameTest
+  ticker), so the test mod mixin `GameTestHooksMixin` turns it on with that property. Fabric runs with
+  `-Dfabric-api.gametest` and Fabric API's GameTest module, which its release jar does not bundle (the version comes
+  from the Fabric API pom).
 - Expected output: the same summary as `runGameTestServer`, then `OK`:
   ```
-  == neoforge: Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar + Capsule-neoforge-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.dMMlJn
-  [11:06:18] [Server thread/INFO] [minecraft/GameTestServer]: All 109 required tests passed :)
-  OK: All 109 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
-  == fabric: Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar + Capsule-fabric-1.21.1-9.1.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.eYuJF4
-  [11:07:27] [Server thread/INFO]: All 107 required tests passed :)
-  OK: All 107 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
+  == neoforge: Capsule-neoforge-26.2-10.0.SNAPSHOT.jar + Capsule-neoforge-26.2-10.0.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.ccheTQ
+  [20:10:16] [Server thread/INFO] [minecraft/GameTestServer]: All 113 required tests passed :)
+  OK: All 113 required tests passed on Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
+  == fabric: Capsule-fabric-26.2-10.0.SNAPSHOT.jar + Capsule-fabric-26.2-10.0.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.LHm14n
+  [20:10:41] [Server thread/INFO]: All 111 required tests passed :)
+  OK: All 111 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
   ```
 - Exit code 0 when every jar passes. A failure prints the failed tests and keeps the server directory:
   ```
   FAIL_ON_PURPOSE=1 scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar
-  [11:07:56] [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
-  [11:07:56] [Server thread/INFO] [minecraft/GameTestServer]:    - failsonpurpose
-  [11:07:51] [Server thread/ERROR] [minecraft/LogTestReporter]: failsonpurpose failed at 10190940, -60, 14580310! failed on purpose (-Dcapsule.gametest.failOnPurpose=true)
-  FAIL: neoforge GameTests on the release jar (exit status 1), log: /tmp/gametest-neoforge.mqlxI2/console.log
+  [20:11:07] [Server thread/ERROR] [minecraft/GameTestServer]: 1 required tests failed :(
+  [20:11:07] [Server thread/ERROR] [minecraft/GameTestServer]:    - capsule:failsonpurpose: failed on purpose (-Dcapsule.gametest.failOnPurpose=true) on tick 0
+  [20:11:03] [Server thread/ERROR] [minecraft/LogTestReporter]: capsule:failsonpurpose failed at 629416, -59, -13486610! failed on purpose (-Dcapsule.gametest.failOnPurpose=true) on tick 0
+  FAIL: neoforge GameTests on the release jar (exit status 1), log: /tmp/gametest-neoforge.Mpd6LY/console.log
   ```
   `FAIL_ON_PURPOSE=1` registers `FailureProofTests` (`-Dcapsule.gametest.failOnPurpose=true`), never registered otherwise.
 - `TIMEOUT` (seconds, default 1200), `EXTRA_MODS` and `KEEP_SERVER` work as in `prod-smoke.sh`.

@@ -16,10 +16,11 @@ set -euo pipefail
 # server of scripts/prod-smoke.sh with the release jar and its test mod jar, which
 # ./gradlew build writes to <loader>/build/test-mod/<release jar name>-gametest.jar, then
 # runs the GameTest server instead of the game server:
-#   - NeoForge: -Dneoforge.gameTestServer=true (the test mod registers the tests, which
-#     NeoForge only does outside production), with SecurityCraft for its tests
+#   - NeoForge: the GameTest server entrypoint of FML (net.neoforged.fml.startup.GameTestServer)
+#     with -Dcapsule.gametest.production=true: NeoForge never enables GameTests in production,
+#     the test mod's GameTestHooksMixin turns them on. With SecurityCraft for its tests
 #   - Fabric: -Dfabric-api.gametest, with the GameTest module of Fabric API (not in its
-#     release jar); the test mod is remapped like the release jar
+#     release jar)
 #
 # Checks: the server reports "All <n> required tests passed". Exit code 0 when every jar
 # passes. FAIL_ON_PURPOSE=1 adds a test that always fails (-Dcapsule.gametest.failOnPurpose=true),
@@ -47,7 +48,11 @@ gametest() {
     [ -z "${FAIL_ON_PURPOSE:-}" ] || jvm_args+=(-Dcapsule.gametest.failOnPurpose=true)
     mkdir -p "$dir/mods"
     if [ "$loader" = neoforge ]; then
-        setup_neoforge "$dir" "${jvm_args[@]}" -Dneoforge.gameTestServer=true
+        setup_neoforge "$dir" "${jvm_args[@]}" -Dcapsule.gametest.production=true
+        # the installed server's arguments, with the GameTest server entrypoint instead of the game server's
+        sed -i 's/net\.neoforged\.fml\.startup\.Server/net.neoforged.fml.startup.GameTestServer/' \
+            "$dir/libraries/net/neoforged/neoforge/$NEO_VERSION/unix_args.txt"
+        START=(./run.sh)
         modrinth_jar security-craft "$(prop securitycraft_version)" "$dir/mods"
     else
         setup_fabric "$dir" "${jvm_args[@]}" -Dfabric-api.gametest "-Dfabric-api.gametest.report-file=$dir/report.xml"

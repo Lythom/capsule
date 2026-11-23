@@ -78,9 +78,11 @@ REI and EMI are checked in dev clients only; the production client (`MODPACK=`) 
 Run a pack bringing REI or EMI. Effort: S.
 
 ### Production NeoForge GameTests depend on NeoForge internals
-`scripts/prod-gametest.sh` relies on undocumented NeoForge behavior: `-Dneoforge.gameTestServer=true` starts a GameTest
-server in production while NeoForge registers and ticks GameTests outside production only, so `ProductionGameTests`
-does both itself (vanilla `GameTestRegistry`, `GameTestTicker`). A NeoForge update can break it. Effort: S per update.
+`scripts/prod-gametest.sh` relies on undocumented NeoForge behavior: it starts FML's GameTest server entrypoint
+(`net.neoforged.fml.startup.GameTestServer`) on an installed server, and NeoForge never enables GameTests in production
+(`GameTestHooks#isGametestEnabled` gates `RegisterGameTestsEvent` and the GameTest ticker), so the test mod mixin
+`GameTestHooksMixin` forces it on with `-Dcapsule.gametest.production=true`. Works on NeoForge 26.2.0.95. A NeoForge
+update can break it. Effort: S per update.
 
 ## Platforms and versions
 
