@@ -11,8 +11,8 @@ import capsule.client.render.CustomRenderType;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -32,13 +32,13 @@ public class CapsuleFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ModConfigSpec config = ModConfigSpecBuilder.build(ClientConfig::define);
-        NeoForgeModConfigEvents.loading(CapsuleMod.MODID).register(modConfig -> {
+        ModConfigEvents.loading(CapsuleMod.MODID).register(modConfig -> {
             if (modConfig.getSpec() == config) ClientConfig.bakeConfig();
         });
-        NeoForgeModConfigEvents.reloading(CapsuleMod.MODID).register(modConfig -> {
+        ModConfigEvents.reloading(CapsuleMod.MODID).register(modConfig -> {
             if (modConfig.getSpec() == config) ClientConfig.bakeConfig();
         });
-        NeoForgeConfigRegistry.INSTANCE.register(CapsuleMod.MODID, ModConfig.Type.CLIENT, config);
+        ConfigRegistry.INSTANCE.register(CapsuleMod.MODID, ModConfig.Type.CLIENT, config);
 
         CapsuleMod.openGuiScreenCommon = LabelGui::open;
         FabricPayloadRegistrar.registerClientReceivers();

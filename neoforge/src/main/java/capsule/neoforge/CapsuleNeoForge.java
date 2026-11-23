@@ -9,6 +9,7 @@ import capsule.items.ThrownCapsules;
 import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.StarterLoot;
 import capsule.network.CapsuleNetwork;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -22,7 +23,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -57,7 +58,8 @@ public class CapsuleNeoForge {
         bus.addListener(EventPriority.HIGH, (ServerStartingEvent event) -> CapsuleMod.serverStarting(event.getServer()));
         bus.addListener(EventPriority.HIGH, (ServerStoppedEvent event) -> CapsuleMod.serverStopped());
         bus.addListener((RegisterCommandsEvent event) -> CapsuleMod.registerCommands(event.getDispatcher()));
-        bus.addListener((AddReloadListenerEvent event) -> event.addListener(CapsuleMod.reloadListener()));
+        bus.addListener((AddServerReloadListenersEvent event) ->
+                event.addListener(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "templates"), CapsuleMod.reloadListener()));
         // the creative tab, the recipe viewers and the prefab recipes are built from the crafting recipes on the client
         bus.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(RecipeType.CRAFTING));
         bus.addListener(EventPriority.HIGHEST, (EntityJoinLevelEvent event) -> {
