@@ -2,14 +2,11 @@ package capsule.client;
 
 import capsule.client.render.CapsuleTemplateRenderer;
 import capsule.client.render.FakeWorld;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -33,6 +30,10 @@ public class CaptureAnimation {
      */
     private static final int MAX_SIZE = 64;
     private static final List<CaptureAnimation> playing = new ArrayList<>();
+    /**
+     * The shrinking box (1.21.1: 0.87, 0.87, 0.87, 1).
+     */
+    private static final int BOX_COLOR = ARGB.colorFromFloat(1, 0.87f, 0.87f, 0.87f);
     /**
      * Frames drawn by capture animations, read by the client smoke test.
      */
@@ -103,27 +104,34 @@ public class CaptureAnimation {
         return ++age < DURATION && level == Minecraft.getInstance().level;
     }
 
-    public static void render(PoseStack poseStack, Vec3 camera, float partialTick) {
-        for (CaptureAnimation animation : playing) animation.draw(poseStack, camera, Math.min(1, (animation.age + partialTick) / DURATION));
+    /**
+     * Adds this frame's capture animations to the frame of the previews.
+     */
+    static void extract(List<CapsulePreviewHandler.PreviewSubmit> frame, Vec3 camera, float partialTick, float lineWidth) {
+        for (CaptureAnimation animation : playing) {
+            CapsulePreviewHandler.PreviewSubmit submit = animation.extract(camera, Math.min(1, (animation.age + partialTick) / DURATION), lineWidth);
+            if (submit != null) frame.add(submit);
+        }
     }
 
-    private void draw(PoseStack poseStack, Vec3 camera, float progress) {
-        poseStack.pushPose();
-        poseStack.translate(origin.getX() - camera.x, origin.getY() - camera.y, origin.getZ() - camera.z);
+    private CapsulePreviewHandler.PreviewSubmit extract(Vec3 camera, float progress, float lineWidth) {
+        Vec3 offset = Vec3.atLowerCornerOf(origin).subtract(camera);
         if (!removed.templateWorld.entrySet().isEmpty()) {
+            renderedFrames++;
             float scale = scale(progress);
-            poseStack.translate(target.x, target.y, target.z);
-            poseStack.scale(scale, scale, scale);
-            poseStack.translate(-target.x, -target.y, -target.z);
-            removed.renderTemplate(poseStack, 1 - progress * 0.5f);
-            renderedFrames++;
+            return (collector, poseStack) -> {
+                poseStack.translate(offset);
+                poseStack.translate(target.x, target.y, target.z);
+                poseStack.scale(scale, scale, scale);
+                poseStack.translate(-target.x, -target.y, -target.z);
+                removed.submitTemplate(collector, poseStack, 1 - progress * 0.5f);
+            };
         } else if (standing.isEmpty()) {
-            MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-            LevelRenderer.renderLineBox(poseStack, buffers.getBuffer(RenderType.lines()), shrunk(progress), 0.87f, 0.87f, 0.87f, 1);
-            buffers.endBatch(RenderType.lines());
             renderedFrames++;
+            AABB box = shrunk(progress).move(offset);
+            return (collector, poseStack) -> RendererUtils.submitLineBox(collector, poseStack, box, BOX_COLOR, lineWidth);
         }
-        poseStack.popPose();
+        return null;
     }
 
     /**

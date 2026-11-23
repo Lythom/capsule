@@ -1,151 +1,101 @@
 package capsule.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.BlockPos;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.phys.AABB;
-import org.joml.Matrix4f;
+import net.minecraft.world.phys.shapes.Shapes;
 
 public class RendererUtils {
-    public static void doPositionPrologue(Camera camera, PoseStack poseStack) {
-        poseStack.pushPose();
-        poseStack.translate(-camera.position().x, -camera.position().y, -camera.position().z);
+    /**
+     * The outline of box, in the space of poseStack, with the vanilla lines render type (depth tested, translucent
+     * blending, view offset z layering) as 1.21.1's LevelRenderer#renderLineBox with RenderType.lines() had.
+     *
+     * @param argb      color with alpha
+     * @param lineWidth 1.21.1's RenderType.lines() used the window-scaled width: Window#getAppropriateLineWidth
+     */
+    public static void submitLineBox(OrderedSubmitNodeCollector collector, PoseStack poseStack, AABB box, int argb, float lineWidth) {
+        collector.submitShapeOutline(poseStack, Shapes.create(box), RenderTypes.lines(), argb, lineWidth, false);
     }
 
-    public static void doPositionEpilogue(PoseStack poseStack) {
-        poseStack.popPose();
-    }
-
-    public static void doOverlayPrologue() {
-        RenderSystem.disableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-    }
-
-    public static void doOverlayEpilogue() {
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableBlend();
-    }
-
-    public static void doWirePrologue() {
-        RenderSystem.disableCull();
-        RenderSystem.lineWidth(3.0F);
-    }
-
-    public static void doWireEpilogue() {
-        RenderSystem.lineWidth(1.0F);
-        RenderSystem.enableCull();
-
-    }
-
-    public static void drawCube(PoseStack poseStack, final BlockPos pos, final float sizeOffset, final VertexConsumer buffer, int r, int g, int b, int a) {
-        drawCube(poseStack, pos.getX() - sizeOffset, pos.getY() - sizeOffset, pos.getZ() - sizeOffset,
-                pos.getX() + 1 + sizeOffset, pos.getY() + 1 + sizeOffset, pos.getZ() + 1 + sizeOffset,
-                buffer, r, g, b, a);
-    }
-
-    public static void drawCube(PoseStack poseStack, final float minX, final float minY, final float minZ,
+    public static void drawCube(PoseStack.Pose pose, final float minX, final float minY, final float minZ,
                                 final float maxX, final float maxY, final float maxZ,
                                 final VertexConsumer buffer, int r, int g, int b, int a) {
-        drawPlaneNegX(poseStack, minX, minY, maxY, minZ, maxZ, buffer, r, g, b, a);
-        drawPlanePosX(poseStack, maxX, minY, maxY, minZ, maxZ, buffer, r, g, b, a);
-        drawPlaneNegY(poseStack, minY, minX, maxX, minZ, maxZ, buffer, r, g, b, a);
-        drawPlanePosY(poseStack, maxY, minX, maxX, minZ, maxZ, buffer, r, g, b, a);
-        drawPlaneNegZ(poseStack, minZ, minX, maxX, minY, maxY, buffer, r, g, b, a);
-        drawPlanePosZ(poseStack, maxZ, minX, maxX, minY, maxY, buffer, r, g, b, a);
+        drawPlaneNegX(pose, minX, minY, maxY, minZ, maxZ, buffer, r, g, b, a);
+        drawPlanePosX(pose, maxX, minY, maxY, minZ, maxZ, buffer, r, g, b, a);
+        drawPlaneNegY(pose, minY, minX, maxX, minZ, maxZ, buffer, r, g, b, a);
+        drawPlanePosY(pose, maxY, minX, maxX, minZ, maxZ, buffer, r, g, b, a);
+        drawPlaneNegZ(pose, minZ, minX, maxX, minY, maxY, buffer, r, g, b, a);
+        drawPlanePosZ(pose, maxZ, minX, maxX, minY, maxY, buffer, r, g, b, a);
     }
 
     /**
      * Draws a quad with four explicit vertices and a normal vector.
      * All six drawPlane* methods delegate to this single implementation.
      */
-    private static void drawQuad(PoseStack poseStack,
+    private static void drawQuad(PoseStack.Pose pose,
                                  float x0, float y0, float z0,
                                  float x1, float y1, float z1,
                                  float x2, float y2, float z2,
                                  float x3, float y3, float z3,
                                  float nx, float ny, float nz,
                                  final VertexConsumer buffer, int r, int g, int b, int a) {
-        Matrix4f matrix4f = poseStack.last().pose();
-        PoseStack.Pose pose = poseStack.last();
-        buffer.addVertex(matrix4f, x0, y0, z0).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
-        buffer.addVertex(matrix4f, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
-        buffer.addVertex(matrix4f, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
-        buffer.addVertex(matrix4f, x3, y3, z3).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        buffer.addVertex(pose, x0, y0, z0).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        buffer.addVertex(pose, x1, y1, z1).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        buffer.addVertex(pose, x2, y2, z2).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
+        buffer.addVertex(pose, x3, y3, z3).setColor(r, g, b, a).setNormal(pose, nx, ny, nz);
     }
 
-    public static void drawPlaneNegX(PoseStack poseStack, final float x, final float minY, final float maxY,
+    public static void drawPlaneNegX(PoseStack.Pose pose, final float x, final float minY, final float maxY,
                                      final float minZ, final float maxZ, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, x, minY, minZ, x, minY, maxZ, x, maxY, maxZ, x, maxY, minZ,
+        drawQuad(pose, x, minY, minZ, x, minY, maxZ, x, maxY, maxZ, x, maxY, minZ,
                 -1, 0, 0, buffer, r, g, b, a);
     }
 
-    public static void drawPlanePosX(PoseStack poseStack, final float x, final float minY, final float maxY,
+    public static void drawPlanePosX(PoseStack.Pose pose, final float x, final float minY, final float maxY,
                                      final float minZ, final float maxZ, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, x, minY, minZ, x, maxY, minZ, x, maxY, maxZ, x, minY, maxZ,
+        drawQuad(pose, x, minY, minZ, x, maxY, minZ, x, maxY, maxZ, x, minY, maxZ,
                 1, 0, 0, buffer, r, g, b, a);
     }
 
-    public static void drawPlaneNegY(PoseStack poseStack, final float y, final float minX, final float maxX,
+    public static void drawPlaneNegY(PoseStack.Pose pose, final float y, final float minX, final float maxX,
                                      final float minZ, final float maxZ, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, minX, y, minZ, maxX, y, minZ, maxX, y, maxZ, minX, y, maxZ,
+        drawQuad(pose, minX, y, minZ, maxX, y, minZ, maxX, y, maxZ, minX, y, maxZ,
                 0, -1, 0, buffer, r, g, b, a);
     }
 
-    public static void drawPlanePosY(PoseStack poseStack, final float y, final float minX, final float maxX,
+    public static void drawPlanePosY(PoseStack.Pose pose, final float y, final float minX, final float maxX,
                                      final float minZ, final float maxZ, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, minX, y, minZ, minX, y, maxZ, maxX, y, maxZ, maxX, y, minZ,
+        drawQuad(pose, minX, y, minZ, minX, y, maxZ, maxX, y, maxZ, maxX, y, minZ,
                 0, 1, 0, buffer, r, g, b, a);
     }
 
-    public static void drawPlaneNegZ(PoseStack poseStack, final float z, final float minX, final float maxX,
+    public static void drawPlaneNegZ(PoseStack.Pose pose, final float z, final float minX, final float maxX,
                                      final float minY, final float maxY, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, minX, minY, z, minX, maxY, z, maxX, maxY, z, maxX, minY, z,
+        drawQuad(pose, minX, minY, z, minX, maxY, z, maxX, maxY, z, maxX, minY, z,
                 0, 0, -1, buffer, r, g, b, a);
     }
 
-    public static void drawPlanePosZ(PoseStack poseStack, final float z, final float minX, final float maxX,
+    public static void drawPlanePosZ(PoseStack.Pose pose, final float z, final float minX, final float maxX,
                                      final float minY, final float maxY, final VertexConsumer buffer,
                                      int r, int g, int b, int a) {
-        drawQuad(poseStack, minX, minY, z, maxX, minY, z, maxX, maxY, z, minX, maxY, z,
+        drawQuad(pose, minX, minY, z, maxX, minY, z, maxX, maxY, z, minX, maxY, z,
                 0, 0, 1, buffer, r, g, b, a);
     }
 
-    public static void drawCapsuleCube(PoseStack poseStack, AABB boundingBox, VertexConsumer bufferBuilder, int r, int g, int b, int a) {
-        drawPlaneNegX(poseStack, (float) boundingBox.minX, (float) boundingBox.minY, (float) boundingBox.maxY, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
-        drawPlanePosX(poseStack, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
-        drawPlaneNegY(poseStack, (float) boundingBox.minY, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
-        drawPlanePosY(poseStack, (float) boundingBox.maxY, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
-        drawPlaneNegZ(poseStack, (float) boundingBox.minZ, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, bufferBuilder, r, g, b, a);
-        drawPlanePosZ(poseStack, (float) boundingBox.maxZ, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, bufferBuilder, r, g, b, a);
+    public static void drawCapsuleCube(PoseStack.Pose pose, AABB boundingBox, VertexConsumer bufferBuilder, int r, int g, int b, int a) {
+        drawPlaneNegX(pose, (float) boundingBox.minX, (float) boundingBox.minY, (float) boundingBox.maxY, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
+        drawPlanePosX(pose, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
+        drawPlaneNegY(pose, (float) boundingBox.minY, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
+        drawPlanePosY(pose, (float) boundingBox.maxY, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minZ, (float) boundingBox.maxZ, bufferBuilder, r, g, b, a);
+        drawPlaneNegZ(pose, (float) boundingBox.minZ, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, bufferBuilder, r, g, b, a);
+        drawPlanePosZ(pose, (float) boundingBox.maxZ, (float) boundingBox.minX, (float) boundingBox.maxX, (float) boundingBox.minY, (float) boundingBox.maxY, bufferBuilder, r, g, b, a);
     }
 
-    public static float[] prevColor = new float[4];
-
-    public static void pushColor(final int rgb, final int alpha) {
-        prevColor = RenderSystem.getShaderColor();
-        final int r = (rgb >> 16) & 0xFF;
-        final int g = (rgb >> 8) & 0xFF;
-        final int b = rgb & 0xFF;
-
-        final float af = alpha / 255f;
-        final float rf = r / 255f;
-        final float gf = g / 255f;
-        final float bf = b / 255f;
-        RenderSystem.setShaderColor(rf, gf, bf, af);
-    }
-
-    public static void popColor() {
-        if (prevColor != null && prevColor.length == 4)
-            RenderSystem.setShaderColor(prevColor[0], prevColor[1], prevColor[2], prevColor[3]);
-    }
 }
