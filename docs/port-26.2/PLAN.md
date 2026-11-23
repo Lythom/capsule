@@ -39,7 +39,7 @@ Proposed in this plan. Change them only after asking the maintainer.
 | D6 | `CapsuleSavedData` moves to the server-wide storage (`MinecraftServer#getDataStorage()`), id `capsule:capsule_data`. No migration of the old per-dimension `capsuleData.dat` is needed. | 26.1 moved saved data files anyway (`26.1.md` §10.1). The counter only seeds blueprint names, and `StructureSaver#getBlueprintUniqueName` skips names already taken, so a counter restarting at 0 cannot overwrite a template. |
 | D7 | **No migration** of config files written by an older Capsule (`config/capsule/prefab_blueprint_recipe.json` with the old ingredient format and `show_in_tooltip`, `blueprint_whitelist.json`, starters, loot templates). A config file that does not parse is reported: one server log error naming the file, what failed and that deleting it restores the default, and the feature that depends on it is skipped. No crash, no silent loss. What must be right is the JSON **bundled** with Capsule (`data/capsule/initialconfig/**`, recipes, advancements): a GameTest parses every bundled file (phase 8). | Capsule 10.x for 26.x is a new major version: there is no "previous" config to carry over (`BACKLOG.md`, "Decided, not doing": "Updated default templates never reach existing installs: fine, users delete the config folder"). The legacy-format branch of `Blueprint.java` (the "uses legacy format" warning, line 255) becomes this error. |
 | D8 | **Done on branch `1.21.1`** (commit `5002f14`): the item predicates of the three recipe advancements (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`) were `{"item": …}` / `{"tag": …}`. They are now `{"items": "minecraft:compass"}` / `{"items": "#c:ender_pearls"}` / `{"items": "#minecraft:planks"}` inside the `inventory_changed` `items` list. The GameTest `RecipeTests#recipeAdvancementsWaitForTheirItem` checks that each criterion matches its item and not dirt. The port takes both from there; 26.3 also renames `recipe_unlocked`'s `"recipe"` to `"recipes"` (phase 10). | An item predicate reads `items` and ignores unknown keys, so the old predicates had no condition: the recipes were unlocked by the first item picked up. The test failed before the fix and passes after (109 NeoForge, 107 Fabric GameTests). |
-| D9 | `capsule_version=10.0` for 26.x (jars `Capsule-<loader>-26.2-10.0.<build>.jar`, then `26.3-10.0.x`). The CHANGELOG entry is `26.2-10.0.x`. | A new major version goes with the new Minecraft numbering, and states that 10.x does not carry configs over (D7). |
+| D9 | One Capsule major version per Minecraft version: `capsule_version=10.0` for 26.2 (jars `Capsule-<loader>-26.2-10.0.<build>.jar`, CHANGELOG entry `26.2-10.0.x`), `capsule_version=11.0` for 26.3 (`26.3-11.0.x`, phase 10). | A version number then tells which Minecraft line a commit or a jar belongs to. The new major also says that configs of the previous major are not carried over (D7). |
 
 ## 2. The inventories
 
@@ -312,7 +312,7 @@ Start from a 26.2 branch that meets §8. `inventory/26.3.md` (vanilla) and `inve
 section numbers below are those of `inventory/26.3.md`.
 
 - Versions (D2): NeoForge 26.3.0.115, NeoForm 26.3-1, Fabric API (newest release for 26.3), the 26.3 Modrinth ids of
-  §6. Same Gradle, ModDevGradle and Loom.
+  §6. Same Gradle, ModDevGradle and Loom. `capsule_version=11.0` (D9).
 - Rendering: `com.mojang.blaze3d` → `com.mojang.renderpearl` (sed in §3), the 26.3 `CustomRenderType` of §4,
   `setOitPipelines(RenderPipelines.OIT_TRANSLUCENT_BLOCK)` on the ghost colour pass and
   `RenderTypes.linesTranslucentNoDepthWrite()` for the recall box (§5), `VertexConsumer#setUv3` in
@@ -330,7 +330,7 @@ section numbers below are those of `inventory/26.3.md`.
   `registerConfig(ModConfig.Type.LOCAL, spec, "capsule-common.toml")`, so the file name does not change.
   Fabric's Forge Config API Port still has `COMMON`.
 - Retest everything of phases 8 and 9 on 26.3, the client smoke test with Improved Transparency on and off, and
-  the §6 matrix with its 26.3 column. CHANGELOG: a `26.3-10.0.x` entry.
+  the §6 matrix with its 26.3 column. CHANGELOG: a `26.3-11.0.x` entry.
 
 ## 6. Compatibility to retest
 
