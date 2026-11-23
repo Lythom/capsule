@@ -32,13 +32,13 @@ Proposed in this plan. Change them only after asking the maintainer.
 |---|---|---|
 | D1 | Target **26.2** (released 2026-06-16), although 26.3 has been out since 2026-09-15 and 26.4 is in snapshots. | The maintainer asked for 26.2. A 26.3 port afterwards is a small step (one primer). |
 | D2 | Tooling: Java 25, NeoForge **26.2.0.95**, NeoForm **26.2-2** for `common`, ModDevGradle **2.0.148**, Fabric Loom **`net.fabricmc.fabric-loom` 1.18.4** (the non-remapping plugin) on the current **Gradle 9.7.1**, Fabric Loader **0.20.1**, Fabric API **0.161.0+26.2**. Parchment is removed: there is none for 26.x, and the game ships Mojang names. | ModDevGradle is known to work on Gradle 9.7.1 in this repo. Loom 1.19.x needs Gradle 9.8+, which ModDevGradle has not been checked on. Moving to Loom 1.19.4 + Gradle 9.8.2 is optional, in its own commit, once everything builds. |
-| D3 | Recipes reach the client through the **loader recipe-sync APIs**: NeoForge `OnDatapackSyncEvent#sendRecipes(RecipeType.CRAFTING)` + `RecipesReceivedEvent`; Fabric `RecipeSynchronization` + `ClientRecipeSynchronizedEvent`. Fabric's `ClientPacketListenerMixin` is deleted. | Since 1.21.2 the server sends no recipes, so the creative tab, the recipe viewers and the prefab trick lose their data. Both loaders now provide this, which needs less code than a Capsule payload. Details: `1.21.2.md` §6.1, `loaders-build.md` §3.1, §3.2, §4.1, §4.2, §4.8. |
+| D3 | Since 1.21.2 the server no longer sends recipes to the client, so the creative tab, the recipe viewers and the prefab recipes (`PrefabsBlueprintAggregatorRecipe`) lose their client-side data. That migration is not optional; the decision is **how**: through the **loader recipe-sync APIs** (NeoForge `OnDatapackSyncEvent#sendRecipes(RecipeType.CRAFTING)` + `RecipesReceivedEvent`; Fabric `RecipeSynchronization` + `ClientRecipeSynchronizedEvent`), not through a Capsule payload. Fabric's `ClientPacketListenerMixin` is deleted. | Both loaders provide it, it is less code than a payload of our own, and JEI/REI read the same synced recipes. Details: `1.21.2.md` §6.1, `loaders-build.md` §3.1, §3.2, §4.1, §4.2, §4.8. |
 | D4 | **EMI is dropped** on this branch: no EMI build exists for 26.x. Keep `common/.../plugins/emi/` and `clientsmoke/EmiProbe.java` but exclude them from compilation (a `sourceSets` exclude with a comment), and remove `emi` from `-PrecipeViewer` and the scripts. | It can neither be compiled nor tested. Bring it back when EMI publishes 26.x. |
 | D5 | The known-incompatibility mods without a 26.2 build (Refined Storage, Mekanism, Immersive Engineering, Super Factory Manager) leave `-Pincompat`. Their test classes are excluded from compilation (comment), and their `gradle.properties` entries are deleted. Corail Tombstone stays (it has a 26.2 build). | §6. |
 | D6 | `CapsuleSavedData` moves to the server-wide storage (`MinecraftServer#getDataStorage()`), id `capsule:capsule_data`. No migration of the old per-dimension `capsuleData.dat` is needed. | 26.1 moved saved data files anyway (`26.1.md` §10.1). The counter only seeds blueprint names, and `StructureSaver#getBlueprintUniqueName` skips names already taken, so a counter restarting at 0 cannot overwrite a template. |
-| D7 | `prefab_blueprint_recipe.json` copied into users' `config/capsule/` by 1.21.1 uses the old ingredient format (`{"item": …}` / `{"tag": …}`) and `show_in_tooltip`. The reader in `Blueprint.java` converts these legacy forms when it loads the file and logs one warning. It does not rewrite the file. | Since 1.21.2 the old file would no longer parse, and every prefab recipe would be lost silently. `BACKLOG.md`, "Decided, not doing", says "Updated default templates never reach existing installs: fine, users delete the config folder". That is acceptable for new content, not for a file that stops parsing. |
-| D8 | Fix the three advancements with `{"item": …}` / `{"tag": …}` in `items` (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`). Use `"items": "minecraft:compass"` / `"#c:ender_pearls"` / `"#minecraft:planks"`. | They are already broken on 1.21.1: `items` takes a holder set (an id, a list of ids or `#tag`). |
-| D9 | `capsule_version` stays `9.1` on this branch. The maintainer picks the release number. | The jar name already carries the Minecraft version (`26.2-9.1.x`). |
+| D7 | **No migration** of config files written by an older Capsule (`config/capsule/prefab_blueprint_recipe.json` with the old ingredient format and `show_in_tooltip`, `blueprint_whitelist.json`, starters, loot templates). A config file that does not parse is reported: one server log error naming the file, what failed and that deleting it restores the default, and the feature that depends on it is skipped. No crash, no silent loss. What must be right is the JSON **bundled** with Capsule (`data/capsule/initialconfig/**`, recipes, advancements): a GameTest parses every bundled file (phase 8). | Capsule 10.x for 26.x is a new major version: there is no "previous" config to carry over (`BACKLOG.md`, "Decided, not doing": "Updated default templates never reach existing installs: fine, users delete the config folder"). The legacy-format branch of `Blueprint.java` (the "uses legacy format" warning, line 255) becomes this error. |
+| D8 | The three advancements with `{"item": …}` / `{"tag": …}` in `items` (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`) are fixed on branch `1.21.1`, with the GameTest `RecipeTests#everyCapsuleAdvancementLoads`. The port takes both from there: `"items": "minecraft:compass"` / `"#c:ender_pearls"` / `"#minecraft:planks"` is still the right form on 26.x (check it against the 26.2/26.3 `ItemPredicate` codec). | They are broken on 1.21.1: `items` takes a holder set (an id, a list of ids or `#tag`), so the advancements do not load and never give their recipes. |
+| D9 | `capsule_version=10.0` for 26.x (jars `Capsule-<loader>-26.2-10.0.<build>.jar`, then `26.3-10.0.x`). The CHANGELOG entry is `26.2-10.0.x`. | A new major version goes with the new Minecraft numbering, and states that 10.x does not carry configs over (D7). |
 
 ## 2. The inventories
 
@@ -114,8 +114,8 @@ of each phase even if the build is still red. Phase 7 is the first that should g
 
 `loaders-build.md` §1–§2 and §2.10–§2.13; `26.1.md` §1; decisions D2, D4, D5.
 
-1. `gradle.properties`: versions and Modrinth ids from `loaders-build.md` §1 and §2.1. Delete Parchment, `emi_version`
-   and the D5 mods.
+1. `gradle.properties`: versions and Modrinth ids from `loaders-build.md` §1 and §2.1, `capsule_version=10.0` (D9).
+   Delete Parchment, `emi_version` and the D5 mods.
 2. Root `build.gradle`: `net.fabricmc.fabric-loom` 1.18.4 instead of `net.fabricmc.fabric-loom-remap` 1.18.2 (D2).
    `buildSrc` conventions: Java 25 toolchain, no Parchment.
 3. `common/build.gradle`: NeoForm 26.2-2; JEI/REI 26.2 artifacts; EMI excluded (D4); claim mods at their 26.2 ids.
@@ -192,11 +192,12 @@ Commit: "Port NBT, block entity and template data to 26.2".
   results, `assemble` without registries, `placementInfo`).
 - `DyeCapsuleRecipe` reads `DataComponents.DYE`.
 - The 34 recipe JSON files, `initialconfig/root/prefab_blueprint_recipe.json` and the code that writes ingredients
-  (`PrefabsBlueprintAggregatorRecipe.FixIngredient`). The reader converts the D7 legacy format.
+  (`PrefabsBlueprintAggregatorRecipe.FixIngredient`). A `prefab_blueprint_recipe.json` that does not parse is reported
+  as D7 says; no conversion of the old format.
 - Ingredients with components (`RecipeViewerContent`): use the loader's component ingredient (NeoForge
   `DataComponentIngredient`, Fabric `DefaultCustomIngredients.components`) through the `Platform` interface.
 - Client side (D3): `CapsuleItems.registerRecipesClient` takes the synced recipes.
-- Advancements (D8).
+- Advancements: take the D8 fix from branch `1.21.1` (merge or cherry-pick it into `dev-1.26.2` before this phase).
 
 Commit: "Port the recipes to 26.2".
 
@@ -267,6 +268,10 @@ open a world. Commit.
   that in `BACKLOG.md` and keep the dev-runtime GameTests.
 - Data: `blueprint_whitelist.json` without the beds, with `minecraft:potent_sulfur` (`26.2.md` §13). Compare the
   whitelist with every 26.2 `BlockEntityType` (`BlockEntityTypes`) for other additions and removals since 1.21.1.
+- Bundled JSON (D7): a GameTest reads every file under `data/capsule/initialconfig/**` with the code that reads it
+  from `config/` (prefab recipe, whitelist, starters, loot templates) and fails on any error or warning. Another one
+  feeds a broken `prefab_blueprint_recipe.json` and checks the error is logged and nothing crashes. Keep
+  `RecipeTests#everyCapsuleAdvancementLoads` (D8) and `everyCapsuleRecipeLoadsWithResolvedIngredients`.
 - Client smoke and showcase (`ClientSmokeTest`, `Showcase`, `Scenario`): `Minecraft.gui`, world clocks, server-side
   weather, `LevelSettings`, screenshots (`26.2.md` §2, `26.1.md` §9–§10, `1.21.6-1.21.10.md` §1.9,
   `1.21.11.md` §17). The `capsule:state` check (`ClientSmokeTest:590-600`) reads the new item model property.
@@ -284,8 +289,8 @@ Gate: the GameTests pass on both loaders, with and without `-PmodCompat`. Commit
   `eclipse-temurin:25-jdk`, `publish.sh` game version filter. CurseForge's name for the game version is UNVERIFIED:
   check it on the `/api/game/versions` endpoint before the first publish. `Jenkinsfile` targets branch 1.12: ask the
   maintainer whether to delete it.
-- Docs: `CHANGELOG.md` (a `26.2-9.1.x` entry: what changed for players, EMI and known incompatibilities not
-  available), `docs/TESTING.md` (versions, totals, the matrix result), `README.md`, `BACKLOG.md` (whatever was left
+- Docs: `CHANGELOG.md` (a `26.2-10.0.x` entry: what changed for players, configs of 9.x not carried over (D7), EMI
+  and known incompatibilities not available), `docs/TESTING.md` (versions, totals, the matrix result), `README.md`, `BACKLOG.md` (whatever was left
   out).
 
 ## 6. Compatibility to retest
