@@ -8,6 +8,7 @@ import capsule.client.ClientConfig;
 import capsule.client.render.CapsuleStateProperty;
 import capsule.client.render.CapsuleTintSource;
 import capsule.client.render.CustomRenderType;
+import capsule.client.render.IrisCompat;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -48,6 +49,7 @@ public class CapsuleFabricClient implements ClientModInitializer {
         ItemTintSources.ID_MAPPER.put(CapsuleTintSource.ID, CapsuleTintSource.MAP_CODEC);
         // compiled with the vanilla pipelines at resource reload (RenderPipelines#register is opened by Fabric API)
         CustomRenderType.PIPELINES.forEach(RenderPipelines::register);
+        IrisCompat.assignPipelines();
         BlockEntityRenderers.register(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new);
 
         // gathered during the level extraction, submitted to the frame's collector (not drawn after the translucent
