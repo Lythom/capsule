@@ -887,7 +887,7 @@ public class CapsuleItem extends Item {
                 color = 0xFFFFFF;
             }
         }
-        // NeoForge 1.21.1 interprets color as ARGB - ensure full alpha
+        // item tint sources return ARGB and must be opaque
         return 0xFF000000 | color;
     }
 

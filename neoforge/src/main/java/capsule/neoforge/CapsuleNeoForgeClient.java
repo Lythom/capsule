@@ -5,22 +5,22 @@ import capsule.blocks.CapsuleBlocks;
 import capsule.blocks.CaptureBER;
 import capsule.client.CapsulePreviewHandler;
 import capsule.client.ClientConfig;
+import capsule.client.render.CapsuleStateProperty;
+import capsule.client.render.CapsuleTintSource;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
@@ -38,13 +38,11 @@ public class CapsuleNeoForgeClient {
 
         CapsuleMod.openGuiScreenCommon = LabelGui::open;
 
-        modEventBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> ItemProperties.register(
-                CapsuleItems.CAPSULE.get(),
-                Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
-                (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
-        )));
-        modEventBus.addListener((RegisterColorHandlersEvent.Item event) ->
-                event.register(CapsuleItem::getColorFromItemstack, CapsuleItems.CAPSULE.get()));
+        // read by assets/capsule/items/capsule.json
+        modEventBus.addListener((RegisterRangeSelectItemModelPropertyEvent event) ->
+                event.register(CapsuleStateProperty.ID, CapsuleStateProperty.MAP_CODEC));
+        modEventBus.addListener((RegisterColorHandlersEvent.ItemTintSources event) ->
+                event.register(CapsuleTintSource.ID, CapsuleTintSource.MAP_CODEC));
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) ->
                 event.registerBlockEntityRenderer(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new));
 

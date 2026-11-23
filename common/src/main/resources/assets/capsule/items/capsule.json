@@ -1,0 +1,194 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "capsule:state",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "capsule:item/capsule",
+      "tints": [
+        {
+          "type": "capsule:layer",
+          "layer": 0
+        },
+        {
+          "type": "capsule:layer",
+          "layer": 1
+        },
+        {
+          "type": "capsule:layer",
+          "layer": 2
+        }
+      ]
+    },
+    "entries": [
+      {
+        "threshold": 0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_empty",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_activated",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_linked",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 3,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_deployed",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 4,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_empty_activated",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_one_use",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 6,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_one_use_activated",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      },
+      {
+        "threshold": 7,
+        "model": {
+          "type": "minecraft:model",
+          "model": "capsule:item/capsule_blueprint",
+          "tints": [
+            {
+              "type": "capsule:layer",
+              "layer": 0
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 1
+            },
+            {
+              "type": "capsule:layer",
+              "layer": 2
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

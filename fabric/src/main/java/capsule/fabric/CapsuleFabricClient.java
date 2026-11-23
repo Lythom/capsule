@@ -5,6 +5,8 @@ import capsule.blocks.CapsuleBlocks;
 import capsule.blocks.CaptureBER;
 import capsule.client.CapsulePreviewHandler;
 import capsule.client.ClientConfig;
+import capsule.client.render.CapsuleStateProperty;
+import capsule.client.render.CapsuleTintSource;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -14,16 +16,13 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.recipe.v1.sync.ClientRecipeSynchronizedEvent;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.color.item.ItemTintSources;
+import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
-
-import java.util.HashMap;
 
 public class CapsuleFabricClient implements ClientModInitializer {
 
@@ -41,12 +40,9 @@ public class CapsuleFabricClient implements ClientModInitializer {
         CapsuleMod.openGuiScreenCommon = LabelGui::open;
         FabricPayloadRegistrar.registerClientReceivers();
 
-        // unclamped, as on NeoForge: capsule states go above 1
-        ItemProperties.PROPERTIES.computeIfAbsent(CapsuleItems.CAPSULE.get(), item -> new HashMap<>()).put(
-                Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "state"),
-                (stack, world, entity, seed) -> CapsuleItem.getState(stack).getValue()
-        );
-        ColorProviderRegistry.ITEM.register(CapsuleItem::getColorFromItemstack, CapsuleItems.CAPSULE.get());
+        // read by assets/capsule/items/capsule.json; both id mappers are opened by Fabric API's transitive class tweaker
+        RangeSelectItemModelProperties.ID_MAPPER.put(CapsuleStateProperty.ID, CapsuleStateProperty.MAP_CODEC);
+        ItemTintSources.ID_MAPPER.put(CapsuleTintSource.ID, CapsuleTintSource.MAP_CODEC);
         BlockEntityRenderers.register(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new);
 
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> CapsulePreviewHandler.onLevelRenderLast(
