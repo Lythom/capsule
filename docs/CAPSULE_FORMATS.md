@@ -1,8 +1,8 @@
 # Capsule item formats
 
 A capsule keeps its data in the `minecraft:custom_data` component; its base color (the body) is the vanilla
-`dyed_color` component. Modpacks can write these items in `/give`, loot tables, quest rewards or recipe outputs
-(KubeJS, CraftTweaker...). `/capsule exportHeldItem` prints the held capsule in this syntax.
+`dyed_color` component, a plain int since Minecraft 1.21.5 (`dyed_color=8072841`, no longer `dyed_color={rgb:...}`).
+Modpacks can write these items in `/give`, loot tables, quest rewards or recipe outputs (KubeJS, CraftTweaker...). `/capsule exportHeldItem` prints the held capsule in this syntax.
 
 ## Keys
 
@@ -41,7 +41,7 @@ label and size; a template larger than `size` makes the capsule larger.
 
 ```js
 // KubeJS
-let burnerResearcherCapsule = 'capsule:capsule[custom_data={color:6196919,label:"burner_researcher",size:3,state:2,structureName:"config/capsule/rewards/burner_researcher",templateShouldBeCopied:1b},dyed_color={rgb:8072841}]'
+let burnerResearcherCapsule = 'capsule:capsule[custom_data={color:6196919,label:"burner_researcher",size:3,state:2,structureName:"config/capsule/rewards/burner_researcher",templateShouldBeCopied:1b},dyed_color=8072841]'
 event.shapeless(burnerResearcherCapsule, ['kubejs:capsule_base', 'minecraft:furnace', 'minecraft:furnace', sheetmetalIron, sheetmetalIron, sheetmetalIron, sheetmetalIron])
 ```
 

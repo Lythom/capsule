@@ -1,5 +1,15 @@
 # Changelog
 
+**26.2-10.0.x : Minecraft 26.2**
+
+- Capsule for Minecraft 26.2, on NeoForge (`Capsule-neoforge-26.2-...jar`, requires NeoForge 26.2) and Fabric (`Capsule-fabric-26.2-...jar`, requires Fabric Loader 0.20, Fabric API 0.161 or later and Forge Config API Port 26.2). Same features, recipes and config options (`config/capsule-common.toml`, `config/capsule-client.toml`) as 9.1 on 1.21.1
+- Upgrading from Capsule 9.x: the files of `config/capsule` written by 9.x are not converted to the 26.2 formats. Keep your own templates (`rewards`, `starters`, `prefabs`), then delete the rest of `config/capsule` (or the whole folder if you have no template of your own) to get the new defaults. A file Capsule cannot read is reported with one error in the server log naming the file and how to restore its default, and the feature using it is skipped. A missing `prefab_blueprint_recipe.json` is recreated from the default
+- Upgrading a world: undeploy the capsules that are deployed before opening the world on 26.2. Undeploying on 26.2 a capsule deployed on 1.21.1 can capture blocks that were there before it was deployed. Capsules that are not deployed (empty, linked, blueprints, one-use, rewards) and capture bases keep their content. A capsule held by a capture base is converted to the 26.2 item format when the base loads, so it keeps its color and enchantments (Minecraft converts the items of vanilla containers only)
+- EMI is not supported on 26.2 (EMI has no 26.x version yet); recipes and information pages show in JEI and REI. Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no 26.2 version, so their known incompatibilities are not tested on 26.2
+- Blueprint whitelist updated to the 26.2 block entities: copper chests, shelves, pale oak signs, copper golem statues, the creaking heart and potent sulfur are kept in blueprints like their 1.21.1 counterparts; beds have no block entity any more. Existing installs: delete `config/capsule/blueprint_whitelist.json` to get the new list
+- Item frames and paintings deploy on their block: Minecraft now saves the block they hang on in a new format, and Capsule moves that one with the deploy (templates of 9.x are converted when they load). Without it a frame deployed far from where it was captured kept the block of the capture and logged "Block-attached entity at invalid position"
+- The capsule counter, which only seeds the names of new templates, is kept once per server (`<world>/data/capsule/capsule_data.dat`) instead of once per dimension. It starts again at 0 in upgraded worlds; names already taken are skipped, so no template is overwritten
+
 **1.21.1-9.1.x : Fabric support, Loyalty, claim mods and bug fixes**
 
 - New: Fabric build for Minecraft 1.21.1 (`Capsule-fabric-1.21.1-...jar`), requires Fabric API and Forge Config API Port. Same config file (`config/capsule-common.toml`), recipes and features as the NeoForge build

@@ -25,12 +25,12 @@ The translucent preview is drawn after the translucent terrain: water and staine
 Optional: draw it before the translucent terrain (render stage and depth to
 check). Effort: S to M.
 
-### Preview and wireframe shadows with Iris
+### Wireframe shadows with Iris
 Issues: https://github.com/Lythom/capsule/issues/69
 
-With Iris and a shader pack, the preview casts a shadow on NeoForge (the render stage event Capsule draws in is also
-fired in Iris' shadow pass), and the capture zone wireframe on both loaders (client smoke screenshots
-`*-iris/02-*.png`). Cosmetic; skip drawing during the shadow pass. Effort: S.
+With Iris and a shader pack, the capture zone wireframe casts a shadow on both loaders (client smoke screenshots
+`*-iris/02-*.png`). On 26.2 the full preview no longer does (Capsule's ghost pipelines get no Iris shadow program).
+Cosmetic; skip the wireframe during the shadow pass (`IrisApi#isRenderingShadowPass`). Effort: S.
 
 ### Creative copy of a deployed capsule shows an empty full preview
 Not investigated: a deployed capsule copied in creative (middle click) previews nothing. Effort: S.
@@ -38,7 +38,7 @@ Not investigated: a deployed capsule copied in creative (middle click) previews 
 ### Fabric: blueprint materials from modded storages
 Blueprint material sources use Transfer API storages; a storage that is not slotted is read as its list of views,
 which a modded storage may reorder between the listing and the extraction. Check with a Fabric storage mod linked to a
-blueprint. Also not covered on Fabric: the label GUI and left click in the air (`Minecraft#startAttack` mixin).
+blueprint. Also not covered on Fabric: left click in the air (`Minecraft#startAttack` mixin).
 Effort: S to M.
 
 ### SecurityCraft stops pre-1.13 block entity upgrades
@@ -53,6 +53,17 @@ Issues: https://github.com/Lythom/capsule/issues/81
 Blocked: Mob Grinding Utils has no 1.21.1 build. The full preview skips a block whose placement, shape update or
 model lookup throws (the reported crash), and falls back to the wireframe.
 Check when a build exists (`validate-all.sh --modded` takes its jar). Effort: S.
+
+### Label screen: the Done button is never shown
+`LabelGui#init` builds a Done button into a list of its own and never adds it to the screen (`addRenderableWidget`), so
+the label screen only has its text field: Enter or Escape close it. Older than the 26.2 port. Effort: S.
+
+### Client smoke inventory overflows with 29 tiers
+`ClientSmokeTest#giveDisplayCapsules` puts 46 capsules (27 tiers, 16 dyed iron capsules, an uncharged blueprint, an
+upgraded and a Recall capsule) in the 27 main inventory slots from slot 9: the next ones land in the armor and offhand
+slots (capsules show on the player in the `06`/`07` inventory tooltip screenshots), the rest is dropped silently. Older
+than the 26.2 port. Give fewer dyed capsules, or check fewer tiers in the inventory and leave the others to the
+creative search screenshot. Effort: S.
 
 ### Starter templates named `_stater_*`
 The five starter huts are named `_stater_*`, so labels show "Stater". Renaming changes the ids existing configs refer to.
@@ -69,13 +80,34 @@ Maven Central can answer 429 (rate limit) to a build machine. Workaround outside
 Gradle init script putting a Maven Central mirror first, passed with `GRADLE_ARGS="-I mirror.gradle"` to the scripts. A committed mirror or a
 retry would make clean clones more reliable. Effort: S.
 
-### EMI "Untranslated tag" warning
-EMI's dev runs warn about untranslated `#c:ingots/*` tags of the addon recipes. Harmless; tag translations
-(`tag.item.c.ingots.*`) would silence it. Effort: S.
+### EMI on Minecraft 26.x
+EMI has no 26.x build: on 26.2 its plugin (`common/.../plugins/emi/`) and the client smoke `EmiProbe` stay in the
+sources, out of the build (a `sourceSets` exclude, decision D4 of `docs/port-26.2/PLAN.md`), and `-PrecipeViewer` and
+the scripts only know JEI and REI. When EMI publishes a 26.x version: compile them again, add `emi` back to
+`-PrecipeViewer`, `client-smoke.sh` and `validate-all.sh`, and port what EMI's API changed. On 1.21.1, EMI's dev runs
+warn about untranslated `#c:ingots/*` tags of the addon recipes (harmless; `tag.item.c.ingots.*` translations would
+silence it). Effort: S to M.
 
-### REI and EMI in a production client
-REI and EMI are checked in dev clients only; the production client (`MODPACK=`) leaves the recipe viewer to the pack.
-Run a pack bringing REI or EMI. Effort: S.
+### Known incompatibilities without a 26.2 build
+Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no 26.2 build (Refined Storage and Super
+Factory Manager exist for 26.1.2), so their `-Pincompat` tests are out of the 26.2 build (`neoforge/build.gradle`,
+decision D5) and only Corail Tombstone is tested. Bring each back with its Modrinth version id in `gradle.properties`
+when it is published for the Minecraft version of the branch. Effort: S each.
+
+### Modded preview and modpack runs on 26.2
+`validate-all.sh --modded` (the client smoke with the mods of #81, #94, #117, #76) and `--modpack` are reported SKIP on
+26.2: Ad Astra and Farmer's Delight (NeoForge) have no 26.2 build (Integrated Dynamics and Farmer's Delight
+Refabricated do), and the 1.21.1 pack, Forgeulously Optimized (Sinytra Connector), has no 26.x version. Pick the 26.2
+builds that exist and a 26.2 NeoForge pack. Effort: S to M.
+
+### Wireframe preview not checked by the client smoke test on 26.2
+The smoke scenario checks the full (translucent) preview of the deploys and blueprints, not the wireframe preview of a
+capsule too large or with blocks the full preview cannot draw, nor the capture zone wireframe of an empty capsule
+beyond the screenshots. Check them by eye in `docs/MANUAL_VALIDATION.md`, or add a scenario step with a check. Effort: S.
+
+### REI in a production client
+REI is checked in dev clients only; the production client (`MODPACK=`) leaves the recipe viewer to the pack. Run a pack
+bringing REI. Effort: S.
 
 ### Production NeoForge GameTests depend on NeoForge internals
 `scripts/prod-gametest.sh` relies on undocumented NeoForge behavior: it starts FML's GameTest server entrypoint
@@ -85,6 +117,16 @@ Run a pack bringing REI or EMI. Effort: S.
 update can break it. Effort: S per update.
 
 ## Platforms and versions
+
+### Publishing 26.2: CurseForge game version and Jenkinsfile
+`publish.sh` looks up the CurseForge game version named exactly `26.2`, and that name is not checked (the
+`/api/game/versions` endpoint needs a token): check it, with the token, before the first 26.2 publish (the script
+stops and lists the `26.*` names when it does not match). `Jenkinsfile` still builds branch `1.12` with the old
+single-project layout (`build/libs`, a `sed` of `BUILD_ID`), and CircleCI is the live CI: delete it or rewrite it for
+the multiloader build (`docs/port-26.2/inventory/loaders-build.md` §5.2). Effort: S.
+
+### Minecraft 26.3
+Phase 10 of `docs/port-26.2/PLAN.md`: branch `dev-1.26.3`, Capsule 11.0. Effort: M.
 
 ### Multi-version builds with Stonecutter
 Targets: 1.21.1 (NeoForge + Fabric), 1.20.1 (Forge + Fabric), 26.1.2 and 26.2 (NeoForge + Fabric). Older versions

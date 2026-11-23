@@ -5,13 +5,14 @@ screenshots (`--all` adds the Iris, modded blocks and modpack client runs): see 
 
 Five automated layers: JUnit unit tests and GameTests run on both loaders on every `./gradlew build`; the GameTests
 also run against the release jars on real servers; the production jar smoke test boots the built jars on real servers;
-the client smoke test plays a scenario in a real client, with JEI, REI or EMI, and takes screenshots. What remains
+the client smoke test plays a scenario in a real client, with JEI or REI, and takes screenshots. What remains
 manual is listed in `docs/MANUAL_VALIDATION.md`.
 
-Minecraft and the mod run on Java 21. Gradle itself runs on Java 25 (Fabric Loom 1.18 needs it): the Gradle launcher
-starts its daemon on a Java 25 found on the machine, or downloads one (`gradle/gradle-daemon-jvm.properties`, kept in
-`~/.gradle/jdks`), and still compiles and runs the game with the Java 21 toolchain. The first build downloads and
-decompiles Minecraft for both loaders (several minutes), later runs take about two minutes.
+Minecraft 26.2, the mod and Gradle run on Java 25: the Gradle launcher starts its daemon on a Java 25 found on the
+machine, or downloads one (`gradle/gradle-daemon-jvm.properties`, kept in `~/.gradle/jdks`), and compiles and runs the
+game with the Java 25 toolchain. The scripts that start real servers and clients outside Gradle need Java 25 on `PATH`.
+The first build downloads and decompiles Minecraft for both loaders (several minutes), later runs take about two
+minutes.
 
 ## Layout
 
@@ -22,7 +23,7 @@ decompiles Minecraft for both loaders (several minutes), later runs take about t
 | `fabric` | Fabric glue (Loom); compiles the common sources into `Capsule-fabric-<mc>-<version>.jar`. Its gametest source set is a mod of its own, `capsule-gametest`, with the GameTests and the client smoke entrypoint |
 
 The test mods are packaged too, in `<loader>/build/test-mod/<release jar name>-gametest.jar` (task `testModJar`, part of
-`assemble`, remapped like the release jar on Fabric), so that the GameTests and the client smoke scenario run next to
+`assemble`), so that the GameTests and the client smoke scenario run next to
 the release jar in real servers and clients. They are never published: CI publishes `build/libs` only.
 
 ## Commands
@@ -32,20 +33,20 @@ the release jar in real servers and clients. They are never published: CI publis
 | `./gradlew build` | compile, jars, and `check` of every project: loader import check, unit tests and GameTests of both loaders | non-zero if anything fails |
 | `./gradlew check --continue` | every test layer, reporting all of them even if one fails | |
 | `./gradlew :neoforge:test` / `:fabric:test` | JUnit tests of `common/src/test/java` on one loader | non-zero if a test fails |
-| `./gradlew :neoforge:runGameTestServer` | the 113 NeoForge GameTests (110 common + 2 SecurityCraft + vanilla's `minecraft:always_pass`) on a headless server | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (121) | number of failed required tests |
-| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (114) | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer` | the 111 Fabric GameTests (110 common + `minecraft:always_pass`) on a headless Fabric server | number of failed required tests |
-| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (115) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer` | the 114 NeoForge GameTests (111 common + 2 SecurityCraft + vanilla's `minecraft:always_pass`) on a headless server | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -PmodCompat` | the same plus the Waystones (2), Sophisticated Storage, WorldEdit, Open Parties and Claims and Flan tests (122) | number of failed required tests |
+| `./gradlew :neoforge:runGameTestServer -Pincompat` | the same plus the tests of the [known incompatibilities](#known-incompatibilities) (115) | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer` | the 112 Fabric GameTests (111 common + `minecraft:always_pass`) on a headless Fabric server | number of failed required tests |
+| `./gradlew :fabric:runGameTestServer -PmodCompat` | the same plus the Open Parties and Claims and Flan tests (116) | number of failed required tests |
 | `... -PmodCompatLatest` | with `-PmodCompat` or `-Pincompat`: the newest Modrinth versions of their mods instead of the pinned ones | |
 | `./gradlew :neoforge:runClient` / `:fabric:runClient` | a dev client with the mod and its GameTests | |
 | `scripts/prod-gametest.sh <jar>...` | the GameTests on real dedicated servers with the release jars, see below | non-zero if a test fails |
 | `scripts/prod-smoke.sh <jar>...` | the release jars on real dedicated servers, see below | non-zero if a jar fails |
 | `scripts/client-smoke.sh neoforge\|fabric` | the client smoke test under Xvfb, see below | non-zero if a check fails |
-| `scripts/validate-all.sh` | every layer above, with JEI, REI and EMI, and a summary table, see below | non-zero if a step fails |
+| `scripts/validate-all.sh` | every layer above, with JEI and REI, and a summary table, see below | non-zero if a step fails |
 
 CI passes the build number with `-Pbuild_id=<n>` (default `SNAPSHOT`), which only changes the jar names
-`neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.<n>.jar` and `fabric/build/libs/Capsule-fabric-1.21.1-9.1.<n>.jar`.
+`neoforge/build/libs/Capsule-neoforge-26.2-10.0.<n>.jar` and `fabric/build/libs/Capsule-fabric-26.2-10.0.<n>.jar`.
 Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints nothing.
 
 ## Unit tests (JUnit 5)
@@ -90,8 +91,8 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
   Protection API with it, so the claim tests see what the generic probe asks.
 - Expected output, at the end of the console log:
   ```
-  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 113 required tests passed :)   (NeoForge)
-  [Server thread/INFO] (Minecraft) All 111 required tests passed :)                                          (Fabric)
+  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 114 required tests passed :)   (NeoForge)
+  [Server thread/INFO] (Minecraft) All 112 required tests passed :)                                          (Fabric)
   ```
   On failure each test is reported with its position and message, then the summary:
   ```
@@ -135,11 +136,11 @@ Neither jar contains GameTest code: `unzip -l <jar> | grep -i gametest` prints n
 
 ### Mods on the GameTest runtime
 
-`gametestImplementation` dependencies of the neoforge project are loaded by its dev runs only: SecurityCraft 1.21.1
-(Modrinth maven, version id in `gradle.properties`) for `SecurityCraftTests`, NeoForge only. The dev runs of both loaders
-load one recipe viewer, JEI by default: `-PrecipeViewer=jei|rei|emi` picks JEI 19.57.0.451, REI 16.0.799 (with
-Architectury API and Cloth Config) or EMI 1.1.24 (versions in `gradle.properties`). The Fabric dev runs load Fabric API
-and Forge Config API Port.
+`gametestImplementation` dependencies of the neoforge project are loaded by its dev runs only: SecurityCraft
+v1.10.2.1 for 26.2 (Modrinth maven, version id in `gradle.properties`) for `SecurityCraftTests`, NeoForge only. The dev
+runs of both loaders load one recipe viewer, JEI by default: `-PrecipeViewer=jei|rei` picks JEI 30.48.0.244 or REI
+26.2.820 (with Architectury API 21.1.13 and Cloth Config; versions in `gradle.properties`). EMI has no 26.x build
+(`BACKLOG.md`). The Fabric dev runs load Fabric API and Forge Config API Port 26.2.1.
 
 ## Mod interaction tests
 
@@ -157,7 +158,7 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ```
   ./gradlew :neoforge:runGameTestServer -PmodCompat
   ...
-  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 121 required tests passed :)
+  [Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 122 required tests passed :)
   ```
 - **Newest versions**: `-PmodCompatLatest` replaces the pinned version of every mod of `-PmodCompat` and `-Pincompat`
   with its newest Modrinth version for the loader and Minecraft version (`modrinth` of
@@ -166,9 +167,9 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   ```
   ./gradlew :neoforge:runGameTestServer -PmodCompat -Pincompat -PmodCompatLatest
   ...
-  sophisticated-storage: 1.21.1-1.6.2.2159 (f7c8aEld), pinned Hhf1IKFI
+  sophisticated-storage: 26.2-1.5.133.2241 (8NBkbIrX), pinned 8NBkbIrX
   ...
-  [Server thread/INFO] [minecraft/GameTestServer]: All 111 required tests passed :)
+  [Server thread/INFO] [minecraft/GameTestServer]: All 123 required tests passed :)
   ```
 - **GameTests on the release jars** with mods: `EXTRA_MODS` of `scripts/prod-gametest.sh`, see
   [GameTests on the release jars](#gametests-on-the-release-jars). Get Off My Lawn (Fabric, #91) is tested there only.
@@ -185,10 +186,12 @@ Mods from issues, checked with Capsule (results and versions in `docs/MANUAL_VAL
   offline, with the release jar and the test mod jar of `./gradlew build`:
   ```
   ./gradlew build
-  MODPACK=forgeulously-optimized:mPRwXMh4 scripts/client-smoke.sh neoforge
+  MODPACK=<slug>[:<version id>] scripts/client-smoke.sh neoforge
   ```
-  Forgeulously Optimized 1.1.4 (49 mods, NeoForge 21.1.218, Connector 2.0.0-beta.12 with Fabric mods, Sodium, Iris) is
-  the pack `validate-all.sh --modpack` uses. The game directory is kept in `build/client-smoke/<run>/game`. The recipe
+  The packs are searched for the `minecraft_version` of `gradle.properties`. On 1.21.1, `validate-all.sh --modpack`
+  used Forgeulously Optimized 1.1.4 (49 mods, NeoForge 21.1.218, Connector 2.0.0-beta.12 with Fabric mods, Sodium,
+  Iris); it has no 26.x version, so on 26.2 `--modpack` needs `MODPACK` and is reported SKIP without it (not run on 26.2,
+  `BACKLOG.md`). The game directory is kept in `build/client-smoke/<run>/game`. The recipe
   viewer check is left to the pack: the report has a line for each viewer it brings. `EXTRA_MODS` also adds jars to the
   dev client of `scripts/client-smoke.sh`; a mod crashing at startup leaves the client on its crash screen until
   `TIMEOUT`.
@@ -202,23 +205,55 @@ or of Capsule shows as a failure, whether it fixes or breaks something:
 
 | Mod (version) | Reported problem | Test | Asserts |
 |---|---|---|---|
-| Corail Tombstone 9.5.6 | moving a player grave duplicates its items | `playerGravesAreNeverCaptured` | standard and overpowered capsules leave graves in place (`tombstone:graves` in `capsule:excluded`, `tombstone:player_graves` excluded by Capsule) |
-| Refined Storage 2.0.9 | machines lose their data when moved | `refinedStorageIsExcludedByDefault`, `diskDriveKeepsItsDiskWhenNotExcluded` | `refinedstorage:` of the default config leaves a disk drive and a controller in place; without it, the disk drive moves with its disk and its 16 diamonds |
-| Mekanism 10.7.19.85 | a moved Digital Miner cannot be broken and stops working | `digitalMinerIsNeverCaptured`, `mekanismBinMovesWithItsContent` | the miner and its bounding blocks stay in place (`c:relocation_not_supported`); a bin moves with its content |
-| Immersive Engineering 12.4.2-194 | wires disappear when deployed elsewhere | `wiredConnectorsAreNeverCaptured` | two LV connectors joined by a copper wire stay in place with the wire (`c:relocation_not_supported`) |
-| Super Factory Manager 4.34.0 | the manager crashes when moved | `managerMovesWithItsProgram` | the manager moves with its disk and program, no crash; the program moves nothing until the inventories are labelled again (labels hold positions), then works |
+| Corail Tombstone 9.9.4 (26.2) | moving a player grave duplicates its items | `playerGravesAreNeverCaptured` | standard and overpowered capsules leave graves in place (`tombstone:graves` in `capsule:excluded`, `tombstone:player_graves` excluded by Capsule) |
+| Refined Storage 2.0.9 (1.21.1 only) | machines lose their data when moved | `refinedStorageIsExcludedByDefault`, `diskDriveKeepsItsDiskWhenNotExcluded` | `refinedstorage:` of the default config leaves a disk drive and a controller in place; without it, the disk drive moves with its disk and its 16 diamonds |
+| Mekanism 10.7.19.85 (1.21.1 only) | a moved Digital Miner cannot be broken and stops working | `digitalMinerIsNeverCaptured`, `mekanismBinMovesWithItsContent` | the miner and its bounding blocks stay in place (`c:relocation_not_supported`); a bin moves with its content |
+| Immersive Engineering 12.4.2-194 (1.21.1 only) | wires disappear when deployed elsewhere | `wiredConnectorsAreNeverCaptured` | two LV connectors joined by a copper wire stay in place with the wire (`c:relocation_not_supported`) |
+| Super Factory Manager 4.34.0 (1.21.1 only) | the manager crashes when moved | `managerMovesWithItsProgram` | the manager moves with its disk and program, no crash; the program moves nothing until the inventories are labelled again (labels hold positions), then works |
 
-GregTech CEu Modern 7.0.2 (1.21.1) is not loaded: it does not start on a dedicated server ("Attempted to load class
+Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no 26.2 build: their test classes are
+out of the 26.2 build (`neoforge/build.gradle`) and their rows above are the 1.21.1 results; on 26.2 `-Pincompat` loads
+Corail Tombstone only. GregTech CEu Modern 7.0.2 (1.21.1) is not loaded: it does not start on a dedicated server ("Attempted to load class
 net/minecraft/client/multiplayer/ClientLevel for invalid dist DEDICATED_SERVER" with LDLib 1.0.35.a, a missing LDLib class
 with 1.0.41). IndustrialCraft 2 and Blood Magic have no NeoForge 1.21.1 version on Modrinth.
 
 ```
 ./gradlew :neoforge:runGameTestServer -Pincompat
 ...
-[Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 114 required tests passed :)
+[Server thread/INFO] [net.minecraft.gametest.framework.GameTestServer/]: All 115 required tests passed :)
 ```
 
 `validate-all.sh --incompat` runs them in the dev runtime and on the NeoForge release jar (`EXTRA_MODS`).
+
+### Compatibility matrix (Minecraft 26.2)
+
+Each mod tested on 1.21.1 was tested again with its newest 26.2 build (versions of 2026-11-23, pinned in
+`gradle.properties` and `validate-all.sh`); a mod without a 26.2 build is not tested. Since it worked on 1.21.1, it is
+likely to work once it is published for 26.2, but nothing checks it. Result of `validate-all.sh --iris --incompat` on
+2026-11-23 (table in [Everything at once](#everything-at-once)):
+
+| Mod | 26.2 build | Tested by | Result |
+|---|---|---|---|
+| JEI | 30.48.0.244 (beta), NeoForge + Fabric | client smoke, both loaders | pass |
+| REI (+ Architectury 21.1.13, Cloth Config) | 26.2.820 | client smoke, both loaders | pass |
+| EMI | none | — | not tested (no 26.x build; plugin out of the build) |
+| SecurityCraft | v1.10.2.1 (NeoForge) | NeoForge GameTests (`SecurityCraftTests`), dev and release jar | pass |
+| Waystones + Balm (+ Shogi) | 26.2.0.14 / 26.2.0.9 (26.2.0.8) | `-PmodCompat` NeoForge | pass |
+| Sophisticated Storage + Core | 26.2-1.5.133 / 26.2-1.5.40 | `-PmodCompat` NeoForge | pass |
+| WorldEdit | 7.4.5 | `-PmodCompat` NeoForge (writes the schematic fixtures) | pass |
+| Open Parties and Claims | 0.33.0 (beta), NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar | pass |
+| Flan | 26.2-1.12.8, NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar | pass |
+| Get Off My Lawn ReServed (+ Polymer 0.17.5+26.2) | 1.21.0+26.2 (Fabric) | Fabric release jar with the claim mods | pass |
+| Common Protection API | 2.0.0 | Fabric GameTests (`TestProbe`) | pass |
+| Forge Config API Port | 26.2.1 | every Fabric run | pass |
+| Corail Tombstone | 9.9.4 (NeoForge) | `-Pincompat` NeoForge, dev and release jar | pass |
+| Iris + Sodium (+ MakeUp Ultra Fast 9.5g) | 1.11.4 / 0.9.2, NeoForge + Fabric | client smoke `--iris`, both loaders | pass (the NeoForge dev client runs without NeoForge's dev-only GL validation, which Iris' pipelines fail; see [Client smoke test](#client-smoke-test)) |
+| Refined Storage | none (3.2.1 exists for 26.1.2) | — | not tested |
+| Mekanism | none | — | not tested |
+| Immersive Engineering | none | — | not tested |
+| Super Factory Manager | none (4.34.0 exists for 26.1.2) | — | not tested |
+| Integrated Dynamics, Ad Astra, Farmer's Delight (`--modded`) | Integrated Dynamics and Farmer's Delight Refabricated only | — | not tested (`--modded` SKIP) |
+| Forgeulously Optimized 1.1.4 (modpack) | none for 26.x | — | not tested (`--modpack` SKIP) |
 
 ## Client smoke test
 
@@ -240,12 +275,18 @@ scripts/client-smoke.sh fabric
   Maven Central mirror first when Maven Central answers 429. `MODPACK` runs the production client instead, see
   [Mod interaction tests](#mod-interaction-tests).
 - `SHADER_PACK=<zip>` turns that shader pack on with Iris (`config/iris.properties`); `EXTRA_MODS` must bring Iris
-  and Sodium. `validate-all.sh --iris` uses MakeUp Ultra Fast with `TIMEOUT=3000` (llvmpipe is slow with shaders).
+  and Sodium. `validate-all.sh --iris` uses MakeUp Ultra Fast with `TIMEOUT=3000` (llvmpipe is slow with shaders). On
+  NeoForge it also passes `-PdisableGlValidation` (`-Dneoforge.disableGlValidation=true`): NeoForge turns on vanilla's
+  GL draw validation in dev runs, and Iris 1.11.4's own pipelines fail it (an `ArrayIndexOutOfBoundsException` in
+  `GlCommandEncoder#validateDraw` while Iris draws the hand, as soon as the world loads). Production clients never run
+  it. Capsule assigns its preview pipelines to Iris programs (`IrisCompat`), otherwise Iris draws the preview without
+  the pack's programs and it is almost invisible.
 - `EXTRA_MODS` with the mods of the preview issues (`validate-all.sh --modded`): on NeoForge Integrated Dynamics,
   Cyclops Core, Common Capabilities, Integrated Tunnels, Ad Astra, Resourceful Lib, Common Storage Lib, Resourceful
   Config, Farmer's Delight, and Refined Storage 2.0.9, which Integrated Dynamics needs in the NeoForge dev client; on
   Fabric Ad Astra and its libraries and Farmer's Delight Refabricated 3.2.8 (3.3.x crashes the Fabric dev remapper).
-  The scenario places the blocks of each mod that is loaded (vanilla farmland and crops always).
+  The scenario places the blocks of each mod that is loaded (vanilla farmland and crops always). These are the 1.21.1
+  mods: Ad Astra and Farmer's Delight have no 26.2 build, so on 26.2 `--modded` is reported SKIP (`BACKLOG.md`).
 - The script writes `onboardAccessibility:false` to the run directory's `options.txt`: since 26.1 the client shows
   the accessibility onboarding screen before the first world load otherwise.
 - Scenario, on ticks of the client: create a flat creative world (`saves/capsule-smoke`, recreated on each run), build a
@@ -319,17 +360,17 @@ scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build/li
   jar passes.
 - Expected output per jar, for example:
   ```
-  == fabric: Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar in /tmp/smoke-fabric.QnmLgQ
-  [16:05:43] [Server thread/INFO]: Done (8.999s)! For help, type "help"
-  	- capsule 1.21.1-9.1.SNAPSHOT
-  	   \-- common-protection-api 1.0.0
-  	- fabric-api 0.116.17+1.21.1
-  	- forgeconfigapiport 21.1.6
-  [16:05:44] [Server thread/INFO]: /capsule giveEmpty [<size>]
-  OK: fabric server booted with Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar and stopped cleanly
+  == fabric: Capsule-fabric-26.2-10.0.SNAPSHOT.jar in /tmp/smoke-fabric.iXn56m
+  [21:46:07] [Server thread/INFO]: Done (3.464s)! For help, type "help"
+  	- capsule 26.2-10.0.SNAPSHOT
+  	   \-- common-protection-api 2.0.0
+  	- fabric-api 0.161.0+26.2
+  	- forgeconfigapiport 26.2.1
+  [21:46:08] [Server thread/INFO]: /capsule giveEmpty [<size>]
+  OK: fabric server booted with Capsule-fabric-26.2-10.0.SNAPSHOT.jar and stopped cleanly
   ```
 - It also fails when capsule asks an update checker (`neoforge.mods.toml` declares no `updateJSONURL`).
-- `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 21, `curl` and `python3`, and network access.
+- `KEEP_SERVER=1` keeps the server directories for inspection. Needs Java 25 on `PATH`, `curl` and `python3`, and network access.
   Downloads (installers, Fabric API, Forge Config API Port, `EXTRA_MODS` of `validate-all.sh`) and the installed NeoForge
   server are cached in `CAPSULE_CACHE` (default `~/.cache/capsule-validation`), outside the repository
   (`scripts/lib.sh`).
@@ -354,11 +395,11 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
 - Expected output: the same summary as `runGameTestServer`, then `OK`:
   ```
   == neoforge: Capsule-neoforge-26.2-10.0.SNAPSHOT.jar + Capsule-neoforge-26.2-10.0.SNAPSHOT-gametest.jar in /tmp/gametest-neoforge.ccheTQ
-  [20:10:16] [Server thread/INFO] [minecraft/GameTestServer]: All 113 required tests passed :)
-  OK: All 113 required tests passed on Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
+  [20:10:16] [Server thread/INFO] [minecraft/GameTestServer]: All 114 required tests passed :)
+  OK: All 114 required tests passed on Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
   == fabric: Capsule-fabric-26.2-10.0.SNAPSHOT.jar + Capsule-fabric-26.2-10.0.SNAPSHOT-gametest.jar in /tmp/gametest-fabric.LHm14n
-  [20:10:41] [Server thread/INFO]: All 111 required tests passed :)
-  OK: All 111 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
+  [20:10:41] [Server thread/INFO]: All 112 required tests passed :)
+  OK: All 112 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
   ```
 - Exit code 0 when every jar passes. A failure prints the failed tests and keeps the server directory:
   ```
@@ -371,17 +412,18 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
   `FAIL_ON_PURPOSE=1` registers `FailureProofTests` (`-Dcapsule.gametest.failOnPurpose=true`), never registered otherwise.
 - `TIMEOUT` (seconds, default 1200), `EXTRA_MODS` and `KEEP_SERVER` work as in `prod-smoke.sh`.
 - With the claim mods in `EXTRA_MODS`, their tests run against the release jar too. Get Off My Lawn is tested this way
-  only: it nests 10 libraries in its jar (Cardinal Components, Polymer, sgui, placeholder-api, rtree, Common Protection
-  API, …), which Fabric Loader loads on a real server but the Loom dev runs do not, so it cannot start in
-  `runGameTestServer`. The Fabric test mod compiles against it (`modCompileOnly`) and `FabricGameTests` registers
+  only: it nests 8 libraries in its jar (Cardinal Components, sgui, placeholder-api, rtree, Common Protection API, …) and
+  requires Polymer, which Fabric Loader loads on a real server but the Loom dev runs do not, so it cannot start in
+  `runGameTestServer`. The Fabric test mod compiles against it (`compileOnly`) and `FabricGameTests` registers
   `GetOffMyLawnTests` only when it is loaded, so the test mod never loads its classes otherwise. `validate-all.sh`
-  downloads Get Off My Lawn ReServed 1.13.1, Open Parties and Claims 0.32.7 and Flan 1.12.8 for Fabric (by sha1 from
-  Modrinth, into `CAPSULE_CACHE/modcompat/fabric`):
+  downloads Get Off My Lawn ReServed 1.21.0+26.2, Polymer 0.17.5+26.2, Open Parties and Claims 0.33.0 and Flan
+  26.2-1.12.8 for Fabric (by sha1 from Modrinth, into `CAPSULE_CACHE/modcompat/fabric`):
   ```
   EXTRA_MODS="$(ls ~/.cache/capsule-validation/modcompat/fabric/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh fabric/build/libs/Capsule-fabric-*.jar
   ...
-  OK: All 112 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
+  OK: All 117 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
   ```
+  117: the 112 Fabric GameTests, 3 Flan, 1 Open Parties and Claims and 1 Get Off My Lawn test.
 
 ## Everything at once
 
@@ -390,16 +432,16 @@ scripts/prod-gametest.sh neoforge/build/libs/Capsule-neoforge-*.jar fabric/build
 ```
 scripts/validate-all.sh            # build, unit tests, GameTests, mod-compat GameTests, release-jar GameTests (Fabric
                                    # also with the claim mods) and their failure proof, prod smoke,
-                                   # client smoke × {NeoForge, Fabric} × {JEI, REI, EMI}
+                                   # client smoke × {NeoForge, Fabric} × {JEI, REI}
 scripts/validate-all.sh --iris     # + client smoke with Iris, Sodium and MakeUp Ultra Fast on both loaders
-scripts/validate-all.sh --modded   # + client smoke with the mods of #81, #94, #117 and #76 on both loaders
-scripts/validate-all.sh --modpack  # + client smoke in a production NeoForge client with a Connector modpack
+scripts/validate-all.sh --modded   # + client smoke with the mods of #81, #94, #117 and #76 (SKIP on 26.2)
+scripts/validate-all.sh --modpack  # + client smoke in a production NeoForge client with MODPACK (SKIP without)
 scripts/validate-all.sh --incompat # + GameTests with the mods of the known incompatibilities, dev runtime and release jar
 scripts/validate-all.sh --all      # everything
 ```
 
-- It works from a clean clone with Java 21, `python3`, `curl`, `xvfb-run`, `flock` and network access. Gradle
-  downloads its own Java 25 if the machine has none. Everything downloaded outside Gradle (servers, installers, mods of
+- It works from a clean clone with Java 25 on `PATH` (checked first: the release jars run on real servers with it),
+  `python3`, `curl`, `xvfb-run`, `flock` and network access. Everything downloaded outside Gradle (servers, installers, mods of
   the variants, the modpack, the shader pack, by sha1 from Modrinth) is cached in `CAPSULE_CACHE` (default
   `~/.cache/capsule-validation`). `GRADLE_ARGS` is added to every Gradle call, `MODPACK` overrides the pack.
   `MODCOMPAT_LATEST=1` runs the mod-compat and incompatibility steps with the newest Modrinth versions of their mods
@@ -409,33 +451,33 @@ scripts/validate-all.sh --all      # everything
 - Logs: `build/validate-all/<step>.log` and `summary.txt`; each client smoke run keeps its screenshots, report and logs
   in `build/client-smoke/<step>/`. Exit code 0 when every step passes.
 - Do not run `./gradlew --stop` while another run uses Gradle on the machine: it kills that run's daemon too.
-- A full run (`--all`) takes about 22 to 25 minutes once Gradle is warm. Its summary, without the log column:
+- On 26.2, `--iris --incompat` (the variants that have 26.2 builds) takes about 20 minutes once Gradle is warm. Its
+  summary on 2026-11-23, without the log column (`--modded` and `--modpack` would add SKIP rows):
   ```
   RESULT STEP                                         TIME  DETAIL
-  PASS   build: jars and loader import check         0m17s  BUILD SUCCESSFUL
-  PASS   unit tests (both loaders)                   0m20s  BUILD SUCCESSFUL
-  PASS   GameTests NeoForge                          0m34s  All 109 required tests passed
-  PASS   GameTests Fabric                            0m31s  All 107 required tests passed
-  PASS   mod-compat GameTests NeoForge               0m41s  All 117 required tests passed
-  PASS   mod-compat GameTests Fabric                 0m31s  All 111 required tests passed
-  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 109 required tests passed on Capsule-neoforge-1.21.1-9.1.SNAPSHOT.jar
-  PASS   GameTests on the Fabric release jar         0m27s  OK: All 107 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
-  PASS   Fabric release jar with the claim mods      0m28s  OK: All 112 required tests passed on Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar
-  PASS   NeoForge release jar: failure reported      0m24s  OK: the failing test was reported (exit status 1)
-  PASS   Fabric release jar: failure reported        0m28s  OK: the failing test was reported (exit status 1)
-  PASS   release jars on dedicated servers           1m00s  OK: fabric server booted with Capsule-fabric-1.21.1-9.1.SNAPSHOT.jar and stopped
-  PASS   client smoke neoforge-jei                   1m24s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke neoforge-rei                   1m25s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke neoforge-emi                   1m23s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke fabric-jei                     1m22s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke fabric-rei                     1m21s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke fabric-emi                     1m22s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke neoforge-iris                  1m32s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke fabric-iris                    1m37s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke neoforge-modded                1m37s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke fabric-modded                  1m39s  46 checks passed, 0 failed, 0 skipped
-  PASS   client smoke neoforge-modpack               1m22s  42 checks passed, 0 failed, 1 skipped
+  PASS   build: jars and loader import check         0m10s  BUILD SUCCESSFUL
+  PASS   unit tests (both loaders)                   0m22s  BUILD SUCCESSFUL
+  PASS   GameTests NeoForge                          0m30s  All 114 required tests passed
+  PASS   GameTests Fabric                            0m25s  All 112 required tests passed
+  PASS   mod-compat GameTests NeoForge               0m35s  All 122 required tests passed
+  PASS   mod-compat GameTests Fabric                 0m27s  All 116 required tests passed
+  PASS   GameTests on the NeoForge release jar       0m25s  OK: All 114 required tests passed on Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
+  PASS   GameTests on the Fabric release jar         0m22s  OK: All 112 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
+  PASS   Fabric release jar with the claim mods      0m25s  OK: All 117 required tests passed on Capsule-fabric-26.2-10.0.SNAPSHOT.jar
+  PASS   NeoForge release jar: failure reported      0m23s  OK: the failing test was reported (exit status 1)
+  PASS   Fabric release jar: failure reported        0m21s  OK: the failing test was reported (exit status 1)
+  PASS   release jars on dedicated servers           0m36s  OK: fabric server booted with Capsule-fabric-26.2-10.0.SNAPSHOT.jar and stopped
+  PASS   client smoke neoforge-jei                   1m22s  47 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-rei                   1m21s  47 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-jei                     1m16s  47 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-rei                     1m16s  47 checks passed, 0 failed, 0 skipped
+  PASS   client smoke neoforge-iris                  1m27s  47 checks passed, 0 failed, 0 skipped
+  PASS   client smoke fabric-iris                    1m20s  47 checks passed, 0 failed, 0 skipped
+  PASS   incompatibility GameTests NeoForge          0m33s  All 115 required tests passed
+  PASS   NeoForge release jar, incompatible mods     0m25s  OK: All 115 required tests passed on Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
   ```
+- On 1.21.1, `--all` (with EMI, the modded blocks, the modpack and the four other incompatible mods) passed every step;
+  see this file on branch `1.21.1`.
 
 ## Not covered
 
