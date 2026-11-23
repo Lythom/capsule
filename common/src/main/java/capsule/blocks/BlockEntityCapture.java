@@ -1,7 +1,17 @@
 package capsule.blocks;
 
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.References;
+import net.minecraft.world.ItemStackWithSlot;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.DispenserBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -15,6 +25,11 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockEntityCapture extends DispenserBlockEntity {
+
+    /**
+     * Data version of Minecraft 1.21.1, the last version Capsule 9 ran on.
+     */
+    private static final int MINECRAFT_1_21_1 = 3955;
 
     public static final List<BlockEntityCapture> instances = new CopyOnWriteArrayList<>();
 
@@ -77,6 +92,25 @@ public class BlockEntityCapture extends DispenserBlockEntity {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         placer = input.read("placer", UUIDUtil.CODEC).orElse(null);
+        upgradeLegacyItems(input);
+    }
+
+    /**
+     * The data fixers upgrade the items of vanilla containers when a world of an older Minecraft version loads, not
+     * those of a modded block entity: a capsule held by a base saved on 1.21.1 still has the 1.21.1 item format
+     * (dyed_color {rgb:...}, enchantments {levels:...}), which no longer decodes, and the base would keep it without
+     * its color or enchantments. Such items are upgraded from the 1.21.1 format; items that decode are left alone.
+     */
+    private void upgradeLegacyItems(ValueInput input) {
+        RegistryOps<Tag> ops = input.lookup().createSerializationContext(NbtOps.INSTANCE);
+        int currentVersion = SharedConstants.getCurrentVersion().dataVersion().version();
+        for (CompoundTag tag : input.listOrEmpty("Items", CompoundTag.CODEC)) {
+            if (!ItemStackWithSlot.CODEC.parse(ops, tag).isError()) continue;
+            CompoundTag upgraded = (CompoundTag) DataFixers.getDataFixer()
+                    .update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, tag), MINECRAFT_1_21_1, currentVersion).getValue();
+            DataResult<ItemStackWithSlot> item = ItemStackWithSlot.CODEC.parse(ops, upgraded);
+            item.result().filter(i -> !item.isError() && i.isValidInContainer(getContainerSize())).ifPresent(i -> getItems().set(i.slot(), i.stack()));
+        }
     }
 
     public AABB getBoundingBox() {
