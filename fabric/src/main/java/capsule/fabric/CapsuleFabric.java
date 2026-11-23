@@ -10,6 +10,7 @@ import capsule.loot.CapsuleLootTableHook;
 import capsule.loot.StarterLoot;
 import capsule.network.CapsuleNetwork;
 import capsule.plugins.claims.Claims;
+import capsule.recipes.CapsuleRecipes;
 import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
 import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
 import net.fabricmc.api.ModInitializer;
@@ -22,6 +23,7 @@ import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.item.v1.EnchantmentEvents;
 import net.fabricmc.fabric.api.loot.v3.LootTableEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.util.TriState;
@@ -53,6 +55,8 @@ public class CapsuleFabric implements ModInitializer {
 
         CapsuleMod.init();
         CapsuleNetwork.registerPayloads(new FabricPayloadRegistrar());
+        // the creative tab, the recipe viewers and the prefab recipes are built from these recipes on the client
+        CapsuleRecipes.clientSyncedSerializers().forEach(RecipeSynchronization::synchronizeRecipeSerializer);
         // the claim mod of Fabric only, CapsuleMod.serverStarting loads the others
         Claims.load("goml", () -> new GetOffMyLawnAdapter());
 

@@ -11,6 +11,7 @@ import capsule.loot.StarterLoot;
 import capsule.network.CapsuleNetwork;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -23,6 +24,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.enchanting.EnchantmentLevelSetEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -56,6 +58,8 @@ public class CapsuleNeoForge {
         bus.addListener(EventPriority.HIGH, (ServerStoppedEvent event) -> CapsuleMod.serverStopped());
         bus.addListener((RegisterCommandsEvent event) -> CapsuleMod.registerCommands(event.getDispatcher()));
         bus.addListener((AddReloadListenerEvent event) -> event.addListener(CapsuleMod.reloadListener()));
+        // the creative tab, the recipe viewers and the prefab recipes are built from the crafting recipes on the client
+        bus.addListener((OnDatapackSyncEvent event) -> event.sendRecipes(RecipeType.CRAFTING));
         bus.addListener(EventPriority.HIGHEST, (EntityJoinLevelEvent event) -> {
             if (StructureSaver.isPreventedDrop(event.getEntity())) event.setCanceled(true);
         });

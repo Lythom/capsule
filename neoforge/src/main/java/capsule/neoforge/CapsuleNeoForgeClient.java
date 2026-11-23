@@ -11,6 +11,7 @@ import capsule.items.CapsuleItems;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -18,7 +19,7 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RecipesUpdatedEvent;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -48,7 +49,7 @@ public class CapsuleNeoForgeClient {
                 event.registerBlockEntityRenderer(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new));
 
         IEventBus bus = NeoForge.EVENT_BUS;
-        bus.addListener((RecipesUpdatedEvent event) -> CapsuleItems.registerRecipesClient(event.getRecipeManager()));
+        bus.addListener((RecipesReceivedEvent event) -> CapsuleItems.registerRecipesClient(event.getRecipeMap().byType(RecipeType.CRAFTING)));
         bus.addListener((RenderLevelStageEvent event) -> {
             if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 CapsulePreviewHandler.onLevelRenderLast(event.getPoseStack(), event.getPartialTick().getGameTimeDeltaPartialTick(true));
