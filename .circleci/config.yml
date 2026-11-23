@@ -3,8 +3,8 @@ version: 2.1
 jobs:
   build:
     docker:
-      # Java 21 builds and runs the mod; Gradle downloads the Java 25 its daemon needs (gradle/gradle-daemon-jvm.properties)
-      - image: cimg/openjdk:21.0.12
+      # Java 25 builds and runs the mod, and runs Gradle's daemon (gradle/gradle-daemon-jvm.properties): no download
+      - image: cimg/openjdk:25.0.5
     resource_class: large
 
     working_directory: ~/repo
@@ -18,8 +18,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - v4-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
-            - v4-dependencies-
+            - v5-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - v5-dependencies-
 
       - run: echo 'export GRADLE_OPTS="-Dfile.encoding=UTF-8"' >> $BASH_ENV
       - run: chmod +x ./gradlew
@@ -29,7 +29,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: v4-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          key: v5-dependencies-{{ checksum "gradle.properties" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
 
       - store_test_results:
           path: neoforge/build/test-results
@@ -80,7 +80,7 @@ jobs:
               ./publish.sh "$JAR_FILE" "${RELEASE_TYPE:-beta}"
             done
 
-# Only version branches (1.21.1, 1.20.1...) are built; other branches are built and tested locally (see docs/TESTING.md).
+# Only version branches (26.2, 1.21.1...) are built; other branches are built and tested locally (see docs/TESTING.md).
 workflows:
   version: 2
   build_and_publish:

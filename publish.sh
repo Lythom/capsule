@@ -16,8 +16,8 @@ set -euo pipefail
 #   ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]
 #
 # Examples:
-#   ./publish.sh --dry-run neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.42.jar beta
-#   ./publish.sh fabric/build/libs/Capsule-fabric-1.21.1-9.1.42.jar release
+#   ./publish.sh --dry-run neoforge/build/libs/Capsule-neoforge-26.2-10.0.42.jar beta
+#   ./publish.sh fabric/build/libs/Capsule-fabric-26.2-10.0.42.jar release
 #
 # Options:
 #   --dry-run  Show the commands that would be executed without actually uploading
@@ -40,7 +40,7 @@ if [ -z "$JAR_FILE" ]; then
     echo "ERROR: No jar file specified."
     echo ""
     echo "Usage: ./publish.sh [--dry-run] <jar-file> [release|beta|alpha]"
-    echo "Example: ./publish.sh neoforge/build/libs/Capsule-neoforge-1.21.1-9.1.42.jar release"
+    echo "Example: ./publish.sh neoforge/build/libs/Capsule-neoforge-26.2-10.0.42.jar release"
     exit 1
 fi
 
@@ -52,11 +52,11 @@ fi
 RELEASE_TYPE="${2:-release}"
 MODRINTH_PROJECT_ID="Pt0JOpyz"
 
-# Extract loader and version info from jar name: Capsule-fabric-1.21.1-9.1.42.jar -> fabric, 1.21.1-9.1.42
+# Extract loader and version info from jar name: Capsule-fabric-26.2-10.0.42.jar -> fabric, 26.2-10.0.42
 JAR_NAME=$(basename "$JAR_FILE")
 LOADER=$(echo "$JAR_NAME" | sed -n 's/^Capsule-\(neoforge\|fabric\)-.*\.jar$/\1/p')
 VERSION=$(echo "$JAR_NAME" | sed 's/^Capsule-[a-z]*-//; s/\.jar$//')
-# Extract MC version: 1.21.1-9.1.42 -> 1.21.1
+# Extract MC version: 26.2-10.0.42 -> 26.2
 MINECRAFT_VERSION=$(echo "$VERSION" | sed 's/-.*//')
 
 # Loader name as listed by CurseForge, and required dependencies (Modrinth project ids, CurseForge slugs)
@@ -187,7 +187,8 @@ else
     CF_VERSIONS_JSON=$(curl -s -H "X-Api-Token: $CURSEFORGE_TOKEN" \
         "https://minecraft.curseforge.com/api/game/versions")
 
-    # Find the ID for Minecraft version
+    # Find the ID for Minecraft version. CurseForge's name for 26.2 is assumed to be exactly '26.2' (not checked: the
+    # endpoint needs a token); when it is not, the listing below shows the names to compare with
     CF_MC_VERSION_ID=$(echo "$CF_VERSIONS_JSON" | python3 -c "
 import json, sys
 versions = json.load(sys.stdin)
@@ -213,7 +214,7 @@ for v in versions:
         echo "$CF_VERSIONS_JSON" | python3 -c "
 import json, sys
 for v in json.load(sys.stdin):
-    if '1.21' in v['name']:
+    if v['name'].startswith('$MINECRAFT_VERSION'.split('.')[0] + '.'):
         print(f\"  {v['id']}: {v['name']}\")
 " 2>/dev/null
         echo "Set CF_MC_VERSION_ID manually and re-run, or check the API response."
