@@ -1,0 +1,18 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    version = neo_version
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        gameTestServer { type = 'gameTestServer' }
+    }
+    mods {
+        trial { sourceSet sourceSets.main }
+    }
+}
+
+neoForge.addModdingDependenciesTo(sourceSets.gametest)

@@ -1,8 +1,9 @@
-# Port plan: Capsule 1.21.1 → Minecraft 26.2
+# Port plan: Capsule 1.21.1 → Minecraft 26.2, then 26.3
 
-Branch: `dev-1.26.2`. CircleCI only builds branches matching `/[0-9]+\..*/` (`.circleci/config.yml`), and CircleCI
-anchors that pattern on the whole branch name, so `dev-1.26.2` is not built. Rename or merge into a `26.2` branch only
-once the definition of done (§8) is met: that branch would be built and published.
+Branches: `dev-1.26.2` for phases 0 to 9, then `dev-1.26.3` (created from `dev-1.26.2` once 26.2 is done) for phase
+10. CircleCI only builds branches matching `/[0-9]+\..*/` (`.circleci/config.yml`), and CircleCI anchors that pattern
+on the whole branch name, so the `dev-*` branches are not built. Push to a `26.2` or `26.3` branch only once the
+definition of done (§8) is met: those branches are built, and published after the manual approval of the `hold` job.
 
 This plan is written for the person or model doing the implementation. Read §1 to §4 before touching code. The
 detailed, per-API instructions live in `inventory/` (§2): this file orders the work, settles conflicts between the
@@ -10,7 +11,7 @@ inventories and lists what has to be retested.
 
 ## 0. Rules for the implementation
 
-- Port **directly** to 26.2. Never build an intermediate Minecraft version. The inventories describe every vanilla
+- Port **directly** to 26.2, then 26.3 (phase 10). Never build an intermediate Minecraft version. The inventories describe every vanilla
   change between 1.21.1 and 26.2, version by version; apply the **final 26.2 form** of each API (§3).
 - Commits: author `Lythom <contact@samuel-bouchet.fr>`, no `Co-Authored-By` or other attribution line. English, in the
   style of the existing history: an imperative subject, then a body that explains why and what was checked. One commit
@@ -30,14 +31,14 @@ Proposed in this plan. Change them only after asking the maintainer.
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | Target **26.2** (released 2026-06-16), although 26.3 has been out since 2026-09-15 and 26.4 is in snapshots. | The maintainer asked for 26.2. A 26.3 port afterwards is a small step (one primer). |
-| D2 | Tooling: Java 25, NeoForge **26.2.0.95**, NeoForm **26.2-2** for `common`, ModDevGradle **2.0.148**, Fabric Loom **`net.fabricmc.fabric-loom` 1.18.4** (the non-remapping plugin) on the current **Gradle 9.7.1**, Fabric Loader **0.20.1**, Fabric API **0.161.0+26.2**. Parchment is removed: there is none for 26.x, and the game ships Mojang names. | ModDevGradle is known to work on Gradle 9.7.1 in this repo. Loom 1.19.x needs Gradle 9.8+, which ModDevGradle has not been checked on. Moving to Loom 1.19.4 + Gradle 9.8.2 is optional, in its own commit, once everything builds. |
+| D1 | Target **26.2** (released 2026-06-16) first, then **26.3** (released 2026-09-15) right after, in phase 10. 26.4 is in snapshots. | A user asked for 26.2. The 26.3 step is about 4–5 days (`inventory/26.3.md`), so both are released together or one after the other. |
+| D2 | One toolchain for 26.2 and 26.3, the newest that works: **Gradle 9.9.2**, ModDevGradle **2.0.148**, Fabric Loom **`net.fabricmc.fabric-loom` 1.19.4** (the non-remapping plugin), Java 25, Fabric Loader **0.20.1**. 26.2: NeoForge **26.2.0.95**, NeoForm **26.2-2**, Fabric API **0.161.0+26.2**. 26.3: NeoForge **26.3.0.115**, NeoForm **26.3-1**, Fabric API: the newest *release* for 26.3 (0.166.2+26.3 on 2026-11-23; 0.167.0 is a beta). Parchment is removed: there is none for 26.x, and the game ships Mojang names. | Built for real on a skeleton shaped like Capsule (`toolchain-trial/`, results in `inventory/26.3-loaders-build.md` §2): 26.2 and 26.3 build with no deprecation warning, and the 26.3 GameTest servers run. Loom 1.19 needs Gradle ≥ 9.8, Loom 1.20 (alpha) needs 9.9. Fabric's own example uses `1.19-SNAPSHOT`, which is older than 1.19.4. |
 | D3 | Since 1.21.2 the server no longer sends recipes to the client, so the creative tab, the recipe viewers and the prefab recipes (`PrefabsBlueprintAggregatorRecipe`) lose their client-side data. That migration is not optional; the decision is **how**: through the **loader recipe-sync APIs** (NeoForge `OnDatapackSyncEvent#sendRecipes(RecipeType.CRAFTING)` + `RecipesReceivedEvent`; Fabric `RecipeSynchronization` + `ClientRecipeSynchronizedEvent`), not through a Capsule payload. Fabric's `ClientPacketListenerMixin` is deleted. | Both loaders provide it, it is less code than a payload of our own, and JEI/REI read the same synced recipes. Details: `1.21.2.md` §6.1, `loaders-build.md` §3.1, §3.2, §4.1, §4.2, §4.8. |
 | D4 | **EMI is dropped** on this branch: no EMI build exists for 26.x. Keep `common/.../plugins/emi/` and `clientsmoke/EmiProbe.java` but exclude them from compilation (a `sourceSets` exclude with a comment), and remove `emi` from `-PrecipeViewer` and the scripts. | It can neither be compiled nor tested. Bring it back when EMI publishes 26.x. |
 | D5 | The known-incompatibility mods without a 26.2 build (Refined Storage, Mekanism, Immersive Engineering, Super Factory Manager) leave `-Pincompat`. Their test classes are excluded from compilation (comment), and their `gradle.properties` entries are deleted. Corail Tombstone stays (it has a 26.2 build). | §6. |
 | D6 | `CapsuleSavedData` moves to the server-wide storage (`MinecraftServer#getDataStorage()`), id `capsule:capsule_data`. No migration of the old per-dimension `capsuleData.dat` is needed. | 26.1 moved saved data files anyway (`26.1.md` §10.1). The counter only seeds blueprint names, and `StructureSaver#getBlueprintUniqueName` skips names already taken, so a counter restarting at 0 cannot overwrite a template. |
 | D7 | **No migration** of config files written by an older Capsule (`config/capsule/prefab_blueprint_recipe.json` with the old ingredient format and `show_in_tooltip`, `blueprint_whitelist.json`, starters, loot templates). A config file that does not parse is reported: one server log error naming the file, what failed and that deleting it restores the default, and the feature that depends on it is skipped. No crash, no silent loss. What must be right is the JSON **bundled** with Capsule (`data/capsule/initialconfig/**`, recipes, advancements): a GameTest parses every bundled file (phase 8). | Capsule 10.x for 26.x is a new major version: there is no "previous" config to carry over (`BACKLOG.md`, "Decided, not doing": "Updated default templates never reach existing installs: fine, users delete the config folder"). The legacy-format branch of `Blueprint.java` (the "uses legacy format" warning, line 255) becomes this error. |
-| D8 | The three advancements with `{"item": …}` / `{"tag": …}` in `items` (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`) are fixed on branch `1.21.1`, with the GameTest `RecipeTests#everyCapsuleAdvancementLoads`. The port takes both from there: `"items": "minecraft:compass"` / `"#c:ender_pearls"` / `"#minecraft:planks"` is still the right form on 26.x (check it against the 26.2/26.3 `ItemPredicate` codec). | They are broken on 1.21.1: `items` takes a holder set (an id, a list of ids or `#tag`), so the advancements do not load and never give their recipes. |
+| D8 | **Done on branch `1.21.1`** (commit `5002f14`): the item predicates of the three recipe advancements (`data/capsule/advancement/recipes/tools/{captureblock,capsule,capsule_wood}.json`) were `{"item": …}` / `{"tag": …}`. They are now `{"items": "minecraft:compass"}` / `{"items": "#c:ender_pearls"}` / `{"items": "#minecraft:planks"}` inside the `inventory_changed` `items` list. The GameTest `RecipeTests#recipeAdvancementsWaitForTheirItem` checks that each criterion matches its item and not dirt. The port takes both from there; 26.3 also renames `recipe_unlocked`'s `"recipe"` to `"recipes"` (phase 10). | An item predicate reads `items` and ignores unknown keys, so the old predicates had no condition: the recipes were unlocked by the first item picked up. The test failed before the fix and passes after (109 NeoForge, 107 Fabric GameTests). |
 | D9 | `capsule_version=10.0` for 26.x (jars `Capsule-<loader>-26.2-10.0.<build>.jar`, then `26.3-10.0.x`). The CHANGELOG entry is `26.2-10.0.x`. | A new major version goes with the new Minecraft numbering, and states that 10.x does not carry configs over (D7). |
 
 ## 2. The inventories
@@ -55,7 +56,11 @@ judged not relevant. The primers are at
 | `inventory/1.21.11.md` | `ResourceLocation` → `Identifier`, `ResourceKey#identifier()`, package moves, permissions, game rules, line width, gizmos, `FakeWorld` time access |
 | `inventory/26.1.md` | Java 25 and the unobfuscated game, recipe serializer records, `ItemStackTemplate`, dye component, loot types, world clocks, saved data storage, block model rendering, `GuiGraphicsExtractor`, `FakeWorld`/`LevelAccessor`, small renames |
 | `inventory/26.2.md` | `Gui`/`Hud`, `MultiBufferSource` removed (submit nodes), `ShapeRenderer` removed, pipeline API (bind groups, reversed depth), `EntityTypes`, public `BlockEntityType` constructor, `EntitySpawnRequest`, beds without block entity, pack format. Checked against the 26.2 jars |
-| `inventory/loaders-build.md` | Target versions, the build file by file, NeoForge 21.1 → 26.2 and Fabric API changes in the loader glue, GameTest registration per loader, CI, publishing, scripts. Checked against the NeoForge 26.2.0.95 sources and Fabric API 0.161.0 |
+| `inventory/loaders-build.md` | Target versions, the build file by file, NeoForge 21.1 → 26.2 and Fabric API changes in the loader glue, GameTest registration per loader, CI, publishing, scripts. Checked against the NeoForge 26.2.0.95 sources and Fabric API 0.161.0. Its tooling versions (Gradle 9.8.2/Loom 1.19.4 vs 9.7.1/1.18.4) are superseded by D2 |
+| `inventory/26.3.md` | 26.2 → 26.3 (phase 10): SDL instead of GLFW, `com.mojang.renderpearl`, order-independent transparency (a crash without OIT pipelines), loot containers and number providers, `recipe_unlocked` `recipes`, recipes as a registry, pack format, whitelist, beds. Checked with javap against the 26.3 jar |
+| `inventory/26.3-loaders-build.md` | 26.3 versions, the toolchain trial (§2), NeoForge 26.2 → 26.3 (`ModConfig.Type` `LOCAL`/`SYNCED`, `neoforge.items` removed, render hooks and Improved Transparency) and Fabric API 0.161 → 0.167 (additions only) |
+| `toolchain-trial/` | The skeleton the toolchain was built with: Capsule's layout (`common` on NeoForm, `neoforge` with ModDevGradle, `fabric` with non-remapping Loom, `buildSrc` conventions). A reference for the phase 0 build files |
+| `central-mirror.init.gradle` | Only for sandboxes where Maven Central answers 429 to Gradle: `./gradlew --init-script docs/port-26.2/central-mirror.init.gradle …` points Central at Google's mirror. Not part of the build |
 
 The files mention "other agents": they were written in parallel, one per slice. Where a file says a topic belongs to
 another agent, look for it in the file of the slice in the table above.
@@ -84,7 +89,7 @@ that give the final form, then the ones to read for context only.
 | Commands and permissions | `1.21.11.md` §12; `1.21.4-1.21.5.md` §2.12 (`ClickEvent`/`HoverEvent`); `26.1.md` §12.4 (`ItemInput`) | — |
 | Player names and profiles | `1.21.6-1.21.10.md` §4.8 (`NameAndId`), `loaders-build.md` (Common Protection API 2.0) | — |
 | Client item models, `capsule:state` property, colors | `1.21.4-1.21.5.md` §1.2–§1.4 + `loaders-build.md` §3.2, §4.2 (registration events) | — |
-| Ghost preview, capture animation, line boxes, block entity renderer: **all world rendering** | `26.2.md` §3–§8 (submit nodes, `submitShapeOutline`, pipelines with bind groups and **reversed depth**), `26.1.md` §11.2, §11.3, §11.5, §11.6, §13.1 (block tessellation, quads, fluid models, tint getter, `FakeWorld`), `1.21.6-1.21.10.md` §4.1 (render state of `CaptureBER`), §4.3 (atlas) | `1.21.2.md` §10–§11, `1.21.4-1.21.5.md` §2.8–§2.9, `1.21.6-1.21.10.md` §1.2–§1.4, §1.10, §4.2, §4.12, `1.21.11.md` §6–§10, `26.1.md` §11.7 |
+| Ghost preview, capture animation, line boxes, block entity renderer: **all world rendering** | Hook: **extract + submit** (NeoForge `ExtractLevelRenderStateEvent` + `SubmitCustomGeometryEvent`, Fabric `LevelRenderEvents.END_EXTRACTION` + `COLLECT_SUBMITS`), never `AfterTranslucentBlocks` / `AFTER_TRANSLUCENT_TERRAIN` nor direct drawing (`26.2.md` §3 path B): in 26.3 those do not run when Improved Transparency is on (`26.3-loaders-build.md` §3). Then `26.2.md` §3–§8 (submit nodes, `submitShapeOutline`, pipelines with bind groups and **reversed depth**), `26.1.md` §11.2, §11.3, §11.5, §11.6, §13.1 (block tessellation, quads, fluid models, tint getter, `FakeWorld`), `1.21.6-1.21.10.md` §4.1 (render state of `CaptureBER`), §4.3 (atlas) | `1.21.2.md` §10–§11, `1.21.4-1.21.5.md` §2.8–§2.9, `1.21.6-1.21.10.md` §1.2–§1.4, §1.10, §4.2, §4.12, `1.21.11.md` §6–§10, `26.1.md` §11.7 |
 | GUI (`LabelGui`, test screens) | `26.2.md` §2 (`Minecraft.gui`), `26.1.md` §11.4 (`GuiGraphicsExtractor`), `1.21.6-1.21.10.md` §4.6 (input events), §1.1 (alpha in colors) | — |
 | GameTests (framework, registration, environments) | `1.21.4-1.21.5.md` §2.4 + `26.1.md` §12.6 + `loaders-build.md` §3.9, §4.9 | — |
 | Loader glue (events, payloads, config, creative tabs, reload listeners, capabilities, fluids) | `loaders-build.md` §3–§4 | `1.21.6-1.21.10.md` §4.9, `1.21.2.md` §13 |
@@ -106,7 +111,8 @@ The game is no longer obfuscated, so the real classes can be read directly:
 
 ## 5. Phases
 
-Effort is for one person who knows the code. Most phases do not compile on their own: `common` only compiles once
+Effort is for one person who knows the code: about 19–27 days for 26.2 (phases 0 to 9), then 4–5 days for 26.3
+(phase 10). Most phases do not compile on their own: `common` only compiles once
 phases 1 to 6 are done. Use `./gradlew :common:compileJava` as a to-do list, package by package, and commit at the end
 of each phase even if the build is still red. Phase 7 is the first that should give a green `./gradlew build`.
 
@@ -116,8 +122,10 @@ of each phase even if the build is still red. Phase 7 is the first that should g
 
 1. `gradle.properties`: versions and Modrinth ids from `loaders-build.md` §1 and §2.1, `capsule_version=10.0` (D9).
    Delete Parchment, `emi_version` and the D5 mods.
-2. Root `build.gradle`: `net.fabricmc.fabric-loom` 1.18.4 instead of `net.fabricmc.fabric-loom-remap` 1.18.2 (D2).
-   `buildSrc` conventions: Java 25 toolchain, no Parchment.
+2. Gradle wrapper 9.9.2 (`./gradlew wrapper --gradle-version 9.9.2`, so the wrapper jar and scripts follow). Root
+   `build.gradle`: `net.fabricmc.fabric-loom` 1.19.4 instead of `net.fabricmc.fabric-loom-remap` 1.18.2 (D2).
+   `buildSrc` conventions: Java 25 toolchain, no Parchment. `toolchain-trial/` has build files that work with these
+   versions; copy from them rather than guess.
 3. `common/build.gradle`: NeoForm 26.2-2; JEI/REI 26.2 artifacts; EMI excluded (D4); claim mods at their 26.2 ids.
 4. `neoforge/build.gradle`: NeoForge 26.2.0.95; `gametest*` dependencies at their 26.2 ids; D5 mods removed along with
    their test classes (exclude plus comment).
@@ -227,8 +235,10 @@ code would have to be rewritten again.
    / `TRANSLUCENT_BLOCK`). Depth is reversed in 26.2: flip every depth comparison. Register the pipelines
    (`RegisterRenderPipelinesEvent` on NeoForge).
 4. Ghost preview (`CapsulePreviewHandler`, `CapsuleTemplateRenderer`, `FakeWorld`, `TranslucentVertexConsumer`):
-   submit through the frame's `SubmitNodeCollector` (Fabric `LevelRenderEvents.COLLECT_SUBMITS`, NeoForge
-   `SubmitCustomGeometryEvent`), with block tessellation through `ModelBlockRenderer#tesselateBlock` and fluids through
+   gather what to draw during extraction (Fabric `LevelRenderEvents.END_EXTRACTION`, NeoForge
+   `ExtractLevelRenderStateEvent`), then submit it through the frame's `SubmitNodeCollector` (Fabric
+   `LevelRenderEvents.COLLECT_SUBMITS`, NeoForge `SubmitCustomGeometryEvent`). This is the path that keeps working
+   with 26.3's Improved Transparency (§3). Block tessellation goes through `ModelBlockRenderer#tesselateBlock` and fluids through
    `FluidModel`. `FakeWorld` implements `LevelAccessor`, `LevelReader` and the client `BlockAndTintGetter`
    (`26.1.md` §11.6, §13.1).
 5. Boxes (`RendererUtils`, `CaptureAnimation`, `CaptureBER`): `submitShapeOutline(...)`; `CaptureBER` with a render
@@ -246,8 +256,10 @@ Commit: one per step above.
 
 `loaders-build.md` §3 (NeoForge) and §4 (Fabric).
 
-- NeoForge: event classes (`AddServerReloadListenersEvent`, `RenderLevelStageEvent` subclasses, recipe events),
-  capabilities (`Capabilities.Item`, `ResourceHandler` and transactions in `NeoForgePlatform`/`ContainerItemSource`),
+- NeoForge: event classes (`AddServerReloadListenersEvent`, recipe events),
+  capabilities (`Capabilities.Item`, `ResourceHandler` and transactions in `NeoForgePlatform`/`ContainerItemSource`;
+  migrate completely, with no `IItemHandler` wrapper left: 26.3 deletes the whole `net.neoforged.neoforge.items`
+  package),
   fluids through `FluidModel` (the code can move to `common`), no `EventBusSubscriber.Bus`, no static
   `FMLLoader.isProduction()`.
 - Fabric: `END_LEVEL_TICK`, `ServerLevelEvents`, `LevelRenderEvents`, `FabricCreativeModeTab`, resource loader v1,
@@ -271,7 +283,7 @@ open a world. Commit.
 - Bundled JSON (D7): a GameTest reads every file under `data/capsule/initialconfig/**` with the code that reads it
   from `config/` (prefab recipe, whitelist, starters, loot templates) and fails on any error or warning. Another one
   feeds a broken `prefab_blueprint_recipe.json` and checks the error is logged and nothing crashes. Keep
-  `RecipeTests#everyCapsuleAdvancementLoads` (D8) and `everyCapsuleRecipeLoadsWithResolvedIngredients`.
+  `RecipeTests#recipeAdvancementsWaitForTheirItem` (D8) and `everyCapsuleRecipeLoadsWithResolvedIngredients`.
 - Client smoke and showcase (`ClientSmokeTest`, `Showcase`, `Scenario`): `Minecraft.gui`, world clocks, server-side
   weather, `LevelSettings`, screenshots (`26.2.md` §2, `26.1.md` §9–§10, `1.21.6-1.21.10.md` §1.9,
   `1.21.11.md` §17). The `capsule:state` check (`ClientSmokeTest:590-600`) reads the new item model property.
@@ -293,33 +305,61 @@ Gate: the GameTests pass on both loaders, with and without `-PmodCompat`. Commit
   and known incompatibilities not available), `docs/TESTING.md` (versions, totals, the matrix result), `README.md`, `BACKLOG.md` (whatever was left
   out).
 
+### Phase 10: Minecraft 26.3 (4–5 days, branch `dev-1.26.3`)
+
+Start from a 26.2 branch that meets §8. `inventory/26.3.md` (vanilla) and `inventory/26.3-loaders-build.md`
+(versions, loaders) give every change; their effort section splits it into about half code and half retesting. The
+section numbers below are those of `inventory/26.3.md`.
+
+- Versions (D2): NeoForge 26.3.0.115, NeoForm 26.3-1, Fabric API (newest release for 26.3), the 26.3 Modrinth ids of
+  §6. Same Gradle, ModDevGradle and Loom.
+- Rendering: `com.mojang.blaze3d` → `com.mojang.renderpearl` (sed in §3), the 26.3 `CustomRenderType` of §4,
+  `setOitPipelines(RenderPipelines.OIT_TRANSLUCENT_BLOCK)` on the ghost colour pass and
+  `RenderTypes.linesTranslucentNoDepthWrite()` for the recall box (§5), `VertexConsumer#setUv3` in
+  `TranslucentVertexConsumer` (§6).
+- Input: no `org.lwjgl.glfw`; `LabelGui` tests `event.isEscape() || event.isConfirmation()`, `Showcase` uses
+  `InputConstants` (§2).
+- Loot (§8): `CapsuleLootEntry` on `SingleEntryContainerBase`, `ContextIntProviders`/`ContextFloatProviders`, and
+  `"condition": {...}` instead of `"conditions": [...]` in `loot_table/blocks/capsulemarker.json` (otherwise the capture
+  base silently stops surviving explosions as configured).
+- Data: advancements `"recipe"` → `"recipes"` (§9), pack format (§1), whitelist with the poplar signs and shelf, beds
+  through `AbstractBedBlock` in `Blueprint` (§15).
+- Small changes: `RecipeMap` in the tests (§10), `FriendlyByteBuf` lists (§12), `getStructureTemplateManager`,
+  `Player#drop` (§13), `TestData` with a dimension (§14).
+- NeoForge: `ModConfig.Type.COMMON` no longer exists. Register with
+  `registerConfig(ModConfig.Type.LOCAL, spec, "capsule-common.toml")`, so the file name does not change.
+  Fabric's Forge Config API Port still has `COMMON`.
+- Retest everything of phases 8 and 9 on 26.3, the client smoke test with Improved Transparency on and off, and
+  the §6 matrix with its 26.3 column. CHANGELOG: a `26.3-10.0.x` entry.
+
 ## 6. Compatibility to retest
 
 Rule: a mod tested on 1.21.1 that has a 26.2 build is retested with its latest 26.2 build. A mod without a 26.2 build
 is not tested, and `docs/TESTING.md` says so. Since it worked on 1.21.1, we can be fairly confident in it. Versions as
-of 2026-11-23 (Modrinth version ids in `inventory/loaders-build.md` §1).
+of 2026-11-23, from the Modrinth API (26.2 version ids in `inventory/loaders-build.md` §1; 26.3 ids below). Take the
+newest build again when the phase starts.
 
-| Mod | Tested on 1.21.1 | 26.2 build | How to test on 26.2 |
-|---|---|---|---|
-| JEI | 19.57.0.451 | 30.48.0.244 (beta), NeoForge + Fabric | client smoke, `RECIPE_VIEWER=jei`, both loaders |
-| REI (+ Architectury, Cloth Config) | 16.0.799 | 26.2.820 | client smoke, `RECIPE_VIEWER=rei`, both loaders |
-| EMI | 1.1.24 | **none** (newest: 1.21.1) | not tested; excluded (D4) |
-| SecurityCraft | v1.10.2.1 | v1.10.2.1 for 26.2 (NeoForge) | NeoForge GameTests (`SecurityCraftTests`) |
-| Waystones + Balm | pinned 1.21.1 | 26.2.0.14 / 26.2.0.9 | `-PmodCompat` NeoForge |
-| Sophisticated Storage + Core | pinned 1.21.1 | 26.2-1.5.133 / 26.2-1.5.40 (NeoForge) | `-PmodCompat` NeoForge |
-| WorldEdit | 7.3.8 | 7.4.5 | `-PmodCompat` NeoForge (writes the schematic fixtures) |
-| Open Parties and Claims | 0.32.7 | 0.33.0 (beta), NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar |
-| Flan | 1.12.8 | 26.2-1.12.8, NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar |
-| Get Off My Lawn ReServed | 1.13.1 | 1.21.0+26.2 (Fabric) | Fabric release jar with the claim mods |
-| Common Protection API | 1.0.0 | 2.0.0 | Fabric GameTests (`TestProbe`) |
-| Forge Config API Port | 21.1.6 | 26.2.1 | every Fabric run |
-| Corail Tombstone | 9.5.6 | 9.9.4 (NeoForge) | `-Pincompat` NeoForge |
-| Refined Storage | 2.0.9 | **none** (3.2.1 exists for 26.1.2) | not tested (D5) |
-| Mekanism | 10.7.19.85 | **none** (newest: 1.21.1) | not tested (D5) |
-| Immersive Engineering | 12.4.2-194 | **none** (newest: 1.21.1) | not tested (D5) |
-| Super Factory Manager | 4.34.0 | **none** (4.34.0 exists for 26.1.2) | not tested (D5) |
-| Iris + Sodium | Iris + Sodium of the 1.21.1 runs | 1.11.4 / 0.9.2, NeoForge + Fabric | `validate-all.sh --iris` |
-| Modpack (Forgeulously Optimized 1.1.4) | 49 mods, Connector | **none** for 26.x | not tested; optionally pick a 26.2 NeoForge pack |
+| Mod | Tested on 1.21.1 | 26.2 build | 26.3 build (Modrinth id) | How to test |
+|---|---|---|---|---|
+| JEI | 19.57.0.451 | 30.48.0.244 (beta), NeoForge + Fabric | 31.23.0.129 (beta) (`lUxPAD1g` / `W90vrxwW`) | client smoke, `RECIPE_VIEWER=jei`, both loaders |
+| REI (+ Architectury, Cloth Config) | 16.0.799 | 26.2.820 | 26.3.824 (`uwE0PJmc` / `rKsAE6bX`), Architectury 22.0.6, Cloth Config 26.3.159 | client smoke, `RECIPE_VIEWER=rei`, both loaders |
+| EMI | 1.1.24 | **none** | **none** | not tested; excluded (D4) |
+| SecurityCraft | v1.10.2.1 | v1.10.2.1 (NeoForge) | v1.10.2.1-beta4 (beta) (`mgxwefx4`, NeoForge) | NeoForge GameTests (`SecurityCraftTests`) |
+| Waystones + Balm | pinned 1.21.1 | 26.2.0.14 / 26.2.0.9 | 26.3.0.3 / 26.3.0.3 (`CEfraVFf` / `QcBcRJZb`) | `-PmodCompat` NeoForge |
+| Sophisticated Storage + Core | pinned 1.21.1 | 26.2-1.5.133 / 26.2-1.5.40 (NeoForge) | 26.3-1.5.134 / 26.3-1.5.42 (`on0Ziwnf` / `8fAHwWo2`) | `-PmodCompat` NeoForge |
+| WorldEdit | 7.3.8 | 7.4.5 | 7.4.6 (`ByRNkO83`) | `-PmodCompat` NeoForge (writes the schematic fixtures) |
+| Open Parties and Claims | 0.32.7 | 0.33.0 (beta), NeoForge + Fabric | 0.33.0 (beta) (`VhEuA4pj` / `KBCCg0os`) | `-PmodCompat` both loaders, Fabric release jar |
+| Flan | 1.12.8 | 26.2-1.12.8, NeoForge + Fabric | 26.3-1.12.9 (`TL00Frpw` / `8PVcH9Li`) | `-PmodCompat` both loaders, Fabric release jar |
+| Get Off My Lawn ReServed | 1.13.1 | 1.21.0+26.2 (Fabric) | 1.22.0+26.3-rc-1 (`p3z2M9AO`, built for 26.3-rc-1: check that it loads on 26.3) | Fabric release jar with the claim mods |
+| Common Protection API | 1.0.0 | 2.0.0 | 2.0.0 (declares no Minecraft version) | Fabric GameTests (`TestProbe`) |
+| Forge Config API Port | 21.1.6 | 26.2.1 | 26.3.1 (`JpKvrr9J` Fabric) | every Fabric run |
+| Corail Tombstone | 9.5.6 | 9.9.4 (NeoForge) | **none** | 26.2: `-Pincompat` NeoForge; 26.3: not tested |
+| Refined Storage | 2.0.9 | **none** (3.2.1 exists for 26.1.2) | **none** | not tested (D5) |
+| Mekanism | 10.7.19.85 | **none** | **none** | not tested (D5) |
+| Immersive Engineering | 12.4.2-194 | **none** | **none** | not tested (D5) |
+| Super Factory Manager | 4.34.0 | **none** (4.34.0 exists for 26.1.2) | **none** | not tested (D5) |
+| Iris + Sodium | Iris + Sodium of the 1.21.1 runs | 1.11.4 / 0.9.2, NeoForge + Fabric | 1.11.7 / 0.9.4-beta.1 (beta) (`Ag5S66CF`, `vTN4NRGW` / `LHznwVbu`, `6etTPjD5`) | `validate-all.sh --iris` |
+| Modpack (Forgeulously Optimized 1.1.4) | 49 mods, Connector | **none** for 26.x | **none** | not tested; optionally pick a 26.2/26.3 NeoForge pack |
 
 `-PmodCompatLatest` already picks the newest Modrinth version of each mod. Pin the versions above in
 `gradle.properties`, and run `-PmodCompatLatest` once at the end.
@@ -327,8 +367,13 @@ of 2026-11-23 (Modrinth version ids in `inventory/loaders-build.md` §1).
 ## 7. Risks
 
 - **World rendering** (phase 6) changed six times between 1.21.1 and 26.2, and the 26.2 pipeline API is new. The
-  translucent preview is a mod feature (#88), not a vanilla one. If submit nodes cannot draw it correctly, fall back to
-  drawing directly (`26.2.md` §3, path B) before changing how it looks.
+  translucent preview is a mod feature (#88), not a vanilla one. Do not fall back to drawing directly (`26.2.md` §3,
+  path B): it does not run in 26.3 with Improved Transparency. If submits cannot draw it as before, ask the maintainer
+  before changing how it looks.
+- **26.3 Improved Transparency**: a blended render type without OIT pipelines crashes the client when the option is on
+  (`26.3.md` §5). The client smoke test must run with the option on and off.
+- **26.3 SDL instead of GLFW**: key and mouse codes changed (`26.3.md` §2). Every input in `LabelGui` and in the smoke
+  test scenario must be replayed on 26.3.
 - **The recipe API** changed twice (1.21.2, 26.1). `PrefabsBlueprintAggregatorRecipe` relied on a network-codec
   trick that no longer exists. Re-read it fully before porting it.
 - **Production NeoForge GameTests** rely on undocumented NeoForge behavior (`BACKLOG.md`, "Production NeoForge
@@ -345,3 +390,5 @@ of 2026-11-23 (Modrinth version ids in `inventory/loaders-build.md` §1).
   Its capsules keep their content and deploy it.
 - The docs of §5 phase 9 updated. `BACKLOG.md` lists what was left out (EMI, the D5 mods, the production GameTests if
   they could not be kept).
+- 26.3 (phase 10): the same list on `dev-1.26.3`, plus the client smoke test with Improved Transparency on, and a
+  26.2 world opening on 26.3.

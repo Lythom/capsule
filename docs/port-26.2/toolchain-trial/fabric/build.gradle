@@ -1,0 +1,35 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.fabricmc.fabric-loom'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}
+
+sourceSets.gametest {
+    compileClasspath += sourceSets.main.compileClasspath
+    runtimeClasspath += sourceSets.main.runtimeClasspath
+}
+
+loom {
+    mods {
+        trial { sourceSet sourceSets.main }
+        'trial-gametest' { sourceSet sourceSets.gametest }
+    }
+    runs {
+        gameTestServer {
+            server()
+            runDir 'runs/gameTestServer'
+            vmArg '-Dfabric-api.gametest'
+        }
+    }
+}
+
+processResources {
+    def properties = [version: version]
+    inputs.properties properties
+    filesMatching('fabric.mod.json') { expand properties }
+}

@@ -1,0 +1,25 @@
+// mirrors capsule/buildSrc/src/main/groovy/multiloader-loader.gradle (trimmed): the loader compiles common's sources
+plugins {
+    id 'multiloader-common'
+}
+
+configurations {
+    commonJava { canBeResolved = true }
+    commonResources { canBeResolved = true }
+}
+
+dependencies {
+    compileOnly project(':common')
+    commonJava project(path: ':common', configuration: 'commonJava')
+    commonResources project(path: ':common', configuration: 'commonResources')
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn configurations.commonJava
+    source configurations.commonJava
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn configurations.commonResources
+    from configurations.commonResources
+}

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "id": "trial",
+  "version": "${version}",
+  "environment": "*",
+  "entrypoints": { "main": ["trial.fabric.TrialFabric"] },
+  "depends": { "fabricloader": ">=0.20.0", "java": ">=25", "fabric-api": "*" }
+}

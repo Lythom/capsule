@@ -1,0 +1,29 @@
+// mirrors capsule/buildSrc/src/main/groovy/multiloader-common.gradle (trimmed)
+plugins {
+    id 'java-library'
+}
+
+version = "${minecraft_version}-0.0.1"
+group = 'trial'
+base.archivesName = "Trial-${project.name}"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral {
+        content {
+            excludeGroupByRegex 'net\\.fabricmc.*'
+        }
+    }
+}
+
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}

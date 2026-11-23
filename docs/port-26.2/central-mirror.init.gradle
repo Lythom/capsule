@@ -1,0 +1,17 @@
+// Trial only: Maven Central answers 429 to Gradle through this session's egress, so point every
+// repo.maven.apache.org repository (project, plugin, buildSrc, Loom/MDG-added) at Google's Central mirror.
+def mirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+def redirect = { repos ->
+    repos.withType(MavenArtifactRepository).configureEach { r ->
+        if (r.url.toString().startsWith('https://repo.maven.apache.org/maven2')) r.url = mirror
+    }
+}
+beforeSettings { settings ->
+    redirect(settings.pluginManagement.repositories)
+    redirect(settings.dependencyResolutionManagement.repositories)
+    settings.buildscript.repositories.with(redirect)
+}
+allprojects {
+    buildscript { redirect(repositories) }
+    redirect(repositories)
+}

@@ -1,0 +1,6 @@
+license = "MIT"
+
+[[mods]]
+modId = "trial"
+version = "0.0.1"
+displayName = "Trial"
