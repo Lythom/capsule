@@ -7,7 +7,7 @@ version = "${minecraft_version}-${capsule_version}.${build_id}"
 group = 'fr.samuelbouchet.capsule'
 base.archivesName = "Capsule-${project.name}"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21) // Mojang ships Java 21 to end users since 1.21
+java.toolchain.languageVersion = JavaLanguageVersion.of(25) // Minecraft 26.1+ requires Java 25
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -50,22 +50,10 @@ repositories {
             includeGroup 'dev.architectury'
         }
     }
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = 'TerraformersMC (EMI)'
-                url = 'https://maven.terraformersmc.com/releases/'
-            }
-        }
-        filter {
-            includeGroup 'dev.emi'
-        }
-    }
     mavenCentral {
         content {
-            // served by maven.fabricmc.net, and by Loom for the remapped mods
+            // served by maven.fabricmc.net
             excludeGroupByRegex 'net\\.fabricmc.*'
-            excludeGroupByRegex 'remapped\\..*'
         }
     }
 }

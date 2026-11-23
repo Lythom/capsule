@@ -35,7 +35,7 @@ interface RecipeViewerProbe {
         List<RecipeViewerProbe> probes = new ArrayList<>();
         if (Services.PLATFORM.isModLoaded("jei")) probes.add(new JeiSmokePlugin());
         if (Services.PLATFORM.isModLoaded("roughlyenoughitems")) probes.add(new ReiProbe());
-        if (Services.PLATFORM.isModLoaded("emi")) probes.add(new EmiProbe());
+        // EmiProbe is left out of the build until EMI has a 26.x build (common/build.gradle)
         return probes;
     }
 

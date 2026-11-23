@@ -1,16 +1,9 @@
 plugins {
     id 'multiloader-loader'
-    id 'net.fabricmc.fabric-loom-remap'
+    id 'net.fabricmc.fabric-loom'
 }
 
 repositories {
-    maven {
-        name = 'ParchmentMC'
-        url = 'https://maven.parchmentmc.org/'
-        content {
-            includeGroup 'org.parchmentmc.data'
-        }
-    }
     maven {
         name = 'Nucleoid (Common Protection API)'
         url = 'https://maven.nucleoid.xyz/'
@@ -27,49 +20,41 @@ repositories {
     }
 }
 
-// mod<Gametest...> configurations, remapped like the main mod dependencies
-loom.createRemapConfigurations(sourceSets.gametest)
-
 dependencies {
+    // Minecraft 26.x is not obfuscated: no mappings, nothing is remapped
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
-    }
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
-    modImplementation "maven.modrinth:forge-config-api-port:${forge_config_api_port_version}"
-    modImplementation include("eu.pb4:common-protection-api:${common_protection_api_version}")
-    // bundled in Forge Config API Port, whose nested jars are not loaded by the dev runs
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation "maven.modrinth:forge-config-api-port:${forge_config_api_port_version}"
+    implementation include("eu.pb4:common-protection-api:${common_protection_api_version}")
+    // bundled in Forge Config API Port (jar-in-jar), pinned to the same version
     implementation "com.electronwill.night-config:core:${night_config_version}"
     runtimeOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
     // recipe viewers: the plugins compile against their APIs, the dev runs load the one picked with -PrecipeViewer
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") { transitive = false }
-    modCompileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") { transitive = false }
-    modCompileOnly("dev.emi:emi-fabric:${emi_version}:api") { transitive = false }
-    // the dev runs do not load nested jars: JEI's config library is added
-    modLocalRuntime([
-            jei : ["mezz.jei:jei-${minecraft_version}-fabric:${jei_version}", "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:0.5.12"],
+    compileOnly("me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}") { transitive = false }
+    compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:${rei_version}") { transitive = false }
+    // JEI's config library (the version JEI's pom asks for), in case the dev runs do not load nested jars
+    localRuntime([
+            jei : ["mezz.jei:jei-${minecraft_version}-fabric:${jei_version}", "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:0.6.6"],
             rei : ["me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"],
-            emi : ["dev.emi:emi-fabric:${emi_version}"],
     ][findProperty('recipeViewer') ?: 'jei'])
 
     testImplementation "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
 
     // the protection mods whose API Capsule calls when they are loaded (#91, #119); SecurityCraft has no Fabric build,
     // its NeoForge API compiles the common check, never loaded on Fabric
-    modCompileOnly("maven.modrinth:open-parties-and-claims:${opac_fabric_version}") { transitive = false }
-    modCompileOnly("maven.modrinth:flan:${flan_fabric_version}") { transitive = false }
-    modCompileOnly("maven.modrinth:goml-reserved:${goml_version}") { transitive = false }
+    compileOnly("maven.modrinth:open-parties-and-claims:${opac_fabric_version}") { transitive = false }
+    compileOnly("maven.modrinth:flan:${flan_fabric_version}") { transitive = false }
+    compileOnly("maven.modrinth:goml-reserved:${goml_version}") { transitive = false }
     compileOnly "com.jamieswhiteshirt:rtree-3i-lite-fabric:${rtree_3i_version}"
     compileOnly("maven.modrinth:security-craft:${securitycraft_version}") { transitive = false }
     // the claim GameTests run with them with -PmodCompat
     if (project.hasProperty('modCompat')) {
-        modGametestRuntimeOnly modrinth('open-parties-and-claims', opac_fabric_version)
-        modGametestRuntimeOnly modrinth('flan', flan_fabric_version)
+        gametestRuntimeOnly modrinth('open-parties-and-claims', opac_fabric_version)
+        gametestRuntimeOnly modrinth('flan', flan_fabric_version)
     }
 }
 
@@ -142,15 +127,10 @@ tasks.named('runGameTestServer') {
     }
 }
 
-// The GameTests as a mod jar, for real servers and clients next to the release jar (scripts/prod-gametest.sh)
-def gametestJar = tasks.register('gametestJar', Jar) {
+// The GameTests as a mod jar, for real servers and clients next to the release jar (scripts/prod-gametest.sh). Nothing
+// is remapped since Minecraft 26.1: a plain jar of the classes
+tasks.register('testModJar', Jar) {
     from sourceSets.gametest.output
-    archiveClassifier = 'gametest-dev'
-    destinationDirectory = layout.buildDirectory.dir('devlibs')
-}
-
-tasks.register('testModJar', net.fabricmc.loom.task.RemapJarTask) {
-    inputFile = gametestJar.flatMap { it.archiveFile }
     archiveClassifier = 'gametest'
     destinationDirectory = layout.buildDirectory.dir('test-mod')
 }

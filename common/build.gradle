@@ -7,20 +7,14 @@ plugins {
 neoForge {
     neoFormVersion = neo_form_version
     accessTransformers.from(file('accesstransformer.cfg'))
-    parchment {
-        minecraftVersion = parchment_minecraft_version
-        mappingsVersion = parchment_mappings_version
-    }
     addModdingDependenciesTo(sourceSets.gametest)
     addModdingDependenciesTo(sourceSets.test)
 }
 
 dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    // REI publishes its common API in intermediary names, its NeoForge API has the Mojang names
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
     compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
-    compileOnly("dev.emi:emi-xplat-mojmap:${emi_version}:api") { transitive = false }
     // the protection mods whose API Capsule calls when they are loaded (#91, #119): their NeoForge jars have the Mojang
     // names, the loader projects compile against their own
     compileOnly("maven.modrinth:open-parties-and-claims:${opac_neoforge_version}") { transitive = false }
@@ -28,6 +22,13 @@ dependencies {
     compileOnly("maven.modrinth:security-craft:${securitycraft_version}") { transitive = false }
     // shipped by NeoForge, and on Fabric by Forge Config API Port
     compileOnly "com.electronwill.night-config:core:${night_config_version}"
+}
+
+// EMI has no build for Minecraft 26.x: its plugin and its client smoke probe stay in the sources, out of the build, until
+// it has one. The loader projects compile these sources too (multiloader-loader.gradle), so they exclude them as well.
+sourceSets {
+    main.java.exclude 'capsule/plugins/emi/**'
+    gametest.java.exclude 'capsule/clientsmoke/EmiProbe.java'
 }
 
 configurations {

@@ -23,6 +23,8 @@ dependencies {
 tasks.named('compileJava', JavaCompile) {
     dependsOn configurations.commonJava
     source configurations.commonJava
+    // EMI has no build for Minecraft 26.x, see common/build.gradle
+    exclude 'capsule/plugins/emi/**'
 }
 
 tasks.named('processResources', ProcessResources) {
@@ -38,6 +40,8 @@ tasks.named('compileTestJava', JavaCompile) {
 tasks.named('compileGametestJava', JavaCompile) {
     dependsOn configurations.commonGametestJava
     source configurations.commonGametestJava
+    // EMI has no build for Minecraft 26.x, see common/build.gradle
+    exclude 'capsule/clientsmoke/EmiProbe.java'
 }
 
 tasks.named('processGametestResources', ProcessResources) {

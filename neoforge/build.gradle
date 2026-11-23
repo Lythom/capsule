@@ -6,11 +6,6 @@ plugins {
 neoForge {
     version = neo_version
 
-    parchment {
-        minecraftVersion = parchment_minecraft_version
-        mappingsVersion = parchment_mappings_version
-    }
-
     runs {
         configureEach {
             // Recommended logging data for a userdev environment
@@ -24,13 +19,10 @@ neoForge {
 
         client {
             client()
-            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
         }
 
         server {
             server()
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
             programArgument '--nogui'
         }
 
@@ -49,7 +41,6 @@ neoForge {
         // Runs every capsule GameTest headless then exits, with the number of failed required tests as exit code.
         gameTestServer {
             type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'capsule'
             // adds ClaimProbeBenchmark, see docs/CLAIMS.md
             if (project.hasProperty('claimBenchmark')) systemProperty 'capsule.gametest.claimBenchmark', 'true'
         }
@@ -84,11 +75,9 @@ dependencies {
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly("me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}") { transitive = false }
     compileOnly("me.shedaniel:RoughlyEnoughItems-default-plugin-neoforge:${rei_version}") { transitive = false }
-    compileOnly("dev.emi:emi-neoforge:${emi_version}:api") { transitive = false }
     localRuntime([
             jei : "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}",
             rei : "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}",
-            emi : "dev.emi:emi-neoforge:${emi_version}",
     ][findProperty('recipeViewer') ?: 'jei'])
 
     // the protection mods whose API Capsule calls when they are loaded (#91, #119)
@@ -113,16 +102,18 @@ dependencies {
     }
 
     // mods of the known incompatibilities (wiki), opt-in: -Pincompat
-    gametestCompileOnly("maven.modrinth:refined-storage:${refined_storage_version}") { transitive = false }
-    gametestCompileOnly("maven.modrinth:immersiveengineering:${immersive_engineering_version}") { transitive = false }
-    gametestCompileOnly("maven.modrinth:super-factory-manager:${sfm_version}") { transitive = false }
     if (project.hasProperty('incompat')) {
-        gametestRuntimeOnly modrinth('refined-storage', refined_storage_version)
-        gametestRuntimeOnly modrinth('mekanism', mekanism_version)
-        gametestRuntimeOnly modrinth('immersiveengineering', immersive_engineering_version)
-        gametestRuntimeOnly modrinth('super-factory-manager', sfm_version)
         gametestRuntimeOnly modrinth('corail-tombstone', tombstone_version)
     }
+}
+
+// Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager, known incompatibilities too, have no
+// build for Minecraft 26.2: their tests stay in the sources, out of the build, until they have one
+sourceSets.gametest.java {
+    exclude 'capsule/gametest/RefinedStorageTests.java'
+    exclude 'capsule/gametest/MekanismTests.java'
+    exclude 'capsule/gametest/ImmersiveEngineeringTests.java'
+    exclude 'capsule/gametest/SuperFactoryManagerTests.java'
 }
 
 tasks.named('runGameTestServer') {

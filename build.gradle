@@ -1,6 +1,7 @@
 plugins {
     // https://projects.neoforged.net/neoforged/moddevgradle
     id 'net.neoforged.moddev' version '2.0.148' apply false
-    // https://maven.fabricmc.net/net/fabricmc/fabric-loom-remap/ (runs on Java 25, see gradle/gradle-daemon-jvm.properties)
-    id 'net.fabricmc.fabric-loom-remap' version '1.18.2' apply false
+    // https://maven.fabricmc.net/net/fabricmc/fabric-loom/ : the non-remapping Loom of unobfuscated Minecraft (26.1+),
+    // needs Gradle 9.8+ and Java 25 (see gradle/gradle-daemon-jvm.properties)
+    id 'net.fabricmc.fabric-loom' version '1.19.4' apply false
 }

@@ -19,13 +19,13 @@ Inspired by Dragon Ball capsules.
 [[dependencies.capsule]]
 modId="neoforge"
 type="required"
-versionRange="[21.1,)"
+versionRange="[26.2,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.capsule]]
 modId="minecraft"
 type="required"
-versionRange="[1.21.1,1.21.2)"
+versionRange="[26.2,26.3)"
 ordering="NONE"
 side="BOTH"
