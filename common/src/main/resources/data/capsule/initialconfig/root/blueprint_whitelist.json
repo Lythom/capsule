@@ -1,22 +1,6 @@
 [
   "minecraft:barrel",
   "minecraft:beacon",
-  "minecraft:white_bed",
-  "minecraft:orange_bed",
-  "minecraft:magenta_bed",
-  "minecraft:light_blue_bed",
-  "minecraft:yellow_bed",
-  "minecraft:lime_bed",
-  "minecraft:pink_bed",
-  "minecraft:gray_bed",
-  "minecraft:light_gray_bed",
-  "minecraft:cyan_bed",
-  "minecraft:purple_bed",
-  "minecraft:blue_bed",
-  "minecraft:brown_bed",
-  "minecraft:green_bed",
-  "minecraft:red_bed",
-  "minecraft:black_bed",
   "minecraft:bee_nest",
   "minecraft:beehive",
   "minecraft:bell",
@@ -62,9 +46,38 @@
     }
   },
   "minecraft:chest",
+  "minecraft:copper_chest",
+  "minecraft:exposed_copper_chest",
+  "minecraft:weathered_copper_chest",
+  "minecraft:oxidized_copper_chest",
+  "minecraft:waxed_copper_chest",
+  "minecraft:waxed_exposed_copper_chest",
+  "minecraft:waxed_weathered_copper_chest",
+  "minecraft:waxed_oxidized_copper_chest",
   "minecraft:chiseled_bookshelf",
+  "minecraft:acacia_shelf",
+  "minecraft:bamboo_shelf",
+  "minecraft:birch_shelf",
+  "minecraft:cherry_shelf",
+  "minecraft:crimson_shelf",
+  "minecraft:dark_oak_shelf",
+  "minecraft:jungle_shelf",
+  "minecraft:mangrove_shelf",
+  "minecraft:oak_shelf",
+  "minecraft:pale_oak_shelf",
+  "minecraft:spruce_shelf",
+  "minecraft:warped_shelf",
   "minecraft:comparator",
   "minecraft:conduit",
+  "minecraft:copper_golem_statue",
+  "minecraft:exposed_copper_golem_statue",
+  "minecraft:weathered_copper_golem_statue",
+  "minecraft:oxidized_copper_golem_statue",
+  "minecraft:waxed_copper_golem_statue",
+  "minecraft:waxed_exposed_copper_golem_statue",
+  "minecraft:waxed_weathered_copper_golem_statue",
+  "minecraft:waxed_oxidized_copper_golem_statue",
+  "minecraft:creaking_heart",
   {
     "block": "minecraft:crafter",
     "keepNBT": {
@@ -440,6 +453,14 @@
     }
   },
   {
+    "block": "minecraft:pale_oak_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
     "block": "minecraft:mangrove_sign",
     "keepNBT": {
       "front_text": null,
@@ -521,6 +542,14 @@
   },
   {
     "block": "minecraft:dark_oak_wall_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
+    "block": "minecraft:pale_oak_wall_sign",
     "keepNBT": {
       "front_text": null,
       "back_text": null,
@@ -616,6 +645,14 @@
     }
   },
   {
+    "block": "minecraft:pale_oak_hanging_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
     "block": "minecraft:mangrove_hanging_sign",
     "keepNBT": {
       "front_text": null,
@@ -704,6 +741,14 @@
     }
   },
   {
+    "block": "minecraft:pale_oak_wall_hanging_sign",
+    "keepNBT": {
+      "front_text": null,
+      "back_text": null,
+      "is_waxed": null
+    }
+  },
+  {
     "block": "minecraft:mangrove_wall_hanging_sign",
     "keepNBT": {
       "front_text": null,
@@ -744,6 +789,7 @@
     }
   },
   "minecraft:smoker",
+  "minecraft:potent_sulfur",
   {
     "block": "minecraft:structure_block",
     "keepNBT": {
