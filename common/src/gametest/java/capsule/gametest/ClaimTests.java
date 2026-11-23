@@ -18,15 +18,20 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapedRecipe;
@@ -48,7 +53,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
 import static capsule.gametest.CapsuleTestUtils.capture;
@@ -220,18 +224,11 @@ public class ClaimTests {
         MinecraftServer server = helper.getLevel().getServer();
         ItemStack even = CapsuleTestUtils.emptyCapsule(3);
         NBTHelper.updateTag(even, tag -> tag.putInt("size", 4));
-        RecipeHolder<ShapedRecipe> evenRecipe = new RecipeHolder<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_even_size"),
-                new ShapedRecipe("", CraftingBookCategory.MISC, ShapedRecipePattern.of(Map.of('#', Ingredient.of(Items.BEDROCK)), "#"), even));
-        CompletableFuture<Integer> largest = server.reloadResources(server.getPackRepository().getSelectedIds()).thenApply(reloaded -> {
-            RecipeManager recipes = server.getRecipeManager();
-            List<RecipeHolder<?>> original = List.copyOf(recipes.getRecipes());
-            recipes.replaceRecipes(Stream.concat(original.stream(), Stream.of(evenRecipe)).toList());
-            try {
-                return Claims.perBlockMaxSize(server);
-            } finally {
-                recipes.replaceRecipes(original);
-            }
-        });
+        RecipeHolder<ShapedRecipe> evenRecipe = new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_even_size")),
+                new ShapedRecipe(new Recipe.CommonInfo(true), new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""),
+                        ShapedRecipePattern.of(Map.of('#', Ingredient.of(Items.BEDROCK)), "#"), ItemStackTemplate.fromNonEmptyStack(even)));
+        CompletableFuture<Integer> largest = server.reloadResources(server.getPackRepository().getSelectedIds()).thenApply(reloaded ->
+                CapsuleTestUtils.withRecipes(server.getRecipeManager(), List.of(evenRecipe), () -> Claims.perBlockMaxSize(server)));
         helper.succeedWhen(() -> {
             assertTrue(helper, largest.isDone(), "reloading");
             int size = NBTHelper.getOrCreateTag(even).getIntOr("size", 0);

@@ -75,7 +75,7 @@ public class CapsuleMod {
         Config.populateConfigFolders(server);
         Claims.loadAdapters();
         if (PrefabsBlueprintAggregatorRecipe.instance != null)
-            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getResourceManager());
+            PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(CapsuleMod.server.getResourceManager(), CapsuleMod.server.registryAccess());
     }
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {

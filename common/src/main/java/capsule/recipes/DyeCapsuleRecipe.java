@@ -5,13 +5,15 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
 import com.google.common.collect.Lists;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.DyeItem;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -23,12 +25,13 @@ import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class DyeCapsuleRecipe extends CustomRecipe {
 
-    public DyeCapsuleRecipe(CraftingBookCategory category) {
-        super(category);
-    }
+    public static final DyeCapsuleRecipe INSTANCE = new DyeCapsuleRecipe();
+    public static final MapCodec<DyeCapsuleRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, DyeCapsuleRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+    public static final RecipeSerializer<DyeCapsuleRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<DyeCapsuleRecipe> getSerializer() {
         return CapsuleRecipes.DYE_CAPSULE_SERIALIZER.get();
     }
 
@@ -46,7 +49,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
                 if (itemstack1.getItem() instanceof CapsuleItem) {
                     itemstack = itemstack1;
                 } else {
-                    if (!(itemstack1.getItem() instanceof DyeItem)) {
+                    if (!itemstack1.has(DataComponents.DYE)) {
                         return false;
                     }
 
@@ -61,8 +64,8 @@ public class DyeCapsuleRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
-        List<DyeItem> dyes = Lists.newArrayList();
+    public ItemStack assemble(CraftingInput inv) {
+        List<DyeColor> dyes = Lists.newArrayList();
         ItemStack itemstack = ItemStack.EMPTY;
 
         for (int i = 0; i < inv.size(); ++i) {
@@ -76,11 +79,12 @@ public class DyeCapsuleRecipe extends CustomRecipe {
 
                     itemstack = itemstack1.copy();
                 } else {
-                    if (!(item instanceof DyeItem)) {
+                    DyeColor dye = itemstack1.get(DataComponents.DYE);
+                    if (dye == null) {
                         return ItemStack.EMPTY;
                     }
 
-                    dyes.add((DyeItem) item);
+                    dyes.add(dye);
                 }
             }
         }
@@ -88,7 +92,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
         return !itemstack.isEmpty() && !dyes.isEmpty() ? dyeItem(itemstack, dyes) : ItemStack.EMPTY;
     }
 
-    static ItemStack dyeItem(ItemStack stack, List<DyeItem> dyes) {
+    static ItemStack dyeItem(ItemStack stack, List<DyeColor> dyes) {
         ItemStack itemstack = ItemStack.EMPTY;
         int[] aint = new int[3];
         int i = 0;
@@ -111,8 +115,8 @@ public class DyeCapsuleRecipe extends CustomRecipe {
                 ++j;
             }
 
-            for (DyeItem dyeitem : dyes) {
-                int texColor = dyeitem.getDyeColor().getTextureDiffuseColor();
+            for (DyeColor dye : dyes) {
+                int texColor = dye.getTextureDiffuseColor();
                 int i2 = (texColor >> 16) & 0xFF;
                 int l = (texColor >> 8) & 0xFF;
                 int i1 = texColor & 0xFF;
@@ -142,12 +146,7 @@ public class DyeCapsuleRecipe extends CustomRecipe {
         }
     }
 
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= 2;
-    }
-
-    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
+    public ItemStack getResultItem() {
         return CapsuleItems.withState(EMPTY);
     }
 

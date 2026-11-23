@@ -3,24 +3,26 @@ package capsule.gametest;
 import capsule.CapsuleMod;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItem.CapsuleState;
+import capsule.items.CapsuleItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +34,12 @@ public class RecipeTests {
 
     private static ItemStack craft(GameTestHelper helper, String expectedRecipe, int width, int height, ItemStack... items) {
         CraftingInput input = CraftingInput.of(width, height, List.of(items));
-        RecipeHolder<CraftingRecipe> recipe = helper.getLevel().getRecipeManager()
+        RecipeHolder<CraftingRecipe> recipe = helper.getLevel().recipeAccess()
                 .getRecipeFor(RecipeType.CRAFTING, input, helper.getLevel())
                 .orElse(null);
         if (recipe == null) helper.fail("no recipe matches for " + expectedRecipe);
-        assertTrue(helper, recipe.id().toString().equals(expectedRecipe), "expected " + expectedRecipe + " but matched " + recipe.id());
-        return recipe.value().assemble(input, helper.getLevel().registryAccess());
+        assertTrue(helper, recipe.id().identifier().toString().equals(expectedRecipe), "expected " + expectedRecipe + " but matched " + recipe.id().identifier());
+        return recipe.value().assemble(input);
     }
 
     private static ItemStack linkedCapsule(GameTestHelper helper) {
@@ -50,22 +52,20 @@ public class RecipeTests {
      */
     @GameTest(template = "empty")
     public static void everyCapsuleRecipeLoadsWithResolvedIngredients(GameTestHelper helper) {
-        RecipeManager recipes = helper.getLevel().getRecipeManager();
+        RecipeManager recipes = helper.getLevel().recipeAccess();
         Set<String> problems = new LinkedHashSet<>();
         helper.getLevel().getServer().getResourceManager()
                 .listResources("recipe", rl -> rl.getNamespace().equals(CapsuleMod.MODID) && rl.getPath().endsWith(".json"))
                 .keySet().forEach(file -> {
                     String path = file.getPath();
                     Identifier id = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, path.substring("recipe/".length(), path.length() - ".json".length()));
-                    Optional<RecipeHolder<?>> recipe = recipes.byKey(id);
+                    Optional<RecipeHolder<?>> recipe = recipes.byKey(ResourceKey.create(Registries.RECIPE, id));
                     if (recipe.isEmpty()) {
                         problems.add(id + " is not loaded");
                         return;
                     }
-                    for (Ingredient ingredient : recipe.get().value().getIngredients()) {
-                        if (!ingredient.isEmpty() && (ingredient.getItems().length == 0 || Arrays.stream(ingredient.getItems()).anyMatch(s -> s.is(Items.BARRIER)))) {
-                            problems.add(id + " has an ingredient matching no item");
-                        }
+                    if (!CapsuleItems.hasNoEmptyTagsIngredient(recipe.get().value())) {
+                        problems.add(id + " has an ingredient matching no item");
                     }
                 });
 
@@ -90,14 +90,14 @@ public class RecipeTests {
     }
 
     private static void checkInventoryCriterion(net.minecraft.server.MinecraftServer server, Set<String> problems, String path, String criterion, ItemStack expected) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(CapsuleMod.MODID, path);
+        Identifier id = Identifier.fromNamespaceAndPath(CapsuleMod.MODID, path);
         var advancement = server.getAdvancements().get(id);
         if (advancement == null) {
             problems.add(id + " is not loaded");
             return;
         }
         var found = advancement.value().criteria().get(criterion);
-        if (found == null || !(found.triggerInstance() instanceof net.minecraft.advancements.critereon.InventoryChangeTrigger.TriggerInstance instance)) {
+        if (found == null || !(found.triggerInstance() instanceof net.minecraft.advancements.triggers.InventoryChangeTrigger.TriggerInstance instance)) {
             problems.add(id + " has no inventory_changed criterion " + criterion);
             return;
         }
@@ -113,10 +113,10 @@ public class RecipeTests {
      */
     @GameTest(template = "empty")
     public static void noCapsuleTierIsMadeOfLapis(GameTestHelper helper) {
-        List<Identifier> lapisTiers = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING).stream()
-                .filter(recipe -> recipe.value().getResultItem(helper.getLevel().registryAccess()).getItem() instanceof CapsuleItem)
-                .filter(recipe -> recipe.value().getIngredients().stream().anyMatch(i -> i.test(new ItemStack(Items.LAPIS_LAZULI))))
-                .map(RecipeHolder::id)
+        List<Identifier> lapisTiers = helper.getLevel().recipeAccess().getRecipes().stream()
+                .filter(recipe -> recipe.value() instanceof ShapedRecipe shaped && shaped.assemble(CraftingInput.EMPTY).getItem() instanceof CapsuleItem)
+                .filter(recipe -> ((ShapedRecipe) recipe.value()).getIngredients().stream().flatMap(Optional::stream).anyMatch(i -> i.test(new ItemStack(Items.LAPIS_LAZULI))))
+                .map(recipe -> recipe.id().identifier())
                 .toList();
         assertTrue(helper, lapisTiers.isEmpty(), "capsule tiers made of lapis: " + lapisTiers);
         helper.succeed();

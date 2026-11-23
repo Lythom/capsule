@@ -5,6 +5,7 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
 import capsule.plugins.claims.ClaimAdapter.Claim;
+import capsule.recipes.BlueprintCapsuleRecipe;
 import com.mojang.authlib.GameProfile;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -17,6 +18,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -265,10 +267,10 @@ public final class Claims {
         RecipeManager recipes = server.getRecipeManager();
         if (recipes != tiersRecipes) {
             // copies: getSize resizes invalid sizes, the recipe results are shared
-            largestTier = recipes.getAllRecipesFor(RecipeType.CRAFTING).stream()
+            largestTier = recipes.getRecipes().stream()
                     .map(RecipeHolder::value)
-                    .filter(recipe -> recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
-                    .map(recipe -> recipe.getResultItem(server.registryAccess()).copy())
+                    .filter(recipe -> recipe.getType() == RecipeType.CRAFTING && recipe instanceof ShapedRecipe && CapsuleItems.hasNoEmptyTagsIngredient(recipe))
+                    .map(recipe -> recipe instanceof BlueprintCapsuleRecipe blueprint ? blueprint.getResultItem() : ((ShapedRecipe) recipe).assemble(CraftingInput.EMPTY))
                     .filter(capsule -> capsule.getItem() instanceof CapsuleItem && !CapsuleItem.isOverpowered(capsule))
                     .mapToInt(CapsuleItem::getSize)
                     .max().orElse(1);

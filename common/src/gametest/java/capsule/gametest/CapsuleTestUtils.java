@@ -24,18 +24,24 @@ import net.minecraft.world.Clearable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Loader independent helpers shared by the capsule GameTests.
@@ -156,5 +162,26 @@ public class CapsuleTestUtils {
 
     public static void assertTrue(GameTestHelper helper, boolean condition, String message) {
         if (!condition) helper.fail(message);
+    }
+
+    /**
+     * Runs action with the recipes of manager plus extra, then puts the recipes back. Since Minecraft 1.21.2 the
+     * recipe manager has no API to replace its recipes, so its recipe map is swapped by reflection.
+     */
+    public static <T> T withRecipes(RecipeManager manager, List<RecipeHolder<?>> extra, Supplier<T> action) {
+        try {
+            Field field = Arrays.stream(RecipeManager.class.getDeclaredFields())
+                    .filter(f -> f.getType() == RecipeMap.class).findFirst().orElseThrow();
+            field.setAccessible(true);
+            RecipeMap original = (RecipeMap) field.get(manager);
+            field.set(manager, RecipeMap.create(Stream.concat(original.values().stream(), extra.stream()).toList()));
+            try {
+                return action.get();
+            } finally {
+                field.set(manager, original);
+            }
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

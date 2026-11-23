@@ -21,7 +21,7 @@ public class FurnaceExperienceTests {
         BlockPos furnacePos = new BlockPos(2, 1, 2);
         helper.setBlock(furnacePos, Blocks.FURNACE);
         FurnaceBlockEntity furnace = helper.getBlockEntity(furnacePos);
-        var recipe = helper.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.SMELTING).getFirst();
+        var recipe = helper.getLevel().recipeAccess().getRecipes().stream().filter(r -> r.value().getType() == RecipeType.SMELTING).findFirst().orElseThrow();
         for (int i = 0; i < 10; i++) furnace.setRecipeUsed(recipe);
 
         ItemStack capsule = capture(helper, new BlockPos(1, 1, 1), 3);

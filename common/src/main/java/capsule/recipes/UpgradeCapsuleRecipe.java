@@ -6,7 +6,6 @@ import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -14,12 +13,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 import static capsule.items.CapsuleItem.CapsuleState.EMPTY;
 
 public class UpgradeCapsuleRecipe implements CraftingRecipe {
+    public static final MapCodec<UpgradeCapsuleRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance.group(
+                    Ingredient.CODEC.fieldOf("ingredient").forGetter(recipe -> recipe.upgradeIngredient)
+            ).apply(instance, UpgradeCapsuleRecipe::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, UpgradeCapsuleRecipe> STREAM_CODEC = StreamCodec.composite(
+            Ingredient.CONTENTS_STREAM_CODEC, recipe -> recipe.upgradeIngredient,
+            UpgradeCapsuleRecipe::new);
+    public static final RecipeSerializer<UpgradeCapsuleRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+
     /**
      * Is the ItemStack that you repair.
      */
@@ -29,7 +38,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
         this.upgradeIngredient = upgradeIngredient;
     }
 
-    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
+    public ItemStack getResultItem() {
         return CapsuleItems.getUpgradedCapsule(CapsuleItems.withState(EMPTY), 1);
     }
 
@@ -62,7 +71,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInput invC, HolderLookup.Provider registryAccess) {
+    public ItemStack assemble(CraftingInput invC) {
         ItemStack input = ItemStack.EMPTY;
         int material = 0;
         for (int i = 0; i < invC.size(); ++i) {
@@ -97,12 +106,7 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     }
 
     @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= 2;
-    }
-
-    @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<UpgradeCapsuleRecipe> getSerializer() {
         return CapsuleRecipes.UPGRADE_CAPSULE_SERIALIZER.get();
     }
 
@@ -112,32 +116,25 @@ public class UpgradeCapsuleRecipe implements CraftingRecipe {
     }
 
     @Override
-    public CraftingBookCategory category() {
-        return CraftingBookCategory.MISC;
+    public boolean showNotification() {
+        return true;
     }
 
-    public static class Serializer implements RecipeSerializer<UpgradeCapsuleRecipe> {
-        public static final MapCodec<UpgradeCapsuleRecipe> CODEC = RecordCodecBuilder.mapCodec(
-                instance -> instance.group(
-                                Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(recipe -> recipe.upgradeIngredient)
-                        )
-                        .apply(instance, UpgradeCapsuleRecipe::new)
-        );
+    @Override
+    public String group() {
+        return "";
+    }
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, UpgradeCapsuleRecipe> STREAM_CODEC =
-                StreamCodec.composite(
-                        Ingredient.CONTENTS_STREAM_CODEC, recipe -> recipe.upgradeIngredient,
-                        UpgradeCapsuleRecipe::new
-                );
+    /**
+     * The recipe book cannot place a recipe whose ingredient count varies.
+     */
+    @Override
+    public PlacementInfo placementInfo() {
+        return PlacementInfo.NOT_PLACEABLE;
+    }
 
-        @Override
-        public MapCodec<UpgradeCapsuleRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, UpgradeCapsuleRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
+    @Override
+    public CraftingBookCategory category() {
+        return CraftingBookCategory.MISC;
     }
 }

@@ -4,19 +4,16 @@ import capsule.helpers.NBTHelper;
 import capsule.helpers.Capsule;
 import capsule.items.CapsuleItem;
 import capsule.platform.Services;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
@@ -30,34 +27,44 @@ import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
  * crafting a prefab, in this case the structureName to create template is taken from the recipe output
  */
 public class BlueprintCapsuleRecipe extends ShapedRecipe {
-    final ShapedRecipePattern pattern;
-    final ItemStack result;
-    final String group;
-    final CraftingBookCategory category;
-    final boolean showNotification;
+    /**
+     * The fields of vanilla's shaped recipe (group, category, show_notification, pattern, key, result).
+     */
+    public static final MapCodec<BlueprintCapsuleRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance.group(
+                    Recipe.CommonInfo.MAP_CODEC.forGetter(recipe -> recipe.commonInfo),
+                    CraftingRecipe.CraftingBookInfo.MAP_CODEC.forGetter(recipe -> recipe.bookInfo),
+                    ShapedRecipePattern.MAP_CODEC.forGetter(recipe -> recipe.pattern),
+                    ItemStackTemplate.CODEC.fieldOf("result").forGetter(recipe -> recipe.result)
+            ).apply(instance, BlueprintCapsuleRecipe::new));
+    public static final StreamCodec<RegistryFriendlyByteBuf, BlueprintCapsuleRecipe> STREAM_CODEC = StreamCodec.composite(
+            Recipe.CommonInfo.STREAM_CODEC, recipe -> recipe.commonInfo,
+            CraftingRecipe.CraftingBookInfo.STREAM_CODEC, recipe -> recipe.bookInfo,
+            ShapedRecipePattern.STREAM_CODEC, recipe -> recipe.pattern,
+            ItemStackTemplate.STREAM_CODEC, recipe -> recipe.result,
+            BlueprintCapsuleRecipe::new);
+    public static final RecipeSerializer<BlueprintCapsuleRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    public BlueprintCapsuleRecipe(String group, CraftingBookCategory category, ShapedRecipePattern pattern, ItemStack result, boolean showNotification) {
-        super(group, category, pattern, result);
-        this.group = group;
-        this.category = category;
+    final ShapedRecipePattern pattern;
+    final ItemStackTemplate result;
+
+    public BlueprintCapsuleRecipe(Recipe.CommonInfo commonInfo, CraftingRecipe.CraftingBookInfo bookInfo, ShapedRecipePattern pattern, ItemStackTemplate result) {
+        super(commonInfo, bookInfo, pattern, result);
         this.pattern = pattern;
         this.result = result;
-        this.showNotification = showNotification;
     }
 
-    @Override
-    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
-        return super.getResultItem(registryAccess);
-    }
-
-    @Override
-    public NonNullList<Ingredient> getIngredients() {
-        return super.getIngredients();
+    /**
+     * The capsule this recipe shows, as written in its json.
+     */
+    public ItemStack getResultItem() {
+        return result.create();
     }
 
     /**
      * The original capsule remains in the crafting grid
      */
+    @Override
     public NonNullList<ItemStack> getRemainingItems(CraftingInput inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
@@ -79,6 +86,7 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     /**
      * Used to check if a recipe matches current crafting inventory
      */
+    @Override
     public boolean matches(CraftingInput inv, Level worldIn) {
         if (!super.matches(inv, worldIn)) {
             return false;
@@ -98,8 +106,9 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
     /**
      * Returns a copy built from the original capsule.
      */
-    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
-        ItemStack referenceCapsule = super.getResultItem(registryAccess);
+    @Override
+    public ItemStack assemble(CraftingInput inv) {
+        ItemStack referenceCapsule = getResultItem();
         for (int i = 0; i < inv.size(); ++i) {
             ItemStack itemstack = inv.getItem(i);
             if (IsCopyable(itemstack)) {
@@ -113,7 +122,7 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
         try {
             ItemStack blueprintItem = Capsule.newLinkedCapsuleItemStack(
                     CapsuleItem.getStructureName(referenceCapsule),
-                    CapsuleItem.getBaseColor(super.getResultItem(registryAccess)),
+                    CapsuleItem.getBaseColor(getResultItem()),
                     0xFFFFFF,
                     CapsuleItem.getSize(referenceCapsule),
                     CapsuleItem.isOverpowered(referenceCapsule),
@@ -133,71 +142,18 @@ public class BlueprintCapsuleRecipe extends ShapedRecipe {
         }
     }
 
+    /**
+     * ShapedRecipe declares its own serializer type; the recipe is written and read by SERIALIZER, registered as
+     * capsule:blueprint_capsule.
+     */
     @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return super.canCraftInDimensions(width, height);
-    }
-
-//    @Override
-//    public Identifier getId() {
-//        return recipe.getId();
-//    }
-
-    @Override
-    public RecipeSerializer<?> getSerializer() {
-        return CapsuleRecipes.BLUEPRINT_CAPSULE_SERIALIZER.get();
+    @SuppressWarnings("unchecked")
+    public RecipeSerializer<ShapedRecipe> getSerializer() {
+        return (RecipeSerializer<ShapedRecipe>) (RecipeSerializer<?>) CapsuleRecipes.BLUEPRINT_CAPSULE_SERIALIZER.get();
     }
 
     @Override
     public boolean isSpecial() {
         return true;
-    }
-
-    @Override
-    public CraftingBookCategory category() {
-        return CraftingBookCategory.MISC;
-    }
-
-    public static class Serializer implements RecipeSerializer<BlueprintCapsuleRecipe> {
-        public static final MapCodec<BlueprintCapsuleRecipe> CODEC = RecordCodecBuilder.mapCodec(
-                instance -> instance.group(
-                                Codec.STRING.optionalFieldOf("group", "").forGetter(recipe -> recipe.group),
-                                CraftingBookCategory.CODEC.fieldOf("category").orElse(CraftingBookCategory.MISC).forGetter(recipe -> recipe.category),
-                                ShapedRecipePattern.MAP_CODEC.forGetter(recipe -> recipe.pattern),
-                                ItemStack.STRICT_CODEC.fieldOf("result").forGetter(recipe -> recipe.result),
-                                Codec.BOOL.optionalFieldOf("show_notification", true).forGetter(recipe -> recipe.showNotification)
-                        )
-                        .apply(instance, BlueprintCapsuleRecipe::new)
-        );
-
-        public static final StreamCodec<RegistryFriendlyByteBuf, BlueprintCapsuleRecipe> STREAM_CODEC =
-                StreamCodec.of(Serializer::toNetwork, Serializer::fromNetwork);
-
-        private static BlueprintCapsuleRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-            String s = buffer.readUtf();
-            CraftingBookCategory category = buffer.readEnum(CraftingBookCategory.class);
-            ShapedRecipePattern pattern = ShapedRecipePattern.STREAM_CODEC.decode(buffer);
-            ItemStack result = ItemStack.STREAM_CODEC.decode(buffer);
-            boolean showNotification = buffer.readBoolean();
-            return new BlueprintCapsuleRecipe(s, category, pattern, result, showNotification);
-        }
-
-        private static void toNetwork(RegistryFriendlyByteBuf buffer, BlueprintCapsuleRecipe recipe) {
-            buffer.writeUtf(recipe.group);
-            buffer.writeEnum(recipe.category);
-            ShapedRecipePattern.STREAM_CODEC.encode(buffer, recipe.pattern);
-            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
-            buffer.writeBoolean(recipe.showNotification);
-        }
-
-        @Override
-        public MapCodec<BlueprintCapsuleRecipe> codec() {
-            return CODEC;
-        }
-
-        @Override
-        public StreamCodec<RegistryFriendlyByteBuf, BlueprintCapsuleRecipe> streamCodec() {
-            return STREAM_CODEC;
-        }
     }
 }

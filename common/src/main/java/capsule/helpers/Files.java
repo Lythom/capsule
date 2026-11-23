@@ -45,6 +45,23 @@ public class Files {
         return null;
     }
 
+    /**
+     * Copies the file Capsule ships at assetPath (data/capsule/<assetPath>) to file, which is missing.
+     */
+    public static void restoreDefaultConfig(File file, String assetPath, ResourceManager ressourceManager) {
+        Identifier id = Identifier.fromNamespaceAndPath("capsule", assetPath);
+        ressourceManager.getResource(id).ifPresentOrElse(resource -> {
+            try (InputStream source = resource.open()) {
+                File parentFolder = file.getParentFile();
+                if (parentFolder != null && !parentFolder.exists()) parentFolder.mkdirs();
+                java.nio.file.Files.copy(source, file.toPath());
+                LOGGER.info("Restored the default " + file.getPath());
+            } catch (IOException e) {
+                LOGGER.error("Could not restore the default " + file.getPath(), e);
+            }
+        }, () -> LOGGER.error("Could not restore the default " + file.getPath() + ": " + id + " is missing"));
+    }
+
     public static JsonObject copy(JsonObject original) {
         try {
             return GSON.fromJson(GSON.toJson(original, JsonObject.class), JsonObject.class);

@@ -51,6 +51,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.GameRules;
@@ -254,10 +255,10 @@ public class ClientSmokeTest {
                             CapsuleItems.capsuleList.size() + " tiers, without recipe: " + tiersWithoutRecipe);
                     List<RecipeHolder<CraftingRecipe>> special = RecipeViewerContent.craftingRecipes();
                     List<String> specialWithoutRecipe = special.stream()
-                            .filter(recipe -> viewer.craftingRecipes(recipe.value().getResultItem(mc().level.registryAccess())) == 0)
-                            .map(recipe -> recipe.id().getPath())
+                            .filter(recipe -> viewer.craftingRecipes(recipe.value().assemble(CraftingInput.EMPTY)) == 0)
+                            .map(recipe -> recipe.id().identifier().getPath())
                             .toList();
-                    long prefabs = special.stream().filter(recipe -> recipe.id().getPath().startsWith("/prefab/")).count();
+                    long prefabs = special.stream().filter(recipe -> recipe.id().identifier().getPath().startsWith("/prefab/")).count();
                     scenario.check(name + " shows the upgrade, clear, recovery, blueprint and prefab recipes", specialWithoutRecipe.isEmpty(),
                             special.size() + " recipes including " + prefabs + " prefabs, without recipe: " + specialWithoutRecipe);
                     viewer.showRecipes(capsule);

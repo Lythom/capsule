@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -204,8 +205,8 @@ public class BlueprintCraftingTests {
                 .filter(r -> r.recipe.getWidth() == 3 && r.recipe.getHeight() == 3 && prefabSlots.stream().noneMatch(i -> r.recipe.getIngredients().get(i).isEmpty()))
                 .findFirst().orElse(null);
         assertTrue(helper, recipe != null, "a prefab recipe with three ingredients should exist");
-        List<Ingredient> ingredients = recipe.recipe.getIngredients();
-        ItemStack[] grid = ingredients.stream().map(i -> i.isEmpty() ? ItemStack.EMPTY : i.getItems()[0].copyWithCount(2)).toArray(ItemStack[]::new);
+        List<Optional<Ingredient>> ingredients = recipe.recipe.getIngredients();
+        ItemStack[] grid = ingredients.stream().map(i -> i.map(ingredient -> new ItemStack(ingredient.items().findFirst().orElseThrow(), 2)).orElse(ItemStack.EMPTY)).toArray(ItemStack[]::new);
         ServerPlayer player = CapsuleTestUtils.survivalPlayer(helper, new BlockPos(4, 1, 4));
         CraftingMenu menu = craftingMenu(helper, player, grid);
 
@@ -215,7 +216,7 @@ public class BlueprintCraftingTests {
         int[] expected = IntStream.range(0, 9).map(i -> grid[i].isEmpty() ? 0 : prefabSlots.contains(i) ? 2 : 2 - crafts).toArray();
         List<ItemStack> crafted = blueprints(helper, player, menu);
         CapsuleTestUtils.removePlayer(player);
-        assertTrue(helper, crafted.size() == crafts, recipe.recipe.getResultItem(helper.getLevel().registryAccess()) + ": expected " + crafts + " blueprints, got " + crafted.size());
+        assertTrue(helper, crafted.size() == crafts, recipe.getResultItem() + ": expected " + crafts + " blueprints, got " + crafted.size());
         assertTrue(helper, Arrays.equals(gridCounts(menu), expected), "grid counts " + Arrays.toString(gridCounts(menu)) + " instead of " + Arrays.toString(expected));
         helper.succeed();
     }
@@ -241,11 +242,11 @@ public class BlueprintCraftingTests {
             String original = Files.readString(file);
             try {
                 Files.writeString(file, original.replaceFirst("\"pattern\": \\[[^\\]]*\\]", pattern));
-                PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(helper.getLevel().getServer().getResourceManager());
+                PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(helper.getLevel().getServer().getResourceManager(), helper.getLevel().registryAccess());
                 test.run();
             } finally {
                 Files.writeString(file, original);
-                PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(helper.getLevel().getServer().getResourceManager());
+                PrefabsBlueprintAggregatorRecipe.instance.populateRecipes(helper.getLevel().getServer().getResourceManager(), helper.getLevel().registryAccess());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

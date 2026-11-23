@@ -9,25 +9,22 @@ import capsule.recipes.BlueprintChangeRecipe;
 import capsule.recipes.PrefabsBlueprintAggregatorRecipe;
 import capsule.recipes.RecoveryCapsuleRecipe;
 import capsule.recipes.UpgradeCapsuleRecipe;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
@@ -58,7 +55,11 @@ public class CapsuleItems {
         return CapsuleItem.getSize(capsule) + CapsuleItem.getMaterialColor(capsule) * 0.000000000001D;
     }
 
-    public static void registerRecipesClient(RecipeManager manager) {
+    /**
+     * Fills the capsule lists of the creative tab and of the recipe viewers from the crafting recipes: on the client,
+     * those the server sent (NeoForge RecipesReceivedEvent, Fabric ClientRecipeSynchronizedEvent).
+     */
+    public static void registerRecipesClient(Iterable<? extends RecipeHolder<?>> recipes) {
         blueprintCapsules.clear();
         blueprintPrefabs.clear();
         capsuleList.clear();
@@ -69,38 +70,30 @@ public class CapsuleItems {
         blueprintChangedCapsule = null;
         upgradedCapsule = null;
 
-        Minecraft minecraft = Minecraft.getInstance();
-        ClientLevel level = minecraft.level;
-        if (level == null) {
-            throw new NullPointerException("level must not be null.");
-        }
-        HolderLookup.Provider registryAccess = level.registryAccess();
-
         // create reference ItemStacks from json recipes
         // used for creative tab and JEI, disabled recipes should not raise here
-        for (RecipeHolder<?> recipeHolder : manager.getRecipes()) {
+        for (RecipeHolder<?> recipeHolder : recipes) {
             var recipe = recipeHolder.value();
-            if (recipeHolder.id().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
-                if (recipe instanceof BlueprintCapsuleRecipe) {
-                    blueprintCapsules.add(Pair.of(((BlueprintCapsuleRecipe) recipe).getResultItem(registryAccess), ((BlueprintCapsuleRecipe) recipe)));
-                } else if (recipe instanceof RecoveryCapsuleRecipe) {
-                    recoveryCapsule = Pair.of(((RecoveryCapsuleRecipe) recipe).getResultItem(registryAccess), (RecoveryCapsuleRecipe) recipe);
-                } else if (recipe instanceof UpgradeCapsuleRecipe) {
-                    upgradedCapsule = Pair.of(recipe.getResultItem(registryAccess), (UpgradeCapsuleRecipe) recipe);
-                } else if (recipe instanceof BlueprintChangeRecipe) {
-                    blueprintChangedCapsule = Pair.of(recipe.getResultItem(registryAccess), (BlueprintChangeRecipe) recipe);
-                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe) {
-                    PrefabsBlueprintAggregatorRecipe agg = (PrefabsBlueprintAggregatorRecipe) recipe;
+            if (recipeHolder.id().identifier().getNamespace().equals("capsule") && hasNoEmptyTagsIngredient(recipe)) {
+                if (recipe instanceof BlueprintCapsuleRecipe blueprint) {
+                    blueprintCapsules.add(Pair.of(blueprint.getResultItem(), blueprint));
+                } else if (recipe instanceof RecoveryCapsuleRecipe recovery) {
+                    recoveryCapsule = Pair.of(recovery.getResultItem(), recovery);
+                } else if (recipe instanceof UpgradeCapsuleRecipe upgrade) {
+                    upgradedCapsule = Pair.of(upgrade.getResultItem(), upgrade);
+                } else if (recipe instanceof BlueprintChangeRecipe blueprintChange) {
+                    blueprintChangedCapsule = Pair.of(blueprintChange.getResultItem(), blueprintChange);
+                } else if (recipe instanceof PrefabsBlueprintAggregatorRecipe agg) {
                     for (PrefabsBlueprintAggregatorRecipe.PrefabsBlueprintCapsuleRecipe aggregatorRecipe : agg.recipes) {
-                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getResultItem(registryAccess), aggregatorRecipe.recipe));
+                        blueprintPrefabs.add(Pair.of(aggregatorRecipe.getResultItem(), aggregatorRecipe.recipe));
                     }
-                } else {
-                    ItemStack output = recipe.getResultItem(registryAccess);
-                    if (output.getItem() instanceof CapsuleItem && recipe instanceof ShapedRecipe) {
+                } else if (recipe instanceof ShapedRecipe shaped) {
+                    ItemStack output = shaped.assemble(CraftingInput.EMPTY);
+                    if (output.getItem() instanceof CapsuleItem) {
                         if (CapsuleItem.isOverpowered(output)) {
-                            CapsuleItems.opCapsuleList.put(output, (ShapedRecipe) recipe);
+                            CapsuleItems.opCapsuleList.put(output, shaped);
                         } else {
-                            CapsuleItems.capsuleList.put(output, (ShapedRecipe) recipe);
+                            CapsuleItems.capsuleList.put(output, shaped);
                         }
                     }
                 }
@@ -113,8 +106,21 @@ public class CapsuleItems {
         }
     }
 
+    /**
+     * False when an ingredient of the recipe matches no item, an empty tag for example (a material no mod adds).
+     */
     public static boolean hasNoEmptyTagsIngredient(Recipe<?> recipe) {
-        return recipe.getIngredients().stream().allMatch(i -> i.isEmpty() || Arrays.stream(i.getItems()).noneMatch(s -> s.getItem() == Items.BARRIER));
+        List<Ingredient> ingredients;
+        if (recipe instanceof ShapedRecipe shaped) {
+            ingredients = shaped.getIngredients().stream().flatMap(Optional::stream).toList();
+        } else if (recipe instanceof RecoveryCapsuleRecipe recovery) {
+            ingredients = recovery.ingredients;
+        } else if (recipe instanceof UpgradeCapsuleRecipe upgrade) {
+            ingredients = List.of(upgrade.upgradeIngredient);
+        } else {
+            ingredients = recipe.placementInfo().ingredients();
+        }
+        return ingredients.stream().noneMatch(Ingredient::isEmpty);
     }
 
     public static ItemStack getUnlabelledCapsule(ItemStack capsule) {

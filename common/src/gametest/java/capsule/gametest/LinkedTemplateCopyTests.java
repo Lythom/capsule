@@ -15,24 +15,27 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -43,7 +46,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static capsule.gametest.CapsuleTestUtils.assertTrue;
 import static capsule.gametest.CapsuleTestUtils.capture;
@@ -106,16 +108,13 @@ public class LinkedTemplateCopyTests {
      * Runs craft with a shapeless recipe turning a furnace into result, removed afterwards.
      */
     private static void withRecipe(GameTestHelper helper, ItemStack result, Runnable craft) {
-        RecipeManager recipes = helper.getLevel().getRecipeManager();
-        List<RecipeHolder<?>> original = List.copyOf(recipes.getRecipes());
-        RecipeHolder<ShapelessRecipe> recipe = new RecipeHolder<>(Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_linked_template_copy"),
-                new ShapelessRecipe("", CraftingBookCategory.MISC, result, NonNullList.of(Ingredient.EMPTY, Ingredient.of(Items.FURNACE))));
-        recipes.replaceRecipes(Stream.concat(original.stream(), Stream.of(recipe)).toList());
-        try {
+        RecipeHolder<ShapelessRecipe> recipe = new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(CapsuleMod.MODID, "test_linked_template_copy")),
+                new ShapelessRecipe(new Recipe.CommonInfo(true), new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""),
+                        ItemStackTemplate.fromNonEmptyStack(result), List.of(Ingredient.of(Items.FURNACE))));
+        CapsuleTestUtils.withRecipes(helper.getLevel().recipeAccess(), List.of(recipe), () -> {
             craft.run();
-        } finally {
-            recipes.replaceRecipes(original);
-        }
+            return null;
+        });
     }
 
     /**

@@ -3,12 +3,12 @@ package capsule.recipes;
 import capsule.helpers.NBTHelper;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -17,11 +17,12 @@ import static capsule.items.CapsuleItem.CapsuleState.DEPLOYED;
 
 public class BlueprintChangeRecipe extends CustomRecipe {
 
-    public BlueprintChangeRecipe(CraftingBookCategory category) {
-        super(category);
-    }
+    public static final BlueprintChangeRecipe INSTANCE = new BlueprintChangeRecipe();
+    public static final MapCodec<BlueprintChangeRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, BlueprintChangeRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+    public static final RecipeSerializer<BlueprintChangeRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
+    public ItemStack getResultItem() {
         ItemStack bp = new ItemStack(CapsuleItems.CAPSULE.get(), 1);
         CapsuleItem.setState(bp, DEPLOYED);
         CapsuleItem.setBlueprint(bp);
@@ -31,7 +32,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<BlueprintChangeRecipe> getSerializer() {
         return CapsuleRecipes.BLUEPRINT_CHANGE_SERIALIZER.get();
     }
 
@@ -83,7 +84,7 @@ public class BlueprintChangeRecipe extends CustomRecipe {
      * Returns an Item that is the result of this recipe
      */
     @Override
-    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
+    public ItemStack assemble(CraftingInput inv) {
         String templateStructure = null;
         Integer templateSize = null;
         ItemStack blueprintCapsule = null;
@@ -111,10 +112,4 @@ public class BlueprintChangeRecipe extends CustomRecipe {
         }
         return ItemStack.EMPTY;
     }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= 2;
-    }
-
 }

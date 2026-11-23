@@ -7,6 +7,7 @@ import capsule.platform.Services;
 import capsule.structure.CapsuleTemplate;
 import capsule.structure.CapsuleTemplateManager;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -226,55 +227,53 @@ public class Blueprint {
         return reduced;
     }
 
-    public static void createDynamicPrefabRecipes(ResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<Identifier, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
-        JsonObject referenceRecipe = Files.readJSON(new File(Config.getCapsuleConfigDir().toString(), "prefab_blueprint_recipe.json"));
-        if (referenceRecipe != null) {
-            // declarations extract to improve readability
-            List<String> enabledPrefabsTemplatesList;
-            TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients;
-            Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced;
-            // get the minimum amount of ingredient without conflicts for each recipe
-            CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixers.getDataFixer());
-            enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
-            templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
-            reduced = reduceIngredientCount(templatesByIngrendients);
+    public static final String PREFAB_RECIPE_FILE = "prefab_blueprint_recipe.json";
 
+    /**
+     * Reads config/capsule/prefab_blueprint_recipe.json and gives parseTemplate, for each prefab, a copy of it whose
+     * result is the prefab blueprint. parseTemplate may throw a JsonParseException when the copy is not a valid
+     * recipe.
+     * A file that cannot be used is reported in one log error, and there is then no prefab recipe: the file is not
+     * converted from older formats (it is recreated, in the current format, once deleted).
+     *
+     * @return false when the file cannot be used: what parseTemplate received must then be dropped
+     */
+    public static boolean createDynamicPrefabRecipes(ResourceManager resourceManager, List<String> prefabsTemplatesList, TriConsumer<Identifier, JsonObject, Triple<ItemStackKey, ItemStackKey, ItemStackKey>> parseTemplate) {
+        File file = new File(Config.getCapsuleConfigDir().toString(), PREFAB_RECIPE_FILE);
+        if (!file.exists()) {
+            Files.restoreDefaultConfig(file, "initialconfig/root/" + PREFAB_RECIPE_FILE, resourceManager);
+        }
+        JsonObject referenceRecipe;
+        try {
+            referenceRecipe = Files.readJSON(file);
+        } catch (JsonParseException e) {
+            reportInvalidPrefabRecipe(file, "it is not valid json: " + e.getMessage());
+            return false;
+        }
+        if (referenceRecipe == null) {
+            reportInvalidPrefabRecipe(file, "it cannot be read");
+            return false;
+        }
+        String formatProblem = prefabRecipeFormatProblem(referenceRecipe);
+        if (formatProblem != null) {
+            reportInvalidPrefabRecipe(file, formatProblem);
+            return false;
+        }
+
+        // get the minimum amount of ingredient without conflicts for each recipe
+        CapsuleTemplateManager tempManager = new CapsuleTemplateManager(resourceManager, new File("."), DataFixers.getDataFixer());
+        List<String> enabledPrefabsTemplatesList = getModEnabledTemplates(prefabsTemplatesList);
+        TreeMap<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> templatesByIngrendients = sortTemplatesByIngredients(enabledPrefabsTemplatesList, tempManager);
+        Map<Triple<ItemStackKey, ItemStackKey, ItemStackKey>, String> reduced = reduceIngredientCount(templatesByIngrendients);
+
+        try {
             reduced.forEach((ingredients, templateName) -> {
                 CapsuleTemplate template = tempManager.getTemplate(Identifier.parse(templateName));
                 JsonObject jsonRecipe = Files.copy(referenceRecipe);
                 if (ingredients.getLeft() == null && ingredients.getMiddle() == null && ingredients.getRight() == null) {
                     LOGGER.error("template " + templateName + " cannot be turned into recipe because capsule failed to turn any block of the structure into ingredient. Please ensure all the modded blocks you are using in the template have their corresponding mod loaded in a version compatible with the template you are using.");
-                }
-                else if (jsonRecipe != null && template != null) {
-                    JsonObject result = jsonRecipe.getAsJsonObject("result");
-                    JsonObject customData;
-                    if (result.has("components")) {
-                        customData = result.getAsJsonObject("components").getAsJsonObject("minecraft:custom_data");
-                    } else if (result.has("nbt")) {
-                        // Legacy format migration: convert old "item"/"nbt" to new "id"/"components" format
-                        LOGGER.warn("prefab_blueprint_recipe.json uses legacy format. Please update to 1.21.1 format with 'id' and 'components'.");
-                        String itemId = result.get("item").getAsString();
-                        JsonObject nbt = result.getAsJsonObject("nbt");
-                        result.remove("item");
-                        result.remove("nbt");
-                        result.addProperty("id", itemId);
-                        result.addProperty("count", 1);
-                        JsonObject components = new JsonObject();
-                        // Extract display.color for dyed_color component
-                        if (nbt.has("display") && nbt.getAsJsonObject("display").has("color")) {
-                            JsonObject dyedColor = new JsonObject();
-                            dyedColor.addProperty("rgb", nbt.getAsJsonObject("display").get("color").getAsInt());
-                            dyedColor.addProperty("show_in_tooltip", false);
-                            components.add("minecraft:dyed_color", dyedColor);
-                            nbt.remove("display");
-                        }
-                        components.add("minecraft:custom_data", nbt);
-                        result.add("components", components);
-                        customData = nbt;
-                    } else {
-                        LOGGER.error("Invalid prefab_blueprint_recipe.json format for template " + templateName);
-                        return;
-                    }
+                } else if (jsonRecipe != null && template != null) {
+                    JsonObject customData = jsonRecipe.getAsJsonObject("result").getAsJsonObject("components").getAsJsonObject("minecraft:custom_data");
                     customData.addProperty("structureName", templateName);
                     customData.addProperty("label", Capsule.labelFromPath(templateName));
                     int size = Math.max(template.getSize().getX(), Math.max(template.getSize().getY(), template.getSize().getZ()));
@@ -283,7 +282,36 @@ public class Blueprint {
                     warnBlocksMissingFromBlueprints(templateName, template);
                 }
             });
+        } catch (JsonParseException e) {
+            reportInvalidPrefabRecipe(file, "it is not a valid shaped recipe: " + e.getMessage());
+            return false;
         }
+        return true;
+    }
+
+    /**
+     * What makes the prefab recipe template unusable before it is parsed as a recipe, or null.
+     */
+    @Nullable
+    private static String prefabRecipeFormatProblem(JsonObject recipe) {
+        if (!recipe.has("result") || !recipe.get("result").isJsonObject()) {
+            return "it has no \"result\" object";
+        }
+        JsonObject result = recipe.getAsJsonObject("result");
+        if (result.has("nbt") || result.has("item")) {
+            return "its \"result\" is in the format of Capsule 1.20 and older (\"item\" and \"nbt\" instead of \"id\" and \"components\")";
+        }
+        if (!result.has("components") || !result.get("components").isJsonObject()
+                || !result.getAsJsonObject("components").has("minecraft:custom_data")
+                || !result.getAsJsonObject("components").get("minecraft:custom_data").isJsonObject()) {
+            return "its \"result\" has no \"components\" object with a \"minecraft:custom_data\" object";
+        }
+        return null;
+    }
+
+    private static void reportInvalidPrefabRecipe(File file, String problem) {
+        LOGGER.error("The prefab blueprint recipes are disabled: " + file.getPath() + " cannot be used, " + problem
+                + ". Delete this file to restore the default one, in the format of this Capsule version, at the next server start.");
     }
 
     /**

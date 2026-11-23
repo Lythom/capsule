@@ -3,11 +3,12 @@ package capsule.recipes;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
 import capsule.platform.Services;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
@@ -31,13 +32,13 @@ public class ClearCapsuleRecipe extends CustomRecipe {
         return capsule;
     }
 
-    public ClearCapsuleRecipe(CraftingBookCategory category) {
-        super(category);
-    }
-
+    public static final ClearCapsuleRecipe INSTANCE = new ClearCapsuleRecipe();
+    public static final MapCodec<ClearCapsuleRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClearCapsuleRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+    public static final RecipeSerializer<ClearCapsuleRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<ClearCapsuleRecipe> getSerializer() {
         return CapsuleRecipes.CLEAR_CAPSULE_SERIALIZER.get();
     }
 
@@ -64,7 +65,7 @@ public class ClearCapsuleRecipe extends CustomRecipe {
     /**
      * Returns an Item that is the result of this recipe
      */
-    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registryAccess) {
+    public ItemStack assemble(CraftingInput inv) {
         NonNullList<ItemStack> nonnulllist = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); ++i) {
@@ -85,12 +86,7 @@ public class ClearCapsuleRecipe extends CustomRecipe {
         return CapsuleItem.isLinkedStateCapsule(itemstack) || (CapsuleItem.hasState(itemstack, DEPLOYED) && !CapsuleItem.isBlueprint(itemstack));
     }
 
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= 1;
-    }
-
-    public ItemStack getResultItem(HolderLookup.Provider registryAccess) {
+    public ItemStack getResultItem() {
         return CapsuleItems.withState(EMPTY);
     }
 
