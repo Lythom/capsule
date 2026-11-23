@@ -7,6 +7,7 @@ import capsule.client.CapsulePreviewHandler;
 import capsule.client.ClientConfig;
 import capsule.client.render.CapsuleStateProperty;
 import capsule.client.render.CapsuleTintSource;
+import capsule.client.render.CustomRenderType;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -21,6 +22,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
+import net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
@@ -43,6 +45,7 @@ public class CapsuleNeoForgeClient {
                 event.register(CapsuleStateProperty.ID, CapsuleStateProperty.MAP_CODEC));
         modEventBus.addListener((RegisterColorHandlersEvent.ItemTintSources event) ->
                 event.register(CapsuleTintSource.ID, CapsuleTintSource.MAP_CODEC));
+        modEventBus.addListener((RegisterRenderPipelinesEvent event) -> CustomRenderType.PIPELINES.forEach(event::registerPipeline));
         modEventBus.addListener((EntityRenderersEvent.RegisterRenderers event) ->
                 event.registerBlockEntityRenderer(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new));
 

@@ -7,6 +7,7 @@ import capsule.client.CapsulePreviewHandler;
 import capsule.client.ClientConfig;
 import capsule.client.render.CapsuleStateProperty;
 import capsule.client.render.CapsuleTintSource;
+import capsule.client.render.CustomRenderType;
 import capsule.gui.LabelGui;
 import capsule.items.CapsuleItem;
 import capsule.items.CapsuleItems;
@@ -17,6 +18,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.recipe.v1.sync.ClientRecipeSynchronizedEvent;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.color.item.ItemTintSources;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperties;
@@ -43,6 +45,8 @@ public class CapsuleFabricClient implements ClientModInitializer {
         // read by assets/capsule/items/capsule.json; both id mappers are opened by Fabric API's transitive class tweaker
         RangeSelectItemModelProperties.ID_MAPPER.put(CapsuleStateProperty.ID, CapsuleStateProperty.MAP_CODEC);
         ItemTintSources.ID_MAPPER.put(CapsuleTintSource.ID, CapsuleTintSource.MAP_CODEC);
+        // compiled with the vanilla pipelines at resource reload (RenderPipelines#register is opened by Fabric API)
+        CustomRenderType.PIPELINES.forEach(RenderPipelines::register);
         BlockEntityRenderers.register(CapsuleBlocks.MARKER_TE.get(), CaptureBER::new);
 
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> CapsulePreviewHandler.onLevelRenderLast(
