@@ -94,6 +94,7 @@ dependencies {
         gametestRuntimeOnly modrinth('worldedit', worldedit_version)
         gametestRuntimeOnly modrinth('waystones', waystones_version)
         gametestRuntimeOnly modrinth('balm', balm_version)
+        gametestRuntimeOnly modrinth('shogi', shogi_version)
         gametestRuntimeOnly modrinth('sophisticated-storage', sophisticated_storage_version)
         gametestRuntimeOnly modrinth('sophisticated-core', sophisticated_core_version)
         // claim mods (#91)
