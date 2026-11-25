@@ -6,9 +6,9 @@ Bring your base! Capsules can capture a region containing any blocks or machines
 
 ## Loaders ##
 
-Minecraft 26.2 builds exist for **NeoForge** and **Fabric** (with Fabric API and Forge Config API Port), from the same
-code: game logic in `common`, loader glue in `neoforge` and `fabric`. Minecraft 1.21.1 (NeoForge and Fabric) is on
-branch `1.21.1`. Older Minecraft versions use Forge, each on its own branch (`1.20` for 1.20.1, `1.18` for 1.18.2,
+Minecraft 26.3 builds exist for **NeoForge** and **Fabric** (with Fabric API and Forge Config API Port), from the same
+code: game logic in `common`, loader glue in `neoforge` and `fabric`. Minecraft 26.2 is on branch `dev-1.26.2`, Minecraft
+1.21.1 (NeoForge and Fabric) on branch `1.21.1`. Older Minecraft versions use Forge, each on its own branch (`1.20` for 1.20.1, `1.18` for 1.18.2,
 `1.16` for 1.16.5).
 
 Capsule recipes and information pages show in **JEI** and **REI** on both loaders (EMI on 1.21.1 only: it has no 26.x

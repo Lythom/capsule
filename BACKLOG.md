@@ -88,19 +88,21 @@ the scripts only know JEI and REI. When EMI publishes a 26.x version: compile th
 warn about untranslated `#c:ingots/*` tags of the addon recipes (harmless; `tag.item.c.ingots.*` translations would
 silence it). Effort: S to M.
 
-### Known incompatibilities without a 26.2 build
-Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no 26.2 build (Refined Storage and Super
-Factory Manager exist for 26.1.2), so their `-Pincompat` tests are out of the 26.2 build (`neoforge/build.gradle`,
-decision D5) and only Corail Tombstone is tested. Bring each back with its Modrinth version id in `gradle.properties`
-when it is published for the Minecraft version of the branch. Effort: S each.
+### Known incompatibilities without a 26.3 build
+Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have no 26.x build (Refined Storage and Super
+Factory Manager exist for 26.1.2), so their `-Pincompat` tests are out of the build (`neoforge/build.gradle`, decision
+D5). Corail Tombstone had a 26.2 build (tested on 26.2) but has none for 26.3: `-Pincompat` loads no mod and says so,
+and `validate-all.sh --incompat` reports its two steps SKIP. Bring each back with its Modrinth version id in
+`gradle.properties` (the `incompatMods` map of `neoforge/build.gradle`, `INCOMPAT_MODS` of `validate-all.sh`) when it
+is published for the Minecraft version of the branch. Effort: S each.
 
-### Modded preview and modpack runs on 26.2
+### Modded preview and modpack runs on 26.x
 `validate-all.sh --modded` (the client smoke with the mods of #81, #94, #117, #76) and `--modpack` are reported SKIP on
-26.2: Ad Astra and Farmer's Delight (NeoForge) have no 26.2 build (Integrated Dynamics and Farmer's Delight
+26.2 and 26.3: Ad Astra and Farmer's Delight (NeoForge) have no 26.2 build (Integrated Dynamics and Farmer's Delight
 Refabricated do), and the 1.21.1 pack, Forgeulously Optimized (Sinytra Connector), has no 26.x version. Pick the 26.2
 builds that exist and a 26.2 NeoForge pack. Effort: S to M.
 
-### Wireframe preview not checked by the client smoke test on 26.2
+### Wireframe preview not checked by the client smoke test on 26.x
 The smoke scenario checks the full (translucent) preview of the deploys and blueprints, not the wireframe preview of a
 capsule too large or with blocks the full preview cannot draw, nor the capture zone wireframe of an empty capsule
 beyond the screenshots. Check them by eye in `docs/MANUAL_VALIDATION.md`, or add a scenario step with a check. Effort: S.
@@ -113,7 +115,7 @@ bringing REI. Effort: S.
 `scripts/prod-gametest.sh` relies on undocumented NeoForge behavior: it starts FML's GameTest server entrypoint
 (`net.neoforged.fml.startup.GameTestServer`) on an installed server, and NeoForge never enables GameTests in production
 (`GameTestHooks#isGametestEnabled` gates `RegisterGameTestsEvent` and the GameTest ticker), so the test mod mixin
-`GameTestHooksMixin` forces it on with `-Dcapsule.gametest.production=true`. Works on NeoForge 26.2.0.95. A NeoForge
+`GameTestHooksMixin` forces it on with `-Dcapsule.gametest.production=true`. Works on NeoForge 26.2.0.95 and 26.3.0.115. A NeoForge
 update can break it. Effort: S per update.
 
 ## Platforms and versions
@@ -125,11 +127,24 @@ stops and lists the `26.*` names when it does not match). `Jenkinsfile` still bu
 single-project layout (`build/libs`, a `sed` of `BUILD_ID`), and CircleCI is the live CI: delete it or rewrite it for
 the multiloader build (`docs/port-26.2/inventory/loaders-build.md` §5.2). Effort: S.
 
-### Minecraft 26.3
-Phase 10 of `docs/port-26.2/PLAN.md`: branch `dev-1.26.3`, Capsule 11.0. Effort: M.
+### Publishing 26.3
+Branch `dev-1.26.3` (Capsule 11.0, phase 10 of `docs/port-26.2/PLAN.md`) is ready to be pushed to a `26.3` branch for
+CI once released; `publish.sh` then looks up the CurseForge game version `26.3`, unchecked like `26.2`. Effort: S.
+
+### Recall box edges hidden with Improved Transparency (26.3)
+With the Improved Transparency option on, the recall box (alpha below 255, `RenderTypes.linesTranslucentNoDepthWrite()`)
+is drawn by vanilla's OIT line pipelines, whose depth test hides the edges lying on a block face, such as the bottom
+front edge of a deployed structure; with the option off they show as on 26.2. Cosmetic; an OIT line pipeline set of
+Capsule's own with a depth bias would fix it. Effort: S.
+
+### LWJGL loader deadlock at client start (26.3)
+One client smoke run out of six hung at start, before the window: the render thread was in LWJGL's
+`SharedLibraryUtil#getLibraryPath` (a `dlopen` inside `dl_iterate_phdr`) while the services discovery thread loaded a JVM
+native library: a glibc loader lock-order deadlock in LWJGL 3.4.3, not in Capsule. The run times out and fails; rerun
+it. Effort: none on Capsule's side (report to LWJGL if it comes back).
 
 ### Multi-version builds with Stonecutter
-Targets: 1.21.1 (NeoForge + Fabric), 1.20.1 (Forge + Fabric), 26.1.2 and 26.2 (NeoForge + Fabric). Older versions
+Targets: 1.21.1 (NeoForge + Fabric), 1.20.1 (Forge + Fabric), 26.1.2, 26.2 and 26.3 (NeoForge + Fabric). Older versions
 stay on their Forge branches (`1.20`, `1.18`, `1.16`), which take bug fixes only. Effort: L.
 
 Stonecutter 0.9.x on top of the multiloader layout (`common`, one project per loader, platform interfaces loaded with

@@ -1,5 +1,14 @@
 # Changelog
 
+**26.3-11.0.x : Minecraft 26.3**
+
+- Capsule for Minecraft 26.3, on NeoForge (`Capsule-neoforge-26.3-...jar`, requires NeoForge 26.3) and Fabric (`Capsule-fabric-26.3-...jar`, requires Fabric Loader 0.20, Fabric API 0.166.2 or later and Forge Config API Port 26.3). Same features, recipes and config options as 10.0 on 26.2; the config file is still `config/capsule-common.toml` on both loaders
+- Upgrading from 10.0 (26.2): config files and worlds carry over. As for every Minecraft upgrade, undeploy the capsules that are deployed before opening the world on 26.3
+- The deploy preview, the capture animation and the capture base and recall boxes work with the new Improved Transparency video option (order independent transparency), which crashed the game otherwise
+- The capture base still drops itself only when it survives an explosion (26.3 reads loot conditions under a new key and ignores the old one)
+- Blueprints count the new straw bed once for its two halves, like the other beds, and keep the poplar signs, hanging signs and shelf with their text and books. Existing installs: delete `config/capsule/blueprint_whitelist.json` to get the new list
+- Corail Tombstone, the last mod of the known incompatibilities with a 26.2 version, has no 26.3 version: its incompatibility is not tested on 26.3
+
 **26.2-10.0.x : Minecraft 26.2**
 
 - Capsule for Minecraft 26.2, on NeoForge (`Capsule-neoforge-26.2-...jar`, requires NeoForge 26.2) and Fabric (`Capsule-fabric-26.2-...jar`, requires Fabric Loader 0.20, Fabric API 0.161 or later and Forge Config API Port 26.2). Same features, recipes and config options (`config/capsule-common.toml`, `config/capsule-client.toml`) as 9.1 on 1.21.1
