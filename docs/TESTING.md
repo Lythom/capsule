@@ -228,35 +228,37 @@ with 1.0.41). IndustrialCraft 2 and Blood Magic have no NeoForge 1.21.1 version 
 
 `validate-all.sh --incompat` runs them in the dev runtime and on the NeoForge release jar (`EXTRA_MODS`).
 
-### Compatibility matrix (Minecraft 26.2)
+### Compatibility matrix (Minecraft 26.3)
 
-Each mod tested on 1.21.1 was tested again with its newest 26.2 build (versions of 2026-11-23, pinned in
-`gradle.properties` and `validate-all.sh`); a mod without a 26.2 build is not tested. Since it worked on 1.21.1, it is
-likely to work once it is published for 26.2, but nothing checks it. Result of `validate-all.sh --iris --incompat` on
-2026-11-23 (table in [Everything at once](#everything-at-once)):
+Each mod tested on 1.21.1 and 26.2 was tested again with its newest 26.3 build (Modrinth API on 2026-11-23, pinned in
+`gradle.properties` and `validate-all.sh`); a mod without a 26.3 build is not tested. Since it worked on 26.2, it is
+likely to work once it is published for 26.3, but nothing checks it. Result of `validate-all.sh --iris --incompat` on
+2026-11-25 (table in [Everything at once](#everything-at-once)):
 
-| Mod | 26.2 build | Tested by | Result |
+| Mod | 26.3 build | Tested by | Result |
 |---|---|---|---|
-| JEI | 30.48.0.244 (beta), NeoForge + Fabric | client smoke, both loaders | pass |
-| REI (+ Architectury 21.1.13, Cloth Config) | 26.2.820 | client smoke, both loaders | pass |
+| JEI | 31.23.0.129 (beta), NeoForge + Fabric | client smoke, both loaders, Improved Transparency off and on | pass |
+| REI (+ Architectury 22.0.6, Cloth Config) | 26.3.824 (beta on NeoForge) | client smoke, both loaders | pass |
 | EMI | none | — | not tested (no 26.x build; plugin out of the build) |
-| SecurityCraft | v1.10.2.1 (NeoForge) | NeoForge GameTests (`SecurityCraftTests`), dev and release jar | pass |
-| Waystones + Balm (+ Shogi) | 26.2.0.14 / 26.2.0.9 (26.2.0.8) | `-PmodCompat` NeoForge | pass |
-| Sophisticated Storage + Core | 26.2-1.5.133 / 26.2-1.5.40 | `-PmodCompat` NeoForge | pass |
-| WorldEdit | 7.4.5 | `-PmodCompat` NeoForge (writes the schematic fixtures) | pass |
+| SecurityCraft | v1.10.2.1-beta4 (beta, NeoForge) | NeoForge GameTests (`SecurityCraftTests`), dev and release jar | pass |
+| Waystones + Balm (+ Shogi) | 26.3.0.3 / 26.3.0.3 (26.3.0.3) | `-PmodCompat` NeoForge | pass |
+| Sophisticated Storage + Core | 26.3-1.5.134 / 26.3-1.5.42 | `-PmodCompat` NeoForge | pass |
+| WorldEdit | 7.4.6 | `-PmodCompat` NeoForge (writes the schematic fixtures) | pass |
 | Open Parties and Claims | 0.33.0 (beta), NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar | pass |
-| Flan | 26.2-1.12.8, NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar | pass |
-| Get Off My Lawn ReServed (+ Polymer 0.17.5+26.2) | 1.21.0+26.2 (Fabric) | Fabric release jar with the claim mods | pass |
+| Flan | 26.3-1.12.9, NeoForge + Fabric | `-PmodCompat` both loaders, Fabric release jar | pass |
+| Get Off My Lawn ReServed (+ Polymer 0.18.7+26.3) | 1.22.0+26.3-rc-1 (Fabric; built for 26.3-rc-1, declares `minecraft >=26.2-`) | Fabric release jar with the claim mods | pass: loads on 26.3, `GetOffMyLawnTests` passes |
 | Common Protection API | 2.0.0 | Fabric GameTests (`TestProbe`) | pass |
-| Forge Config API Port | 26.2.1 | every Fabric run | pass |
-| Corail Tombstone | 9.9.4 (NeoForge) | `-Pincompat` NeoForge, dev and release jar | pass |
-| Iris + Sodium (+ MakeUp Ultra Fast 9.5g) | 1.11.4 / 0.9.2, NeoForge + Fabric | client smoke `--iris`, both loaders | pass (the NeoForge dev client runs without NeoForge's dev-only GL validation, which Iris' pipelines fail; see [Client smoke test](#client-smoke-test)) |
+| Forge Config API Port | 26.3.1 | every Fabric run | pass |
+| Iris + Sodium (+ MakeUp Ultra Fast 9.5g) | Iris 1.11.7 / Sodium 0.9.2 (Fabric) | client smoke `--iris`, Fabric | pass on Fabric. NeoForge not tested: no pair loads on NeoForge 26.3.0.115 (Sodium 0.9.3 and later refuse Iris below 1.12.1, which does not exist for 26.3; Sodium 0.9.2 crashes the NeoForge client at startup) |
+| Corail Tombstone | none (9.9.4 exists for 26.2) | — | not tested (`--incompat` steps SKIP) |
 | Refined Storage | none (3.2.1 exists for 26.1.2) | — | not tested |
 | Mekanism | none | — | not tested |
 | Immersive Engineering | none | — | not tested |
 | Super Factory Manager | none (4.34.0 exists for 26.1.2) | — | not tested |
-| Integrated Dynamics, Ad Astra, Farmer's Delight (`--modded`) | Integrated Dynamics and Farmer's Delight Refabricated only | — | not tested (`--modded` SKIP) |
+| Integrated Dynamics, Ad Astra, Farmer's Delight (`--modded`) | not all of them | — | not tested (`--modded` SKIP) |
 | Forgeulously Optimized 1.1.4 (modpack) | none for 26.x | — | not tested (`--modpack` SKIP) |
+
+The 26.2 results are in this file on branch `dev-1.26.2`.
 
 ## Client smoke test
 
@@ -289,10 +291,11 @@ scripts/client-smoke.sh fabric
 - `SHADER_PACK=<zip>` turns that shader pack on with Iris (`config/iris.properties`); `EXTRA_MODS` must bring Iris
   and Sodium. `validate-all.sh --iris` uses MakeUp Ultra Fast with `TIMEOUT=3000` (llvmpipe is slow with shaders). On
   NeoForge it also passes `-PdisableGlValidation` (`-Dneoforge.disableGlValidation=true`): NeoForge turns on vanilla's
-  GL draw validation in dev runs, and Iris 1.11.4's own pipelines fail it (an `ArrayIndexOutOfBoundsException` in
-  `GlCommandEncoder#validateDraw` while Iris draws the hand, as soon as the world loads). Production clients never run
-  it. Capsule assigns its preview pipelines to Iris programs (`IrisCompat`), otherwise Iris draws the preview without
-  the pack's programs and it is almost invisible.
+  GL draw validation in dev runs, and Iris 1.11.4's own pipelines fail it on 26.2 (an `ArrayIndexOutOfBoundsException`
+  in `GlCommandEncoder#validateDraw` while Iris draws the hand, as soon as the world loads). Production clients never
+  run it. Capsule assigns its preview pipelines to Iris programs (`IrisCompat`), otherwise Iris draws the preview
+  without the pack's programs and it is almost invisible. On 26.3 the Iris run is Fabric only (Iris 1.11.7 with
+  Sodium 0.9.2): no Iris and Sodium pair loads on NeoForge 26.3.0.115 (see the compatibility matrix).
 - `EXTRA_MODS` with the mods of the preview issues (`validate-all.sh --modded`): on NeoForge Integrated Dynamics,
   Cyclops Core, Common Capabilities, Integrated Tunnels, Ad Astra, Resourceful Lib, Common Storage Lib, Resourceful
   Config, Farmer's Delight, and Refined Storage 2.0.9, which Integrated Dynamics needs in the NeoForge dev client; on

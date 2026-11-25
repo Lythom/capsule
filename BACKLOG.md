@@ -131,6 +131,12 @@ the multiloader build (`docs/port-26.2/inventory/loaders-build.md` §5.2). Effor
 Branch `dev-1.26.3` (Capsule 11.0, phase 10 of `docs/port-26.2/PLAN.md`) is ready to be pushed to a `26.3` branch for
 CI once released; `publish.sh` then looks up the CurseForge game version `26.3`, unchecked like `26.2`. Effort: S.
 
+### Iris on NeoForge 26.3 not tested
+No Iris and Sodium pair loads on NeoForge 26.3.0.115 (2026-11-25): Sodium 0.9.3 and 0.9.4-beta.1 declare Iris below
+1.12.1 incompatible and Iris 1.11.7 is the newest for 26.3, while Sodium 0.9.2 crashes the NeoForge client at startup.
+`validate-all.sh --iris` reports `neoforge-iris` SKIP; Fabric is tested. Put the NeoForge jars back in `validate-all.sh`
+when Iris 1.12.1 or later is published for 26.3. Effort: S.
+
 ### Recall box edges hidden with Improved Transparency (26.3)
 With the Improved Transparency option on, the recall box (alpha below 255, `RenderTypes.linesTranslucentNoDepthWrite()`)
 is drawn by vanilla's OIT line pipelines, whose depth test hides the edges lying on a block face, such as the bottom

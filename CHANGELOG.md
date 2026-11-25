@@ -8,6 +8,7 @@
 - The capture base still drops itself only when it survives an explosion (26.3 reads loot conditions under a new key and ignores the old one)
 - Blueprints count the new straw bed once for its two halves, like the other beds, and keep the poplar signs, hanging signs and shelf with their text and books. Existing installs: delete `config/capsule/blueprint_whitelist.json` to get the new list
 - Corail Tombstone, the last mod of the known incompatibilities with a 26.2 version, has no 26.3 version: its incompatibility is not tested on 26.3
+- Iris shader packs: the preview keeps working with Iris 1.11.7 on Fabric. On NeoForge no Iris version loads with NeoForge 26.3 yet, so it is not tested there
 
 **26.2-10.0.x : Minecraft 26.2**
 
