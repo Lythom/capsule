@@ -12,16 +12,19 @@ set -uo pipefail
 # each loader, the mod-compat GameTests (-PmodCompat) of each loader, the GameTests on the
 # release jars (scripts/prod-gametest.sh, on Fabric also with the claim mods) and its failure
 # proof, the release jars on real servers (scripts/prod-smoke.sh), and the client smoke test
-# of each loader with JEI and REI (scripts/client-smoke.sh). Slower variants, off by default:
-#   --iris     client smoke with Iris, Sodium and the MakeUp Ultra Fast shader pack
+# of each loader with JEI and REI, then with JEI and Improved Transparency on (scripts/client-smoke.sh,
+# IMPROVED_TRANSPARENCY). Slower variants, off by default:
+#   --iris     client smoke with Iris, Sodium and the MakeUp Ultra Fast shader pack (Iris turns
+#              Improved Transparency off while a shader pack is on)
 #   --modded   client smoke with the mods of the modded block issues (#81, #94, #117, #76):
-#              not available on Minecraft 26.2 yet (Ad Astra and Farmer's Delight have no
-#              26.2 build), the step is reported SKIP
+#              not available on Minecraft 26.3 (Ad Astra and Farmer's Delight have no
+#              26.x build), the step is reported SKIP
 #   --modpack  client smoke in a production NeoForge client with a modpack (MODPACK, a
-#              Modrinth slug[:version id] or a .mrpack file). No default on 26.2: the 1.21.1
+#              Modrinth slug[:version id] or a .mrpack file). No default on 26.3: the 1.21.1
 #              pack (Forgeulously Optimized) has no 26.x version, the step is SKIP without MODPACK
-#   --incompat GameTests with the mod of the known incompatibilities that has a 26.2 build
-#              (Corail Tombstone, -Pincompat), also on the NeoForge release jar
+#   --incompat GameTests with the mods of the known incompatibilities that have a 26.3 build
+#              (-Pincompat), also on the NeoForge release jar: none has one (Corail Tombstone, the
+#              last one, had a 26.2 build only), the steps are reported SKIP
 #   --all      all of them
 # MODCOMPAT_LATEST=1 runs the mod-compat and incompatibility steps with the newest Modrinth
 # versions of their mods instead of the pinned ones (-PmodCompatLatest).
@@ -51,7 +54,7 @@ for arg in "$@"; do
         --modpack) MODPACK_RUN=1 ;;
         --incompat) INCOMPAT=1 ;;
         --all) IRIS=1 MODDED=1 MODPACK_RUN=1 INCOMPAT=1 ;;
-        *) sed -n '7,29p' "$0"; exit 1 ;;
+        *) sed -n '7,30p' "$0"; exit 1 ;;
     esac
 done
 for tool in java python3 curl xvfb-run flock; do
@@ -146,11 +149,11 @@ step modcompat-neoforge "mod-compat GameTests NeoForge" "${GRADLE[@]}" :neoforge
 step modcompat-fabric "mod-compat GameTests Fabric" "${GRADLE[@]}" :fabric:runGameTestServer -PmodCompat "${COMPAT[@]}"
 step prod-gametest-neoforge "GameTests on the NeoForge release jar" scripts/prod-gametest.sh "$NEO_JAR"
 step prod-gametest-fabric "GameTests on the Fabric release jar" scripts/prod-gametest.sh "$FABRIC_JAR"
-# Get Off My Lawn ReServed 1.21.0+26.2 with Polymer 0.17.5+26.2 (it requires polymer-core), Open Parties and Claims
-# 0.33.0, Flan 26.2-1.12.8: GOML runs on real servers only
-compat_mods "$CACHE/modcompat/fabric" fabric goml-reserved:1fb10a769a0f338b62ff23aeb25c61955a96565b \
-    polymer:115afd5dc50584d1ac294fe71b5aeb4e9138e434 \
-    open-parties-and-claims:138c08aecb5c3a1d57ea18054fda8735bbc2fa1e flan:4919b45aa772eaae4eff13253e9632b9b9deebbb
+# Get Off My Lawn ReServed 1.22.0+26.3-rc-1 (its only 26.3 build, made for 26.3-rc-1) with Polymer 0.18.7+26.3 (it
+# requires polymer-core), Open Parties and Claims 0.33.0, Flan 26.3-1.12.9: GOML runs on real servers only
+compat_mods "$CACHE/modcompat/fabric" fabric goml-reserved:07f6e3cdfed1f2d2fb3a2d624b1d8a848bab8939 \
+    polymer:64f34c2b04f267ea1bf9aa5971811ec870535814 \
+    open-parties-and-claims:190876f04783118573ad6808ff868ac6576f279d flan:b7ad503bb7c029c3355f97053e14d09a903e9940
 step prod-modcompat-fabric "Fabric release jar with the claim mods" \
     env EXTRA_MODS="$(ls "$CACHE/modcompat/fabric"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$FABRIC_JAR"
 step prod-gametest-proof-neoforge "NeoForge release jar: failure reported" expect_failure scripts/prod-gametest.sh "$NEO_JAR"
@@ -161,11 +164,16 @@ for loader in neoforge fabric; do
         smoke "$loader-$viewer" "$loader" "$viewer"
     done
 done
+# 26.3's Improved Transparency draws the translucent phase with order independent transparency: the preview, the boxes
+# and the capture animation need render types of their own there
+for loader in neoforge fabric; do
+    smoke "$loader-jei-oit" "$loader" jei IMPROVED_TRANSPARENCY=on
+done
 
 if [ -n "$IRIS" ]; then
-    # Iris 1.11.4 and Sodium 0.9.2 for 26.2, MakeUp Ultra Fast 9.5g
-    mods "$CACHE/iris/neoforge" decfbe06505849620da8f1381c88af1e122ecdd3 e0a7838c8f733fecf0f2cb729e3439f70c21809f
-    mods "$CACHE/iris/fabric" bd0b24731a94b8fe164531e6345718d30ab08ed2 62a70961a5b3e06938e06ab5f2dc4c5a51cf3323
+    # Iris 1.11.7 and Sodium 0.9.3 for 26.3, MakeUp Ultra Fast 9.5g
+    mods "$CACHE/iris/neoforge" 57cbbd1f58b6226c633520541c1a3ae57c019373 b51a0c28a0b9b39b943cfaf5d54c6462ea5bd37a
+    mods "$CACHE/iris/fabric" fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c 818009279d57d8c8c4fa814e685e7c9122f7677f
     mods "$CACHE/iris/pack" 57938ae6e1c83a2758b2e5dab80061d5002e88e7
     for loader in neoforge fabric; do
         smoke "$loader-iris" "$loader" jei TIMEOUT=3000 SHADER_PACK="$(ls "$CACHE"/iris/pack/*.zip)" \
@@ -175,25 +183,32 @@ fi
 
 if [ -n "$MODDED" ]; then
     # The 1.21.1 run loaded Integrated Dynamics, Ad Astra and Farmer's Delight: Ad Astra and Farmer's Delight (NeoForge)
-    # have no 26.2 build (BACKLOG.md)
-    skip neoforge-modded "client smoke neoforge-modded" "no 26.2 build of the modded block mods"
-    skip fabric-modded "client smoke fabric-modded" "no 26.2 build of the modded block mods"
+    # have no 26.x build (BACKLOG.md)
+    skip neoforge-modded "client smoke neoforge-modded" "no 26.3 build of the modded block mods"
+    skip fabric-modded "client smoke fabric-modded" "no 26.3 build of the modded block mods"
 fi
 
 if [ -n "$INCOMPAT" ]; then
-    step incompat-neoforge "incompatibility GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -Pincompat "${COMPAT[@]}"
-    # Corail Tombstone 9.9.4 for 26.2. Refined Storage, Mekanism, Immersive Engineering and Super Factory Manager have
-    # no 26.2 build: not tested (their GameTests are out of the build, neoforge/build.gradle)
-    compat_mods "$CACHE/incompat/neoforge" neoforge corail-tombstone:08ebdd2ecf6cba8ff389e3d123432a8e2a6466cd
-    step prod-incompat-neoforge "NeoForge release jar, incompatible mods" \
-        env EXTRA_MODS="$(ls "$CACHE/incompat/neoforge"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$NEO_JAR"
+    # project:sha1 of each mod of the known incompatibilities with a 26.3 build, as in neoforge/build.gradle (-Pincompat):
+    # none. Corail Tombstone had a 26.2 build only; Refined Storage, Mekanism, Immersive Engineering and Super Factory
+    # Manager have no 26.x build. Not tested; their GameTests stay in the sources
+    INCOMPAT_MODS=()
+    if [ "${#INCOMPAT_MODS[@]}" -eq 0 ]; then
+        skip incompat-neoforge "incompatibility GameTests NeoForge" "no mod of the known incompatibilities has a 26.3 build"
+        skip prod-incompat-neoforge "NeoForge release jar, incompatible mods" "no mod of the known incompatibilities has a 26.3 build"
+    else
+        step incompat-neoforge "incompatibility GameTests NeoForge" "${GRADLE[@]}" :neoforge:runGameTestServer -Pincompat "${COMPAT[@]}"
+        compat_mods "$CACHE/incompat/neoforge" neoforge "${INCOMPAT_MODS[@]}"
+        step prod-incompat-neoforge "NeoForge release jar, incompatible mods" \
+            env EXTRA_MODS="$(ls "$CACHE/incompat/neoforge"/*.jar | tr '\n' ' ')" scripts/prod-gametest.sh "$NEO_JAR"
+    fi
 fi
 
 if [ -n "$MODPACK_RUN" ]; then
     if [ -n "${MODPACK:-}" ]; then
         smoke neoforge-modpack neoforge jei MODPACK="$MODPACK"
     else
-        skip neoforge-modpack "client smoke neoforge-modpack" "no MODPACK given (no 26.2 version of the 1.21.1 pack)"
+        skip neoforge-modpack "client smoke neoforge-modpack" "no MODPACK given (no 26.3 version of the 1.21.1 pack)"
     fi
 fi
 

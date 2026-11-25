@@ -9,7 +9,7 @@ set -euo pipefail
 #   scripts/prod-smoke.sh <jar-file>...
 #
 # Examples:
-#   scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-26.2-10.0.SNAPSHOT.jar
+#   scripts/prod-smoke.sh neoforge/build/libs/Capsule-neoforge-26.3-11.0.SNAPSHOT.jar
 #   scripts/prod-smoke.sh neoforge/build/libs/Capsule-*.jar fabric/build/libs/Capsule-*.jar
 #
 # For each jar (loader read from the file name), in a temporary directory:
