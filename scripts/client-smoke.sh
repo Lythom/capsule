@@ -21,9 +21,11 @@ set -euo pipefail
 # TIMEOUT (seconds, default 1500) bounds the whole run, build included. GRADLE_ARGS adds
 # arguments to the Gradle call (e.g. "-I mirror.gradle" when Maven Central rate limits).
 # EXTRA_MODS (space separated jar files) adds mods to the run, e.g. the jars of a modpack:
-# NeoForge 26.2 dev runs load production mod jars from the mods folder.
+# NeoForge 26.x dev runs load production mod jars from the mods folder.
 # SHADER_PACK (a shader pack zip) turns it on with Iris, which EXTRA_MODS must bring with Sodium, and turns
 # off the GL draw validation of NeoForge dev runs, which Iris' pipelines fail (neoforge/build.gradle).
+# IMPROVED_TRANSPARENCY (on or off, default off) sets the video option of that name (26.3: the translucent phase is then
+# drawn with order independent transparency, which needs render types of its own); the report says which mode ran.
 # MODPACK (NeoForge only: a Modrinth modpack slug, optionally :<version id>, or a .mrpack file)
 # plays the scenario in a production client instead (scripts/prod-client.py: official
 # installer, no Gradle) with the pack's mods, the release jar and the test mod jar of
@@ -34,10 +36,16 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOADER="${1:-}"
 TIMEOUT="${TIMEOUT:-1500}"
 RECIPE_VIEWER="${RECIPE_VIEWER:-jei}"
+IMPROVED_TRANSPARENCY="${IMPROVED_TRANSPARENCY:-off}"
 
 case "$LOADER" in
     neoforge|fabric) ;;
     *) echo "Usage: scripts/client-smoke.sh neoforge|fabric"; exit 1 ;;
+esac
+case "$IMPROVED_TRANSPARENCY" in
+    on) improved_transparency=true ;;
+    off) improved_transparency=false ;;
+    *) echo "IMPROVED_TRANSPARENCY must be on or off"; exit 1 ;;
 esac
 case "$RECIPE_VIEWER" in
     jei|rei) VIEWER_NAME="${RECIPE_VIEWER^^}" ;;
@@ -51,7 +59,7 @@ if [ -z "${MODPACK:-}" ]; then
     RUN_DIR="$ROOT/$LOADER/runs/clientSmoke"
     rm -rf "$RUN_DIR/screenshots/capsule-smoke" "$RUN_DIR/mods" "$RUN_DIR/shaderpacks" "$RUN_DIR/config/iris.properties"
     RUN=("$ROOT/gradlew" -p "$ROOT" ${GRADLE_ARGS:-} ":$LOADER:runClientSmoke" "-PrecipeViewer=$RECIPE_VIEWER")
-    echo "== $LOADER client smoke test with $VIEWER_NAME (log: $OUT/console.log)"
+    echo "== $LOADER client smoke test with $VIEWER_NAME, Improved Transparency $IMPROVED_TRANSPARENCY (log: $OUT/console.log)"
 else
     [ "$LOADER" = neoforge ] || { echo "MODPACK needs the neoforge loader"; exit 1; }
     RUN_DIR="$OUT/game"
@@ -70,6 +78,12 @@ if [ -f "$RUN_DIR/options.txt" ] && grep -q '^onboardAccessibility:' "$RUN_DIR/o
     sed -i 's/^onboardAccessibility:.*/onboardAccessibility:false/' "$RUN_DIR/options.txt"
 else
     echo 'onboardAccessibility:false' >> "$RUN_DIR/options.txt"
+fi
+# Improved Transparency, written on every run so that a previous run does not leak into this one
+if grep -q '^improvedTransparency:' "$RUN_DIR/options.txt"; then
+    sed -i "s/^improvedTransparency:.*/improvedTransparency:$improved_transparency/" "$RUN_DIR/options.txt"
+else
+    echo "improvedTransparency:$improved_transparency" >> "$RUN_DIR/options.txt"
 fi
 # no screen of mod loading warnings on NeoForge (REI 26.2 raises three), which the scenario would wait behind
 if [ "$LOADER" = neoforge ]; then
@@ -92,6 +106,10 @@ if [ -n "${SHADER_PACK:-}" ]; then
 fi
 
 if [ -z "${DISPLAY:-}" ]; then
+    # Since 26.3 the game opens its window with SDL and asks for an sRGB framebuffer, which no GLX visual of Xvfb
+    # offers ("Couldn't find matching GLX visual"): SDL goes through EGL instead (Mesa's libEGL, package libegl1)
+    ldconfig -p | grep -q 'libEGL\.so\.1' || { echo "FAIL: no libEGL.so.1 (install libegl1): SDL needs EGL under Xvfb"; exit 1; }
+    export SDL_VIDEO_FORCE_EGL=1
     RUN=(xvfb-run -a -s "-screen 0 1280x720x24" "${RUN[@]}")
 fi
 status=0
@@ -105,6 +123,8 @@ failures=()
 if [ -f "$OUT/report.txt" ]; then
     cat "$OUT/report.txt"
     grep -q '^RESULT PASS' "$OUT/report.txt" || failures+=("a check failed")
+    grep -q "^INFO Improved Transparency $IMPROVED_TRANSPARENCY\$" "$OUT/report.txt" \
+        || failures+=("the scenario did not run with Improved Transparency $IMPROVED_TRANSPARENCY")
     if [ -z "${MODPACK:-}" ]; then
         grep -q "^PASS $VIEWER_NAME shows the capsule recipes" "$OUT/report.txt" || failures+=("$VIEWER_NAME did not show the capsule recipes")
     fi

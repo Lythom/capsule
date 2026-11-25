@@ -58,6 +58,10 @@ done
 
 RUN=("$ROOT/gradlew" -p "$ROOT" ${GRADLE_ARGS:-} ":$LOADER:runClientSmoke" "-PrecipeViewer=$RECIPE_VIEWER" "-Pshowcase=$SCENES")
 if [ -z "${DISPLAY:-}" ]; then
+    # Since 26.3 the game opens its window with SDL and asks for an sRGB framebuffer, which no GLX visual of Xvfb
+    # offers ("Couldn't find matching GLX visual"): SDL goes through EGL instead (Mesa's libEGL, package libegl1)
+    ldconfig -p | grep -q 'libEGL\.so\.1' || { echo "FAIL: no libEGL.so.1 (install libegl1): SDL needs EGL under Xvfb"; exit 1; }
+    export SDL_VIDEO_FORCE_EGL=1
     RUN=(xvfb-run -a -s "-screen 0 1280x720x24" "${RUN[@]}")
 fi
 echo "== $LOADER showcase ${SCENES:-(all scenes)} (log: $OUT/console.log)"

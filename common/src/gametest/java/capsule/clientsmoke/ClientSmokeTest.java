@@ -152,7 +152,10 @@ public class ClientSmokeTest {
             showcase.scenes();
         } else {
             scenario.async("prepare the capture area", 100, () -> onServer(this::prepareCaptureArea))
-                    .sleep(80);
+                    .sleep(80)
+                    // set in options.txt by scripts/client-smoke.sh (IMPROVED_TRANSPARENCY), which checks this line
+                    .run("note the transparency mode", () -> scenario.results.add("INFO Improved Transparency "
+                            + (mc().gameRenderer.useImprovedTransparency() ? "on" : "off")));
             captureScenario();
             inventoryScenario();
             deployScenario();
