@@ -116,10 +116,12 @@ smoke() {
     step "$id" "client smoke $id" env RECIPE_VIEWER="$viewer" OUT="$SHOTS/$id" "$@" scripts/client-smoke.sh "$loader"
 }
 
-# mods <dir> <sha1...>: Modrinth files, by sha1 (stable even if a version is renamed)
+# mods <dir> <sha1...>: Modrinth files, by sha1 (stable even if a version is renamed). The directory is emptied first,
+# so that the files of another branch (another Minecraft version) are not loaded with them
 mods() {
     local dir="$1"
     shift
+    rm -rf "$dir"
     mkdir -p "$dir"
     for sha1 in "$@"; do
         modrinth_file "$sha1" "$dir" > /dev/null
@@ -171,9 +173,10 @@ for loader in neoforge fabric; do
 done
 
 if [ -n "$IRIS" ]; then
-    # Iris 1.11.7 and Sodium 0.9.3 for 26.3, MakeUp Ultra Fast 9.5g
-    mods "$CACHE/iris/neoforge" 57cbbd1f58b6226c633520541c1a3ae57c019373 b51a0c28a0b9b39b943cfaf5d54c6462ea5bd37a
-    mods "$CACHE/iris/fabric" fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c 818009279d57d8c8c4fa814e685e7c9122f7677f
+    # Iris 1.11.7 and Sodium 0.9.2 for 26.3, MakeUp Ultra Fast 9.5g. Iris 1.11.7, the newest for 26.3, was built against
+    # Sodium 0.9.2; Sodium 0.9.3 refuses Iris below 1.12.1
+    mods "$CACHE/iris/neoforge" 57cbbd1f58b6226c633520541c1a3ae57c019373 9015607e5ae2c5b9692ebf05113f9caca6ec41bf
+    mods "$CACHE/iris/fabric" fa03640ba1e4ef2f7ae3619c6373a06e46d0ba2c 9acfe851e36f4fb27d7c5baa224e8bd4e0334283
     mods "$CACHE/iris/pack" 57938ae6e1c83a2758b2e5dab80061d5002e88e7
     for loader in neoforge fabric; do
         smoke "$loader-iris" "$loader" jei TIMEOUT=3000 SHADER_PACK="$(ls "$CACHE"/iris/pack/*.zip)" \
