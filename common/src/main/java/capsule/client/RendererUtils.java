@@ -3,20 +3,28 @@ package capsule.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.Shapes;
 
 public class RendererUtils {
     /**
-     * The outline of box, in the space of poseStack, with the vanilla lines render type (depth tested, translucent
-     * blending, view offset z layering) as 1.21.1's LevelRenderer#renderLineBox with RenderType.lines() had.
+     * The outline of box, in the space of poseStack, with the vanilla lines render types (depth tested, view offset z
+     * layering) as 1.21.1's LevelRenderer#renderLineBox with RenderType.lines() had.
+     * <p>
+     * Since 26.3 an outline with alpha below 255 goes to the translucent phase, which Improved Transparency draws in
+     * order independent transparency stages: only a render type with OIT pipelines can be drawn there (the client
+     * crashes otherwise), and RenderTypes.lines() has none. Translucent boxes take
+     * RenderTypes.linesTranslucentNoDepthWrite(), which has them; opaque boxes keep RenderTypes.lines().
      *
      * @param argb      color with alpha
      * @param lineWidth 1.21.1's RenderType.lines() used the window-scaled width: Window#getAppropriateLineWidth
      */
     public static void submitLineBox(OrderedSubmitNodeCollector collector, PoseStack poseStack, AABB box, int argb, float lineWidth) {
-        collector.submitShapeOutline(poseStack, Shapes.create(box), RenderTypes.lines(), argb, lineWidth, false);
+        RenderType type = ARGB.alpha(argb) == 255 ? RenderTypes.lines() : RenderTypes.linesTranslucentNoDepthWrite();
+        collector.submitShapeOutline(poseStack, Shapes.create(box), type, argb, lineWidth, false);
     }
 
     public static void drawCube(PoseStack.Pose pose, final float minX, final float minY, final float minZ,
